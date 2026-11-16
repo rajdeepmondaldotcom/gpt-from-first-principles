@@ -1,0 +1,10 @@
+{
+  "commit": "98e72c2",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "step_2000_pairs_ms": 4.756630000192672,
+  "step_all_pairs_s": 1.3827208749911126,
+  "train_nats": 2.4650802612304688,
+  "val_bits_per_byte": 3.5986520098747445,
+  "sample": "Once upon a timer dle PEved himalef by rol y t, han, it "
+}
