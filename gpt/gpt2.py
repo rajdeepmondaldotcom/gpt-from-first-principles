@@ -118,7 +118,7 @@ def sample(model, start, n, generator):
     out, device = start.tolist(), start.device
     for _ in range(n):
         scores = model(torch.tensor([out[-model.context :]], device=device))[0, -1]
-        # Draw on the CPU: the same seed then gives the same text on any machine's CPU.
+        # The generator lives on the CPU, so the chances move there for the draw.
         out.append(torch.multinomial(softmax(scores).cpu(), 1, generator=generator).item())
     return out
 
