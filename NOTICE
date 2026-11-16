@@ -1,0 +1,5 @@
+gpt-from-first-principles
+Copyright 2026 Rajdeep Mondal
+
+data/tiny_shakespeare.txt is public-domain text by William Shakespeare,
+in the single-file form Andrej Karpathy assembled for char-rnn.

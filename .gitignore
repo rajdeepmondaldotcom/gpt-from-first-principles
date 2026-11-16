@@ -1,0 +1,10 @@
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+# downloaded or generated, never committed
+data/cache/
+*.pt
+*.safetensors
+*.bin

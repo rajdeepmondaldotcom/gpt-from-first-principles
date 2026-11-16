@@ -1,0 +1,23 @@
+[project]
+name = "gpt-from-first-principles"
+version = "0.1.0"
+description = "Build a GPT yourself. Train it, serve it, then teach the same code chess."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+# numpy: torch warns on every import without it
+dependencies = ["torch>=2.6", "numpy"]
+
+[project.optional-dependencies]
+reference = ["tiktoken", "regex"]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = ["reference: checks our code against an outside reference; needs the reference extra"]
+
+[tool.ruff]
+line-length = 100
