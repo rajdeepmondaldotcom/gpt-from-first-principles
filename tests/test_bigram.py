@@ -2,7 +2,7 @@ import math
 import random
 from pathlib import Path
 
-from gpt.bigram import count, cross_entropy, entropy, kl, loss, sample, split, table
+from gpt.bigram import count, loss, sample, split, table
 
 SENTENCE = "the cat sat on the mat"
 TEXT = Path("data/tiny_shakespeare.txt").read_text()
@@ -42,12 +42,6 @@ def test_counting_gives_the_most_likely_table():
         assert loss(nudged, SENTENCE) > loss(P, SENTENCE)
 
 
-def test_cross_entropy_is_entropy_plus_kl():
-    p, q = [0.5, 0.25, 0.25], [0.7, 0.2, 0.1]
-    assert math.isclose(cross_entropy(p, q), entropy(p) + kl(p, q))
-    assert kl(p, p) == 0 and kl(p, q) > 0
-
-
 def test_an_unseen_pair_costs_infinity_until_we_smooth():
     """In "abab", a is followed only by b. The pair "aa" was never seen."""
     assert loss(table(count("abab"), "ab"), "aa") == math.inf
@@ -69,3 +63,8 @@ def test_the_scoreboard_numbers_in_the_lesson():
 def test_the_same_seed_writes_the_same_text():
     P = table(count(TEXT), VOCAB, smooth=1)
     assert sample(P, "Once", 20, random.Random(0)) == sample(P, "Once", 20, random.Random(0))
+
+
+def test_adding_a_thousand_to_each_count_flattens_the_table():
+    train, val = split(TEXT)
+    assert round(loss(table(count(train), VOCAB, smooth=1000), val), 3) == 3.141

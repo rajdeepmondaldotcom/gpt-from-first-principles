@@ -6,7 +6,7 @@ Eight characters is about one word. To see further with the same model, make eac
 
 ## The idea
 
-The obvious bigger piece is a word. The training text has 23,841 different words. The unseen text has 20,153 words, and 2,361 of them never occur in training. A model with a row per word has no row for those. It can neither read them nor write them, and more than one word in nine is a hole.
+The obvious bigger piece is a word. The training text has 23,841 different words. The unseen text is 20,153 words long, and 2,361 of those never occur in training. A model with a row per word has no row for those. It can neither read them nor write them, and more than one word in nine is a hole.
 
 Characters never run out, and they are too small. We want pieces that are as large as words where the text allows and can still spell anything.
 
@@ -16,11 +16,11 @@ Now grow the vocabulary. Find the pair of neighbouring tokens that occurs most o
 
 Common words end up as one token. Rare words stay in pieces. Nothing is ever unknown, because the 256 bytes are still in the vocabulary.
 
-To encode new text, start from its bytes and keep joining the pair that was learned earliest, until no learned pair is left.
+Turning text into token ids is called encoding, and turning ids back into text is decoding. To encode new text, start from its bytes. Find the pair of neighbours that was learned earliest, join its leftmost occurrence, and repeat until no learned pair is left.
 
 Cut the text into chunks first: a run of letters, a run of digits or a run of anything else, each with the one space before it. Merges happen inside a chunk, so no token spans two words. The usual token for a word in the middle of a sentence carries its space in front, as in ` time`.
 
-Keep one extra token that marks where a document ends. It never comes out of ordinary text. If a user types the characters `<|endoftext|>`, they are encoded as plain characters, or anyone could forge the end of a document.
+Keep one extra token that marks where a document ends. Lesson 25 uses it to teach a model when to stop. It never comes out of ordinary text. If a user types the characters `<|endoftext|>`, they are encoded as plain characters, or anyone could forge the end of a document.
 
 Expect half characters. A token can hold one byte of a two-byte character. Decoded alone, that token is not text, and Python prints a placeholder for it.
 
@@ -35,7 +35,7 @@ Train on `aaabdaaabac`. Each character is one byte, so we start with 11 tokens.
 | Tokens | Pair counts | Merge |
 |---|---|---|
 | a a a b d a a a b a c | aa 4, ab 2, four others 1 | aa becomes Z |
-| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: take the smaller pair, ab, as Y |
+| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: take the pair that sorts first, ab, as Y |
 | Z Y d Z Y a c | ZY 2, four others 1 | ZY becomes X |
 | X d X a c | | |
 
@@ -76,7 +76,7 @@ To encode `aab` with this vocabulary, start from a a b. The earliest merge that 
         return [self.vocab[p] for p in parts]
 ```
 
-A token learned earlier has a smaller id, so the smallest id among the joinable pairs is the earliest merge.
+`vocab.get(a + b, math.inf)` is the id of the token a pair would make, or infinity if no such token was learned. A token learned earlier has a smaller id, so `min` finds the earliest merge, and the leftmost one when there are several. Ties in training are broken the way Python sorts bytes, which is the order of a dictionary.
 
 ## The proof
 
@@ -91,7 +91,7 @@ uv run pytest tests/test_bpe.py
 - More merges mean fewer tokens.
 - The end token comes only when asked for.
 - Half of `é` decodes to a placeholder, and both halves to `é`.
-- Given GPT-2's vocabulary, our encoder returns the same ids as OpenAI's tiktoken. This test needs `uv sync --extra reference`.
+- GPT-2 is a model OpenAI released in 2019, and lesson 10 rebuilds it. It was trained with BPE. Given GPT-2's vocabulary, our encoder returns the same ids as tiktoken, OpenAI's own encoder. This test needs `uv sync --extra reference`.
 
 ```bash
 uv run python -m gpt.bpe
@@ -100,27 +100,28 @@ uv run python -m gpt.bpe
 ```
 words in the training text: 23,841 different ones
 words in the unseen text: 20,153, of which 2,361 never occur in training
-512 tokens: 1.90 bytes per token, MLP scores 2.597 bits per byte
-1024 tokens: 2.28 bytes per token, MLP scores 2.572 bits per byte
+512 tokens: 1.90 bytes per token, MLP 2.597 bits per byte
+1024 tokens: 2.28 bytes per token, MLP 2.572 bits per byte
 first merges: [' t', 'he', ' a', 'ou', ' s', ' m', 'in', ' w', 're', 'ha', ' the', 'nd']
 longest tokens: [' against', ' nothing', 'ORIOLANUS', 'GLOUCESTER', ' VINCENTIO', 'CORIOLANUS']
 'Once upon a time' -> ['O', 'nce', ' upon', ' a', ' time']
 ```
 
-The script trains lesson 4's model again, unchanged except that it reads eight tokens in place of eight characters.
+The script trains lesson 4's model again on eight tokens in place of eight characters. Only its table of embeddings and its second layer grow, to fit the larger vocabulary.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
 | Knows nothing | 6.022 |
 | Bigram, counted | 3.581 |
+| Bigram, learned | 3.599 |
 | MLP, eight characters back | 2.663 |
 | MLP, eight tokens back, 1,024 tokens | 2.572 |
 
 ## What it still cannot do
 
-With 1,024 tokens the window reaches 18 bytes, about three words. The score moved from 2.663 to 2.572, which is far less than the jump from one character of context to eight.
+With 1,024 tokens the window reaches 18 bytes, about three words. The loss moved from 2.663 to 2.572 bits per byte, which is far less than the jump from one character of context to eight.
 
-Reach is no longer the main limit. Eight tokens are still eight fixed slots, each read by weights of its own. What the model learns about a word in the third slot does not help it when the same word sits in the fifth.
+More than doubling the reach bought little. Eight tokens are still eight fixed slots, each read by weights of its own. What the model learns about a word in the third slot does not help it when the same word sits in the fifth.
 
 ## Check yourself
 
@@ -136,9 +137,9 @@ Predict before you run: training starts at 256 tokens and stops at 1,024. How ma
 Two. a a a a becomes Z a a, then Z Z. Each step joins the leftmost pair that the earliest merge covers.
 </details>
 
-<details><summary>A model scores 4.07 nats per token and a token averages 2.28 bytes. What is that in bits per byte?</summary>
+<details><summary>A model's loss is 4.072 nats per token and a token averages 2.284 bytes. What is that in bits per byte?</summary>
 
-4.07 / 0.693 / 2.28 = 2.57.
+4.072 / 0.6931 / 2.284 = 2.572.
 </details>
 
 <details><summary>Why does the token for a mid-sentence word begin with a space?</summary>

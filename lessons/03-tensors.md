@@ -2,13 +2,13 @@
 
 By the end of this page the bigram learns all of Shakespeare in two seconds.
 
-Lesson 2's model learned one sentence. Each number was a Python object, and a step on 2,000 pairs of Shakespeare took up to a second.
+Lesson 2's model learned one sentence. Each number was a Python object, and one step on all of Shakespeare would have built about 139 million of them.
 
 ## The idea
 
-Store the numbers in a grid and do arithmetic on the whole grid at once. The grid is called a tensor, and its shape says how many numbers lie along each direction. Our table of scores `W` has shape 65 × 65, one row per character. One instruction, such as `W.exp()`, runs over all 4,225 numbers in compiled code.
+Store the numbers in a grid and do arithmetic on the whole grid at once. The grid is called a tensor, and its shape says how many numbers lie along each direction. Our table of scores `W` has shape 65 × 65, one row per character. One instruction, such as `W.exp()`, runs over all 4,225 numbers inside the library, in fast machine code, with no Python loop.
 
-PyTorch gives us tensors, and an autograd like ours comes built in. On this page we still work the slopes out by hand, and use PyTorch's autograd only to check them.
+PyTorch is the library that gives us tensors. An autograd like ours comes built in. On this page we still work the slopes out by hand, and use PyTorch's autograd only to check them.
 
 Three tensor moves do the work.
 
@@ -18,18 +18,22 @@ The second is working along one direction. `scores.sum(dim=-1)` adds up each row
 
 The third is stretching. `scores.max(dim=-1, keepdim=True).values` is a column holding each row's largest score. Subtract it from `scores` and PyTorch stretches the column across all 65 places. This is called broadcasting.
 
-Now the slopes. For one pair, the loss is minus the log of the chance that softmax gave to the true next character. Work through the algebra and the slope for each score comes out short:
+Now the slopes. Take one pair whose true next character is t. With lesson 1's rules, its loss is
+
+-ln(chance of t) = -(score of t) + ln(total of e to each score)
+
+Use lesson 2's table on the two parts. The first part has a slope of -1 for t's score and 0 for the others. For the second part, ln has a slope of 1 over the total, and the total moves by e to the score when a score moves. Multiply along the path: e to the score, over the total. That is the score's own chance. So the slope for each score is:
 
 - for the true next character: its chance, minus 1
 - for each other character: its chance
 
-Raising any score makes the row's total bigger, which costs each character some chance. Raising the true character's own score also wins that back and more. The slopes in a row sum to zero. The loss is an average over N pairs, so each slope is divided by N.
+The slopes in a row sum to zero. The loss is an average over N pairs, so each slope is divided by N.
 
-A lookup sends slopes back to the row it read. A row read by 500 pairs collects 500 sets of slopes. That is "add across paths" from lesson 2.
+A lookup sends slopes back to the row it read. A row read by 500 pairs collects 500 sets of slopes: add across paths, as in lesson 2. A test checks this against autograd.
 
 Big scores break the arithmetic. A computer stores a number in a fixed count of bits, and e to the power 1,000 does not fit. PyTorch writes `inf`, and `inf / inf` gives `nan`, which means "not a number". Softmax depends only on the gaps between scores: add 5 to each score in a row and the chances stay put. So we subtract the row's largest score first. The largest becomes 0, e to the 0 is 1, and nothing overflows.
 
-One idea is left. A step on all 1,003,853 pairs takes about a second. A step on 2,000 pairs picked at random takes a few milliseconds, and its slopes point almost the same way, with some noise. The random handful is called a batch. Learning from batches is called stochastic gradient descent. Two thousand cheap, noisy steps get further than a few exact ones.
+One idea is left. A step on all 1,003,853 pairs takes about a second. A step on 2,000 pairs picked at random takes a few thousandths of a second, and its slopes point almost the same way, with some noise. The random handful is called a batch, and learning from batches is called stochastic gradient descent. In the time of one exact step we can take hundreds of noisy ones.
 
 ## By hand
 
@@ -55,10 +59,15 @@ def softmax(scores):
     scores = scores - scores.max(dim=-1, keepdim=True).values  # same chances, no overflow
     exps = scores.exp()
     return exps / exps.sum(dim=-1, keepdim=True)
-```
 
-```python
-# gpt/tensors.py
+
+def cross_entropy(scores, targets):
+    """Average surprise: minus the log of the chance each row gave to its target."""
+    scores = scores - scores.max(dim=-1, keepdim=True).values
+    log_chances = scores - scores.exp().sum(dim=-1, keepdim=True).log()
+    return -log_chances[torch.arange(len(targets)), targets].mean()
+
+
 def cross_entropy_slopes(scores, targets):
     """The slope of that loss for each score, worked out by hand."""
     slopes = softmax(scores)
@@ -66,7 +75,11 @@ def cross_entropy_slopes(scores, targets):
     return slopes / len(targets)
 ```
 
-`slopes[torch.arange(len(targets)), targets]` picks one number from each row: in row 0 the place `targets[0]`, in row 1 the place `targets[1]`.
+`keepdim=True` keeps the result as a column, so that it can be stretched across the rows. `.max` returns both the largest values and where they were, and `.values` takes the first.
+
+`cross_entropy` never forms a chance. It works with the log of each chance, score minus ln of the total, so a tiny chance cannot round to 0 and send ln to minus infinity.
+
+`torch.arange(n)` is the tensor 0, 1, up to n - 1. Indexing with it and `targets` picks one number from each row: in row 0 the place `targets[0]`, in row 1 the place `targets[1]`.
 
 One step of learning:
 
@@ -78,7 +91,7 @@ One step of learning:
         W -= rate * torch.zeros_like(W).index_add_(0, x, slopes)
 ```
 
-`at` holds the positions of the pairs in this batch. `index_add_(0, x, slopes)` adds row i of `slopes` into row `x[i]` of a grid of zeros.
+`ids` is the text as a tensor of whole numbers and `at` holds the positions of this batch's pairs, so `x` is each pair's first character and `y` its second. `index_add_(0, x, slopes)` adds row i of `slopes` into row `x[i]` of a grid of zeros.
 
 ## The proof
 
@@ -106,7 +119,7 @@ learned bigram, training text: 2.465 nats
 learned bigram, unseen text:   3.599 bits per byte
 ```
 
-Timings are from an M4 laptop and move from run to run. A step on 2,000 pairs is about a hundred times faster than in lesson 2.
+Timings are from an M4 laptop and move from run to run.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -124,7 +137,7 @@ Once upon a timer dle PEved himalef by rol y t, han, it
 
 It is the same model as lesson 1, learned by a different route, so it writes the same kind of soup. It still sees one character back.
 
-We can now train a model of any shape. The table is the wrong shape: more context means a row for each possible run of characters, and almost all of those rows stay empty.
+The loop no longer cares what the model is. Any function built from operations with known slopes can take the table's place. The table is the wrong shape: more context means a row for each possible run of characters, and almost all of those rows stay empty.
 
 ## Check yourself
 
@@ -132,7 +145,7 @@ Predict before you run: `W[x]` for the training text holds 1,003,853 × 65 numbe
 
 <details><summary>Answer</summary>
 
-About 261 MB. That is why a step on all the pairs is slow.
+About 261 MB. A step on all the pairs fills that much memory several times over, which is where its second goes.
 </details>
 
 <details><summary>A row of scores is (0, 0, 0, 0) and the true next character is the second. What are the slopes?</summary>

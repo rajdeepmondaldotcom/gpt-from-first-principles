@@ -90,27 +90,33 @@ def learn_bigram(text, steps=300, rate=5.0):
 
 
 if __name__ == "__main__":
-    import time
     from pathlib import Path
 
     from gpt.bigram import count, loss, table
 
     sentence = "the cat sat on the mat"
     counted = loss(table(count(sentence), sorted(set(sentence))), sentence)
-    losses = learn_bigram(sentence)
-    print(f"counted table:      {counted:.4f} nats")
-    for step in (0, 1, 10, 100, 299):
-        print(f"learned, step {step:>3}:  {losses[step]:.4f} nats")
+    losses = learn_bigram(sentence, steps=3000)
+    print(f"counted table:       {counted:.4f} nats")
+    for step in (0, 1, 10, 100, 299, 2999):
+        print(f"learned, step {step:>4}:  {losses[step]:.4f} nats")
 
-    # How long would one step on all of Shakespeare take? Time 2,000 pairs and scale up.
+    # How much work is one step on Shakespeare? Count the Values that 2,000 pairs build.
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     pairs = [(vocab.index(a), vocab.index(b)) for a, b in pairwise(text[:2001])]
     W = [[Value(0.0) for _ in vocab] for _ in vocab]
-    start = time.perf_counter()
-    bigram_loss(W, pairs).backward()
-    seconds = time.perf_counter() - start
-    minutes = seconds / 2000 * (len(text) - 1) / 60
-    print(f"one step on 2,000 pairs of Shakespeare: {seconds:.2f} s")
-    print(f"one step on the whole file would take:  {minutes:.1f} minutes")
-    save("02_autograd", counted=counted, learned=losses[-1], step_2000_pairs_s=seconds)
+    seen, stack = set(), [bigram_loss(W, pairs)]
+    while stack:
+        v = stack.pop()
+        if v not in seen:
+            seen.add(v)
+            stack.extend(v.parents)
+    print(f"one step on 2,000 pairs of Shakespeare builds {len(seen):,} Values")
+    save(
+        "02_autograd",
+        counted=counted,
+        learned_300=losses[299],
+        learned_3000=losses[-1],
+        values=len(seen),
+    )

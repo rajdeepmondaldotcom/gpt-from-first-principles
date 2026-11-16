@@ -16,10 +16,10 @@ from gpt.tensors import cross_entropy, encode, softmax
 class Embedding(nn.Module):
     """Lesson 8. A vector for what the token is, plus a vector for where it stands."""
 
-    def __init__(self, vocab, block, width):
+    def __init__(self, vocab, context, width):
         super().__init__()
         self.token = nn.Embedding(vocab, width)
-        self.position = nn.Embedding(block, width)  # one row per place, up to `block` places
+        self.position = nn.Embedding(context, width)  # one row per place, up to `context` places
 
     def forward(self, idx):
         places = torch.arange(idx.size(-1), device=idx.device)
@@ -64,14 +64,14 @@ class Block(nn.Module):
 class GPT2(nn.Module):
     """Lesson 10. Token ids in, a row of scores for the next token at each place out."""
 
-    def __init__(self, vocab=50257, block=1024, width=768, heads=12, layers=12):
+    def __init__(self, vocab=50257, context=1024, width=768, heads=12, layers=12):
         super().__init__()
-        self.block = block
-        self.embed = Embedding(vocab, block, width)
+        self.context = context  # the most tokens the model can read at once
+        self.embed = Embedding(vocab, context, width)
         self.blocks = nn.ModuleList(Block(width, heads) for _ in range(layers))
         self.norm = LayerNorm(width)
-        self.head = nn.Linear(width, vocab, bias=False)
-        self.head.weight = self.embed.token.weight  # one grid reads tokens and scores them
+        self.out = nn.Linear(width, vocab, bias=False)
+        self.out.weight = self.embed.token.weight  # one grid reads tokens and scores them
         for name, p in self.named_parameters():
             if p.dim() == 2:
                 # Each block adds to the same vector. Smaller additions keep the sum steady.
@@ -84,13 +84,13 @@ class GPT2(nn.Module):
         x = self.embed(idx)
         for block in self.blocks:
             x = block(x)
-        return self.head(self.norm(x))
+        return self.out(self.norm(x))
 
 
-def batch(ids, block, size, generator):
-    """Random windows of `block` tokens, and the same windows moved one token on."""
-    at = torch.randint(len(ids) - block, (size,), generator=generator).to(ids.device)[:, None]
-    steps = torch.arange(block, device=ids.device)
+def batch(ids, context, size, generator):
+    """Random windows of `context` tokens, and the same windows moved one token on."""
+    at = torch.randint(len(ids) - context, (size,), generator=generator).to(ids.device)[:, None]
+    steps = torch.arange(context, device=ids.device)
     return ids[at + steps], ids[at + 1 + steps]
 
 
@@ -103,9 +103,9 @@ def loss_on(model, x, y):
 @torch.no_grad()
 def evaluate(model, ids):
     """Loss in nats over `ids`, cut into windows that do not overlap."""
-    rows = (len(ids) - 1) // model.block
-    x = ids[: rows * model.block].view(rows, model.block)
-    y = ids[1 : rows * model.block + 1].view(rows, model.block)
+    rows = (len(ids) - 1) // model.context
+    x = ids[: rows * model.context].view(rows, model.context)
+    y = ids[1 : rows * model.context + 1].view(rows, model.context)
     losses = [loss_on(model, a, b) for a, b in zip(x.split(64), y.split(64))]
     sizes = [len(a) for a in x.split(64)]
     return sum(loss * n for loss, n in zip(losses, sizes)).item() / rows
@@ -113,10 +113,10 @@ def evaluate(model, ids):
 
 @torch.no_grad()
 def sample(model, start, n, generator):
-    """Write n more tokens. The model reads at most its last `block` tokens."""
+    """Write n more tokens. The model reads at most its last `context` tokens."""
     out, device = start.tolist(), start.device
     for _ in range(n):
-        scores = model(torch.tensor([out[-model.block :]], device=device))[0, -1]
+        scores = model(torch.tensor([out[-model.context :]], device=device))[0, -1]
         # Draw on the CPU: the same seed then gives the same text on any machine's CPU.
         out.append(torch.multinomial(softmax(scores).cpu(), 1, generator=generator).item())
     return out
@@ -164,7 +164,7 @@ def load_gpt2(path):
         # OpenAI stored each linear layer as (inputs, outputs). PyTorch wants (outputs, inputs).
         flip = mine.endswith(("qkv.weight", "proj.weight", "wide.weight", "narrow.weight"))
         state[mine] = tensor.T if flip else tensor
-    model.load_state_dict(state, strict=False)  # `head.weight` is the token grid, already set
+    model.load_state_dict(state, strict=False)  # `out.weight` is the token grid, already set
     return model.eval()
 
 
@@ -179,13 +179,13 @@ if __name__ == "__main__":
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
-    model = GPT2(vocab=len(vocab), block=64, width=128, heads=4, layers=4).to(device)
+    model = GPT2(vocab=len(vocab), context=64, width=128, heads=4, layers=4).to(device)
     parameters = sum(p.numel() for p in model.parameters())
     first = evaluate(model, val_ids)
     print(f"parameters: {parameters:,}")
     print(f"loss before training: {first:.3f} nats (ln 65 = {math.log(65):.3f})")
     for step in range(1, 3001):
-        x, y = batch(train_ids, model.block, 32, generator)
+        x, y = batch(train_ids, model.context, 32, generator)
         loss = loss_on(model, x, y)
         model.zero_grad()
         loss.backward()

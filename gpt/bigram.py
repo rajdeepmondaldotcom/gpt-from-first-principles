@@ -45,18 +45,6 @@ def sample(P, start, n, rng):
     return out
 
 
-def entropy(p):
-    return -sum(x * math.log(x) for x in p if x)
-
-
-def cross_entropy(p, q):
-    return -sum(x * math.log(y) for x, y in zip(p, q) if x)
-
-
-def kl(p, q):
-    return sum(x * math.log(x / y) for x, y in zip(p, q) if x)
-
-
 if __name__ == "__main__":
     text = Path("data/tiny_shakespeare.txt").read_text()
     train, val = split(text)

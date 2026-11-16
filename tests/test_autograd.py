@@ -41,6 +41,18 @@ def test_hand_example():
     assert (L.data, a.grad, b.grad, c.grad) == (4.0, -3.0, 2.0, 1.0)
 
 
+def test_each_operation_knows_its_own_slope():
+    """The table in lesson 2: power, e to the x, and ln, each checked against its rule."""
+    for build, x, rule in [
+        (lambda v: v**3, 2.0, 3 * 2.0**2),
+        (lambda v: v.exp(), 1.5, math.exp(1.5)),
+        (lambda v: v.log(), 4.0, 1 / 4.0),
+    ]:
+        v = Value(x)
+        build(v).backward()
+        assert math.isclose(v.grad, rule)
+
+
 def test_a_number_used_twice_collects_both_paths():
     a = Value(3.0)
     (a + a).backward()

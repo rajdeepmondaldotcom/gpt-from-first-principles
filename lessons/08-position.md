@@ -1,12 +1,12 @@
 # 8. Position
 
-By the end of this page the model knows where each token stands.
+By the end of this page each token's vector says where the token stands.
 
-An attention layer has no sense of order. To the last token, the earlier tokens are a bag. `dog bites man` and `man bites dog` put the same three tokens in the bag.
+An attention layer has no sense of order. To the last token of `dog bites man today`, the earlier tokens are a bag, and `man bites dog today` puts the same three tokens in it.
 
 ## The idea
 
-Tell each token its place before attention runs.
+Tell each token its place before attention runs. A token's place is also called its position.
 
 A first try is to attach the place as one more number: 0 for the first token, 1 for the second. That gives the model a single number to work with, and its size has no limit: place 500 is 500 times place 1.
 
@@ -16,9 +16,9 @@ vector for a token = row for what it is + row for where it stands
 
 Both tables start random and both are learned. Training decides what "being third" should look like, the same way it decides what "being the letter e" should look like.
 
-After the addition, the same token in two places gives two different vectors. Queries and keys are made from those vectors, so a token can now ask for "a noun, two places back".
+After the addition, the same token in two places gives two different vectors. Queries and keys are made from those vectors, so what a token reads can now depend on where things stand.
 
-The second table has a fixed number of rows. We call that number the block. A model with a block of 64 has no row for place 64, so it cannot read more than 64 tokens at once.
+The second table has a fixed number of rows. We call that number the context: the most tokens the model can read at once. A model with a context of 64 has no row for place 64, so it cannot read a 65th token.
 
 ## By hand
 
@@ -50,17 +50,17 @@ Four different vectors. Without the place rows there are two, (1, 0) and (0, 1),
 class Embedding(nn.Module):
     """Lesson 8. A vector for what the token is, plus a vector for where it stands."""
 
-    def __init__(self, vocab, block, width):
+    def __init__(self, vocab, context, width):
         super().__init__()
         self.token = nn.Embedding(vocab, width)
-        self.position = nn.Embedding(block, width)  # one row per place, up to `block` places
+        self.position = nn.Embedding(context, width)  # one row per place, up to `context` places
 
     def forward(self, idx):
         places = torch.arange(idx.size(-1), device=idx.device)
         return self.token(idx) + self.position(places)
 ```
 
-`idx` holds token ids with shape (batch, tokens). `places` is 0, 1, 2 and so on, one per token. `self.position(places)` has shape (tokens, width), and broadcasting adds it to each text in the batch.
+`idx` holds token ids with shape (batch, tokens), and `idx.size(-1)` is the number of tokens. `places` is 0, 1, 2 and so on, one per token. `self.position(places)` has shape (tokens, width), and broadcasting adds it to each text in the batch.
 
 ## The proof
 
@@ -69,30 +69,31 @@ uv run pytest tests/test_gpt2.py
 ```
 
 - One layer cannot tell order until positions are added. Feed an attention layer the tokens 3, 1, 4, 1, 5, then the same tokens with the first four shuffled. With token rows alone, the result at the last place is the same. With place rows added, it differs.
+- The hand example gives the four vectors above.
 - The same token gets a different vector in each place.
-- Text longer than the table fails: a block of 8 takes 8 tokens and raises an error on 9.
+- Text longer than the table fails: a context of 8 takes 8 tokens and raises an error on 9.
 
 ## What it still cannot do
 
-We have the parts of one layer: embeddings with positions, and attention. One layer of attention is one round of reading. Working out what a sentence means takes several rounds, each building on the last, so we want to stack layers.
+We have the parts of one layer: embeddings with positions, and attention. One round of reading lets a token gather facts from other tokens. To use a fact that another token gathered, it needs a second round, so we want to stack layers.
 
-Attention also only mixes. Its result is a weighted average of values, passed through one linear layer. Nothing bends, so however many attention layers we stack, no token gets to compute with what it has read.
+Attention also only mixes. A token's result is a weighted average of values, passed through one linear layer. The token collects what it reads and never works on it.
 
 ## Check yourself
 
-Predict before you run: a model has a block of 1,024 and a width of 768. How many parameters does the table of places hold?
+Predict before you run: a model has a context of 1,024 and a width of 768. How many parameters does the table of places hold?
 
 <details><summary>Answer</summary>
 
 1,024 × 768 = 786,432.
 </details>
 
-<details><summary>We add the place row to the token row. Why not lay them end to end, as lesson 4 did with its eight characters?</summary>
+<details><summary>We add the place row to the token row. What would laying them end to end, as lesson 4 did with its eight characters, cost?</summary>
 
-Laying end to end doubles the width of each vector, and of each layer that reads it. Adding keeps the width, and the model can still separate the two parts, because it learns both tables.
+It would double the width of each vector, and of each layer that reads it. Adding keeps the width.
 </details>
 
-<details><summary>A model with a block of 64 is given 65 tokens. What happens, and where?</summary>
+<details><summary>A model with a context of 64 is given 65 tokens. What happens, and where?</summary>
 
 `self.position(places)` asks for row 64 of a table whose rows run from 0 to 63. PyTorch raises an IndexError.
 </details>

@@ -27,7 +27,7 @@ WEIGHTS = Path("data/cache/gpt2.safetensors")
 
 
 def small():
-    return GPT2(vocab=65, block=64, width=128, heads=4, layers=4)
+    return GPT2(vocab=65, context=64, width=128, heads=4, layers=4)
 
 
 # Lesson 8: position
@@ -35,7 +35,7 @@ def small():
 
 def test_one_layer_cannot_tell_order_until_positions_are_added():
     torch.manual_seed(0)
-    embed, layer = Embedding(vocab=10, block=8, width=16), CausalSelfAttention(16, heads=4)
+    embed, layer = Embedding(vocab=10, context=8, width=16), CausalSelfAttention(16, heads=4)
     text, shuffled = torch.tensor([[3, 1, 4, 1, 5]]), torch.tensor([[4, 1, 1, 3, 5]])
     last = lambda vectors: layer(vectors)[0, -1]
     assert torch.allclose(last(embed.token(text)), last(embed.token(shuffled)), atol=1e-6)
@@ -44,12 +44,12 @@ def test_one_layer_cannot_tell_order_until_positions_are_added():
 
 def test_the_same_token_gets_a_different_vector_in_each_place():
     torch.manual_seed(0)
-    vectors = Embedding(vocab=10, block=8, width=16)(torch.tensor([[7, 7, 7]]))[0]
+    vectors = Embedding(vocab=10, context=8, width=16)(torch.tensor([[7, 7, 7]]))[0]
     assert not torch.allclose(vectors[0], vectors[1]) and not torch.allclose(vectors[1], vectors[2])
 
 
 def test_text_longer_than_the_table_has_no_position_to_look_up():
-    embed = Embedding(vocab=10, block=8, width=16)
+    embed = Embedding(vocab=10, context=8, width=16)
     embed(torch.zeros(1, 8, dtype=torch.long))
     with pytest.raises(IndexError):
         embed(torch.zeros(1, 9, dtype=torch.long))
@@ -64,7 +64,7 @@ def test_layer_norm_by_hand():
 
 
 def test_position_by_hand():
-    embed = Embedding(vocab=2, block=3, width=2)  # token 0 is `dog`, token 1 is `man`
+    embed = Embedding(vocab=2, context=3, width=2)  # token 0 is `dog`, token 1 is `man`
     with torch.no_grad():
         embed.token.weight.copy_(torch.tensor([[1.0, 0.0], [0.0, 1.0]]))
         embed.position.weight.copy_(torch.tensor([[0.5, 0.5], [0.0, 0.0], [-0.5, 0.5]]))
@@ -110,8 +110,8 @@ def slope_reaching_the_input(blocks, add):
 
 def test_the_gradient_survives_depth_only_with_the_additions():
     torch.manual_seed(0)
-    shallow = GPT2(vocab=10, block=8, width=32, heads=4, layers=2).blocks
-    deep = GPT2(vocab=10, block=8, width=32, heads=4, layers=24).blocks
+    shallow = GPT2(vocab=10, context=8, width=32, heads=4, layers=2).blocks
+    deep = GPT2(vocab=10, context=8, width=32, heads=4, layers=24).blocks
     assert slope_reaching_the_input(deep, add=False) == 0  # nothing at all gets back
     with_2, with_24 = slope_reaching_the_input(shallow, True), slope_reaching_the_input(deep, True)
     assert 0.5 < with_24 / with_2 < 2  # with them, 24 layers pass back as much as 2
@@ -134,12 +134,12 @@ def test_a_block_cannot_read_the_future_either():
 # Lesson 10: the GPT
 
 
-def parameters(vocab, block, width, layers):
+def parameters(vocab, context, width, layers):
     per_block = 2 * width + (3 * width * width + 3 * width) + (width * width + width)  # norm, attn
     per_block += (
         2 * width + (4 * width * width + 4 * width) + (4 * width * width + width)
     )  # norm, MLP
-    return vocab * width + block * width + layers * per_block + 2 * width
+    return vocab * width + context * width + layers * per_block + 2 * width
 
 
 def test_the_parameter_count_follows_the_formula():
@@ -149,7 +149,7 @@ def test_the_parameter_count_follows_the_formula():
 
 def test_one_grid_reads_tokens_and_scores_them():
     model = small()
-    assert model.head.weight is model.embed.token.weight
+    assert model.out.weight is model.embed.token.weight
     assert 50257 * 768 == 38597376  # what tying saves in GPT-2: almost a third of the model
 
 

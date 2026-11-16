@@ -10,7 +10,7 @@ We want each token to choose what to read.
 
 Each token is a row of numbers, its embedding. A row of numbers is called a vector, and the count of numbers in it is its width. To compare two vectors, multiply them entry by entry and add the products. This is the dot product. It is large when the two vectors have large numbers of the same sign in the same places.
 
-A first try: for one token, take its dot product with each token in the text, turn those scores into weights with softmax, and replace the token with the weighted average of the embeddings. This lets a token read from anywhere. It has no parameters, so it cannot learn what to look for.
+A first try: for one token, take its dot product with each token in the text, turn those scores into weights with softmax, and replace the token with the weighted average of the embeddings. This lets a token read from anywhere. It has no parameters beyond the embeddings, so it cannot learn what to look for.
 
 The fix is to give each token three vectors, made from its embedding by three linear layers:
 
@@ -18,11 +18,11 @@ The fix is to give each token three vectors, made from its embedding by three li
 - a key: what this token offers
 - a value: what this token hands over when chosen
 
-The score for token i reading token j is the dot product of i's query with j's key. Softmax turns token i's scores into weights that sum to 1. Token i's result is the weighted sum of the values. This is attention.
+The score for token i reading token j is the dot product of i's query with j's key. Softmax turns token i's scores into weights that sum to 1. Token i's result is the weighted sum of the values. This is attention. The weights are called attention weights. They are worked out afresh for each text and are not parameters, unlike the weights inside a layer.
 
-The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and so is the fixed length. Two tests below check both.
+The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens. Two tests below check both.
 
-One detail keeps it trainable. A dot product adds one product per entry, and a sum of n random terms has a spread that grows like the square root of n. At a width of 256 the scores spread about 16 wide. Softmax then puts 0.87 of the weight on a single token, on average, and passes back almost no slope, like the stuck units of lesson 4. So we divide the scores by the square root of the width. The spread drops to 1 and the largest weight to 0.08.
+One detail keeps it trainable. Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n. We measured it: with random vectors at a width of 256, the scores have a spread of 16. Among 100 tokens, softmax then puts 0.87 of the weight on a single token, on average, and passes back almost no slope, like the stuck units of lesson 4. So we divide the scores by the square root of the width. The spread drops to 1 and the largest weight to 0.08.
 
 ## By hand
 
@@ -45,7 +45,7 @@ The query for `sat` is (0, 2, 0, 2).
 
 The result is 0.017 × (1, 0) + 0.936 × (0, 1) + 0.047 × (1, 1) = (0.064, 0.983). `sat` took 94% of what it read from `cat`.
 
-Now all three tokens at once. Stack the queries as the rows of a grid Q, the keys as K and the values as V. `Q @ K.T` holds each query's dot product with each key, a grid of 3 × 3. Row i is what token i reads. The row for `sat` is the row we worked out, and a test finds it there.
+Now all three tokens at once. Stack the queries as the rows of a grid Q, the keys as K and the values as V. `K.T` is K turned on its side, rows for columns. `Q @ K.T` then holds each query's dot product with each key, a grid of 3 × 3. Row i is what token i reads. The row for `sat` is the row we worked out, and a test finds it there.
 
 ## The code
 
@@ -60,7 +60,7 @@ def attend(q, k, v, mask=None):
     return weights @ v, weights
 ```
 
-`k.transpose(-2, -1)` turns K on its side, so that `q @` it takes each query's dot product with each key. `softmax` is ours from lesson 3. Leave `mask` for the next lesson.
+`k.transpose(-2, -1)` turns K on its side, as `.T` does, and also works when there are more than two directions. `q.size(-1)` is the width. `softmax` is ours from lesson 3. Leave `mask` for the next lesson.
 
 ## The proof
 
@@ -71,13 +71,13 @@ uv run pytest tests/test_attention.py
 - The hand example gives the scores, the weights and the result above.
 - The hand example is one row of the whole grid.
 - `attend` equals PyTorch's `scaled_dot_product_attention`.
-- At a width of 256, undivided scores spread 16 wide and the largest weight averages above 0.8. Divided, the spread is 1 and the largest weight is under 0.1.
+- At a width of 256, with 100 tokens, undivided scores have a spread near 16 and the largest weight averages above 0.8. Divided, the spread is near 1 and the largest weight is under 0.1.
 - No slots: shuffle the tokens and the results shuffle with them.
 - The same weights serve 3 tokens and 30.
 
 ## What it still cannot do
 
-We train a model by scoring its guess for the next token at each place in the text. With attention as it stands, the token at place 3 can read the token at place 4, which is the answer it is meant to guess. The loss would fall to nothing and the model would learn nothing it can use when it writes, because the next token does not exist yet.
+Lesson 4's model made one guess per window. Attention gives a result at each place, so we could ask for a guess at each place: from the result at place 3, guess the token at place 4. As it stands that would be cheating. The token at place 3 can read the token at place 4, which is the answer. A model trained that way would be no use when it writes, because then the next token does not exist yet.
 
 Each token also gets one set of weights, so one view of the text. To continue `the cat sat on the`, a token may need the last noun and the last verb at once.
 

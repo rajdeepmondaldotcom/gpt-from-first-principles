@@ -1,0 +1,33 @@
+{
+  "commit": "afccb8e",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "seed": 0,
+  "words": 23841,
+  "unseen_words": 2361,
+  "held_out_words": 20153,
+  "first_merges": [
+    " t",
+    "he",
+    " a",
+    "ou",
+    " s",
+    " m",
+    "in",
+    " w",
+    "re",
+    "ha",
+    " the",
+    "nd"
+  ],
+  "scores": {
+    "512": {
+      "bytes_per_token": 1.9013364243829265,
+      "val_bits_per_byte": 2.597165970262842
+    },
+    "1024": {
+      "bytes_per_token": 2.2837837837837838,
+      "val_bits_per_byte": 2.5722136230341803
+    }
+  }
+}

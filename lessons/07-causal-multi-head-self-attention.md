@@ -1,6 +1,6 @@
 # 7. Causal multi-head self-attention
 
-By the end of this page you have an attention layer that trains on each place in a text at once without seeing the answers, and reads the text in several ways at the same time.
+By the end of this page you have an attention layer that can be trained on each place in a text at once without seeing the answers, and that reads the text in several ways at the same time.
 
 Lesson 6 left two problems. A token can read the token after it, which is the answer it is meant to guess. And each token gets one view of the text.
 
@@ -10,9 +10,9 @@ Hide the future. Token i may read tokens 0 to i and nothing later. Before softma
 
 The rule is called a causal mask: each token's result depends only on what came before it. The layer is called self-attention because the queries, keys and values all come from the same tokens.
 
-The mask buys more than honesty. Lesson 4's model made one guess per window. A masked layer makes one guess at each place: after token 0 it guesses token 1, after tokens 0 and 1 it guesses token 2, and so on. A window of 8 tokens gives 8 guesses in one pass, and none of them saw its answer.
+The mask buys more than honesty. Lesson 4's model made one guess per window. A masked layer gives a result at each place, and each result can be turned into a guess for the token that follows: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on. A window of 8 tokens gives 8 guesses in one pass, and none of them saw its answer.
 
-Now the second problem. Cut each query, key and value into equal slices and run attention on each slice by itself. Each slice is called a head. A head has its own part of the weights, so it makes its own choice of what to read. Lay the heads' results end to end, and pass them through one more linear layer that mixes them.
+Now the second problem. Cut each query, key and value into equal slices and run attention on each slice by itself. Each slice is called a head. The numbers in a head's slice come from its own columns of the layer that makes queries, keys and values, so each head has weights of its own and makes its own choice of what to read. Lay the heads' results end to end, and pass them through one more linear layer that mixes them.
 
 At a width of 16, four heads have a width of 4 each. The parameter count does not depend on the number of heads, because the same vectors are cut into more or fewer slices.
 
@@ -62,11 +62,11 @@ class CausalSelfAttention(nn.Module):
         return self.proj(out.transpose(1, 2).reshape(B, T, C))
 ```
 
-`self.qkv(x)` makes 3 × width numbers per token, and `chunk(3, dim=-1)` cuts them into the query, the key and the value.
+`B`, `T` and `C` are the three directions of `x`: B texts in the batch, T tokens in each, C numbers per token. `self.qkv(x)` makes 3 × C numbers per token, and `chunk(3, dim=-1)` cuts them into the query, the key and the value.
 
 `view(B, T, self.heads, C // self.heads)` cuts each vector into heads. `transpose(1, 2)` then moves the heads next to the batch, giving the shape (batch, heads, tokens, head width). `attend` works on the last two directions, so it runs once and handles each head of each text.
 
-`tril()` keeps the lower-left triangle of a grid of ones, which is the mask above. The last line lays the heads end to end again and mixes them.
+`tril()` keeps the lower-left triangle of a grid of ones, which is the mask above. `device=x.device` builds the mask wherever `x` is stored, and lesson 10 says more about that. `attend` returns the result and the weights, and `_` throws the weights away. The last line lays the heads end to end again and mixes them.
 
 ## The proof
 
@@ -82,7 +82,7 @@ uv run pytest tests/test_attention.py
 
 ## What it still cannot do
 
-The layer has no sense of order. Lesson 6 showed that shuffling the tokens shuffles the results and changes nothing else. With the mask, the last token reads the earlier tokens as a bag: it knows which tokens came before, and not which came first. `dog bites man` and `man bites dog` look the same to it.
+The layer has no sense of order. Lesson 6 showed that shuffling the tokens shuffles the results and changes nothing else. With the mask, the last token reads the earlier tokens as a bag: it knows which tokens came before, and not which came first. To the last token of `dog bites man today`, the earlier tokens are the same bag as in `man bites dog today`.
 
 ## Check yourself
 

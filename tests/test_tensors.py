@@ -39,6 +39,9 @@ def test_big_scores_do_not_overflow():
     assert naive.isnan().all()  # e to the 1000 is too big for the machine: inf / inf
     assert torch.allclose(softmax(big), softmax(torch.tensor([[2.0, 1.0, 0.0]])))
     assert math.isclose(cross_entropy(big * 10, torch.tensor([0])), 0, abs_tol=1e-4)
+    far = torch.tensor([[0.0, -200.0]])  # the target's chance is e to the -200: 0 in 32 bits
+    assert (-(far.exp() / far.exp().sum()).log())[0, 1] == math.inf
+    assert cross_entropy(far, torch.tensor([1])) == 200
 
 
 def test_a_lookup_sends_its_slopes_back_to_the_row_it_read():

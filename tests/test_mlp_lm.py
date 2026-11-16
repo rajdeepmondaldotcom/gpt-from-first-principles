@@ -52,6 +52,23 @@ def test_it_starts_with_no_opinion():
     assert math.isclose(evaluate(MLP(65), IDS[:5000]), math.log(65), rel_tol=1e-6)
 
 
+def test_the_slope_of_tanh_is_one_minus_its_square():
+    for x in (0.0, 2.0, 3.0):
+        nudged = (math.tanh(x + 1e-6) - math.tanh(x)) / 1e-6
+        assert math.isclose(nudged, 1 - math.tanh(x) ** 2, abs_tol=1e-5)
+
+
+def test_hidden_units_that_start_equal_stay_equal():
+    torch.manual_seed(0)
+    model = MLP(65)
+    with torch.no_grad():
+        model.hidden.weight[1] = model.hidden.weight[0]  # unit 1 starts as a copy of unit 0
+        model.hidden.bias[1] = model.hidden.bias[0]
+    train(model, IDS, steps=50, rate=0.1, generator=torch.Generator().manual_seed(0))
+    assert torch.equal(model.hidden.weight[0], model.hidden.weight[1])
+    assert not torch.equal(model.hidden.weight[0], model.hidden.weight[2])
+
+
 def test_a_bad_starting_scale_jams_the_hidden_units():
     def start(scale):
         torch.manual_seed(0)

@@ -103,9 +103,7 @@ if __name__ == "__main__":
         train_mlp(model, ids, steps=30000, rate=0.1, generator=torch.Generator().manual_seed(0))
         bits = evaluate(model, val_ids) / math.log(2) / per_token
         scores[size] = {"bytes_per_token": per_token, "val_bits_per_byte": bits}
-        print(
-            f"{size} tokens: {per_token:.2f} bytes per token, MLP scores {bits:.3f} bits per byte"
-        )
+        print(f"{size} tokens: {per_token:.2f} bytes per token, MLP {bits:.3f} bits per byte")
 
     learned = [tokenizer.bytes[i].decode() for i in range(256, 1024)]
     pieces = [tokenizer.decode([i]) for i in tokenizer.encode("Once upon a time")]
