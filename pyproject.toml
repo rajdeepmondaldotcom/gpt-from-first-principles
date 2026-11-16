@@ -9,7 +9,10 @@ license = "Apache-2.0"
 dependencies = ["torch>=2.6", "numpy"]
 
 [project.optional-dependencies]
-reference = ["tiktoken", "regex"]
+reference = [
+    "tiktoken",
+    "regex",
+]
 
 [dependency-groups]
 dev = ["pytest", "ruff"]
