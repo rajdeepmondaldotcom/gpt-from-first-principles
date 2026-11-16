@@ -89,8 +89,9 @@ class GPT2(nn.Module):
 
 def batch(ids, block, size, generator):
     """Random windows of `block` tokens, and the same windows moved one token on."""
-    at = torch.randint(len(ids) - block, (size,), generator=generator)[:, None]
-    return ids[at + torch.arange(block)], ids[at + 1 + torch.arange(block)]
+    at = torch.randint(len(ids) - block, (size,), generator=generator).to(ids.device)[:, None]
+    steps = torch.arange(block, device=ids.device)
+    return ids[at + steps], ids[at + 1 + steps]
 
 
 def loss_on(model, x, y):
@@ -113,10 +114,11 @@ def evaluate(model, ids):
 @torch.no_grad()
 def sample(model, start, n, generator):
     """Write n more tokens. The model reads at most its last `block` tokens."""
-    out = start.tolist()
+    out, device = start.tolist(), start.device
     for _ in range(n):
-        scores = model(torch.tensor([out[-model.block :]]))[0, -1]
-        out.append(torch.multinomial(softmax(scores), 1, generator=generator).item())
+        scores = model(torch.tensor([out[-model.block :]], device=device))[0, -1]
+        # Draw on the CPU: the same seed then gives the same text on any machine's CPU.
+        out.append(torch.multinomial(softmax(scores).cpu(), 1, generator=generator).item())
     return out
 
 
@@ -169,13 +171,15 @@ def load_gpt2(path):
 if __name__ == "__main__":
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
-    ids = encode(text, vocab)
+    # A model and its data must sit on the same device. `mps` is the Mac's graphics chip.
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    ids = encode(text, vocab).to(device)
     n = int(len(ids) * 0.9)
     train_ids, val_ids = ids[:n], ids[n:]
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
-    model = GPT2(vocab=len(vocab), block=64, width=128, heads=4, layers=4)
+    model = GPT2(vocab=len(vocab), block=64, width=128, heads=4, layers=4).to(device)
     parameters = sum(p.numel() for p in model.parameters())
     first = evaluate(model, val_ids)
     print(f"parameters: {parameters:,}")
@@ -191,13 +195,14 @@ if __name__ == "__main__":
         if step % 500 == 0:
             print(f"step {step}: {loss.item():.3f} nats")
     val_nats = evaluate(model, val_ids)
-    story = sample(model, encode("Once upon a time", vocab), 80, generator)
+    story = sample(model, encode("Once upon a time", vocab).to(device), 80, generator)
     story = "".join(vocab[i] for i in story)
     print(f"unseen text: {val_nats:.3f} nats, {val_nats / math.log(2):.3f} bits per byte")
     print(f"sample: {story!r}")
     save(
         "10_gpt2",
         torch=torch.__version__,
+        device=device,
         seed=0,
         parameters=parameters,
         first_nats=first,

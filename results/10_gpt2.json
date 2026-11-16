@@ -1,0 +1,12 @@
+{
+  "commit": "92869e4",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "mps",
+  "seed": 0,
+  "parameters": 809856,
+  "first_nats": 4.245526984966992,
+  "val_nats": 2.106789519948335,
+  "val_bits_per_byte": 3.039454792626303,
+  "sample": "Once upon a timerres matilseso forts hads ffitll;\nHeren se whallll ime pabennty my welllbent, I "
+}
