@@ -1,5 +1,3 @@
-import math
-
 import torch
 import torch.nn.functional as F
 
@@ -91,19 +89,16 @@ def test_heads_split_the_vector_and_each_runs_attention_on_its_slice():
 
 def test_more_heads_cost_no_extra_parameters():
     count = lambda heads: sum(p.numel() for p in CausalSelfAttention(64, heads).parameters())
-    assert count(1) == count(8) == 4 * 64 * 64 + 4 * 64
-    assert math.isclose(math.sqrt(4), 2)  # the hand example divides its scores by this
+    assert count(1) == count(8) == 4 * 64 * 64 + 4 * 64 == 16640
 
 
 def test_masking_by_hand():
     """Lesson 7: `cat` scores (the, cat, sat) as (2, 1, 3) and may not read `sat`."""
-    scores, may_read = torch.tensor([2.0, 1.0, 3.0]), torch.tensor([True, True, False])
-    weights = scores.masked_fill(~may_read, -math.inf).softmax(dim=-1)
-    assert torch.allclose(weights, torch.tensor([0.731, 0.269, 0.0]), atol=5e-4)
-    late = scores.softmax(dim=-1) * may_read  # the obvious way: zero the weight afterwards...
+    query, keys = torch.tensor([[1.0]]), torch.tensor([[2.0], [1.0], [3.0]])  # width 1: no scaling
+    may_read = torch.tensor([[True, True, False]])
+    weights = attend(query, keys, keys, may_read)[1]
+    assert torch.allclose(weights, torch.tensor([[0.731, 0.269, 0.0]]), atol=5e-4)
+    late = attend(query, keys, keys)[1] * may_read  # the obvious way: zero the weight afterwards...
     assert torch.allclose(weights, late / late.sum())  # ...then rescale. Same answer.
-    assert torch.ones(3, 3, dtype=torch.bool).tril().int().tolist() == [
-        [1, 0, 0],
-        [1, 1, 0],
-        [1, 1, 1],
-    ]
+    past = torch.ones(3, 3, dtype=torch.bool).tril()
+    assert past.int().tolist() == [[1, 0, 0], [1, 1, 0], [1, 1, 1]]

@@ -1,5 +1,7 @@
-"""Keep the pages honest: quoted code is real, links resolve, prose stays plain and short."""
+"""Keep the pages honest: quoted code is real, numbers are the ones the scripts printed,
+links and commands resolve, and the prose stays plain and short."""
 
+import json
 import re
 from pathlib import Path
 
@@ -57,10 +59,59 @@ def test_prose_is_plain(page):
 def test_lesson_has_the_same_parts_and_stays_short(page):
     text = page.read_text()
     assert re.findall(r"^## (.+)$", text, flags=re.MULTILINE) == SECTIONS
-    assert len(prose(text).split()) <= 1400  # room to define each term; no room to wander
+    assert len(prose(text).split()) <= 1200
 
 
 @pytest.mark.parametrize("page", PAGES, ids=str)
-def test_links_resolve(page):
-    for target in re.findall(r"\]\((?!https?:)([^)#]+)", page.read_text()):
+def test_links_and_commands_resolve(page):
+    text = page.read_text()
+    for target in re.findall(r"\]\((?!https?:)([^)#]+)", text):
         assert (page.parent / target).exists(), f"{page}: broken link {target}"
+    for path in re.findall(r"uv run pytest (tests/\S+)", text):
+        assert Path(path).exists(), f"{page}: no such test file {path}"
+    for module in re.findall(r"python -m gpt\.(\w+)", text):
+        assert Path(f"gpt/{module}.py").exists(), f"{page}: no such script gpt/{module}.py"
+
+
+def saved(page):
+    """What the lesson's script printed and saved: results/NN_name.json for lessons/NN-name.md."""
+    files = sorted(Path("results").glob(f"{page.name[:2]}_*.json"))
+    return json.loads(files[0].read_text()) if files else None
+
+
+@pytest.mark.parametrize("page", LESSONS, ids=str)
+def test_the_output_on_the_page_is_what_the_script_printed(page):
+    shown = re.search(
+        r"python -m gpt\.\w+\n```\n\n```\n(.*?)```", page.read_text(), flags=re.DOTALL
+    )
+    assert bool(shown) == bool(saved(page)), (
+        f"{page}: an output block needs a results file, and back"
+    )
+    if shown:
+        printed = iter(saved(page)["printed"])
+        for line in shown[1].splitlines():
+            assert line in printed, (
+                f"{page}: the script did not print {line!r} (or not in this order)"
+            )
+
+
+@pytest.mark.parametrize("page", LESSONS, ids=str)
+def test_the_sample_on_the_page_is_the_one_the_script_wrote(page):
+    shown = re.search(
+        r"## What it still cannot do\n.*?```\n(.*?)\n```", page.read_text(), flags=re.DOTALL
+    )
+    if shown and saved(page):
+        assert shown[1] in saved(page)["sample"], f"{page}: this sample is not in the results file"
+
+
+@pytest.mark.parametrize("page", PAGES, ids=str)
+def test_scoreboard_numbers_were_printed_by_a_script(page):
+    printed = " ".join(
+        line
+        for file in Path("results").glob("*.json")
+        for line in json.loads(file.read_text())["printed"]
+    )
+    for number in re.findall(r"^\|.*\| (\d\.\d{3}) \|$", page.read_text(), flags=re.MULTILINE):
+        assert f"{number} bits per byte" in printed, (
+            f"{page}: no script printed {number} bits per byte"
+        )

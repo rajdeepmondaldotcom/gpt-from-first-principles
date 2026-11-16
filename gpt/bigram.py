@@ -6,12 +6,12 @@ from collections import Counter
 from itertools import pairwise
 from pathlib import Path
 
-from gpt.results import save
+from gpt.results import save, say
 
 
-def split(text, frac=0.9):
+def split(text):
     """The first 90% teaches the model. The rest tests it on text it never saw."""
-    n = int(len(text) * frac)
+    n = int(len(text) * 0.9)
     return text[:n], text[n:]
 
 
@@ -52,11 +52,11 @@ if __name__ == "__main__":
     P = table(count(train), vocab, smooth=1)
     bits = loss(P, val) / math.log(2)  # one character is one byte here, so bits per byte
     story = sample(P, "Once upon a time", 40, random.Random(0))
-    print(f"characters: {len(vocab)}")
-    print(
+    say(f"characters: {len(vocab)}")
+    say(
         f"uniform guess: {math.log(len(vocab)):.3f} nats, {math.log2(len(vocab)):.3f} bits per byte"
     )
-    print(f"bigram, training text: {loss(P, train):.3f} nats")
-    print(f"bigram, unseen text:   {loss(P, val):.3f} nats, {bits:.3f} bits per byte")
-    print(f"sample: {story!r}")
+    say(f"bigram, training text: {loss(P, train):.3f} nats")
+    say(f"bigram, unseen text:   {loss(P, val):.3f} nats, {bits:.3f} bits per byte")
+    say(f"sample: {story!r}")
     save("01_bigram", vocab=len(vocab), val_nats=loss(P, val), val_bits_per_byte=bits, sample=story)

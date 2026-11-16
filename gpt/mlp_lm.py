@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 from torch import nn
 
-from gpt.results import save
+from gpt.results import save, say
 from gpt.tensors import cross_entropy, encode, softmax
 
 
@@ -33,17 +33,16 @@ def batch(ids, context, size, generator):
     return ids[at[:, None] + torch.arange(context)], ids[at + context]
 
 
-def train(model, ids, steps, rate, size=64, generator=None):
+def train(model, ids, steps, rate, generator):
     """Stochastic gradient descent. PyTorch's autograd now finds the slopes."""
     for _ in range(steps):
-        x, y = batch(ids, model.context, size, generator)
+        x, y = batch(ids, model.context, 64, generator)
         loss = cross_entropy(model(x), y)
         model.zero_grad()
         loss.backward()
         with torch.no_grad():
             for p in model.parameters():
                 p -= rate * p.grad
-    return loss.item()
 
 
 @torch.no_grad()
@@ -86,21 +85,21 @@ if __name__ == "__main__":
         return stuck, evaluate(model, val_ids)
 
     (stuck, short), (stuck_big, short_big) = short_run(1), short_run(20)
-    print(f"normal start:    {stuck:.0%} of hidden units stuck, {short:.3f} nats after 2,000 steps")
-    print(f"20x bigger start: {stuck_big:.0%} of hidden units stuck, {short_big:.3f} nats")
+    say(f"normal start:    {stuck:.0%} of hidden units stuck, {short:.3f} nats after 2,000 steps")
+    say(f"20x bigger start: {stuck_big:.0%} of hidden units stuck, {short_big:.3f} nats")
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
     model = MLP(len(vocab))
-    print(f"parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"loss before training: {evaluate(model, val_ids):.3f} nats (ln 65 = {math.log(65):.3f})")
+    say(f"parameters: {sum(p.numel() for p in model.parameters()):,}")
+    say(f"loss before training: {evaluate(model, val_ids):.3f} nats (ln 65 = {math.log(65):.3f})")
     train(model, train_ids, steps=30000, rate=0.1, generator=generator)
     train_nats, val_nats = evaluate(model, train_ids[:100000]), evaluate(model, val_ids)
     story = sample(model, encode("Once upon a time", vocab), 60, generator)
     story = "".join(vocab[i] for i in story)
-    print(f"after 30,000 steps, training text: {train_nats:.3f} nats")
-    print(f"unseen text:   {val_nats:.3f} nats, {val_nats / math.log(2):.3f} bits per byte")
-    print(f"sample: {story!r}")
+    say(f"after 30,000 steps, first 100,000 training characters: {train_nats:.3f} nats")
+    say(f"unseen text:   {val_nats:.3f} nats, {val_nats / math.log(2):.3f} bits per byte")
+    say(f"sample: {story!r}")
     save(
         "04_mlp_lm",
         torch=torch.__version__,

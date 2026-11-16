@@ -62,20 +62,25 @@ def test_a_number_used_twice_collects_both_paths():
     assert a.grad == 6.0
 
 
+def walk(rate, steps=50):
+    """Gradient descent on (w - 3) squared from w = 0, with our own slopes."""
+    w, path = Value(0.0), []
+    for _ in range(steps):
+        ((w - 3) ** 2).backward()
+        w.data -= rate * w.grad
+        w.grad = 0.0
+        path.append(round(w.data, 4))
+    return path
+
+
 def test_walking_downhill_by_hand():
-    w, path = 0.0, []
-    for _ in range(50):
-        w -= 0.1 * 2 * (w - 3)
-        path.append(round(w, 4))
+    path = walk(rate=0.1)
     assert path[:5] == [0.6, 1.08, 1.464, 1.7712, 2.017]
-    assert math.isclose(w, 3.0, abs_tol=1e-3)
+    assert math.isclose(path[-1], 3.0, abs_tol=1e-3)
 
 
 def test_a_step_that_is_too_big_runs_away():
-    w = 0.0
-    for _ in range(50):
-        w -= 1.1 * 2 * (w - 3)
-    assert abs(w - 3) > 1000
+    assert abs(walk(rate=1.1)[-1] - 3) > 1000
 
 
 def test_the_learned_table_reaches_the_counted_one():

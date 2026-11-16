@@ -8,15 +8,15 @@ from pathlib import Path
 
 import tiktoken
 import torch
+from safetensors.torch import load_file  # their reader, not ours: the two sides stay independent
 from transformers import GPT2Config, GPT2LMHeadModel
 
-from gpt.gpt2 import read_safetensors
-
-weights = read_safetensors("data/cache/gpt2.safetensors")
+weights = load_file("data/cache/gpt2.safetensors")
 model = GPT2LMHeadModel(GPT2Config()).eval()
 state = {f"transformer.{name}": tensor for name, tensor in weights.items()}
 state["lm_head.weight"] = weights["wte.weight"]
-model.load_state_dict(state, strict=False)
+missing = model.load_state_dict(state, strict=False).missing_keys
+assert not missing, missing
 
 ids = tiktoken.get_encoding("gpt2").encode("Once upon a time, there was a")
 with torch.no_grad():

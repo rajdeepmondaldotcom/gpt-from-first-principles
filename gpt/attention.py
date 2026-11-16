@@ -12,6 +12,7 @@ def attend(q, k, v, mask=None):
     """Each query scores each key, the scores become weights, and the weights mix the values."""
     scores = q @ k.transpose(-2, -1) / math.sqrt(q.size(-1))
     if mask is not None:
+        # shortcut: a row with every key masked comes out as NaN; a causal mask never has one.
         scores = scores.masked_fill(~mask, -math.inf)  # a weight of 0 wherever mask is False
     weights = softmax(scores)
     return weights @ v, weights

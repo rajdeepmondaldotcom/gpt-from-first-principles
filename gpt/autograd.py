@@ -3,7 +3,7 @@
 import math
 from itertools import pairwise
 
-from gpt.results import save
+from gpt.results import save, say
 
 
 class Value:
@@ -97,9 +97,9 @@ if __name__ == "__main__":
     sentence = "the cat sat on the mat"
     counted = loss(table(count(sentence), sorted(set(sentence))), sentence)
     losses = learn_bigram(sentence, steps=3000)
-    print(f"counted table:       {counted:.4f} nats")
+    say(f"counted table:       {counted:.4f} nats")
     for step in (0, 1, 10, 100, 299, 2999):
-        print(f"learned, step {step:>4}:  {losses[step]:.4f} nats")
+        say(f"learned, step {step:>4}:  {losses[step]:.4f} nats")
 
     # How much work is one step on Shakespeare? Count the Values that 2,000 pairs build.
     text = Path("data/tiny_shakespeare.txt").read_text()
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         if v not in seen:
             seen.add(v)
             stack.extend(v.parents)
-    print(f"one step on 2,000 pairs of Shakespeare builds {len(seen):,} Values")
+    say(f"one step on 2,000 pairs of Shakespeare builds {len(seen):,} Values")
     save(
         "02_autograd",
         counted=counted,

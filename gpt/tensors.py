@@ -6,7 +6,7 @@ from pathlib import Path
 
 import torch
 
-from gpt.results import save
+from gpt.results import save, say
 
 
 def softmax(scores):
@@ -33,7 +33,7 @@ def cross_entropy_slopes(scores, targets):
 def encode(text, vocab):
     """Text to a tensor of whole numbers: each character becomes its place in the vocabulary."""
     place = {c: i for i, c in enumerate(vocab)}
-    return torch.tensor([place[c] for c in text])
+    return torch.tensor([place[c] for c in text], dtype=torch.long)
 
 
 def learn_bigram(ids, vocab_size, steps, rate, batch=None, generator=None):
@@ -74,8 +74,8 @@ if __name__ == "__main__":
         return (time.perf_counter() - start) / repeats
 
     small, full = seconds_per_step(2000, 100), seconds_per_step(len(train) - 1, 3)
-    print(f"one step on 2,000 pairs:     {small * 1000:.1f} ms")
-    print(f"one step on {len(train) - 1:,} pairs: {full:.2f} s")
+    say(f"one step on 2,000 pairs:     {small * 1000:.1f} ms")
+    say(f"one step on {len(train) - 1:,} pairs: {full:.2f} s")
 
     generator = torch.Generator().manual_seed(0)
     start = time.perf_counter()
@@ -85,10 +85,10 @@ if __name__ == "__main__":
     val_bits = cross_entropy(W[val[:-1]], val[1:]).item() / math.log(2)
     story = sample(W, encode("Once upon a time", vocab), 40, generator)
     story = "".join(vocab[i] for i in story)
-    print(f"2,000 steps on batches of 2,000 pairs: {seconds:.0f} s")
-    print(f"learned bigram, training text: {train_nats:.3f} nats")
-    print(f"learned bigram, unseen text:   {val_bits:.3f} bits per byte")
-    print(f"sample: {story!r}")
+    say(f"2,000 steps on batches of 2,000 pairs: {seconds:.0f} s")
+    say(f"learned bigram, training text: {train_nats:.3f} nats")
+    say(f"learned bigram, unseen text:   {val_bits:.3f} bits per byte")
+    say(f"sample: {story!r}")
     save(
         "03_tensors",
         torch=torch.__version__,

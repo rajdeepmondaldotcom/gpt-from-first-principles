@@ -9,7 +9,7 @@ import torch
 from torch import nn
 
 from gpt.attention import CausalSelfAttention
-from gpt.results import save
+from gpt.results import save, say
 from gpt.tensors import cross_entropy, encode, softmax
 
 
@@ -104,11 +104,12 @@ def loss_on(model, x, y):
 def evaluate(model, ids):
     """Loss in nats over `ids`, cut into windows that do not overlap."""
     rows = (len(ids) - 1) // model.context
+    assert rows > 0, "evaluate needs more than `context` tokens"
     x = ids[: rows * model.context].view(rows, model.context)
     y = ids[1 : rows * model.context + 1].view(rows, model.context)
-    losses = [loss_on(model, a, b) for a, b in zip(x.split(64), y.split(64))]
-    sizes = [len(a) for a in x.split(64)]
-    return sum(loss * n for loss, n in zip(losses, sizes)).item() / rows
+    some = max(1, 4096 // model.context)  # rows per pass: about 4,096 tokens whatever the context
+    total = sum(loss_on(model, a, b) * len(a) for a, b in zip(x.split(some), y.split(some)))
+    return total.item() / rows
 
 
 @torch.no_grad()
@@ -130,6 +131,7 @@ def read_safetensors(path):
     tensors = {}
     for name, entry in header.items():
         if name != "__metadata__":
+            assert entry["dtype"] == "F32", f"{name} is {entry['dtype']}, not 32-bit floats"
             start, end = entry["data_offsets"]
             raw = bytearray(data[8 + length + start : 8 + length + end])
             tensors[name] = torch.frombuffer(raw, dtype=torch.float32).view(entry["shape"])
@@ -164,26 +166,25 @@ def load_gpt2(path):
         # OpenAI stored each linear layer as (inputs, outputs). PyTorch wants (outputs, inputs).
         flip = mine.endswith(("qkv.weight", "proj.weight", "wide.weight", "narrow.weight"))
         state[mine] = tensor.T if flip else tensor
-    model.load_state_dict(state, strict=False)  # `out.weight` is the token grid, already set
+    state["out.weight"] = state["embed.token.weight"]  # the tied grid, under its second name
+    model.load_state_dict(state)  # raises if any weight is missing or unexpected
     return model.eval()
 
 
 if __name__ == "__main__":
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
-    # A model and its data must sit on the same device. `mps` is the Mac's graphics chip.
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    ids = encode(text, vocab).to(device)
+    ids = encode(text, vocab)
     n = int(len(ids) * 0.9)
     train_ids, val_ids = ids[:n], ids[n:]
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
-    model = GPT2(vocab=len(vocab), context=64, width=128, heads=4, layers=4).to(device)
+    model = GPT2(vocab=len(vocab), context=64, width=128, heads=4, layers=4)
     parameters = sum(p.numel() for p in model.parameters())
     first = evaluate(model, val_ids)
-    print(f"parameters: {parameters:,}")
-    print(f"loss before training: {first:.3f} nats (ln 65 = {math.log(65):.3f})")
+    say(f"parameters: {parameters:,}")
+    say(f"loss before training: {first:.3f} nats (ln 65 = {math.log(65):.3f})")
     for step in range(1, 3001):
         x, y = batch(train_ids, model.context, 32, generator)
         loss = loss_on(model, x, y)
@@ -193,16 +194,16 @@ if __name__ == "__main__":
             for p in model.parameters():
                 p -= 0.1 * p.grad
         if step % 500 == 0:
-            print(f"step {step}: {loss.item():.3f} nats")
+            say(f"step {step}: {loss.item():.3f} nats")
     val_nats = evaluate(model, val_ids)
-    story = sample(model, encode("Once upon a time", vocab).to(device), 80, generator)
+    story = sample(model, encode("Once upon a time", vocab), 80, generator)
     story = "".join(vocab[i] for i in story)
-    print(f"unseen text: {val_nats:.3f} nats, {val_nats / math.log(2):.3f} bits per byte")
-    print(f"sample: {story!r}")
+    say(f"unseen text: {val_nats:.3f} nats, {val_nats / math.log(2):.3f} bits per byte")
+    say(f"sample: {story!r}")
     save(
         "10_gpt2",
         torch=torch.__version__,
-        device=device,
+        device="cpu",
         seed=0,
         parameters=parameters,
         first_nats=first,

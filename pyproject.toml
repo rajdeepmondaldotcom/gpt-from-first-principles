@@ -21,6 +21,16 @@ dev = ["pytest", "ruff"]
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = ["reference: checks our code against an outside reference; needs the reference extra"]
+addopts = "-m 'not reference'"  # run those with: uv run --extra reference pytest -m reference
 
 [tool.ruff]
 line-length = 100
+
+# On Linux, take the CPU build of torch: the default one adds gigabytes of GPU libraries.
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

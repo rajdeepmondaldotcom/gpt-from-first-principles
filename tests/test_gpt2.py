@@ -92,9 +92,9 @@ def test_our_layer_norm_equals_torch():
 def test_gelu_by_hand_and_against_torch():
     x = torch.tensor([-1.0, 0.0, 1.0, 3.0])
     assert [round(v, 3) for v in gelu(x).tolist()] == [-0.159, 0.0, 0.841, 2.996]
-    assert torch.allclose(
-        gelu(torch.linspace(-6, 6, 99)), F.gelu(torch.linspace(-6, 6, 99), approximate="tanh")
-    )
+    x = torch.linspace(-6, 6, 99)
+    # atol: near -5 the two differ in the last bits on some processors, by about 1e-7
+    assert torch.allclose(gelu(x), F.gelu(x, approximate="tanh"), atol=1e-6)
 
 
 def slope_reaching_the_input(blocks, add):
@@ -104,7 +104,7 @@ def slope_reaching_the_input(blocks, add):
     h = x
     for b in blocks:
         h = b(h) if add else b.narrow(gelu(b.wide(b.norm2(b.attn(b.norm1(h))))))
-    h.pow(2).sum().backward()
+    (h * torch.randn_like(h)).sum().backward()  # a loss whose slope for each output is about 1
     return x.grad.norm().item()
 
 
@@ -112,9 +112,12 @@ def test_the_gradient_survives_depth_only_with_the_additions():
     torch.manual_seed(0)
     shallow = GPT2(vocab=10, context=8, width=32, heads=4, layers=2).blocks
     deep = GPT2(vocab=10, context=8, width=32, heads=4, layers=24).blocks
-    assert slope_reaching_the_input(deep, add=False) == 0  # nothing at all gets back
     with_2, with_24 = slope_reaching_the_input(shallow, True), slope_reaching_the_input(deep, True)
-    assert 0.5 < with_24 / with_2 < 2  # with them, 24 layers pass back as much as 2
+    assert 0.5 < with_24 / with_2 < 2  # with them, 24 blocks pass back as much as 2
+    without_2 = slope_reaching_the_input(shallow, False)
+    without_24 = slope_reaching_the_input(deep, False)
+    assert without_2 < with_2 / 100  # without them, two blocks already lose a factor of 100
+    assert 0 < without_24 < with_24 * 1e-12  # and 24 blocks leave less than a trillionth
 
 
 def test_the_additions_help_whatever_the_starting_weights():
@@ -144,13 +147,18 @@ def parameters(vocab, context, width, layers):
 
 def test_the_parameter_count_follows_the_formula():
     assert sum(p.numel() for p in small().parameters()) == parameters(65, 64, 128, 4) == 809856
-    assert parameters(50257, 1024, 768, 12) == 124439808  # GPT-2, the "124M" model
+    with torch.device("meta"):  # build GPT-2's shapes without storing a number
+        gpt2 = GPT2()
+    assert sum(p.numel() for p in gpt2.parameters()) == parameters(50257, 1024, 768, 12)
+    assert parameters(50257, 1024, 768, 12) == 124439808  # the "124M" model
 
 
 def test_one_grid_reads_tokens_and_scores_them():
     model = small()
     assert model.out.weight is model.embed.token.weight
-    assert 50257 * 768 == 38597376  # what tying saves in GPT-2: almost a third of the model
+    with torch.device("meta"):
+        gpt2 = GPT2()
+    assert gpt2.out.weight.numel() == 38597376  # what tying saves in GPT-2
 
 
 def test_scores_come_out_for_each_place_and_each_token():
@@ -191,6 +199,29 @@ def test_a_few_steps_lower_the_loss():
     assert evaluate(model, ids) < first - 0.5
 
 
+def test_evaluate_is_the_loss_over_every_window():
+    torch.manual_seed(0)
+    model, ids = small(), torch.randint(65, (64 * 70 + 1,))  # 70 windows: a pass of 64, then 6
+    x, y = ids[:-1].view(70, 64), ids[1:].view(70, 64)
+    with torch.no_grad():
+        at_once = loss_on(model, x, y).item()
+    assert math.isclose(evaluate(model, ids), at_once, rel_tol=1e-5)
+    with pytest.raises(AssertionError, match="more than `context` tokens"):
+        evaluate(model, ids[:64])
+
+
+def test_past_its_context_the_model_reads_its_last_tokens():
+    torch.manual_seed(0)
+    model, long = small(), torch.randint(65, (80,))  # 80 tokens, and a context of 64
+    with torch.no_grad():
+        model.embed.token.weight.mul_(
+            50
+        )  # strong opinions, so what it reads decides what it writes
+    whole = sample(model, long, 5, torch.Generator().manual_seed(0))
+    tail = sample(model, long[-64:], 5, torch.Generator().manual_seed(0))
+    assert len(whole) == 85 and whole[-5:] == tail[-5:]
+
+
 def test_sampling_repeats_with_the_same_seed():
     torch.manual_seed(0)
     model, start = small(), torch.tensor([1, 2, 3])
@@ -202,8 +233,12 @@ def test_we_can_read_the_weight_file_format(tmp_path):
     numbers = torch.arange(6, dtype=torch.float32).view(2, 3)
     header = json.dumps({"w": {"dtype": "F32", "shape": [2, 3], "data_offsets": [0, 24]}}).encode()
     path = tmp_path / "tiny.safetensors"
-    path.write_bytes(struct.pack("<Q", len(header)) + header + numbers.numpy().tobytes())
+    path.write_bytes(struct.pack("<Q", len(header)) + header + struct.pack("<6f", *range(6)))
     assert torch.equal(read_safetensors(path)["w"], numbers)
+    whole = json.dumps({"w": {"dtype": "I32", "shape": [2, 3], "data_offsets": [0, 24]}}).encode()
+    path.write_bytes(struct.pack("<Q", len(whole)) + whole + struct.pack("<6i", *range(6)))
+    with pytest.raises(AssertionError, match="not 32-bit floats"):
+        read_safetensors(path)  # whole numbers read as floats would be silent nonsense
 
 
 @pytest.mark.reference

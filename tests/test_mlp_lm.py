@@ -69,6 +69,18 @@ def test_hidden_units_that_start_equal_stay_equal():
     assert not torch.equal(model.hidden.weight[0], model.hidden.weight[2])
 
 
+def test_evaluate_is_the_loss_over_every_window():
+    torch.manual_seed(0)
+    model = MLP(65)
+    with torch.no_grad():
+        model.out.weight.normal_()  # an untrained model with opinions, so windows differ
+    ids = IDS[: 4096 + 8 + 100]  # 4,196 windows: one full chunk of 4,096 and a small one
+    windows = ids.unfold(0, 9, 1)
+    with torch.no_grad():
+        at_once = cross_entropy(model(windows[:, :-1]), windows[:, -1]).item()
+    assert math.isclose(evaluate(model, ids), at_once, rel_tol=1e-5)
+
+
 def test_a_bad_starting_scale_jams_the_hidden_units():
     def start(scale):
         torch.manual_seed(0)

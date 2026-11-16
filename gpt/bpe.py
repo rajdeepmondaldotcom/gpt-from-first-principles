@@ -6,7 +6,7 @@ from collections import Counter
 from itertools import pairwise
 from pathlib import Path
 
-from gpt.results import save
+from gpt.results import save, say
 
 # Cut text into chunks before merging, so no token spans two words. A chunk is a run of
 # letters, a run of digits or a run of anything else, each with the one space before it.
@@ -27,11 +27,12 @@ def merge(tokens, pair):
     return tuple(out)
 
 
-def train(text, size, split=SPLIT):
+def train(text, size):
     """Byte pair encoding. Returns the vocabulary: the bytes of each token mapped to its id."""
     vocab = {bytes([b]): b for b in range(256)}  # start with one token per byte
-    chunks = Counter(split.findall(text))  # each distinct chunk, and how often it occurs
+    chunks = Counter(SPLIT.findall(text))  # each distinct chunk, and how often it occurs
     chunks = {tuple(bytes([b]) for b in c.encode()): n for c, n in chunks.items()}
+    # shortcut: recounts every pair after each merge; fine for a few thousand merges on a few MB.
     while len(vocab) < size:
         pairs = Counter()
         for tokens, n in chunks.items():
@@ -55,6 +56,8 @@ class Tokenizer:
 
     def encode_chunk(self, chunk):
         """Start from bytes. Keep joining the pair that was learned earliest."""
+        # shortcut: rescans the chunk after each join, so a chunk of n bytes costs n squared;
+        # fine for words, replace before encoding text from strangers.
         parts = [bytes([b]) for b in chunk.encode()]
         while len(parts) > 1:
             rank, i = min(
@@ -88,10 +91,11 @@ if __name__ == "__main__":
 
     text = Path("data/tiny_shakespeare.txt").read_text()
     n = int(len(text) * 0.9)
-    seen, later = set(text[:n].split()), text[n:].split()
+    words = re.compile("[a-z]+")  # a word is a run of letters, whatever its case
+    seen, later = set(words.findall(text[:n].lower())), words.findall(text[n:].lower())
     unseen = sum(word not in seen for word in later)
-    print(f"words in the training text: {len(seen):,} different ones")
-    print(f"words in the unseen text: {len(later):,}, of which {unseen:,} never occur in training")
+    say(f"words in the training text: {len(seen):,} different ones")
+    say(f"words in the unseen text: {len(later):,}, of which {unseen:,} never occur in training")
 
     scores = {}
     for size in (512, 1024):
@@ -103,13 +107,13 @@ if __name__ == "__main__":
         train_mlp(model, ids, steps=30000, rate=0.1, generator=torch.Generator().manual_seed(0))
         bits = evaluate(model, val_ids) / math.log(2) / per_token
         scores[size] = {"bytes_per_token": per_token, "val_bits_per_byte": bits}
-        print(f"{size} tokens: {per_token:.2f} bytes per token, MLP {bits:.3f} bits per byte")
+        say(f"{size} tokens: {per_token:.2f} bytes per token, MLP {bits:.3f} bits per byte")
 
     learned = [tokenizer.bytes[i].decode() for i in range(256, 1024)]
     pieces = [tokenizer.decode([i]) for i in tokenizer.encode("Once upon a time")]
-    print(f"first merges: {learned[:12]}")
-    print(f"longest tokens: {sorted(learned, key=len)[-6:]}")
-    print(f"'Once upon a time' -> {pieces}")
+    say(f"first merges: {learned[:12]}")
+    say(f"longest tokens: {sorted(learned, key=len)[-6:]}")
+    say(f"'Once upon a time' -> {pieces}")
     save(
         "05_bpe",
         torch=torch.__version__,

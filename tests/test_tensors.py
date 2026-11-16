@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -66,11 +67,21 @@ def test_same_numbers_as_lesson_2():
 
 
 def test_random_batches_get_close_to_the_whole_text():
-    torch.manual_seed(0)
-    ids = torch.randint(5, (5000,))
-    whole = learn_bigram(ids, 5, steps=200, rate=2.0)
+    text = Path("data/tiny_shakespeare.txt").read_text()[:20000]
+    vocab = sorted(set(text))
+    ids = encode(text, vocab)
+
+    def loss(W):
+        return cross_entropy(W[ids[:-1]], ids[1:]).item()
+
+    whole = learn_bigram(ids, len(vocab), steps=200, rate=30.0)
     batches = learn_bigram(
-        ids, 5, steps=200, rate=2.0, batch=500, generator=torch.Generator().manual_seed(0)
+        ids,
+        len(vocab),
+        steps=200,
+        rate=30.0,
+        batch=1000,
+        generator=torch.Generator().manual_seed(0),
     )
-    loss = lambda W: cross_entropy(W[ids[:-1]], ids[1:]).item()
-    assert abs(loss(whole) - loss(batches)) < 0.01
+    assert loss(torch.zeros(len(vocab), len(vocab))) > 4.0  # untrained: a blind guess
+    assert loss(whole) < 2.6 and abs(loss(whole) - loss(batches)) < 0.05
