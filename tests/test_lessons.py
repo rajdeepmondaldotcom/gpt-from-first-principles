@@ -47,7 +47,7 @@ def test_quoted_code_is_in_the_source(page):
 
 @pytest.mark.parametrize("page", PAGES, ids=str)
 def test_prose_is_plain(page):
-    text = prose(page.read_text())
+    text = re.sub(r"\[[^\]]*\]\([^)]*\)", "", prose(page.read_text()))  # titles of cited works stay
     for pattern in BANNED:
         hit = re.search(pattern, text, flags=re.IGNORECASE)
         assert not hit, f"{page}: cut {hit.group()!r}"
