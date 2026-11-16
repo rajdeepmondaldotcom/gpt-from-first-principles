@@ -1,0 +1,15 @@
+{
+  "commit": "17fd1aa",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "seed": 0,
+  "parameters": 67673,
+  "train_nats": 1.6568928956985474,
+  "val_nats": 1.8459017276763916,
+  "val_bits_per_byte": 2.6630732684871,
+  "sample": "Once upon a time it plain? till I to susing to your me that was pifis last q",
+  "stuck": 1.52587890625e-05,
+  "stuck_big_start": 0.819061279296875,
+  "short_nats": 2.3017728328704834,
+  "short_nats_big_start": 2.6521034240722656
+}
