@@ -2,7 +2,7 @@
 
 By the end of this page the same window of eight reaches more than twice as far back.
 
-Eight characters is about one word. To see further with the same model, make each piece of text bigger.
+Eight characters is about a word and a half. To see further with the same model, make each piece of text bigger.
 
 ## The idea
 
@@ -10,7 +10,7 @@ The obvious bigger piece is a word. Call a word a run of letters, and ignore cap
 
 Characters never run out, and they are too small. We want pieces as large as words where the text allows, that can still spell anything.
 
-A computer stores text as bytes, numbers from 0 to 255. Plain English letters take one byte each, `é` takes two, and an emoji takes four. Any text in any language is a row of bytes, so a vocabulary of 256 tokens, one per byte, can write anything.
+A computer stores text as bytes, numbers from 0 to 255. Plain English letters take one byte each, `é` takes two, and most emoji take four. Any text in any language is a row of bytes, so a vocabulary of 256 tokens, one per byte, can write anything.
 
 Now grow the vocabulary. Find the pair of neighbouring tokens that occurs most often in the training text. Make that pair a new token, and replace it wherever it occurs. Repeat until the vocabulary is the size you want. This is byte pair encoding, or BPE.
 
@@ -22,7 +22,7 @@ Cut the text into chunks first: a run of letters, a run of digits or a run of an
 
 Keep one extra token that marks where a document ends. It never comes out of ordinary text. If a user types the characters `<|endoftext|>`, they are encoded as plain characters, or anyone could forge the end of a document.
 
-A token can hold one byte of a two-byte character. Decoded alone it is not text, and Python prints a placeholder for it.
+A token can hold one byte of a two-byte character. Decoded alone it is not text, and Python prints a placeholder.
 
 Bigger tokens are a trade. The same window covers more text. In return the model has more rows to learn, and sees each one less often.
 
@@ -92,7 +92,7 @@ uv run pytest tests/test_bpe.py
 - Encoding gives the same tokens as replaying the merges one by one in the order they were learned.
 - The end token comes only when asked for.
 - Half of `é` decodes to a placeholder, and both halves to `é`.
-- GPT-2 was trained with BPE. Given its vocabulary, our encoder returns the same ids as tiktoken, OpenAI's own encoder. This test runs with `uv run --extra reference pytest -m reference`.
+- Given GPT-2's vocabulary and chunk rule, our encoder returns the same ids as tiktoken, OpenAI's own encoder. This test runs with `uv run --extra reference pytest -m reference`.
 
 ```bash
 uv run python -m gpt.bpe
@@ -120,7 +120,7 @@ The script trains lesson 4's model again on eight tokens in place of eight chara
 
 ## What it still cannot do
 
-With 1,024 tokens the window reaches 18 bytes, about three words. The loss moved from 2.663 to 2.572 bits per byte, which is far less than the jump from one character of context to eight.
+With 1,024 tokens the window reaches 18 bytes, about three words. The loss moved from 2.663 to 2.572 bits per byte, a gain of 0.09. The jump from one character of context to eight gained 0.92.
 
 More than doubling the reach bought little. Eight tokens are still eight fixed slots, each read by weights of its own.
 

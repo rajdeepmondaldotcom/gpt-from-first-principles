@@ -10,7 +10,7 @@ Hide the future. Token i may read tokens 0 to i and nothing later. Before softma
 
 The rule is called a causal mask: each token's result depends only on what came before it. The layer is called self-attention because the queries, keys and values all come from the same tokens.
 
-The mask buys more than honesty. Lesson 4's model made one guess per window. A masked layer gives a result at each place, and each result can be turned into a guess for the token that follows: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on. A window of 8 tokens gives 8 guesses in one pass, and none of them saw its answer.
+The mask also gives one guess per place. Lesson 4's model made one guess per window. A masked layer gives a result at each place, and each result can be turned into a guess for the token that follows: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on. A window of 8 tokens gives 8 guesses in one pass, and none of them saw its answer.
 
 Now the second problem. Cut each query, key and value into equal slices and run attention on each slice by itself. Each slice is called a head. The numbers in a head's slice come from its own columns of the layer that makes queries, keys and values, so each head has weights of its own and makes its own choice of what to read. Lay the heads' results end to end, and pass them through one more linear layer that mixes them.
 
@@ -27,7 +27,7 @@ Take `cat`, the second of three tokens. Say its scores for `the`, `cat` and `sat
 | e to that power | 7.389 | 2.718 | 0 |
 | Weight (divide by 10.107) | 0.731 | 0.269 | 0 |
 
-The obvious way is to run softmax on (2, 1, 3), set the last weight to 0, and divide the others by their sum. It gives the same weights, and a test checks it. Masking the score does it in one step.
+The long way is to run softmax on (2, 1, 3), set the last weight to 0, and divide the others by their sum. It gives the same weights, and a test checks it. Masking the score does it in one step.
 
 For three tokens the whole mask is a grid. Row i says what token i may read:
 
@@ -74,7 +74,7 @@ class CausalSelfAttention(nn.Module):
 uv run pytest tests/test_attention.py
 ```
 
-- The masked example gives 0.731, 0.269 and 0, and equals the obvious way.
+- The masked example gives 0.731, 0.269 and 0, and equals the long way.
 - A token cannot read the future. Replace token 4 of 6 and the results for tokens 0 to 3 do not change by a single bit.
 - Future tokens get a weight of exactly 0, and the first token puts a weight of 1 on itself.
 - Heads cut the vector, and each runs `attend` on its slice: the layer equals four separate calls, laid end to end and mixed.

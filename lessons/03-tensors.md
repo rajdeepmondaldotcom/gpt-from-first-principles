@@ -10,7 +10,7 @@ Store the numbers in a grid and do arithmetic on the whole grid at once. The gri
 
 PyTorch is the library that gives us tensors. An autograd like ours comes built in. On this page we still work the slopes out by hand, and use PyTorch's autograd only to check them.
 
-Three tensor moves do the work.
+We need three tensor moves.
 
 - Looking up many rows at once. Turn the text into a tensor of whole numbers, each character's place in the vocabulary. If `x` holds the first character of each pair, `W[x]` has shape 1,003,853 × 65: for each pair, the row of scores it needs.
 - Working along one direction. `scores.sum(dim=-1)` adds up each row. `dim=-1` means the last direction, across the 65 scores.
@@ -27,9 +27,9 @@ Use lesson 2's table on the two parts. The first part has a slope of -1 for t's 
 
 The slopes in a row sum to zero. The loss is an average over N pairs, so each slope is divided by N. A lookup sends slopes back to the row it read, and a row read by 500 pairs collects 500 sets of slopes: add across paths, as in lesson 2.
 
-Big scores break the arithmetic. A computer stores a number in a fixed count of bits, and e to the power 1,000 does not fit. PyTorch writes `inf`, and `inf / inf` gives `nan`, which means "not a number". Softmax depends only on the gaps between scores: add 5 to each score in a row and the chances stay put. So we subtract the row's largest score first. The largest becomes 0, e to the 0 is 1, and nothing overflows.
+Big scores overflow. A computer stores a number in a fixed count of bits, and e to the power 1,000 does not fit. PyTorch writes `inf`, and `inf / inf` gives `nan`, which means "not a number". Softmax depends only on the gaps between scores: add 5 to each score in a row and the chances stay put. So we subtract the row's largest score first. The largest becomes 0, e to the 0 is 1, and nothing overflows.
 
-One idea is left. A step on 2,000 pairs picked at random does 500 times less arithmetic than a step on all 1,003,853, and its slopes come from the same text, with some noise. The random handful is called a batch, and learning from batches is called stochastic gradient descent. The run below times both.
+A step on 2,000 pairs picked at random does 500 times less arithmetic than a step on all 1,003,853, and its slopes come from the same text, with some noise. The random handful is called a batch, and learning from batches is called stochastic gradient descent. The run below times both.
 
 ## By hand
 
@@ -100,7 +100,7 @@ uv run pytest tests/test_tensors.py
 - Scores of 1,000 give `nan` the naive way and the right chances our way. A chance of e to the -200 gives an infinite loss the naive way and 200 ours.
 - A lookup sends its slopes back to the rows it read, and a row nobody read gets none.
 - On the sentence, the tensor model gives the same loss as lesson 2's model after 1, 10 and 30 steps.
-- On 20,000 characters of Shakespeare, random batches end within 0.05 nats of using the whole text, and both end far below an untrained table.
+- On 20,000 characters of Shakespeare, random batches end within 0.05 nats of using the whole text. Both end under 2.6 nats, where an untrained table scores more than 4.
 
 ```bash
 uv run python -m gpt.tensors
@@ -132,7 +132,7 @@ Once upon a timer dle PEved himalef by rol y t, han, it
 
 It is the same model as lesson 1, learned by a different route, and it still sees one character back.
 
-The loop no longer cares what the model is. Any function built from operations with known slopes can take the table's place.
+The loop needs only slopes. Any function built from operations with known slopes can take the table's place.
 
 ## Check yourself
 

@@ -27,7 +27,7 @@ Count the parameters:
 
 The lookup is a matrix multiplication too. Write a character as 65 numbers, all 0 except a 1 at its place, called a one-hot row. Multiply it by the embedding grid and out comes the character's row. So the model is multiply, add and bend, and lesson 2's chain rule handles each. From here on PyTorch's autograd finds the slopes.
 
-The second layer starts at zero. Each score is then 0, each character gets the same chance, and the first loss is ln 65. A higher first loss means the model begins with wrong opinions to unlearn.
+The second layer starts at zero. Each score is then 0, each character gets the same chance, and the first loss is ln 65: the model starts with no opinion.
 
 The other parts start as small random numbers. They must differ: two hidden units that start with equal weights get equal slopes and stay equal for ever.
 
@@ -73,7 +73,7 @@ class MLP(nn.Module):
         return self.out(h)
 ```
 
-A class that builds on `nn.Module` is a model. PyTorch finds its parameters through `model.parameters()`, and calling `model(x)` runs `forward`. The line `super().__init__()` switches that machinery on.
+A class that builds on `nn.Module` is a model. PyTorch finds its parameters through `model.parameters()`, and calling `model(x)` runs `forward`. The line `super().__init__()` sets that up.
 
 `nn.Embedding` is the lookup and `nn.Linear` is `x @ W + b`. PyTorch stores `W` turned on its side, as 256 × 192, and does the turning itself. `rows.flatten(1)` lays the eight rows end to end.
 
@@ -145,7 +145,7 @@ Once upon a time it plain? till I to susing to your me that was pifis last q
 
 `till`, `your` and `last` are words. `susing` and `pifis` are not, and the words do not add up to a sentence.
 
-Eight characters is about one word. The model cannot see the word before the one it is writing. Start the prompt with `Twice` in place of `Once` and it writes the same continuation, because the last eight characters did not change.
+Eight characters is about a word and a half. The model cannot see further back than that. Start the prompt with `Twice` in place of `Once` and, with the same random draws, it writes the same continuation, because the last eight characters did not change.
 
 Each place in the window also has weights of its own. The 6,144 weights that read the third character share nothing with those that read the fifth, so a pattern learned at one place has to be learned again at every other.
 

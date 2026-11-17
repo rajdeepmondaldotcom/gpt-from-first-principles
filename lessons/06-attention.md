@@ -12,7 +12,7 @@ Each token is a row of numbers, its embedding. A row of numbers is called a vect
 
 A first try: for one token, take its dot product with each token in the text, turn those scores into weights with softmax, and replace the token with the weighted average of the embeddings. This lets a token read from anywhere. It has no parameters beyond the embeddings, so it cannot learn what to look for.
 
-The fix is to give each token three vectors, made from its embedding by three linear layers:
+Give each token three vectors, made from its embedding by three linear layers:
 
 - a query: what this token is looking for
 - a key: what this token offers
@@ -22,7 +22,7 @@ The score for token i reading token j is the dot product of i's query with j's k
 
 The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens. Two tests below check both.
 
-One detail keeps it trainable. Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
+Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
 
 ## By hand
 
@@ -113,6 +113,6 @@ Nothing. Softmax depends only on the gaps between scores.
 
 Go deeper:
 
-- Vaswani and others, [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017). Section 3.2 is this page.
-- Bahdanau, Cho and Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473) (2014). The paper that introduced attention, for translation.
+- Vaswani and others, [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (2017). Section 3.2.1 is this page.
+- Bahdanau, Cho and Bengio, [Neural Machine Translation by Jointly Learning to Align and Translate](https://arxiv.org/abs/1409.0473) (2014). The paper that brought attention to translation.
 - Jay Alammar, [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/). Queries, keys and values in pictures.

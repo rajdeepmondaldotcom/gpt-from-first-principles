@@ -2,27 +2,27 @@
 
 By the end of this page you have a unit whose gradients survive a stack of 24 as well as a stack of 2.
 
-One attention layer is one round of reading, and we want several rounds. Attention also only mixes, so no token works on what it read. And a plain stack of 24 blocks passes almost no slope back to its first block. We measure that below.
+One attention layer is one round of reading, and we want several rounds. Attention also only mixes: with no bend, no token computes on what it read. And a plain stack of 24 blocks passes almost no slope back to its first block.
 
 ## The idea
 
-Three additions around attention make a block.
+A block is attention with three parts added: an MLP, a path around each layer, and a normalization.
 
-The first gives each token a place to think. After attention, each token's vector passes through a small MLP: a linear layer that widens it four times, a bend, and a linear layer that narrows it back. The same MLP serves each token. Attention moves information between tokens, and the MLP computes on what each token gathered.
+After attention, each token's vector passes through a small MLP: a linear layer that widens it four times, a bend, and a linear layer that narrows it back. The same MLP serves each token. Attention moves information between tokens, and the MLP computes on what each token gathered.
 
 The bend is called GELU. For large negative numbers it gives about 0, and for large positive numbers about the number itself. Unlike tanh it does not flatten for large positive numbers, so slopes pass back through it there.
 
-The second addition is an addition. In place of `x = layer(x)` we write `x = x + layer(x)`. Each layer now makes a correction to the vector and hands the rest on unchanged. The line of plain additions that runs from the first block to the last is called the residual stream.
+We also add each layer's result to its input. In place of `x = layer(x)` we write `x = x + layer(x)`. Each layer now makes a correction to the vector and hands the rest on unchanged. The line of plain additions that runs from the first block to the last is called the residual stream.
 
-This fixes depth. Lesson 2 showed that an addition passes a slope back unchanged. So each block has a path around it with a slope of exactly 1, and however many blocks we stack, the early ones still hear from the loss. A test measures it with the starting weights of GPT-2, the 2019 model that lesson 10 rebuilds. Each block multiplies what passes through it by small weights. Without the additions, two blocks already pass back less than a hundredth of the gradient, and 24 blocks pass back less than a trillionth of it. With the additions, the gradient reaching the first block is about as large at 24 blocks as at 2, within a factor of 2.
+Lesson 2 showed that an addition passes a slope back unchanged. So each block has a path around it with a slope of exactly 1, and however many blocks we stack, the early ones still get slope from the loss. A test measures it with the starting weights of GPT-2, the 2019 model that lesson 10 rebuilds. Each block multiplies what passes through it by small weights. Without the additions, two blocks already pass back less than a hundredth of the gradient, and 24 blocks pass back less than a trillionth of it. With the additions, the gradient reaching the first block is about as large at 24 blocks as at 2, within a factor of 2.
 
-The third keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Steady sizes matter for the reason lesson 6 gave: scores that are too large jam a softmax.
+The normalization keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Steady sizes matter for the reason lesson 6 gave: scores that are too large put nearly all of a softmax's weight on one token.
 
 We normalize the input to each layer and leave the residual stream alone:
 
 `x = x + attention(norm(x))`, then `x = x + mlp(norm(x))`
 
-The first model built from blocks like these, in 2017, normalized after each addition, which put a normalization on the main path. GPT-2 moved it to where we have it.
+The first model built from blocks like these, in 2017, normalized after each addition, which put a normalization on the main path. GPT-2 puts it where we have it.
 
 ## By hand
 
@@ -42,7 +42,7 @@ GELU at four points:
 |---|---|---|---|---|
 | Out | -0.159 | 0 | 0.841 | 2.996 |
 
-A residual step: if x = (1, 2) and the layer returns (0.1, -0.2), the new x is (1.1, 1.8). The layer nudged the vector and did not replace it.
+A residual step: if x = (1, 2) and the layer returns (0.1, -0.2), the new x is (1.1, 1.8).
 
 ## The code
 
@@ -108,7 +108,7 @@ uv run pytest tests/test_gpt2.py
 
 Nothing yet turns the last block's vectors into scores for the next token, and nothing has been trained. We have the parts and no model.
 
-We also have no evidence that the parts are right. Each test here checks one part against a small reference. Whether they add up to GPT-2 is a separate question, and it has an exact answer.
+Each test here checks one part against a small reference. We have no evidence yet that the parts add up to GPT-2.
 
 ## Check yourself
 
@@ -121,7 +121,7 @@ Predict before you run: how many parameters does one block have at a width of 12
 
 <details><summary>What does layer normalization return for (5, 5, 5, 5)?</summary>
 
-(0, 0, 0, 0), with the gain at 1 and the shift at 0, as they start. Subtracting the mean leaves zeros, and zero divided by the small safety number is zero.
+(0, 0, 0, 0), with the gain at 1 and the shift at 0, as they start. Subtracting the mean leaves zeros, and zero divided by a small positive number is zero.
 </details>
 
 <details><summary>The MLP uses the same weights for each token. How can it treat the third token unlike the first?</summary>
@@ -138,4 +138,4 @@ Go deeper:
 
 - He and others, [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385) (2015). The addition, and what it did for depth.
 - Ba, Kiros and Hinton, [Layer Normalization](https://arxiv.org/abs/1607.06450) (2016).
-- Xiong and others, [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745) (2020). Why normalizing before each layer trains more easily than after.
+- Xiong and others, [On Layer Normalization in the Transformer Architecture](https://arxiv.org/abs/2002.04745) (2020). Why normalizing before each layer needs less tuning than after.

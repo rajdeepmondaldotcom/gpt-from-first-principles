@@ -2,7 +2,7 @@
 
 Build a GPT yourself. Train it, serve it, then teach the same code chess.
 
-You start with a loop that counts letters. Each lesson adds one idea, in code short enough to read in a sitting, with a test that proves it. You need Python and school maths. It is hard on purpose.
+You start with a loop that counts letters. Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. It is hard on purpose.
 
 Under construction: lessons 1 to 10 of 42 are here.
 
@@ -34,7 +34,7 @@ Each model is scored on the same unseen tenth of Shakespeare, in bits per byte. 
 | MLP, eight tokens back, 1,024 tokens | 5 | 2.572 |
 | GPT, 64 characters back | 10 | 3.017 |
 
-The GPT is behind the MLP here, after scoring three times as many targets. Both were trained with plain gradient descent.
+The GPT scored three times as many targets and still trails the MLP. We trained both with plain gradient descent.
 
 ## The same prompt at each stage
 

@@ -2,14 +2,14 @@
 
 By the end of this page the parts are one model, and on our test prompt that model, running OpenAI's GPT-2 weights, gives GPT-2's answers.
 
-We have embeddings, positions, attention and the block. We have no model, and no evidence that the parts add up to the real thing.
+We have embeddings, positions, attention and the block. We have no model, and no evidence that the parts add up to GPT-2.
 
 ## The idea
 
 Four steps turn token ids into scores:
 
 1. The embedding gives each token a vector for what it is and where it stands.
-2. A stack of blocks reads and thinks.
+2. A stack of blocks works on the vectors.
 3. One last layer normalization steadies the result.
 4. A linear layer turns each token's vector into one score per token in the vocabulary.
 
@@ -19,11 +19,11 @@ PyTorch stores the last layer's grid with one row per token in the vocabulary, e
 
 Each grid starts as random numbers with a spread of 0.02, and each bias at 0. The two layers in a block that add into the residual stream start smaller, divided by the square root of twice the number of blocks. With 12 blocks the stream receives 24 additions, and by lesson 6's rule the spread of a sum of 24 random terms grows like the square root of 24. Dividing by that root keeps the total the same size at any depth. Our small model's first loss is 4.246, against ln 65 = 4.174.
 
-GPT-2 small has 12 blocks, a width of 768, 12 heads, a context of 1,024 tokens and 50,257 tokens in its vocabulary: 124,439,808 parameters. OpenAI published its trained weights. If our parts are that model, then our code with those weights must give the scores that a trusted implementation gives.
+GPT-2 small has 12 blocks, a width of 768, 12 heads, a context of 1,024 tokens and 50,257 tokens in its vocabulary: 124,439,808 parameters. OpenAI published its trained weights. If our parts are that model, our code with those weights must give the scores that an independent implementation gives.
 
-The weights come in a format called safetensors. A file starts with 8 bytes that hold a length. Then come that many bytes of JSON, a plain-text format, naming each tensor with its shape and where its numbers sit. Then come the raw numbers. We read it by hand. One catch: OpenAI stored each linear layer's grid the other way round from PyTorch, so those grids are turned on their side as they load.
+The weights come in a format called safetensors. A file starts with 8 bytes that hold a length. Then come that many bytes of JSON, a plain-text format, naming each tensor with its shape and where its numbers sit. Then come the raw numbers. We read it by hand. OpenAI stored each linear layer's grid the other way round from PyTorch, so we turn those grids on their side as they load.
 
-Hugging Face publishes a widely used implementation of GPT-2. We gave it the prompt `Once upon a time, there was a` and saved what it returned. Our model, with the same weights, picks the same top token at each of the 8 places. At the last place its scores for 31 tokens match the saved ones to within 0.0001, on scores near -100. Its top guess for the next token is ` man`.
+Hugging Face's `transformers` library has an implementation of GPT-2. We gave it the prompt `Once upon a time, there was a` and saved what it returned. Our model, with the same weights, picks the same top token at each of the 8 places. At the last place its scores for 31 tokens, the 20 it rates highest and 11 spread across the vocabulary, match the saved ones to within 0.0001, on scores near -100. Its top guess for the next token is ` man`.
 
 ## By hand
 
@@ -104,9 +104,9 @@ echo "248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707  data/cac
 uv run --extra reference pytest -m reference
 ```
 
-The second line checks that the file is the one we tested. `tests/gpt2_reference.py` is the script that made the saved scores from Hugging Face's code.
+The third line checks that the file is the one we tested. `tests/gpt2_reference.py` is the script that made the saved scores from Hugging Face's code.
 
-Then train the small model with lesson 4's loop, plain gradient descent. We go back to characters for now. Shakespeare is one megabyte, and 65 tokens keep these runs to minutes.
+Then train the small model with lesson 4's loop, plain gradient descent. We go back to characters: Shakespeare is one megabyte, and 65 tokens keep these runs to minutes.
 
 ```bash
 uv run python -m gpt.gpt2
@@ -145,7 +145,7 @@ TORENINA:
 You, ha
 ```
 
-With GPT-2's weights the code gives GPT-2's scores. Trained by us, it is behind an MLP a twelfth of its size. It has scored three times as many targets as the MLP, 6,144,000 against 1,920,000. Lesson 11 keeps the model and changes only the rule that turns slopes into steps.
+With GPT-2's weights the code gives GPT-2's scores. Trained by us, it has scored three times as many targets as an MLP a twelfth of its size, 6,144,000 against 1,920,000, and still trails it. Lesson 11 keeps the model and changes only the rule that turns slopes into steps.
 
 ## Check yourself
 

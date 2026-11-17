@@ -6,7 +6,7 @@ Counting worked because the model was a table. For a model of any other shape th
 
 ## The idea
 
-A model is a recipe with adjustable numbers in it, called parameters. Give the bigram one parameter per pair of characters, a score, and start them all at 0.
+A model is a calculation with adjustable numbers in it, called parameters. Give the bigram one parameter per pair of characters, a score, and start them all at 0.
 
 A score can be any number, so we need a rule that turns a row of scores into chances. Raise e to the power of each score, then divide by the row's total. The results are positive and sum to 1. The rule is called softmax. With all scores at 0, each character gets the same chance.
 
@@ -18,9 +18,9 @@ new value = old value - rate × slope
 
 A positive slope means raising the parameter hurts, so we lower it. The rate, called the learning rate, sets the size of the step. Repeating this rule is called gradient descent.
 
-The obvious way to get a slope is to nudge. Add 0.000001 to one score, work out the loss again, and divide the change by 0.000001. That costs one full loss calculation per parameter, on each step. Our sentence has 10 different characters, so its model has 100 scores. GPT-2, which lesson 10 rebuilds, has 124 million parameters.
+One way to get a slope is to nudge. Add 0.000001 to one score, work out the loss again, and divide the change by 0.000001. That costs one full loss calculation per parameter, on each step. Our sentence has 10 different characters, so its model has 100 scores. GPT-2, which lesson 10 rebuilds, has 124 million parameters.
 
-The chain rule gets all the slopes from one pass. A loss is built from a few small operations, and each has a known slope:
+The chain rule gets all the slopes from one pass backwards. A loss is built from a few small operations, and each has a known slope:
 
 | Operation | Slope for x |
 |---|---|
@@ -34,7 +34,7 @@ Division is covered too, because x / y is x × y to the power -1.
 
 Slopes combine by two rules. If x moves y at a rate of 3, and y moves the loss at a rate of 2, then x moves the loss at a rate of 6: multiply along a path. If x reaches the loss by two paths, add them.
 
-So we work out the loss once and let each number remember what it was made from. Then we walk backwards from the loss and hand each number its share. Code that does this is called automatic differentiation, or autograd.
+We work out the loss once and let each number remember what it was made from. Then we walk backwards from the loss and work out each number's slope. Code that does this is called automatic differentiation, or autograd.
 
 ## By hand
 
@@ -84,7 +84,7 @@ class Value:
 
 Python calls `__add__` when it meets `a + b` and `__mul__` for `a * b`. So plain-looking arithmetic on Values builds new Values that remember their parents, with the slopes from the table. The `isinstance` line lets a plain number take part by wrapping it in a Value.
 
-`backward` makes a list, `order`, of each Value after the Values it was made from. The result moves one for one with itself, so its `grad` is 1. Then the list is walked in reverse:
+`backward` makes a list, `order`, of each Value after the Values it was made from. The result moves one for one with itself, so its `grad` is 1. Then `backward` walks the list in reverse:
 
 ```python
 # gpt/autograd.py
@@ -106,7 +106,7 @@ One step of learning for the table of scores `W`:
                 w.grad = 0.0
 ```
 
-`bigram_loss` is lesson 1's loss with softmax in place of the counted table. Each `grad` is set back to 0 after use, or the next step's slopes would be added to this step's.
+`bigram_loss` is lesson 1's loss with softmax in place of the counted table. The loop sets each `grad` back to 0 after use, or the next step's slopes would be added to this step's.
 
 ## The proof
 
