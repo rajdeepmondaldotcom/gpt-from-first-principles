@@ -1,7 +1,6 @@
 """Lesson 17. What it costs: count the memory and the arithmetic before spending them."""
 
 import time
-from pathlib import Path
 
 import torch
 
