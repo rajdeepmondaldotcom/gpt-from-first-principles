@@ -2,7 +2,7 @@
 
 By the end of this page a small model guesses four tokens ahead, the big model checks all four in one pass, and each token still comes with the chance the big model alone would give it.
 
-The model is smaller now. It still runs once, top to bottom, for each token it writes.
+Lesson 34's model is smaller, and it wrote slower: 393 tokens a second against 643. Each token still costs one whole pass of the model.
 
 ## The idea
 

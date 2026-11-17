@@ -1,15 +1,15 @@
 # 32. Batching
 
-By the end of this page many readers share each pass of the model, a request joins or leaves between two tokens, and each reader still gets the story they would get alone.
+By the end of this page many listeners share each pass of the model, a request joins or leaves between two tokens, and each listener still gets the story they would get alone.
 
-Lesson 31's machine served one reader while the rest stood in line, and each pass of the model wrote one token for that one reader.
+Lesson 31's machine served one listener while the rest stood in line, and each pass of the model wrote one token for that one listener.
 
 ## The idea
 
-A pass of the model works on a grid of tokens with one row for each text. In training the grid had 32 rows. In writing it has had one. Give it a row for each reader, and one pass writes a token for each of them.
+A pass of the model works on a grid of tokens with one row for each text. In training the grid had 32 rows. In writing it has had one. Give it a row for each listener, and one pass writes a token for each of them.
 
 1. The rows have different lengths, and a grid needs rows of one length. We line the rows up at their ends and put empty places in front of the shorter ones. A grid of true and false, called `real`, marks the places that hold tokens, and attention reads only those.
-2. Readers come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
+2. Listeners come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
 3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine counts each request at the size of the longest, and takes a new one only if the rows together still fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
 
 A row read its prompt at places 0, 1, 2 and so on, and the model turned each key by its place, as in lesson 15. In the batch that row may sit further along, behind some empty places. With rotary positions a score depends only on the distance between two tokens, so we turn each of the row's keys further by the same number of places and no score changes.
@@ -132,9 +132,9 @@ Timings are from an M4 laptop, and they move from run to run.
 
 Eight requests that join two steps apart each write what they write alone, and so does a prompt read in chunks.
 
-Alone, a reader gets 628 tokens a second. Among 16, each gets 138 and the machine writes 2,002 in all, 3.2 times what it wrote for one. At 32 it writes 2,246, 12% more than at 16.
+Alone, a listener gets 628 tokens a second. Among 16, each gets 138 and the machine writes 2,002 in all, 3.2 times what it wrote for one. At 32 it writes 2,246, 12% more than at 16.
 
-At 15.1 requests a second, half of lesson 31's readers waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 13 ms or less, and the machine writes 813 tokens a second where it wrote 631.
+At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 13 ms or less, and the machine writes 813 tokens a second where it wrote 631.
 
 ## What it still cannot do
 
@@ -142,11 +142,11 @@ Each request reads its whole prompt from the first token, even when the requests
 
 ## Check yourself
 
-Predict before you run: 16 readers share each pass. Does each one get their tokens faster or slower than a reader alone, and does the machine write more or fewer tokens a second in all?
+Predict before you run: 16 listeners share each pass. Does each one get their tokens faster or slower than a listener alone, and does the machine write more or fewer tokens a second in all?
 
 <details><summary>Answer</summary>
 
-Slower for each reader, more in all: 138 tokens a second each where one alone gets 628, and 2,002 in all where one gets 617.
+Slower for each listener, more in all: 138 tokens a second each where one alone gets 628, and 2,002 in all where one gets 617.
 </details>
 
 <details><summary>From lesson 15: what would break if positions came from lesson 8's table of places?</summary>

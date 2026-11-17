@@ -6,14 +6,14 @@ Lesson 32's engine reads each prompt from its first token, even when the request
 
 ## The idea
 
-Many prompts begin alike. A service puts the same instructions in front of each question. A reader of our storyteller who asks what happens next sends back the whole story so far, with one sentence added.
+Many prompts begin alike. A service puts the same instructions in front of each question. A listener of our storyteller who asks what happens next sends back the whole story so far, with one sentence added.
 
 Lesson 23's cache holds a key and a value for each token read. Lesson 7's mask means that a token's key and value depend only on the tokens before it. So two prompts that agree on their first 160 tokens have the same keys and values for those 160 tokens, whatever comes after. We read them once and keep them, and each later request copies them and reads only what is new.
 
 We keep the cache in pieces of 16 tokens. Each piece is filed under the whole text from the first token to the end of that piece. A new prompt looks up its first 16 tokens, then its first 32, then its first 48, and stops at the first piece that is not there.
 
 1. Reuse stops at the start of the piece that holds the first token that differs. Later tokens may match word for word, but their keys and values were worked out from a different text, and have to be read again.
-2. Put what changes last: a prompt that opens with the reader's name or the time of day shares nothing with the next one.
+2. Put what changes last: a prompt that opens with the listener's name or the time of day shares nothing with the next one.
 3. At least one token is always read. The store gives back keys and values, and the scores for the first new token take a pass of the model. So a prompt that ends where a stored piece ends reads that last piece again.
 
 The store has a budget in bytes. When full, it throws out the piece used longest ago.
@@ -113,7 +113,7 @@ A store with room for twelve pieces does as well as one with no limit. Each requ
 
 ## What it still cannot do
 
-To write one token the model still reads each of its weights, and each weight is a 32-bit number: 21.5 MB for each token written.
+Each weight is still a 32-bit number, 21.5 MB in all, and we have not asked how many of those bits the loss needs.
 
 ## Check yourself
 
@@ -134,9 +134,9 @@ Nothing across days. Within a day, each whole piece of the date and the instruct
 Its keys and values were worked out with the tokens before it in view. The same 16 tokens after a different beginning have different keys and values.
 </details>
 
-<details><summary>From lesson 7: which part of the model makes a shared beginning give the same keys and values in two prompts?</summary>
+<details><summary>From lesson 7: if attention had no mask, could two prompts reuse a shared beginning?</summary>
 
-The causal mask. A token reads only the tokens before it, so nothing after the shared beginning can reach back into it.
+No. Each token would read the tokens after it too, so a beginning's keys and values would change with what follows it.
 </details>
 
 Go deeper:

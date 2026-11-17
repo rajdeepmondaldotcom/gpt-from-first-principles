@@ -2,7 +2,7 @@
 
 By the end of this page each weight inside the blocks takes 8 bits, or 4, and you have measured what each choice costs in memory, loss and speed.
 
-To write one token the model reads each of its weights, and each weight is a 32-bit number: 21.5 MB for each token written.
+Each weight is still a 32-bit number, 21.5 MB in all, and we have not asked how many of those bits the loss needs.
 
 ## The idea
 
@@ -20,7 +20,7 @@ We measure what the model loses in practice: the loss on 500 unseen stories, bef
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-We store the weights small and turn them back into 32-bit numbers each time a layer runs, which is extra work. Engines built for speed multiply the small numbers as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
+We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading fewer bytes removes no wait. And we turn the small numbers back into 32-bit numbers each time a layer runs, which is extra work. Engines built for speed multiply them as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
 
 ## By hand
 
@@ -103,11 +103,11 @@ Timings are from an M4 laptop, and they move from run to run.
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Both shrunk models write slower: 393 and 168 tokens a second, against 643. Each call turns each grid back into 32-bit numbers before it multiplies, work the 32-bit model does not do. Lesson 31 put our writing at about an eighth of what memory alone allows, so memory was not the limit to begin with. Lesson 37 looks for where the time goes.
+Both shrunk models write slower: 393 and 168 tokens a second, against 643. Lesson 37 looks for where the time goes.
 
 ## What it still cannot do
 
-The model is smaller. It still runs once, top to bottom, for each token it writes.
+The model is smaller, and it wrote slower: 393 tokens a second against 643. Each token still costs one whole pass of the model.
 
 ## Check yourself
 
@@ -125,7 +125,7 @@ Half a step. At 8 bits a step is 0.5 / 127 = 0.0039, so 0.002. At 4 bits a step 
 
 <details><summary>Why does one large weight in a row hurt the other weights in that row?</summary>
 
-It sets the scale. The step grows with it, and each smaller weight is rounded to a coarser grid.
+It sets the scale. The step grows with it, and each smaller weight is rounded in coarser steps.
 </details>
 
 <details><summary>From lesson 24: the loss rose by a few hundredths of a nat at 4 bits. What makes that more than luck?</summary>
