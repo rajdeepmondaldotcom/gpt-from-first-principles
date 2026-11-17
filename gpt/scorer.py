@@ -110,7 +110,7 @@ if __name__ == "__main__":
         loss.backward()
         clip(scorer.parameters(), 1.0)
         optimizer.step()
-        if (step + 1) % 100 == 0:
+        if step == 0 or (step + 1) % 100 == 0:
             say(f"step {step + 1}: {loss.item():.3f} on 16 pairs. ln 2 is 0.693")
     ranked = right(held)
     low, high = rate_interval(ranked, generator)
