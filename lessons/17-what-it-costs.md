@@ -22,7 +22,7 @@ A training step runs forward and then backward. The backward pass uses each weig
 
 Divide the work by the machine's speed and you have the time. By this count, this Mac's graphics chip trains a model of 5 million parameters at 326 billion multiplies and adds a second.
 
-Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. Chen's notes, below, work out when the speed of reading memory sets the speed of writing on large models. We have not measured which one limits this small model.
+Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The notes by kipply, below, work out when the speed of reading memory sets the speed of writing on large models. We have not measured which one limits this small model.
 
 ## By hand
 
@@ -125,5 +125,5 @@ Go deeper:
 
 - Austin and others, [How to Scale Your Model](https://jax-ml.github.io/scaling-book/). Counting memory, arithmetic and time for models a million times this size.
 - Kaplan and others, [Scaling Laws for Neural Language Models](https://arxiv.org/abs/2001.08361) (2020). They count training as 6 for each parameter and token.
-- Chen, [Transformer Inference Arithmetic](https://kipp.ly/transformer-inference-arithmetic/). The same sums for writing text, with the cache.
+- kipply, [Transformer Inference Arithmetic](https://kipp.ly/transformer-inference-arithmetic/). The same sums for writing text, with the cache.
 - Dao and others, [FlashAttention](https://arxiv.org/abs/2205.14135) (2022). Attention in tiles, done so that the grid of scores never leaves the chip's fastest memory.
