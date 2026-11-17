@@ -15,11 +15,11 @@ A check is a fact that holds for a healthy run and fails for a broken one. We ru
 - The loop can learn one batch by heart. If the loss stays up, the loop is broken: slopes are not reaching the weights, or old slopes are piling up.
 - Each grid of weights moves a little on each step. Measure how far a grid moved as a share of its own size. A share of 0 means the optimizer never got that grid. Our check fails a share above 2%.
 
-The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more, and the sums are below. Later steps are smaller: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
+The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more, and the table below works it out. Later steps are smaller: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
 
-A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and a model with a large gap is said to overfit. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
+A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and we say a model with a large gap overfits. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
 
-Lesson 11's weight decay is one cure. Dropout is the other. While training, each number a layer adds to the residual stream is set to 0 with a fixed chance, and the rest are divided by the chance of being kept, which keeps their average the same over many passes. The idea, from the paper linked below, is that a model which cannot count on any one number has to spread what it learns. After training we switch dropout off and use every number.
+Lesson 11's weight decay is one cure. Dropout is the other. While training, dropout sets each number a layer adds to the residual stream to 0 with a fixed chance and divides the rest by the chance of being kept, which keeps their average the same over many passes. The idea, from the paper linked below, is that a model which cannot count on any one number has to spread what it learns. After training we switch dropout off and use every number.
 
 ## By hand
 
@@ -30,7 +30,7 @@ A step size. Most grids start with entries about 0.02 in size, and Adam's first 
 | 0.00003 | 0.00003 / 0.02 = 0.15% |
 | 0.003 | 0.003 / 0.02 = 15% |
 
-The two layers in each block that add into the stream start at 0.007, so the same step is about 42% of their size.
+The two layers in each block that add into the stream start at 0.0071, so the same step is 42% of their size.
 
 Dropout with a chance of 0.5 on the vector (1, 2, 3, 4). Suppose the first and third entries are dropped. The rest are divided by 0.5:
 
@@ -79,14 +79,14 @@ A healthy model passes each check. Then the test plants seven bugs, and each tur
 | Planted bug | The check that fails |
 |---|---|
 | Token rows 20 times too large | The first loss is far from ln of the vocabulary size |
-| The layers that add into the stream 20 times too large | The stream more than tripled, and the first loss still passed |
+| The layers that add into the stream 20 times too large | The stream more than doubled, and the first loss still passed |
 | Targets not moved on | Targets are not the inputs one token on |
 | The mask removed | An earlier place changed when the last token did |
 | A first step at 100 times the warmup's rate | A grid moved by more than 2% of its size |
 | Only the blocks handed to the optimizer | A grid did not move |
 | Slopes never cleared | One batch is not learned by heart |
 
-Dropout changes the result while training and nothing once it is switched off. It reaches both layers that add into the stream.
+With dropout on, two passes give different results. Switched off, the model gives the result it gave before. It reaches both layers that add into the stream.
 
 ```bash
 uv run python -m gpt.checks
@@ -99,11 +99,11 @@ dropout 0.3 and decay 0.1: training text 1.230, unseen text 2.286, gap 1.055 nat
 
 Both runs are lesson 12's loop for 3,000 steps on 100,000 characters. The plain run has no dropout and no decay.
 
-Plain, the model stores its text: 0.491 nats on the text it trained on and 3.648 on unseen text, worse than the counted bigram's 2.482. With dropout and decay together the gap falls from 3.157 nats to 1.055, and the loss on unseen text to 2.286. Two things changed at once, so this shows the pair and not each.
+Plain, the model stores its text: 0.491 nats on the text it trained on and 3.648 on unseen text, worse than the counted bigram's 2.482. With dropout and decay together the gap falls from 3.157 nats to 1.055, and the loss on unseen text to 2.286. Two things changed at once, so this measures the pair together.
 
 ## What it still cannot do
 
-Passing each check shows a run is healthy. It does not show that a change helped. The output above compares two runs, one of each setting, and another seed would give other numbers. We do not yet know how far apart two runs of the same setting land.
+A run can pass each check after a change that did not help. The output above compares two runs, one of each setting, and another seed would give other numbers. We do not yet know how far apart two runs of the same setting land.
 
 ## Check yourself
 

@@ -2,7 +2,7 @@
 
 By the end of this page you can say whether a change made a model better, and how often your rule for saying so is wrong.
 
-Lesson 13 compared two runs, one of each setting. Lesson 12 took its schedule on trust. Neither result can be believed yet, because we do not know how far apart two runs of the same setting land.
+Lesson 13 compared two runs, one of each setting. Lesson 12 took its schedule on trust. We cannot trust either result yet, because we do not know how far apart two runs of the same setting land.
 
 ## The idea
 
@@ -20,7 +20,7 @@ The rule also misses real changes. A change three times the spread of the differ
 
 Three habits go with the rule:
 
-- Change one thing at a time. If two things change, the difference belongs to neither.
+- Change one thing at a time. If two things change, you cannot tell which one caused the difference.
 - Search a rate by factors. Lesson 13's planted rate was wrong by a factor of 100. So try 0.0003, 0.001, 0.003, 0.01 and 0.03, each about three times the last, on a few seeds. This is called a sweep. Trust a rate that wins on each seed.
 - Say what was measured. Our runs are 600 steps long. A rate that wins at 600 steps may lose at 5,000, and we have not tested it.
 
@@ -40,7 +40,7 @@ Setting A scores 2.00 on each of five seeds. Setting B scores 2.02, 1.99, 2.03, 
 
 B looks worse by 0.01. That is 1.4 errors from zero, which is under 3, so the rule does not count B as worse.
 
-The sum is divided by 4 and not 5. The mean came from the same five numbers, so they sit a little closer to it than they would to the true mean, and dividing by one less makes up for it.
+We divide by 4 because the mean was worked out from these five numbers, which makes their spread look smaller than it is.
 
 ## The code
 
@@ -77,7 +77,7 @@ uv run pytest tests/test_experiment.py
 - The same seed gives the same loss, and a new seed a different one.
 - With nothing changed, the rule passes between 3 and 6 experiments in 100 at five seeds, and between 8 and 11 at three.
 - A planted change three times the noise is found. One as large as the noise needs twenty seeds.
-- On a tiny model, a rate 100 times too low is more than 3 errors worse, and each of three seeds picks one of the same two neighbours out of five rates.
+- On a tiny model, a rate 100 times too low is more than 3 errors worse, and each of three seeds picks 0.01 or 0.03 out of five rates.
 
 ```bash
 uv run python -m gpt.experiment
@@ -100,7 +100,7 @@ Each number is the loss on unseen text after 600 steps of lesson 12's model and 
 
 Two of the comparisons are planted. The same setting on five new seeds, where the seeds are the only change, differs by 0.4 errors, and the rule rejects it. Half the width is worse by 15.4 errors, and the rule passes it.
 
-The other two were open questions. A fixed rate of 0.003 with no warmup is worse than lesson 12's schedule by 0.222 nats, 9.0 errors from zero. That is warmup and the falling rate together, at 600 steps. It does not say which of the two helps.
+The other two were open questions. A fixed rate of 0.003 with no warmup is worse than lesson 12's schedule by 0.222 nats, 9.0 errors from zero. That is warmup and the falling rate together, at 600 steps. We cannot tell from it which of the two helps.
 
 In the sweep, lesson 12's rate was too low for a run this short. A peak of 0.01 wins on each of the three seeds, by 0.065 nats on average over 0.003. Lessons 15 and 16 keep 0.003, so that their numbers can be set beside lesson 12's.
 

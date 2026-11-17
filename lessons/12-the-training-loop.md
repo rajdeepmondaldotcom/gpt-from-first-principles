@@ -6,13 +6,13 @@ Lesson 11 ran 3,000 steps at one fixed rate. Nothing looked at unseen text along
 
 ## The idea
 
-The rate changes as the run goes. Adam's first step moves each parameter by the full rate, whatever its slope, and each of its averages holds one slope. So we begin with a small rate and raise it in a straight line over the first 100 steps. This is called warmup. After it, the rate falls to a tenth of its peak along half a cosine wave: slowly at first, fastest in the middle, slowly at the end. The plan for the rate is called a schedule. Warmup and a falling rate are common practice, and we take them on trust here. Lesson 14 tests them against a fixed rate.
+The rate changes as the run goes. Adam's first step moves each parameter by the full rate, whatever its slope, and each of its averages holds one slope. So we begin with a small rate and raise it in a straight line over the first 100 steps. This is called warmup. After it, the rate falls to a tenth of its peak along half a cosine wave: a gentle fall at first, steepest in the middle, gentle at the end. The plan for the rate is called a schedule. We take warmup and a falling rate on trust here. Lesson 14 tests them against a fixed rate.
 
-Clipping puts a limit on the gradient. A batch can produce a gradient far longer than usual. Adam's average of squares would hold on to it for about a thousand steps, and divide each step in that time by a larger size. Before each step we measure the length of the whole gradient: square each slope, add them all, take the square root. If the length is above the limit, we scale the gradient down to the limit and keep its direction.
+A batch can produce a gradient far longer than usual, so we put a limit on it. Adam's average of squares would keep a trace of a long one for about a thousand steps, and divide each step in that time by a larger size. Before each step we measure the length of the whole gradient: square each slope, add them all, take the square root. If the length is above the limit, we scale the gradient down to the limit and keep its direction. This is called clipping.
 
-Small batches add up to a big one. Slopes add, as lesson 2 showed. Run four small batches, let their slopes add up, then take one step. The step is the same as for one batch four times the size, which might not fit in memory.
+Slopes add, as lesson 2 showed, so small batches can stand in for a big one. Run four small batches, let their slopes add up, then take one step. The step is the same as for one batch four times the size, which might not fit in memory.
 
-Every 500 steps the loop measures the loss on unseen text. The loss on the training batches measures how well the model fits the text it trains on.
+Every 500 steps the loop measures the loss on unseen text. The training loss shows how well the model fits text it has seen, and the unseen loss how it does on text it has not.
 
 A checkpoint lets the run stop and start. It is a file that holds what shapes the rest of this run:
 
@@ -21,7 +21,7 @@ A checkpoint lets the run stop and start. It is a file that holds what shapes th
 - the step number, because the schedule depends on it
 - the state of the random number generator. A generator makes its numbers by a fixed rule from a state it keeps, so the state sets the batches to come
 
-The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with each number held in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time, and the PyTorch page linked below has the details. On this page the switch stays off.
+The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with each number held in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time, and the PyTorch page linked below has the details. Here the switch stays off.
 
 The run below uses a peak rate of 0.003, a limit of 1, batches of 32 windows, a decay of 0.1 and 5,000 steps.
 
@@ -66,7 +66,7 @@ def rate_at(step, peak, warmup, steps, floor=0.1):
         yield step + 1, total
 ```
 
-`yield` hands the step number and the loss back to whoever called `train`, then carries on when asked for the next one. Each small loss is divided by `parts` because a loss is an average, and the average over the big batch is the average of the small averages. `torch.autocast` is the 16-bit switch, off unless `half` is set, and `bfloat16` is PyTorch's name for a 16-bit format. `.item()` turns a tensor that holds one number into a plain Python number.
+`yield` hands the step number and the loss back to whoever called `train`, then carries on when asked for the next one. We divide each small loss by `parts` because a loss is an average, and the average over the big batch is the average of the small averages. `torch.autocast` is the 16-bit switch, off unless `half` is set, and `bfloat16` is PyTorch's name for a 16-bit format. `.item()` turns a tensor that holds one number into a plain Python number.
 
 ```python
 # gpt/train.py
@@ -126,7 +126,7 @@ unseen text: 1.529 nats, 2.206 bits per byte
 | GPT, with AdamW | 2.372 |
 | GPT, with the loop, 5,000 steps | 2.206 |
 
-Between the last two rows four things changed: the steps, the peak rate, the decay, and the schedule with clipping. The last row shows the whole loop and no single part of it.
+Between the last two rows four things changed: the steps, the peak rate, the decay, and the schedule with clipping. The table cannot say which of the four made the gain.
 
 ## What it still cannot do
 
@@ -136,7 +136,7 @@ As your o'er peace will keep again the sword,
 So many foot, your worshonour that my
 ```
 
-The loop prints numbers. It cannot tell a healthy run's numbers from a broken one's. A model with no mask still prints a falling loss and raises no error.
+From the printed numbers alone you cannot tell a healthy run from a broken one. A model with no mask still prints a falling loss and raises no error.
 
 ## Check yourself
 

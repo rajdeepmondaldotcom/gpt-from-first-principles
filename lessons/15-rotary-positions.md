@@ -8,13 +8,11 @@ Lesson 8's table has one row for each place, 64 of them, so a 65th token cannot 
 
 Attention needs to know how far apart two tokens are. Lesson 8 put the place into the token's vector once, before any layer. Rotary positions put it where it is used: into each query and each key, at each attention layer.
 
-Pair up a query's entries: the first with the one halfway along, the second with the next, and so on. A pair of numbers is a point on a flat surface. Turn that point around the centre by an angle of place × speed, with the angle in radians: a full turn is 2π, about 6.283. Do the same to each key. A turn moves a point and keeps its distance from the centre, so no vector changes length.
+Pair up a query's entries: entry i with the entry half the vector's length further on. A pair of numbers is a point on a flat surface. Turn that point around the centre by an angle of place × speed, with the angle in radians: a full turn is 2π, about 6.283. Do the same to each key. We leave the values as they are. A turn moves a point and keeps its distance from the centre, so no vector changes length.
 
-A score is a dot product. For one pair of entries, the dot product of two points is their two lengths times the cosine of the angle between them, a fact of school geometry that the hand example below shows. Turn the query by m × speed and the key by n × speed, and the angle between them changes by (m - n) × speed. So the score depends on m - n and not on m or n alone. Move both tokens 100 places on and the score is the same.
+A score is a dot product. For one pair of entries, the dot product of two points is their two lengths times the cosine of the angle between them, a fact of school geometry that the hand example below shows. Turn the query by m × speed and the key by n × speed, and the angle between them changes by (m - n) × speed. So the score depends only on m - n. Move both tokens 100 places on and the score is the same.
 
 One speed is not enough, because an angle comes back to where it started after a full turn. At 1 radian a place, a distance of 44 is seven full turns and 0.018 radians, which looks like a distance of 0. So each pair gets a speed of its own. The first turns 1 radian a place and the speeds fall, pair by pair, toward one ten-thousandth of that. Fast pairs change a score between neighbours. Slow pairs change it only across long distances.
-
-Values are not turned.
 
 Nothing here has a size tied to the length of the text. The model can be handed more tokens than it trained on. The run below measures how well it reads them.
 
@@ -83,7 +81,7 @@ reading 128 tokens: 1.869 nats, 2.696 bits per byte
 reading 256 tokens: 2.393 nats, 3.452 bits per byte
 ```
 
-The first three lines are lesson 14's method, 600 steps on five seeds. The rotary model is ahead by 0.091 nats, 10.2 errors from zero. Two things differ between the models, so the gain cannot be given to rotation alone: the table is gone, and this attention has no biases.
+The first three lines are lesson 14's method, 600 steps on five seeds. The rotary model is ahead by 0.091 nats, 10.2 errors from zero. Two things differ between the models, so we cannot credit the gain to rotation alone: the table is gone, and this attention has no biases.
 
 The last three lines are one model trained for lesson 12's 5,000 steps. Read at 64 tokens it scores 2.210 bits per byte, and lesson 12's scored 2.206. That is one run of each, and lesson 14 saw two runs of one setting differ by more. We cannot say the gain lasted, or that it did not.
 
@@ -106,7 +104,7 @@ My good my wife knee; most kill my our own.
 And off your worshood of him at
 ```
 
-The model runs on 256 tokens, and it reads them worse: 1.532 nats at 64 tokens, 1.869 at 128 and 2.393 at 256. It trained on distances up to 63 and never met a longer one. Rotary positions remove the limit on length, and the model still has to train on long text to read it well.
+The model runs on 256 tokens, and it reads them worse: 1.532 nats at 64 tokens, 1.869 at 128 and 2.393 at 256. It trained on distances up to 63 and never met a longer one. To read long text well, the model has to train on it.
 
 The rest of the model is still 2019's: layer normalization, a GELU MLP, and a key and value head for each query head.
 
