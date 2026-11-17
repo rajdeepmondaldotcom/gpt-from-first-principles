@@ -121,26 +121,37 @@ uv run pytest tests/test_server.py
 - A request with no prompt, a temperature given as text or as NaN, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
 - A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
-The script starts the server, asks it for one story, then has `ab`, a load tool that comes with the Apache web server, send 200 requests, 16 at a time.
+The script starts the server, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
 
 ```bash
 uv run python -m gpt.server
 ```
 
 ```
-@@OUTPUT@@
+one request over the web: 'Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking '
+200 requests, 16 at a time, by ab: 22.5 a second, 682 ms each
+the same run by our own counts: 22.5 a second, 680 ms each
+tokens written: 20,000, 2,245 a second
+first token after 31 ms on average
+requests inside, averaged over the run: 15.2
+arrival rate times time inside: 15.3
+a million tokens at that speed: 7 minutes of this machine
+400 requests, 200 at a time: 100 answered, 300 told to try again
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run.
 
-@@RESULTS@@
+The outside tool and our own counts agree: 22.5 requests a second, and 682 ms each against our 680. The server wrote 2,245 tokens a second, with a first token after 31 ms on average. Requests inside averaged 15.2, and the arrival rate times the time inside is 22.5 × 0.680 = 15.3, so the sum holds.
+
+At that speed a million tokens take this laptop 7 minutes. Sent 400 requests, 200 at a time, the server answered 100 and told 300 to try again.
 
 To hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine itself, which nothing outside it can reach.
 
 ## What it still cannot do
 
 ```
-@@SAMPLE@@
+Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking for something special. She wanted to find something special to show her friends. 
+Suddenly, Mira saw a big, fluffy cat and a blue bird. She asked them if they wanted to play with the cat, but they were always scared. Mira said, "No, I don't want to play with the
 ```
 
 That story came over the web from our own server. The server gives the right answers, and we wrote it to be read, in Python. We have not asked how fast an engine built for speed would run the same model.
@@ -154,11 +165,6 @@ Predict before you run: 16 requests are inside the server at a time, each takes 
 8. Requests inside equal the rate times the time inside, so the rate is 16 / 2.
 </details>
 
-<details><summary>Why does the server refuse a request when the line is full, when it could let the line grow?</summary>
-
-Lesson 31 showed what a growing line does: each new request waits longer than the last. A no that comes at once lets the client try again or go elsewhere.
-</details>
-
 <details><summary>From lesson 5: why can one token be half a character?</summary>
 
 Our tokens are made of bytes, and a character outside plain English letters takes two bytes or more. Until a merge joins them, each byte is a token of its own.
@@ -166,6 +172,5 @@ Our tokens are made of bytes, and a character outside plain English letters take
 
 Go deeper:
 
-- OpenAI, [the API written down as a specification](https://github.com/openai/openai-openapi). The chat completions request and the stream of events that our server answers with.
 - Google, [Site Reliability Engineering](https://sre.google/sre-book/handling-overload/), chapter 21. What a service should do when more arrives than it can serve.
 - [vLLM](https://github.com/vllm-project/vllm). A server that speaks the same format, with the engine of lessons 32 and 33 built for graphics chips.
