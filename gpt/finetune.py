@@ -91,7 +91,7 @@ def measure(name, model, words, held, unseen, generator):
     )
     say(f"{name}: {ended} stories end by themselves, plain stories {nats:.3f} nats a token")
     numbers = {"passed": sum(passed), "words_used": share, "ended": ended, "plain_nats": nats}
-    return numbers, plain
+    return numbers | {"by_task": words_used}, plain
 
 
 def plain_gap(after, before, generator):

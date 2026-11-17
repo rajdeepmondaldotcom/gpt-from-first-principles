@@ -5,7 +5,7 @@ import torch
 
 from gpt.model import GPT
 from gpt.optim import AdamW
-from gpt.scorer import Scorer, comparison_loss, pad
+from gpt.scorer import Scorer, comparison_loss, pad, pairs_from, taste
 
 
 def scorer():
@@ -40,6 +40,42 @@ def right(net, held):
             .mean()
             .item()
         )
+
+
+TASK = {"name": "Mira", "words": ["cat", "moon", "brave"]}
+LONG = "Mira the brave cat looked at the moon. " + " ".join(
+    f"She took step {i}." for i in range(12)
+)
+
+
+def test_taste_by_hand():
+    assert len(LONG.split()) >= 40
+    assert taste(TASK, LONG, ended=True) == 1.0  # whole, with the name and all three words
+    assert taste(TASK, LONG.replace("moon", "sky"), ended=True) == 0.75
+    assert taste(TASK, LONG, ended=False) == 0  # it never ends
+    assert taste(TASK, "Mira the brave cat saw the moon.", ended=True) == 0  # too short
+    assert taste(TASK, LONG + " She took step 3.", ended=True) == 0  # a sentence said twice
+
+
+def test_pairs_put_the_story_the_readers_like_first():
+    class Letters:  # a tokenizer of single characters, for this test
+        end = 0
+
+        def decode(self, ids):
+            return "".join(chr(i) for i in ids)
+
+    def story(text, ended=True):
+        ids = [1, 2, *map(ord, text), *([0] if ended else [])]  # a prompt of two tokens, then text
+        return TASK, (ids, 2), 0.0
+
+    good, fair, bad = story(LONG), story(LONG.replace("moon", "sky")), story(LONG, ended=False)
+    pairs = pairs_from([good, bad, fair, bad], Letters())
+    ids = {name: one[1] for name, one in (("good", good), ("fair", fair), ("bad", bad))}
+    # good beats both bad ones and fair, fair beats both bad ones; the two bad ones tie: no pair
+    assert len(pairs) == 5 and (ids["good"], ids["fair"]) in pairs
+    assert (
+        pairs.count((ids["good"], ids["bad"])) == 2 and pairs.count((ids["fair"], ids["bad"])) == 2
+    )
 
 
 def test_padding_keeps_each_texts_last_place():

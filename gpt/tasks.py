@@ -54,6 +54,12 @@ def passes(task, text):
     return task["name"] in WORD.findall(text) and all(used(task, text))
 
 
+def score(task, text):
+    """A finer check than pass or fail: the share of the name and the asked words the text has."""
+    found = [task["name"] in WORD.findall(text), *used(task, text)]
+    return sum(found) / len(found)
+
+
 def attempt(model, words, task, lines=prompt, **how):
     """Ask the model for a story. Returns what it wrote, whether that passes, whether it ended."""
     asked = words.encode(lines(task))
