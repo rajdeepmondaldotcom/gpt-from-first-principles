@@ -44,8 +44,16 @@ class Service:
         threading.Thread(target=self.work, daemon=True).start()
 
     def submit(self, prompt, limit, **how):
-        """Queue a prompt. Returns the request and the queue its tokens will come on, or None."""
-        request = Request(self.words.encode(prompt), limit, stop=self.words.end, how=how)
+        """Queue a prompt. Returns the request and the queue its tokens will come on, or None.
+
+        The model never trained past its context, so the answer stops there. A prompt that fills
+        the context leaves no room to write: a ValueError.
+        """
+        ids = self.words.encode(prompt)
+        room = self.engine.model.context - len(ids)
+        if room < 1:
+            raise ValueError("the prompt fills the model's context")
+        request = Request(ids, min(limit, room), stop=self.words.end, how=how)
         out = queue.Queue()
         try:
             self.inbox.put_nowait((request, out, time.perf_counter()))
@@ -116,12 +124,16 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/v1/chat/completions":
             return self.reply(404, "text/plain", b"not found\n")
         ask = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-        job = self.service.submit(
-            ask["messages"][-1]["content"],
-            ask.get("max_tokens", 250),
-            temperature=ask.get("temperature", 0.8),
-            top_p=ask.get("top_p", 1.0),
-        )
+        try:
+            job = self.service.submit(
+                ask["messages"][-1]["content"],
+                ask.get("max_tokens", 250),
+                temperature=ask.get("temperature", 0.8),
+                top_p=ask.get("top_p", 1.0),
+            )
+        except ValueError as problem:  # nothing we can do with this request: say why
+            body = json.dumps({"error": str(problem)}).encode()
+            return self.reply(400, "application/json", body + b"\n")
         first = job[1].get() if job else None
         if first is None:
             return self.reply(503, "application/json", b'{"error": "busy, try again"}\n')
@@ -164,7 +176,7 @@ def serve(service, port=8000):
     return server
 
 
-PAGE = """<!doctype html>
+PAGE = r"""<!doctype html>
 <meta charset="utf-8">
 <title>Storyteller</title>
 <style>
@@ -172,6 +184,7 @@ PAGE = """<!doctype html>
   input { font: inherit; width: 8em; margin: 0 .3em .3em 0; }
   button { font: inherit; padding: .2em .8em; }
   #story { white-space: pre-wrap; margin-top: 1em; min-height: 6em; }
+  #next { width: 20em; }
 </style>
 <h1>Tell me a story</h1>
 <p>
@@ -183,40 +196,60 @@ PAGE = """<!doctype html>
   <label><input type="checkbox" id="aloud" style="width:auto" checked> read it aloud</label>
 </p>
 <div id="story"></div>
+<p id="more" hidden>
+  <input id="next" placeholder="What happens next?">
+  <button id="on">Go on</button>
+</p>
 <script>
-const story = document.getElementById("story");
-function say(text) {
+const story = document.getElementById("story"), more = document.getElementById("more");
+let text = "";  // everything the model has read and written so far
+function say(words) {
   if (document.getElementById("aloud").checked && window.speechSynthesis)
-    speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+    speechSynthesis.speak(new SpeechSynthesisUtterance(words));
 }
-document.getElementById("go").onclick = async () => {
-  const words = [...document.querySelectorAll(".word")].map(w => w.value).join(", ");
-  const prompt = `Name: ${document.getElementById("name").value}\\nWords: ${words}\\nStory:`;
-  story.textContent = "";
-  if (window.speechSynthesis) speechSynthesis.cancel();
+async function tell(limit) {
+  more.hidden = true;
   const reply = await fetch("/v1/chat/completions", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({messages: [{role: "user", content: prompt}], stream: true}),
+    body: JSON.stringify({messages: [{role: "user", content: text}], stream: true, max_tokens: limit}),
   });
-  if (!reply.ok) { story.textContent = "The storyteller is busy. Try again in a moment."; return; }
+  if (reply.status === 400) { story.textContent += "\n\nThe end: this story is as long as the model can read."; return; }
+  if (!reply.ok) { story.textContent += "\n\nThe storyteller is busy. Try again in a moment."; return; }
   const reader = reply.body.getReader(), decoder = new TextDecoder();
   let rest = "", sentence = "";
   for (;;) {
     const {done, value} = await reader.read();
     if (done) break;
     rest += decoder.decode(value, {stream: true});
-    const events = rest.split("\\n\\n");
+    const events = rest.split("\n\n");
     rest = events.pop();
     for (const event of events) {
       if (!event.startsWith("data: ") || event === "data: [DONE]") continue;
       const piece = JSON.parse(event.slice(6)).choices[0].delta.content;
       story.textContent += piece;
+      text += piece;
       sentence += piece;
-      if (/[.!?]\\s*$/.test(sentence)) { say(sentence); sentence = ""; }
+      if (/[.!?]\s*$/.test(sentence)) { say(sentence); sentence = ""; }
     }
   }
   if (sentence.trim()) say(sentence);
+  more.hidden = false;
+}
+document.getElementById("go").onclick = () => {
+  const words = [...document.querySelectorAll(".word")].map(w => w.value).join(", ");
+  text = `Name: ${document.getElementById("name").value}\nWords: ${words}\nStory:`;
+  story.textContent = "";
+  if (window.speechSynthesis) speechSynthesis.cancel();
+  tell(120);
+};
+document.getElementById("on").onclick = () => {
+  const next = " " + document.getElementById("next").value.trim();
+  story.textContent += next;
+  text += next;
+  say(next);
+  document.getElementById("next").value = "";
+  tell(100);
 };
 </script>
 """

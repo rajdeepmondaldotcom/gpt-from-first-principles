@@ -88,8 +88,24 @@ def test_people_asking_at_once_each_get_their_own_answer(running):
     assert service.counts["finished"] == 6
 
 
-def test_a_reader_who_leaves_frees_their_place(running):
-    _, service, url = running
+def test_an_answer_stops_at_the_models_context(running):
+    net, _, url = running  # a context of 64 tokens, and 10 of them are the prompt
+    assert ask(url, "Once upon ", limit=500) == alone(net, "Once upon ", limit=54)
+
+
+def test_a_prompt_that_fills_the_context_is_refused_with_the_reason(running):
+    _, _, url = running
+    with pytest.raises(urllib.error.HTTPError) as refused:
+        ask(url, "x" * 64)
+    assert refused.value.code == 400 and b"context" in refused.value.read()
+
+
+def test_a_reader_who_leaves_frees_their_place():
+    torch.manual_seed(0)
+    roomy = GPT(vocab=257, context=5002, width=32, heads=4, layers=2, kv_heads=2)
+    service = Service(roomy, WORDS, budget=10**9)
+    server = serve(service, port=0)
+    url = f"http://127.0.0.1:{server.server_port}"
     reply = post(url, "Go", stream=True, limit=5000)
     reply.readline()
     reply.close()  # the reader walks away after one piece
@@ -98,6 +114,8 @@ def test_a_reader_who_leaves_frees_their_place(running):
             break
         time.sleep(0.01)
     assert not service.outs and service.counts["tokens"] < 5000
+    service.running = False
+    server.shutdown()
 
 
 def test_no_memory_means_a_plain_no_at_once():
