@@ -138,6 +138,13 @@ if __name__ == "__main__":
         part = counts[name]
         say(f"{name}: {part['games']:,} games, {part['tokens']:,} tokens")
     say(f"tokens in the vocabulary: {words.end + 1:,}")
+    plays = [len(game.split()) for game in unseen]
+    plain = sum(ch.isalpha() or ch.isspace() for game in unseen for ch in game)
+    say(
+        f"unseen games: {(counts['val']['tokens'] - len(unseen)) / sum(plays):.1f} tokens a move, "
+        f"half have {sorted(plays)[len(plays) // 2]} moves or fewer, "
+        f"{plain / sum(map(len, unseen)):.0%} of a game is letters and spaces"
+    )
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     ids = read(cache / "chess_train.bin").to(device)
