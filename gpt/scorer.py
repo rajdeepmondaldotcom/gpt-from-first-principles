@@ -5,10 +5,8 @@ import re
 import torch
 from torch import nn
 
-from gpt.reinforce import sample
+from gpt.reinforce import TRIES, sample
 from gpt.tasks import score
-
-TRIES = 4  # lesson 27 wrote this many stories for each order
 
 
 class Scorer(nn.Module):
@@ -73,12 +71,12 @@ def liked(model, words, tasks, generator):
     return [readers(words, task, sample(model, words, task, generator)[0]) for task in tasks]
 
 
-def pad(texts, fill, device="cpu"):
+def pad(texts, fill):
     """Stack lists of token ids of different lengths. Returns the grid and each row's last place."""
-    ids = torch.full((len(texts), max(map(len, texts))), fill, device=device)
+    ids = torch.full((len(texts), max(map(len, texts))), fill)
     for row, text in enumerate(texts):
-        ids[row, : len(text)] = torch.tensor(text, device=device)
-    return ids, torch.tensor([len(text) - 1 for text in texts], device=device)
+        ids[row, : len(text)] = torch.tensor(text)
+    return ids, torch.tensor([len(text) - 1 for text in texts])
 
 
 def comparison_loss(better, worse):
@@ -158,7 +156,7 @@ if __name__ == "__main__":
     for at in range(rounds):
         examples, group, picked = [], [], []
         for g in range(4):
-            for _ in range(4):
+            for _ in range(TRIES):
                 example, mark = sample(model, words, tasks[4 * at + g], generator)
                 examples.append(example)
                 checked.append(mark)  # lesson 27's score: the training never sees it

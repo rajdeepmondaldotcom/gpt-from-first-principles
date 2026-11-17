@@ -109,7 +109,7 @@ The engine's thread:
 
 If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine.
 
-The rest of the file is Python's standard web server and the page you see in the browser. The page reads each finished sentence aloud in the browser's own voice, and sends the story so far back with the line you type.
+The rest of the file is Python's standard web server, and `gpt/page.html` is the page you see in the browser. It reads each finished sentence aloud in the browser's own voice, and sends the story so far back with the line you type.
 
 ## The proof
 

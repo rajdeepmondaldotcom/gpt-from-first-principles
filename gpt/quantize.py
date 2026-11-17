@@ -56,7 +56,7 @@ if __name__ == "__main__":
     from pathlib import Path
 
     from gpt.data import documents, read
-    from gpt.evaluate import interval, losses
+    from gpt.evaluate import losses, paired_gap
     from gpt.generate import generate
     from gpt.results import save, say
     from gpt.story import load
@@ -103,9 +103,7 @@ if __name__ == "__main__":
             if isinstance(q, Quantized)
         )
         scored = [losses(small, doc, 256, 256).tolist() for doc in unseen]
-        gaps = [[s - f for s, f in zip(new, old)] for new, old in zip(scored, full)]
-        gap = sum(map(sum, gaps)) / sum(map(len, gaps))
-        low, high = interval(gaps, generator)
+        gap, (low, high) = paired_gap(scored, full, generator)
         say(
             f"{bits} bits: {size(small) / 1e6:.1f} MB, {gap:+.4f} nats "
             f"(95% interval {low:+.4f} to {high:+.4f}), {speed(small):,.0f} tokens a second"

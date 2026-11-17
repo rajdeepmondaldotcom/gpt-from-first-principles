@@ -48,14 +48,15 @@ if __name__ == "__main__":
     # On the processor: one token at a time is faster there than on the graphics chip, and it repeats.
     model, words = load(Path("data/cache/story"))
     prompt = words.encode("Once upon a time")
+    word = re.compile(r"[a-z]+")
     known = set()  # each word of the training text, in lowercase
     for story in documents(read(Path("data/cache/stories_train.bin")), words.end):
-        known.update(re.findall(r"[a-z]+", words.decode(story.tolist()).lower()))
+        known.update(word.findall(words.decode(story.tolist()).lower()))
 
     def made_up(texts):
         """The share of words in these texts that the training text never uses."""
-        used = [word for text in texts for word in re.findall(r"[a-z]+", text.lower())]
-        return sum(word not in known for word in used) / len(used)
+        used = [w for text in texts for w in word.findall(text.lower())]
+        return sum(w not in known for w in used) / len(used)
 
     def write(**how):
         """One story as text, and whether it reached its end."""

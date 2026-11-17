@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 
 from gpt.data import documents, read
-from gpt.evaluate import interval, losses, rate_interval
+from gpt.evaluate import interval, losses, paired_gap, rate_interval
 from gpt.results import save, say
 from gpt.story import save_llama
 from gpt.tasks import attempt, count_documents, make, prompt, used
@@ -104,12 +104,6 @@ def keep(model, cache, name):
         (out / file).write_text((cache / "story" / file).read_text())
 
 
-def plain_gap(after, before, generator):
-    """How much worse plain stories got, token by token, with its 95% interval."""
-    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
-    return sum(map(sum, gaps)) / sum(map(len, gaps)), interval(gaps, generator)
-
-
 if __name__ == "__main__":
     from gpt.optim import AdamW
     from gpt.story import load
@@ -133,7 +127,7 @@ if __name__ == "__main__":
             say(f"step {step}: {loss:.3f} nats on the answers")
     model.to("cpu")
     after, plain_after = measure("after", model, words, held, unseen, generator)
-    gap, (low, high) = plain_gap(plain_after, plain_before, generator)
+    gap, (low, high) = paired_gap(plain_after, plain_before, generator)
     say(
         f"plain stories, after minus before: {gap:+.3f} nats, 95% interval {low:+.3f} to {high:+.3f}"
     )

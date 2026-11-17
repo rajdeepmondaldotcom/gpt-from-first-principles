@@ -13,8 +13,8 @@ def preference_loss(ours_better, ours_worse, frozen_better, frozen_worse, beta=0
 if __name__ == "__main__":
     from pathlib import Path
 
-    from gpt.evaluate import interval
-    from gpt.finetune import keep, measure, plain_gap, prepare
+    from gpt.evaluate import interval, paired_gap
+    from gpt.finetune import keep, measure, prepare
     from gpt.optim import AdamW
     from gpt.reinforce import answer_log_chances
     from gpt.results import save, say
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         f"{sum(map(sum, gained))} of {len(flat)}, 95% interval {low:.2f} to {high:.2f}"
     )
     after, plain_after = measure("after the pairs", model, words, tasks, unseen, generator)
-    gap, (low_gap, high_gap) = plain_gap(plain_after, plain_start, generator)
+    gap, (low_gap, high_gap) = paired_gap(plain_after, plain_start, generator)
     say(
         f"plain stories, after minus before: {gap:+.3f} nats, "
         f"95% interval {low_gap:+.3f} to {high_gap:+.3f}"
