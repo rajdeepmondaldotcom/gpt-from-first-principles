@@ -10,7 +10,7 @@ def test_one_row_by_hand():
     assert scale.item() == pytest.approx(1 / 7)  # the largest size, 1.0, maps to 7
     assert numbers.tolist() == [[4, -7, 2, 0]]  # 4.2 rounds to 4, 1.82 rounds to 2
     back = numbers * scale
-    assert back.tolist() == pytest.approx([4 / 7, -1.0, 2 / 7, 0.0])
+    assert back[0].tolist() == pytest.approx([4 / 7, -1.0, 2 / 7, 0.0])
 
 
 @pytest.mark.parametrize("bits", [8, 4])
