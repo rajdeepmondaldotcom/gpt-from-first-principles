@@ -1,30 +1,32 @@
 {
-  "commit": "d914832",
+  "commit": "a2a442b",
   "python": "3.13.13",
   "torch": "2.15.0",
   "timings": {
     "cpu": {
-      "forward": 0.009965499979443848,
-      "step": 0.030006500077433884
+      "forward": 0.024378917063586414,
+      "step": 0.08031025005038828
     },
     "mps": {
-      "forward": 0.1734659590292722,
-      "step": 0.9861173749668524,
-      "flops_per_second": 306917604353.30896
+      "forward": 0.20825037499889731,
+      "step": 0.9283229160355404,
+      "flops_per_second": 326025327079.62683
     }
   },
   "printed": [
     "parameters: 795,392, 3.2 MB of weights",
     "training state: weights, slopes and two averages, 12.7 MB",
-    "layer results for one batch of 32 x 64 tokens: 54.3 MB",
+    "kept for the backward pass, one batch of 32 x 64 tokens: 118.9 MB",
+    "the same batch with 128 tokens in each window: 2.28 times as much kept",
     "forward pass over 2,048 tokens: 3.52 billion multiplies and adds",
-    "forward pass: 10 ms, 353 billion a second",
-    "training step: 30 ms, 3.0 times the forward pass",
+    "forward pass: 24 ms, 144 billion a second",
+    "training step: 80 ms, 3.3 times the forward pass",
     "cache: 4,096 bytes a token",
     "one new token after 64: 0.50 for each byte read",
-    "one training step: 830 for each byte of training state",
-    "on the graphics chip, 5,374,464 parameters: 986 ms a training step",
-    "that is 307 billion multiplies and adds a second",
-    "three hours at that speed: 3.3e+15 multiplies and adds"
+    "one training step: 80 for each byte it holds",
+    "on the graphics chip, 5,374,464 parameters: 928 ms a training step",
+    "that step takes 4.5 times its forward pass",
+    "that is 326 billion multiplies and adds a second",
+    "three hours at that speed: 3.5e+15 multiplies and adds"
   ]
 }

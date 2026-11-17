@@ -1,5 +1,5 @@
 {
-  "commit": "d914832",
+  "commit": "a2a442b",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "cpu",
@@ -22,7 +22,7 @@
     "temperature 1.5": {
       "different": 20,
       "finished": 18,
-      "made_up": 0.1316
+      "made_up": 0.126
     },
     "temperature 1, top-p 0.9": {
       "different": 20,
@@ -44,7 +44,7 @@
     "  'Once upon a time, there was a little girl named Amy. Amy loved to eat spaghetti. One day, she saw a big, round thing in the kitchen. It looked like a '",
     "temperature 1: 20 different stories of 20, 20 reach their end, 0.3% of their words made up",
     "  'Once upon a time, in a big forest, there was a small cabin. In the cabin lived a funny bear named Bobo. Bobo had a favorite seat in the woods. He was '",
-    "temperature 1.5: 20 different stories of 20, 18 reach their end, 13.2% of their words made up",
+    "temperature 1.5: 20 different stories of 20, 18 reach their end, 12.6% of their words made up",
     "  'Once upon a time, there was an apron. The apron breatamed purple lying coiled around shining in the shadows across the wasops until there was just as '",
     "temperature 1, top-p 0.9: 20 different stories of 20, 20 reach their end, 0.0% of their words made up",
     "  'Once upon a time, there was a bird. The bird had a pretty feather. The bird liked to fly high in the sky. The bird was a happy bird.\\nOne day, the bird'"

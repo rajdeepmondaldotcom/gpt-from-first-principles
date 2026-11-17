@@ -6,21 +6,21 @@ To write each new token, the model reads the whole text again from its first tok
 
 ## The idea
 
-Ask what changes when one token is added to the end. Lesson 7's mask lets a token read only the tokens before it. So the results for the first 200 tokens are the same whether or not a 201st follows. Working them out again is waste.
+Add one token to the end. Lesson 7's mask lets a token read only the tokens before it, so the results for the first 200 tokens are the same whether or not a 201st follows. We need not work them out again.
 
-The new token does need something from the old ones. In each block, attention scores the new token's query against the key of each earlier token and mixes their values. It needs nothing else from them: their queries and what their MLPs made are used only for their own results.
+The new token does need something from the old ones. In each block, attention scores the new token's query against the key of each earlier token and mixes their values. It needs nothing else from them: only their own results use their queries and what their MLPs made.
 
 So keep, in each block, the key and the value of each token read so far. This is the KV cache. To add a token, run that one token through the model. In each block it makes its query, key and value, puts the key and value at the end of the cache, and reads the whole cache.
 
-A text of n tokens is then read n times in all. Without the cache it is read 1 + 2 + ... + n times, about n² / 2.
+For a text of n tokens the model then reads n tokens in all. Without the cache it reads 1 + 2 + ... + n, about n² / 2.
 
-Three details break a cache, and each has a test here.
+A cache goes wrong in three places, and each has a test here.
 
-- The place. The new token's place is the number of tokens in the cache. A cache that starts each call at place 0 turns the query by the wrong angle.
-- More than one new token. A prompt can arrive in pieces. The new tokens need lesson 7's mask among themselves: each reads the whole cache, and the new tokens up to itself.
-- Grouped heads. The cache holds one key for each key head, and lesson 16 repeats them for the query heads at the moment of use.
+- The new token's place is the number of tokens in the cache. A cache that starts each call at place 0 turns the new query and key by the wrong angle, and the wrong key stays in the cache.
+- A prompt can arrive in pieces, so one call can bring several new tokens. The new tokens need lesson 7's mask among themselves: each reads the whole cache, and the new tokens up to itself.
+- With grouped heads the cache holds one key for each key head, and lesson 16 repeats them for the query heads at the moment of use.
 
-The cache costs memory, and lesson 17 counted it. The story model keeps 6,144 bytes for each token, so a story of 250 tokens holds 1.5 MB.
+The cache costs memory, and lesson 17 counted it. The story model has 6 blocks and 4 key heads of 32 numbers, so it keeps 2 × 6 × 4 × 32 × 4 = 6,144 bytes for each token. A story of 250 tokens holds 1.5 MB.
 
 ## By hand
 
@@ -36,7 +36,7 @@ Without it the model reads 4 tokens for the first new one, 5 for the second, and
 
 ## The code
 
-Lesson 15 quoted attention with two names left for later. Here they are. `seen` is how many tokens the cache holds, and it sets the new tokens' places:
+Lesson 15 quoted attention with two names left for later. `seen` is how many tokens the cache holds, and it sets the new tokens' places:
 
 ```python
 # gpt/model.py
@@ -63,17 +63,20 @@ The new keys and values join the old ones, and the cache keeps the result:
 
 `tril(seen)` keeps, in row i, the first `seen` + i + 1 columns: the whole cache and the new tokens up to this one.
 
-The loop that writes hands the model only what it has not read:
+The loop that writes hands the model only what it has not read. The model's second argument, `kept`, is a list with one cache for each block:
 
 ```python
 # gpt/generate.py
 @torch.no_grad()
 def generate(model, ids, n, stop=None, cache=True, **how):
-    """Write up to n tokens after `ids`. With a cache, the model reads each token once."""
+    """Write up to n tokens after `ids`, stopping at the context the model trained on.
+
+    With a cache, the model reads each token once.
+    """
     ids, device = list(ids), model.embed.weight.device
     kept = [{} for _ in model.blocks] if cache else None
     unread = ids
-    for _ in range(n):
+    for _ in range(min(n, model.context - len(ids))):
         scores = model(torch.tensor([unread if cache else ids], device=device), kept)[0, -1]
         ids.append(choose(scores, **how))
         if ids[-1] == stop:
@@ -100,15 +103,15 @@ uv run python -m gpt.generate
 ```
 
 ```
-without a cache: 20,700 tokens read, 106 tokens a second
-with the cache: 203 tokens read, 386 tokens a second
+without a cache: 20,700 tokens read, 102 tokens a second
+with the cache: 203 tokens read, 373 tokens a second
 the two stories are the same: True
 the cache holds 6,144 bytes for each token
 ```
 
-Timings are from an M4 laptop and move from run to run.
+Timings are from an M4 laptop that was running other jobs, and they move from run to run.
 
-The cache reads 102 times fewer tokens and writes 3.6 times as fast. It still calls the model 200 times, once for each token.
+With the cache the model reads 102 times fewer tokens and writes 3.7 times as fast. It still calls the model 200 times, once for each token.
 
 ## What it still cannot do
 
@@ -128,9 +131,9 @@ With: 10 + 99 = 109. Without: 10 + 11 + ... + 109 = 100 × (10 + 109) / 2 = 5,95
 A token's query is used once, to work out its own result. Its key and value are read again by each token that comes after.
 </details>
 
-<details><summary>How much memory does the story model's cache need for a text of 1,000 tokens?</summary>
+<details><summary>How much memory does the story model's cache need for a full context of 256 tokens?</summary>
 
-6,144 bytes a token: about 6.1 MB.
+6,144 bytes a token: 1,572,864 bytes, about 1.6 MB.
 </details>
 
 <details><summary>From lesson 7: why does adding a token leave the earlier results as they were?</summary>

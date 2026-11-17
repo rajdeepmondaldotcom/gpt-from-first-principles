@@ -2,7 +2,7 @@
 
 By the end of this page four processes train one model between them, and they end with the weights one process would have reached alone.
 
-The run we picked is 8,921 steps on one graphics chip. A run on text the size of the web is too long for one machine. To use many machines, a step has to be split among them without changing its result.
+The run we picked is 8,921 steps on one graphics chip, and lesson 19 put the web's text at about 250,000 times what it reads. To use many machines, we have to split a step among them without changing its result.
 
 ## The idea
 
@@ -15,11 +15,9 @@ Each worker is a separate process with its own copy of the model and its own opt
 3. The coordinator averages the slopes and sends the average to each worker.
 4. Each worker takes one optimizer step with that average.
 
-Equal weights, the same slopes and the same optimizer give equal weights after the step. The weights themselves never travel.
+Equal weights, the same slopes and the same optimizer give equal weights after the step. Only the slopes travel, and they are as large as the model: 4 bytes for each parameter, from each worker and back, on each step. Between machines, sending them takes time that one process alone would not spend. On one machine PyTorch hands a tensor to another process through shared memory, so the run below does not measure that cost.
 
-The slopes do, and they are as large as the model: 4 bytes for each parameter, from each worker and back, on each step. Sending them takes time that one process alone would not spend. That is one reason four workers are less than four times as fast as one.
-
-The other reason is hardware. Workers pay off when each has a processor or a graphics chip of its own. On one laptop they share the same cores, and the run below shows what that buys.
+Workers pay off when each has a processor or a graphics chip of its own. On one laptop they share the same cores.
 
 ## By hand
 
@@ -52,6 +50,7 @@ def work(pipe, shape, seed, rate):
 def share(pipes, x, y):
     """One step. Split the batch, gather each worker's slopes, send back their weighted average."""
     xs, ys = x.chunk(len(pipes)), y.chunk(len(pipes))
+    assert len(xs) == len(pipes), "a worker with no share would wait for one forever"
     for pipe, part, target in zip(pipes, xs, ys):
         pipe.send((part, target))
     slopes = [pipe.recv() for pipe in pipes]
@@ -65,7 +64,7 @@ def share(pipes, x, y):
 
 A pipe is a two-way channel between two processes: `send` puts an object in at one end and `recv` waits for it at the other. `iter(pipe.recv, None)` keeps receiving until a `None` arrives. `x.chunk(4)` cuts a batch into four parts along its first direction. `zip(*slopes)` lines up the same parameter's slopes from each worker.
 
-`work` runs in a process of its own. `share` runs in the coordinator, once for each step.
+`work` runs in a process of its own. `share` runs in the coordinator, once for each step. Two short functions are not shown: `start` builds a model and its optimizer from a seed, and `launch` starts the worker processes, each a fresh Python, and returns a pipe to each.
 
 ## The proof
 
@@ -73,27 +72,29 @@ A pipe is a two-way channel between two processes: `send` puts an object in at o
 uv run pytest tests/test_workers.py
 ```
 
-- Four workers on a batch of 32 windows end three steps with the weights of one process on the whole batch, to 0.00001. The four end equal to each other, to the last bit.
+- Four workers on a batch of 32 windows end three steps with the weights of one process on the whole batch, to 0.00001. The workers add the same numbers in another order, and a 32-bit sum depends on the order. The four end equal to each other, to the last bit.
 - A batch of 30 windows gives shares of 8, 8, 8 and 6. Counted by share, the workers still match one process.
 - With the plain mean in its place, they do not.
+- A batch of 6 windows splits into 3 shares, so 4 workers refuse it. A worker that dies raises an error in the coordinator instead of leaving it waiting.
 
 ```bash
 uv run python -m gpt.workers
 ```
 
 ```
-1 workers: 329 ms a step on a batch of 64 windows
-2 workers: 254 ms a step on a batch of 64 windows
-4 workers: 321 ms a step on a batch of 64 windows
+threads one process spreads its arithmetic over: 4
+1 workers: 169 ms a step on a batch of 64 windows
+2 workers: 149 ms a step on a batch of 64 windows
+4 workers: 134 ms a step on a batch of 64 windows
 ```
 
-Timings are from an M4 laptop and move from run to run.
+Timings are from an M4 laptop that was running other jobs, and they move from run to run.
 
-Two workers are 1.3 times as fast as one, and four are no faster than one. The laptop has no spare cores to give them, and each step ships the slopes twice. The method is right, and this machine has nothing to gain from it. Lesson 41 runs it on four graphics chips.
+Four workers are 1.3 times as fast as one, where four machines could be near four times. One process already spreads its arithmetic over 4 threads, so on this laptop the workers compete with each other for the same cores. Splitting gives the right weights. We have not measured what it gains across machines.
 
 ## What it still cannot do
 
-The text is clean and on disk. The size is chosen. The loop can stop and start, and the checks are written. No model has been trained on any of it yet.
+We have clean text on disk, a chosen size, a loop that can stop and start, and checks written ahead. We have not yet trained a model on any of it.
 
 ## Check yourself
 
