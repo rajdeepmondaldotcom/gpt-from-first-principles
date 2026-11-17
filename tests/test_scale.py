@@ -1,6 +1,7 @@
 import pytest
 import torch
 
+from gpt import scale
 from gpt.cost import forward_flops
 from gpt.model import GPT
 from gpt.scale import law, predict, run, shape
@@ -42,6 +43,17 @@ def test_noise_moves_the_fit_a_little_and_the_miss_reports_it():
     assert predict(fitted, 1e6, 1e7) == pytest.approx(3.5, abs=0.05)
 
 
+def test_the_fit_never_goes_below_zero():
+    floorless = TRUE | {"parts": [0.0, 1.1, 1.4]}  # a law with no floor, and noisy runs of it
+    noise = 0.02 * torch.randn(len(RUNS), generator=torch.Generator().manual_seed(0))
+    runs = [(n, d, predict(floorless, n, d) + e) for (n, d, _), e in zip(RUNS, noise.tolist())]
+    fitted = law(runs)  # left free, the best fit to these runs has a floor of -0.2
+    assert min(fitted["parts"]) >= 0 and (fitted["alpha"], fitted["beta"]) == (0.4, 0.35)
+    rising = [(n, d, 2 + n / 1e6) for n, d, _ in RUNS]  # worse with size: no such law fits
+    with pytest.raises(AssertionError, match="zero or more"):
+        law(rising)
+
+
 def test_for_a_fixed_budget_there_is_one_best_size_and_it_grows_with_the_budget():
     small, large = best_size(TRUE, 1e14), best_size(TRUE, 16e14)
     assert predict(TRUE, small, 1e14 / (6 * small)) < predict(TRUE, small / 3, 1e14 / (2 * small))
@@ -73,3 +85,23 @@ def test_a_run_spends_its_budget_and_a_bigger_model_gets_fewer_steps():
     count, tokens, _ = run(small, budget, ids, ids[:2048], size=4)
     assert tokens == 5 * 4 * 256 and count == sum(p.numel() for p in GPT(**small).parameters())
     assert run(big, budget, ids, ids[:2048], size=4)[1] < tokens
+
+
+def test_a_seed_repeats_its_run_and_another_seed_does_not():
+    ids = torch.randint(4097, (20000,), generator=torch.Generator().manual_seed(0))
+    small = shape(32, 2)
+    budget = 3 * forward_flops(GPT(**small), 4 * 256, 256) * 3
+
+    def loss(seed):
+        return run(small, budget, ids, ids[:2048], seed=seed, size=4)[2]
+
+    assert loss(0) == loss(0) and loss(0) != loss(1)
+
+
+def test_a_run_warms_up_for_a_tenth_of_its_steps(monkeypatch):
+    asked = {}
+    monkeypatch.setattr(scale, "train", lambda *a, **loop: asked.update(loop) or iter(()))
+    ids = torch.randint(4097, (20000,), generator=torch.Generator().manual_seed(0))
+    small = shape(32, 2)
+    run(small, 3 * forward_flops(GPT(**small), 4 * 256, 256) * 30, ids, ids[:2048], size=4)
+    assert asked["warmup"] == 3  # the loop's own 100 would leave a 30-step run all warmup

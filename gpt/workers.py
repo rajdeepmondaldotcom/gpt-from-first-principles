@@ -35,6 +35,7 @@ def work(pipe, shape, seed, rate):
 def share(pipes, x, y):
     """One step. Split the batch, gather each worker's slopes, send back their weighted average."""
     xs, ys = x.chunk(len(pipes)), y.chunk(len(pipes))
+    assert len(xs) == len(pipes), "a worker with no share would wait for one forever"
     for pipe, part, target in zip(pipes, xs, ys):
         pipe.send((part, target))
     slopes = [pipe.recv() for pipe in pipes]
@@ -52,6 +53,7 @@ def launch(count, shape, seed, rate):
     for _ in range(count):
         ours, theirs = context.Pipe()
         context.Process(target=work, args=(theirs, shape, seed, rate), daemon=True).start()
+        theirs.close()  # our copy of the worker's end: closed, a dead worker is an error, not a wait
         pipes.append(ours)
     return pipes
 

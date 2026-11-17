@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from gpt.gpt2 import batch, loss_on
@@ -55,3 +56,19 @@ def test_unequal_shares_are_weighted_by_their_size():
     for x, y in batches(30):
         plain_mean(pipes, x, y)
     assert not close(alone(30), finish(pipes)[0])
+
+
+def test_a_batch_too_small_to_share_is_refused():
+    pipes = launch(4, SHAPE, seed=0, rate=1e-2)
+    x, y = batches(6)[0]  # 6 windows split into 3 shares of 2: the fourth worker would get none
+    with pytest.raises(AssertionError, match="no share"):
+        share(pipes, x, y)
+    finish(pipes)
+
+
+def test_a_worker_that_dies_is_an_error_and_not_a_wait():
+    (pipe,) = launch(1, SHAPE, seed=0, rate=1e-2)
+    pipe.send(("not", "tensors"))  # the worker fails on this and exits
+    assert pipe.poll(60)  # its end of the pipe closes, and we are told
+    with pytest.raises(EOFError):
+        pipe.recv()

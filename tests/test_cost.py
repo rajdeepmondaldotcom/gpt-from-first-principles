@@ -4,7 +4,7 @@ from torch import nn
 
 from gpt import model as model_file
 from gpt.attention import attend
-from gpt.cost import attend_in_tiles, cache_bytes, forward_flops, layer_bytes
+from gpt.cost import attend_in_tiles, cache_bytes, forward_flops, kept_bytes
 from gpt.gpt2 import loss_on
 from gpt.model import GPT
 from gpt.optim import AdamW
@@ -66,11 +66,18 @@ def test_the_cache_formula_equals_the_cache(kv_heads):
     )  # falls with the heads
 
 
-def test_layer_results_grow_with_the_batch_and_with_the_context():
+def test_what_a_step_keeps_doubles_with_the_batch_and_more_than_doubles_with_the_context():
     model = small()
-    one = layer_bytes(model, torch.randint(65, (1, 8)))
-    assert layer_bytes(model, torch.randint(65, (2, 8))) == 2 * one
-    assert layer_bytes(model, torch.randint(65, (1, 16))) == 2 * one
+
+    def kept(rows, length):
+        ids = torch.randint(65, (rows, length + 1), generator=torch.Generator().manual_seed(0))
+        return kept_bytes(model, ids[:, :-1], ids[:, 1:])
+
+    grids = 2 * 2 * 4 * 16 * 16 * 4  # 2 blocks, 2 rows, 4 heads, 16 x 16 chances, 4 bytes each
+    assert kept(2, 16) > grids  # the backward pass needs each grid of chances, and more
+    assert kept(4, 16) == pytest.approx(2 * kept(2, 16), rel=0.02)
+    assert 2 < kept(2, 16) / kept(2, 8) < 4  # layer results double; each grid grows four times
+    assert all(p.grad is None for p in model.parameters())  # measuring trains nothing
 
 
 @pytest.mark.parametrize("tile", [1, 3, 8])

@@ -5,6 +5,7 @@ import json
 import unicodedata
 import urllib.request
 import zlib
+from itertools import pairwise
 from pathlib import Path
 
 import torch
@@ -12,7 +13,7 @@ import torch
 from gpt.bpe import END, Tokenizer, train
 from gpt.results import save, say
 
-# 2.2 GB of short stories written for small children. We take the first 200 MB of one fixed copy.
+# 2.2 GB of short stories written for small children. We take the start of one fixed copy.
 URL = (
     "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/"
     "f54c09fd23315a6f9c86f9dc80f725de7d8f9c64/TinyStoriesV2-GPT4-train.txt"
@@ -21,14 +22,15 @@ SHA256 = "ee5242d9d94d6df3b5813e01adb0ee278eb77aa3bb7395fbd22cbe6e368869e9"
 PRIME = 2**31 - 1
 
 
-def fetch(path, megabytes=200):
-    """Download the first `megabytes` of the stories, once, and check they are the bytes we used."""
+def fetch(path):
+    """Download the first 209,715,200 bytes of the stories, once, and check they are the ones we used."""
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
-        ask = urllib.request.Request(URL, headers={"Range": f"bytes=0-{megabytes * 2**20 - 1}"})
+        ask = urllib.request.Request(URL, headers={"Range": f"bytes=0-{200 * 2**20 - 1}"})
         with urllib.request.urlopen(ask) as reply:
             path.write_bytes(reply.read())
-    assert hashlib.sha256(path.read_bytes()).hexdigest() == SHA256, f"{path} is not the same slice"
+    if hashlib.sha256(path.read_bytes()).hexdigest() != SHA256:
+        raise ValueError(f"{path} is not the slice this lesson measured. Delete it and run again.")
 
 
 def clean(doc):
@@ -64,11 +66,12 @@ def minhash(items, a, b):
     return ((a[:, None] * x + b[:, None]) % PRIME).min(dim=1).values
 
 
-def near_repeats(docs, least=0.8, bands=8, rows=4):
+def near_repeats(docs, least=0.8):
     """Each document that shares at least `least` of its word runs with an earlier one.
 
     Returns a dictionary: the index of the later document, then the index of the one it repeats.
     """
+    bands, rows = 8, 4  # 32 scrambles, in 8 bands of 4
     generator = torch.Generator().manual_seed(0)
     a, b = (torch.randint(1, PRIME, (bands * rows,), generator=generator) for _ in range(2))
     first, drop = {}, {}  # first[key]: the earliest kept document with that band of numbers
@@ -117,6 +120,13 @@ def write(path, ids):
 def read(path):
     """Token ids from disk. The file is mapped, not loaded: only the parts a batch touches are read."""
     return torch.from_file(str(path), dtype=torch.int32, size=path.stat().st_size // 4)
+
+
+def documents(ids, end):
+    """Cut a run of token ids into its documents, each with the end token before and after."""
+    mark = torch.tensor([end], dtype=ids.dtype)
+    cuts = [-1, *(ids == end).nonzero().flatten().tolist()]
+    return [torch.cat([mark, ids[a + 1 : b + 1]]) for a, b in pairwise(cuts) if b - a > 1]
 
 
 def tokenizer(path):
