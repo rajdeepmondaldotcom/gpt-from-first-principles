@@ -69,15 +69,23 @@ if __name__ == "__main__":
 
     prompts = [text[300 * i : 300 * i + 64].tolist() for i in range(16)]
 
-    # How many times does one token's pass call into PyTorch? Each call has a cost of its own.
-    kept = [{} for _ in ours.blocks]
-    with torch.no_grad():
-        ours(torch.tensor([prompts[0]]), kept)
-        with torch.profiler.profile() as watched:
-            ours(torch.tensor([[prompts[1][0]]]), kept)
-    calls = [e for e in watched.events() if e.name.startswith("aten::")]
-    outer = sum(not (e.cpu_parent and e.cpu_parent.name.startswith("aten::")) for e in calls)
+    def calls(net):
+        """How many times one token's pass calls into PyTorch. Each call has a cost of its own."""
+        kept = [{} for _ in net.blocks]
+        with torch.no_grad():
+            net(torch.tensor([prompts[0]]), kept)
+            with torch.profiler.profile() as watched:
+                net(torch.tensor([[prompts[1][0]]]), kept)
+        found = [e for e in watched.events() if e.name.startswith("aten::")]
+        return sum(not (e.cpu_parent and e.cpu_parent.name.startswith("aten::")) for e in found)
+
+    # An untrained model as deep as ours and an eighth as wide: the same calls, far less arithmetic.
+    torch.manual_seed(0)
+    small = GPT(**shape(32, len(ours.blocks)))
+    fewer = sum(p.numel() for p in ours.parameters()) / sum(p.numel() for p in small.parameters())
+    outer = calls(ours)
     say(f"one token's pass makes {outer} calls into PyTorch")
+    say(f"a model {fewer:.0f} times smaller makes {calls(small)}")
 
     def fastest(work, tries=3):
         """Tokens a second for `work`, which writes and returns a count. The best of three."""
@@ -117,9 +125,7 @@ if __name__ == "__main__":
         "ours, processor": ours_alone("cpu"),
         "ours, processor, 16 at once": fastest(ours_batch),
     }
-    torch.manual_seed(0)
-    small = GPT(**shape(32, 2))  # untrained, with 1 weight for each 35 of the story model's
-    numbers["ours, processor, a model 35 times smaller"] = ours_alone("cpu", small)
+    numbers[f"ours, processor, a model {fewer:.0f} times smaller"] = ours_alone("cpu", small)
     if torch.backends.mps.is_available():
         numbers["ours, graphics chip"] = ours_alone("mps")
     for device, name in ((mx.gpu, "graphics chip"), (mx.cpu, "processor")):
