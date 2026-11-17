@@ -29,7 +29,7 @@ The model answers `Once upon a time`, and from lesson 25 an order, so you can wa
 
 Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so.
 
-The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it.
+The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page ends with a question that begins "Predict before you run". Read that question first, and write your guess down before you reach the page's output.
 
 ## By hand
 

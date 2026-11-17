@@ -8,13 +8,13 @@ Each model in this course has read English: Shakespeare, then stories. We have n
 
 Nothing in the model knows what a word is. It reads token ids and gives a chance to each id that could come next. We can put anything written as text in front of it, and chess players write their games down.
 
-A game is a list of moves. `e4` moves a pawn to the square e4, `Nf3` a knight to f3, and `Bxc6` is a bishop taking on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`. On these pages a move is one side's turn, so that line has four. The model sees this line and never a board.
+A game is a list of moves. `e4` moves a pawn to the square e4, `Nf3` a knight to f3, and `Bxc6` is a bishop taking on c6. K, Q and R are king, queen and rook. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`. On these pages a move is one side's turn, so that line has four. The model sees this line and never a board.
 
-The games come from Lichess, a free site that gives the public a record of each rated game played on it. We take March 2014. `moves` strips a record down to its moves, and we keep each game of 20 moves or more.
+The games come from Lichess, a free site that publishes a record of each rated game played on it. We take March 2014. `moves` strips a record down to its moves, and we keep each game of 20 moves or more.
 
 From there the steps are lesson 18's: drop repeats and near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. Lesson 18's `clean` threw out a document under 80% letters and spaces, and a game is 74%. So we switch `clean` off for games: `moves` has done the cleaning.
 
-The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well: that script's long run, called with other data.
+The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's long run, called with other data: it tries the same three rates on short runs, and the same budget buys this smaller model 10,420 steps.
 
 A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal. What is legal depends on where each piece now stands, and the model is shown only the moves.
 
@@ -30,8 +30,6 @@ After `e4 e5` it is white's turn.
 | `Ke3` | no | a king moves one square |
 | `e5` | no | black's pawn stands there |
 | `Qh5` | yes | the pawn has left e2, so the queen's diagonal is open |
-
-Before `e4`, `Qh5` was not legal: the pawn on e2 stood in the way.
 
 Tokens. Lesson 5's tokenizer never joins a letter to a digit, so a move is two tokens or more.
 
@@ -87,7 +85,7 @@ def next_move(model, words, played, temperature=0, generator=None):
     return text[0] if text else ""
 ```
 
-`words` is the tokenizer and `generate` lesson 22's writing loop, told to write 6 tokens at most. The ids start with the end token because each game in the training text came after one. `chess` is python-chess, a library that knows the rules: the referee, and no part of the model. `push_san` plays a move on its board. `parse_san` raises an error for text that names no move the position allows, and reads `--` as a pass, so its answer is checked against the legal moves. `san` writes a move as the rules do.
+`words` is the tokenizer and `generate` lesson 22's writing loop, told to write 6 tokens at most. The ids start with the end token because each game in the training text came after one. `chess` is python-chess, a library that knows the rules and is no part of the model. `push_san` plays a move on its board. `parse_san` raises an error for text that names no move the position allows, and reads `--` as a pass, so its answer is checked against the legal moves. `san` writes a move as the rules do.
 
 ## The proof
 
@@ -98,11 +96,11 @@ uv run pytest tests/test_games.py
 ```
 
 - A record's line becomes moves alone, with notes, numbers, marks and results gone, and a record of 4 moves is left out. Each move kept is legal after the ones before it.
-- The hand examples, and a few more: nothing is legal after checkmate, and `hello` and `--` are no moves. `Nf3+` with no check is a legal move, and not an exact one.
+- The hand examples, and more: nothing is legal after checkmate, and `hello` and `--` are no moves. `Nf3+` with no check is a legal move, and not an exact one.
 - A small model that knows one game by heart writes its next move at three places, castling among them.
 - A cut falls inside a game's first 60 moves. A position is found among the training games it opens, and half a move opens none.
 
-The script downloads 129 MB and trains on the graphics chip for 10,420 steps.
+The script downloads 129 MB and trains on the graphics chip.
 
 ```bash
 uv run python -m gpt.games
@@ -151,7 +149,7 @@ e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O 
 
 The model wrote that game alone, from the end token. Its first 26 moves are legal and the 27th is not.
 
-A legal move can be a terrible one. We do not know yet whether the model can win a game.
+A legal move can be a terrible one. We do not yet know whether it can win a game.
 
 ## Check yourself
 
@@ -159,7 +157,7 @@ Predict before you run: the model has never seen a board. After 10,420 steps of 
 
 <details><summary>Answer</summary>
 
-About nine in ten. On lists of moves that no training game begins with, 737 of 808 moves are legal.
+About nine in ten: on lists of moves that no training game begins with, 737 of 808 are legal.
 </details>
 
 <details><summary>What changed in the model's file to make it play chess?</summary>

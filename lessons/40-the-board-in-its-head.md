@@ -10,19 +10,19 @@ After the model reads a move's last token, each block leaves a row of 256 number
 
 A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on each fourth position of a game, so white is always to move, and a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
 
-We want it weak: a big network could work the position out for itself. One linear layer cannot, so if it reads the board, the stream holds the board along straight lines.
+We want it weak: a big network could work the position out for itself. One linear layer cannot: each score is the stream times one row of weights, summed, so a row is a direction in the stream, a line. If it reads the board, the board lies along such lines.
 
 We check three things.
 
-1. Test on games the probe has not seen, and leave out each position whose moves so far also begin one of its own games: openings repeat.
+1. Test on games the probe has not seen, and leave out each position whose moves so far also begin one of its own games.
 2. Compare with a lazy guess: each square's most usual piece. Score the probe apart on the squares where that guess is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
 The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit.
 
-Take a position where white has a pawn and one queen that can move. Along the probe's line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not.
+Take a position where white has a pawn and one queen that can move. Along the line that tells queen from empty on that square, nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not.
 
-Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, show what the model would say if it stopped after an earlier block.
+Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, show what the model would say if it stopped after an earlier block. We count how often the top token there is already the whole model's, and the chance it gives that token.
 
 ## By hand
 
@@ -33,8 +33,6 @@ A board as 64 numbers, from a1 to h8. An empty square is 0, a white pawn, knight
 | no moves | 1 | 0 | 0 | 2 |
 | `e4` | 0 | 1 | 0 | 2 |
 | `e4 e5 Nf3` | 0 | 1 | 2 | 0 |
-
-The size of a probe. It maps 256 numbers to 64 × 13 = 832 scores: 212,992 weights and 832 biases.
 
 The nudge. Say the probe's score for "empty" on a square trails its score for "queen" by 4, and we want it to lead by 3. Adding the line between the two raises the lead by the line's squared length. If that is 2, we add (3 + 4) / 2 = 3.5 times the line.
 
@@ -75,7 +73,7 @@ def erase(probe, stream, square, piece, margin=3.0, length=None):
     return max(margin - lead, 0.0) / (line @ line).item() * line.detach()
 ```
 
-`view(64, PIECES, -1)` sorts the layer's rows by square and piece. The row for "empty" minus the row for the piece is the one line in the stream along which the probe tells the two apart.
+`view(64, PIECES, -1)` sorts the layer's rows by square and piece, and `line` is the row for empty minus the row for the piece.
 
 ## The proof
 
@@ -126,7 +124,7 @@ Untouched, the model gives queen moves a chance of 20.3%. A margin of 3 takes a 
 
 The final choice is on top in 27% of positions after block 4, and 43% after block 5.
 
-A last probe is fitted and tested on each third position, where either side may be to move. After block 5 it reads 74.9%, against 80.7% with white to move.
+A last probe is fitted and tested on each third position, with either side to move. After block 5 it reads 74.9%, against 80.7% with white to move.
 
 ## What it still cannot do
 
@@ -149,4 +147,4 @@ Each block reads the stream and adds to it, and the final layer reads it to choo
 Go deeper:
 
 - Karvonen, [Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models](https://arxiv.org/abs/2403.15498) (2024). Linear probes and edits on a chess model.
-- Nanda, Lee and Wattenberg, [Emergent Linear Representations in World Models of Self-Supervised Sequence Models](https://arxiv.org/abs/2309.00941) (2023). On Othello, one linear layer reads the board once squares are labelled as the mover's and the opponent's: the thing to try on our 74.9%.
+- Nanda, Lee and Wattenberg, [Emergent Linear Representations in World Models of Self-Supervised Sequence Models](https://arxiv.org/abs/2309.00941) (2023). On Othello, a linear probe reads the board once squares are labelled mine and theirs: the thing to try on our 74.9%.
