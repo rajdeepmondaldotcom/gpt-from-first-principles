@@ -1,5 +1,5 @@
 {
-  "commit": "907d924",
+  "commit": "78fe19a",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "cpu",
@@ -7,7 +7,7 @@
     "passed": 30,
     "words_used": 0.57,
     "ended": 196,
-    "plain_nats": 1.5493107769596397,
+    "plain_nats": 1.5493107866032823,
     "by_task": [
       [
         false,
@@ -1012,10 +1012,10 @@
     ]
   },
   "keeping": {
-    "passed": 42,
-    "words_used": 0.605,
-    "ended": 195,
-    "plain_nats": 1.6186083881366926,
+    "passed": 37,
+    "words_used": 0.5733333333333334,
+    "ended": 191,
+    "plain_nats": 1.6119015322213093,
     "by_task": [
       [
         false,
@@ -1023,7 +1023,7 @@
         false
       ],
       [
-        false,
+        true,
         false,
         false
       ],
@@ -1035,37 +1035,37 @@
       [
         true,
         true,
-        false
+        true
       ],
       [
-        false,
+        true,
         false,
         true
       ],
       [
         true,
-        false,
-        false
+        true,
+        true
       ],
       [
         false,
         true,
-        false
+        true
       ],
       [
         false,
-        false,
-        false
+        true,
+        true
       ],
       [
         true,
-        true,
+        false,
         true
       ],
       [
-        true,
+        false,
         true,
-        true
+        false
       ],
       [
         true,
@@ -1080,7 +1080,7 @@
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
@@ -1095,27 +1095,27 @@
       [
         true,
         false,
-        true
+        false
       ],
       [
         true,
         false,
-        true
+        false
       ],
       [
-        true,
+        false,
         true,
-        true
+        false
       ],
       [
         true,
         false,
-        true
+        false
       ],
       [
         true,
         false,
-        true
+        false
       ],
       [
         true,
@@ -1124,12 +1124,17 @@
       ],
       [
         true,
+        false,
+        false
+      ],
+      [
         true,
+        false,
         true
       ],
       [
-        true,
         false,
+        true,
         true
       ],
       [
@@ -1148,18 +1153,13 @@
         false
       ],
       [
-        false,
         true,
-        false
+        false,
+        true
       ],
       [
         true,
         true,
-        false
-      ],
-      [
-        true,
-        false,
         true
       ],
       [
@@ -1174,32 +1174,32 @@
       ],
       [
         true,
-        false,
-        false
+        true,
+        true
       ],
       [
-        false,
         false,
+        true,
         true
       ],
       [
-        true,
-        true,
+        false,
+        false,
         false
       ],
       [
         true,
         true,
-        false
+        true
       ],
       [
-        true,
+        false,
         true,
         true
       ],
       [
-        true,
-        true,
+        false,
+        false,
         false
       ],
       [
@@ -1208,19 +1208,19 @@
         false
       ],
       [
-        false,
+        true,
         false,
-        false
+        true
       ],
       [
-        false,
         true,
+        true,
         true
       ],
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
@@ -1235,7 +1235,7 @@
       [
         false,
         false,
-        true
+        false
       ],
       [
         true,
@@ -1248,9 +1248,9 @@
         false
       ],
       [
-        true,
+        false,
         true,
-        false
+        true
       ],
       [
         true,
@@ -1259,7 +1259,7 @@
       ],
       [
         true,
-        true,
+        false,
         false
       ],
       [
@@ -1278,9 +1278,9 @@
         false
       ],
       [
-        false,
         true,
-        false
+        false,
+        true
       ],
       [
         false,
@@ -1288,14 +1288,14 @@
         true
       ],
       [
-        true,
         true,
+        false,
         false
       ],
       [
         true,
-        false,
-        true
+        true,
+        false
       ],
       [
         true,
@@ -1303,8 +1303,8 @@
         false
       ],
       [
-        false,
         true,
+        true,
         true
       ],
       [
@@ -1313,8 +1313,8 @@
         false
       ],
       [
-        false,
-        false,
+        true,
+        true,
         true
       ],
       [
@@ -1323,8 +1323,8 @@
         false
       ],
       [
-        true,
         false,
+        false,
         false
       ],
       [
@@ -1355,16 +1355,16 @@
       [
         true,
         false,
-        false
+        true
       ],
       [
-        true,
         false,
-        true
+        false,
+        false
       ],
       [
-        true,
         false,
+        true,
         true
       ],
       [
@@ -1373,8 +1373,8 @@
         false
       ],
       [
-        false,
         true,
+        true,
         false
       ],
       [
@@ -1383,19 +1383,19 @@
         false
       ],
       [
-        true,
         false,
-        false
+        false,
+        true
       ],
       [
-        false,
         true,
-        false
+        true,
+        true
       ],
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
@@ -1404,28 +1404,28 @@
       ],
       [
         true,
-        true,
+        false,
         false
       ],
       [
-        false,
+        true,
         false,
         true
       ],
       [
-        true,
+        false,
         true,
         false
       ],
       [
         true,
-        false,
+        true,
         true
       ],
       [
         true,
         false,
-        false
+        true
       ],
       [
         true,
@@ -1433,18 +1433,18 @@
         false
       ],
       [
-        false,
         true,
-        false
+        true,
+        true
       ],
       [
-        false,
+        true,
         false,
         true
       ],
       [
-        true,
         true,
+        false,
         false
       ],
       [
@@ -1458,9 +1458,9 @@
         false
       ],
       [
-        true,
         false,
-        false
+        false,
+        true
       ],
       [
         true,
@@ -1473,12 +1473,12 @@
         false
       ],
       [
-        true,
-        true,
+        false,
+        false,
         true
       ],
       [
-        false,
+        true,
         false,
         true
       ],
@@ -1493,9 +1493,9 @@
         true
       ],
       [
-        true,
+        false,
         true,
-        false
+        true
       ],
       [
         true,
@@ -1503,19 +1503,19 @@
         false
       ],
       [
-        true,
         false,
+        true,
         false
       ],
       [
         true,
-        false,
+        true,
         false
       ],
       [
         false,
-        false,
-        true
+        true,
+        false
       ],
       [
         false,
@@ -1533,33 +1533,33 @@
         false
       ],
       [
-        false,
         true,
-        false
+        true,
+        true
       ],
       [
-        true,
         false,
-        false
+        true,
+        true
       ],
       [
-        false,
         true,
+        false,
         false
       ],
       [
-        true,
         false,
+        true,
         false
       ],
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
-        true,
+        false,
         false
       ],
       [
@@ -1568,33 +1568,38 @@
         true
       ],
       [
-        true,
         false,
+        false,
         false
       ],
       [
         true,
         false,
-        false
+        true
       ],
       [
         false,
-        false,
+        true,
         false
       ],
       [
         true,
         true,
+        true
+      ],
+      [
+        false,
+        false,
         false
       ],
       [
-        true,
-        true,
-        true
+        false,
+        false,
+        false
       ],
       [
         true,
-        true,
+        false,
         false
       ],
       [
@@ -1609,32 +1614,22 @@
       ],
       [
         false,
-        true,
+        false,
         false
       ],
       [
         false,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
+        false,
         true
       ],
       [
-        true,
+        false,
         false,
         true
       ],
       [
-        true,
-        true,
+        false,
+        false,
         true
       ],
       [
@@ -1648,13 +1643,13 @@
         true
       ],
       [
-        true,
         true,
-        true
+        false,
+        false
       ],
       [
         true,
-        true,
+        false,
         true
       ],
       [
@@ -1663,8 +1658,13 @@
         false
       ],
       [
+        false,
         true,
+        true
+      ],
+      [
         true,
+        false,
         true
       ],
       [
@@ -1673,22 +1673,22 @@
         false
       ],
       [
-        false,
         true,
+        true,
         true
       ],
       [
         true,
         false,
-        false
+        true
       ],
       [
         true,
         true,
-        false
+        true
       ],
       [
-        false,
+        true,
         true,
         true
       ],
@@ -1703,19 +1703,19 @@
         false
       ],
       [
-        false,
+        true,
         false,
         false
       ],
       [
-        true,
         false,
+        false,
         false
       ],
       [
         true,
         false,
-        false
+        true
       ],
       [
         false,
@@ -1735,11 +1735,11 @@
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
-        true,
+        false,
         false
       ],
       [
@@ -1749,18 +1749,18 @@
       ],
       [
         true,
-        false,
-        false
+        true,
+        true
       ],
       [
         true,
         true,
-        false
+        true
       ],
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
@@ -1773,9 +1773,9 @@
         true
       ],
       [
-        true,
         true,
-        true
+        false,
+        false
       ],
       [
         true,
@@ -1793,14 +1793,14 @@
         false
       ],
       [
-        true,
-        true,
+        false,
+        false,
         false
       ],
       [
         true,
         true,
-        false
+        true
       ],
       [
         false,
@@ -1815,11 +1815,11 @@
       [
         true,
         true,
-        false
+        true
       ],
       [
-        false,
         true,
+        false,
         false
       ],
       [
@@ -1834,8 +1834,8 @@
       ],
       [
         true,
-        true,
-        true
+        false,
+        false
       ],
       [
         true,
@@ -1855,27 +1855,32 @@
       [
         true,
         true,
-        true
+        false
       ],
       [
         true,
         false,
-        true
+        false
       ],
       [
-        true,
+        false,
+        false,
+        false
+      ],
+      [
         true,
+        false,
         true
       ],
       [
-        true,
         false,
+        false,
         false
       ],
       [
-        true,
         true,
-        true
+        false,
+        false
       ],
       [
         true,
@@ -1885,11 +1890,11 @@
       [
         true,
         true,
-        true
+        false
       ],
       [
-        true,
         true,
+        false,
         false
       ],
       [
@@ -1903,13 +1908,13 @@
         true
       ],
       [
-        true,
         true,
+        false,
         false
       ],
       [
         true,
-        false,
+        true,
         true
       ],
       [
@@ -1918,13 +1923,23 @@
         false
       ],
       [
-        true,
+        false,
         true,
         false
       ],
       [
         false,
         false,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
         false
       ],
       [
@@ -1945,11 +1960,11 @@
       [
         false,
         true,
-        false
+        true
       ],
       [
         true,
-        true,
+        false,
         true
       ],
       [
@@ -1963,19 +1978,14 @@
         false
       ],
       [
-        false,
-        true,
-        false
-      ],
-      [
         true,
         true,
         true
       ],
       [
         true,
-        false,
-        true
+        true,
+        false
       ],
       [
         true,
@@ -1993,17 +2003,12 @@
         false
       ],
       [
-        true,
         true,
+        false,
         false
       ],
       [
         false,
-        true,
-        true
-      ],
-      [
-        true,
         false,
         true
       ],
@@ -2011,19 +2016,14 @@
         true,
         false,
         true
-      ],
-      [
-        true,
-        false,
-        false
       ]
     ]
   },
   "scoring": {
-    "passed": 99,
-    "words_used": 0.7966666666666666,
-    "ended": 176,
-    "plain_nats": 1.6337508312062308,
+    "passed": 56,
+    "words_used": 0.6783333333333333,
+    "ended": 141,
+    "plain_nats": 1.5727095573570875,
     "by_task": [
       [
         true,
@@ -2043,6 +2043,26 @@
       [
         true,
         true,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        false,
+        false,
         true
       ],
       [
@@ -2063,30 +2083,10 @@
       [
         true,
         false,
-        true
+        false
       ],
       [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
         false,
-        true
-      ],
-      [
-        true,
         true,
         true
       ],
@@ -2097,12 +2097,17 @@
       ],
       [
         true,
-        true,
+        false,
         false
       ],
       [
         true,
+        false,
+        true
+      ],
+      [
         true,
+        false,
         true
       ],
       [
@@ -2117,12 +2122,7 @@
       ],
       [
         true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
+        false,
         false
       ],
       [
@@ -2143,6 +2143,11 @@
       [
         true,
         true,
+        false
+      ],
+      [
+        true,
+        true,
         true
       ],
       [
@@ -2156,59 +2161,14 @@
         false
       ],
       [
+        false,
         true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        false
+        true
       ],
       [
         true,
         false,
         true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
       ],
       [
         true,
@@ -2233,12 +2193,37 @@
       [
         true,
         true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
         true
       ],
       [
         true,
         true,
         false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        false,
+        true,
+        true
       ],
       [
         true,
@@ -2257,17 +2242,7 @@
       ],
       [
         true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
+        false,
         true
       ],
       [
@@ -2278,42 +2253,7 @@
       [
         true,
         true,
-        true
-      ],
-      [
-        true,
-        true,
         false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        false,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        false,
-        true,
-        true
       ],
       [
         true,
@@ -2351,116 +2291,6 @@
         true
       ],
       [
-        true,
-        false,
-        false
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        false
-      ],
-      [
-        false,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
         false,
         true,
         true
@@ -2472,137 +2302,7 @@
       ],
       [
         true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
         false,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        false,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        false
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        false,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        false,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        false,
-        false
-      ],
-      [
-        false,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
         true
       ],
       [
@@ -2628,96 +2328,11 @@
       [
         true,
         true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
         false
       ],
       [
         true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
         false,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        false,
-        true,
         false
       ],
       [
@@ -2727,6 +2342,11 @@
       ],
       [
         false,
+        true,
+        false
+      ],
+      [
+        true,
         false,
         true
       ],
@@ -2747,8 +2367,13 @@
       ],
       [
         true,
-        true,
+        false,
         true
+      ],
+      [
+        true,
+        false,
+        false
       ],
       [
         true,
@@ -2759,141 +2384,6 @@
         true,
         true,
         true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        false,
-        true,
-        false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        false,
-        true,
-        false
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        false
-      ],
-      [
-        true,
-        false,
-        false
       ],
       [
         true,
@@ -2927,8 +2417,333 @@
       ],
       [
         true,
+        false,
+        true
+      ],
+      [
+        true,
         true,
         false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        false,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        false,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        false,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        false,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        false,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true
       ],
       [
         true,
@@ -2957,6 +2772,221 @@
       ],
       [
         true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        false,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        false,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        false,
+        false,
+        false
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
+        true,
+        true
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        true,
+        true,
+        false
+      ],
+      [
+        false,
+        true,
+        true
+      ],
+      [
+        true,
+        false,
+        true
+      ],
+      [
+        false,
+        false,
+        true
+      ],
+      [
+        true,
+        false,
+        false
+      ],
+      [
+        true,
         true,
         true
       ],
@@ -2977,48 +3007,18 @@
       ],
       [
         true,
+        true,
+        true
+      ],
+      [
+        true,
         false,
         true
       ],
       [
-        true,
         false,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        true,
+        false,
         false
-      ],
-      [
-        true,
-        true,
-        true
-      ],
-      [
-        true,
-        false,
-        true
-      ],
-      [
-        true,
-        true,
-        true
       ],
       [
         true,
@@ -3027,28 +3027,28 @@
       ]
     ]
   },
-  "kept": 167,
-  "gap": 0.19166666666666668,
+  "kept": 192,
+  "gap": 0.105,
   "interval": [
-    0.15333333611488342,
-    0.2316666692495346
+    0.06666667014360428,
+    0.14337503910064697
   ],
   "printed": [
-    "lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.20",
+    "lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.21",
     "lesson 25's model: 0.57 of the asked words used, 95% interval 0.53 to 0.61",
     "lesson 25's model: 196 stories end by themselves, plain stories 1.549 nats a token",
-    "first try: 167 of 1600 stories pass, and we keep those",
-    "keep what passes: 42 of 200 tasks passed, 95% interval 0.16 to 0.28",
-    "keep what passes: 0.60 of the asked words used, 95% interval 0.57 to 0.64",
-    "keep what passes: 195 stories end by themselves, plain stories 1.619 nats a token",
-    "round 20: the last 320 stories scored 0.62 on average",
-    "round 40: the last 320 stories scored 0.70 on average",
-    "round 60: the last 320 stories scored 0.79 on average",
-    "round 80: the last 320 stories scored 0.80 on average",
-    "round 100: the last 320 stories scored 0.83 on average",
-    "learn from the score: 99 of 200 tasks passed, 95% interval 0.42 to 0.56",
-    "learn from the score: 0.80 of the asked words used, 95% interval 0.76 to 0.83",
-    "learn from the score: 176 stories end by themselves, plain stories 1.634 nats a token",
-    "asked words used, learning from the score minus keeping what passes: +0.19, 95% interval +0.15 to +0.23"
+    "first try: 192 of 1600 stories pass, and we keep those",
+    "keep what passes: 37 of 200 tasks passed, 95% interval 0.13 to 0.25",
+    "keep what passes: 0.57 of the asked words used, 95% interval 0.53 to 0.61",
+    "keep what passes: 191 stories end by themselves, plain stories 1.612 nats a token",
+    "round 20: the last 320 stories scored 0.58 on average",
+    "round 40: the last 320 stories scored 0.67 on average",
+    "round 60: the last 320 stories scored 0.70 on average",
+    "round 80: the last 320 stories scored 0.75 on average",
+    "round 100: the last 320 stories scored 0.73 on average",
+    "learn from the score: 56 of 200 tasks passed, 95% interval 0.22 to 0.35",
+    "learn from the score: 0.68 of the asked words used, 95% interval 0.64 to 0.71",
+    "learn from the score: 141 stories end by themselves, plain stories 1.573 nats a token",
+    "asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14"
   ]
 }

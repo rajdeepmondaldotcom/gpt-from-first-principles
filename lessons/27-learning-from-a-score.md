@@ -2,19 +2,19 @@
 
 By the end of this page the model has been trained with no right answers, only a number for each story it wrote, and you have measured that against the simplest thing one could try.
 
-Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there are no right answers to copy. There is only a check that says pass or fail.
+Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there is none: only a check that says pass or fail.
 
 ## The idea
 
 Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
 
-The first thing to try needs nothing new. Let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though a story one word short came close.
+The first thing to try needs nothing new. Let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though one a word short came close.
 
 The second way uses them all. Write the average score the model would earn as a sum: each story it might write, times its chance, times its score. We want that sum's slope for each weight. We cannot list them all, so we rewrite the sum to sample it. By lesson 2's table, the slope of ln x is the slope of x over x, so the slope of a chance is the chance times the slope of its logarithm. Each term of the sum then starts with a chance, and the slope is an average, over stories the model itself wrote, of
 
 score × slope of the log of the story's chance
 
-The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write some stories, score each, and step so that each story's log chance rises in proportion to its score, with no right answer.
+The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write some stories, score each, and step so that each story's log chance rises in proportion to its score.
 
 The step as written is noisy. If each score is between 0 and 1, each story is pushed up, good and bad alike, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
@@ -78,29 +78,29 @@ uv run python -m gpt.reinforce
 ```
 
 ```
-lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.20
+lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.21
 lesson 25's model: 0.57 of the asked words used, 95% interval 0.53 to 0.61
 lesson 25's model: 196 stories end by themselves, plain stories 1.549 nats a token
-first try: 167 of 1600 stories pass, and we keep those
-keep what passes: 42 of 200 tasks passed, 95% interval 0.16 to 0.28
-keep what passes: 0.60 of the asked words used, 95% interval 0.57 to 0.64
-keep what passes: 195 stories end by themselves, plain stories 1.619 nats a token
-round 20: the last 320 stories scored 0.62 on average
-round 40: the last 320 stories scored 0.70 on average
-round 60: the last 320 stories scored 0.79 on average
-round 80: the last 320 stories scored 0.80 on average
-round 100: the last 320 stories scored 0.83 on average
-learn from the score: 99 of 200 tasks passed, 95% interval 0.42 to 0.56
-learn from the score: 0.80 of the asked words used, 95% interval 0.76 to 0.83
-learn from the score: 176 stories end by themselves, plain stories 1.634 nats a token
-asked words used, learning from the score minus keeping what passes: +0.19, 95% interval +0.15 to +0.23
+first try: 192 of 1600 stories pass, and we keep those
+keep what passes: 37 of 200 tasks passed, 95% interval 0.13 to 0.25
+keep what passes: 0.57 of the asked words used, 95% interval 0.53 to 0.61
+keep what passes: 191 stories end by themselves, plain stories 1.612 nats a token
+round 20: the last 320 stories scored 0.58 on average
+round 40: the last 320 stories scored 0.67 on average
+round 60: the last 320 stories scored 0.70 on average
+round 80: the last 320 stories scored 0.75 on average
+round 100: the last 320 stories scored 0.73 on average
+learn from the score: 56 of 200 tasks passed, 95% interval 0.22 to 0.35
+learn from the score: 0.68 of the asked words used, 95% interval 0.64 to 0.71
+learn from the score: 141 stories end by themselves, plain stories 1.573 nats a token
+asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14
 ```
 
-Lesson 25's model passes 30 of 200. Keeping what passes had 167 stories to learn from and reaches 42. The two intervals overlap.
+Lesson 25's model passes 30 of 200 here and passed 27 in lesson 25: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap, and the share of asked words stays at 0.57.
 
-Learning from the score passes 99. The stories it wrote in training scored 0.62 at first and 0.83 by the end. It uses 0.80 of the asked words against 0.60, and the difference of +0.19 has an interval of +0.15 to +0.23.
+Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57, a difference of +0.10 with an interval of +0.07 to +0.14.
 
-It also learned what the score left out. Only 176 of its stories reach their end where 196 did, and plain stories score 1.634 nats where they scored 1.549. The score counts four words, and nothing in it pays for an ending.
+The score counts a name and three words, and gives nothing for an ending. Only 141 of its 200 stories reach their end, where 196 did. Plain stories score 1.573 nats where they scored 1.549, and 1.612 after keeping what passes.
 
 ## What it still cannot do
 
@@ -108,11 +108,11 @@ The check here was a program: a name and three words, found or not found. What m
 
 ## Check yourself
 
-Predict before you run: which will use more of the asked words after 1,600 stories, the model that kept what passed or the model that learned from each score?
+Predict before you run: which will use more of the asked words after 1,600 stories, the model that kept what passed or the one that learned from each score?
 
 <details><summary>Answer</summary>
 
-The one that learned from each score: 0.80 against 0.60. Keeping what passes learned from 167 stories, and the score taught from all 1,600.
+The one that learned from each score: 0.68 against 0.57. Keeping what passes learned from 192 stories, the score from all 1,600.
 </details>
 
 <details><summary>One story of four scores 1 and the other three score 0. Work out its score minus the group's average, and three quarters of its score minus the average of the other three.</summary>
