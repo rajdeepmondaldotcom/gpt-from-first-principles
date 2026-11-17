@@ -62,6 +62,9 @@ class LoRA(nn.Module):
         return self.layer(x) + self.scale * (x @ self.down.T @ self.up.T)
 
 
+GRIDS = ("q", "k", "v", "proj", "gate", "wide", "narrow")  # each linear layer in a block
+
+
 def add_lora(model, rank, names=("q", "v")):
     """Freeze the whole model, then put a correction beside each grid in a block that has one of
     these names. The two named here make the queries and the values."""
