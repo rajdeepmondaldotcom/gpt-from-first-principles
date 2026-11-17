@@ -1,6 +1,6 @@
 # 27. Learning from a score
 
-By the end of this page the model has been trained with no right answers, only a number for each story it wrote, and you have measured that against the simplest thing one could try.
+By the end of this page the model has been trained with no right answers, only a number for each story it wrote, and you have measured that against fine-tuning on the stories that pass.
 
 Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there is none: only a check that says pass or fail.
 
@@ -8,7 +8,7 @@ Both fine-tunes learned from 60,404 stories that already obeyed their orders: a 
 
 Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
 
-The first thing to try needs nothing new. Let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though one a word short came close.
+The first way needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though one a word short came close.
 
 The second way uses them all. Write the average score the model would earn as a sum: each story it might write, times its chance, times its score. We want that sum's slope for each weight. We cannot list them all, so we rewrite the sum to sample it. By lesson 2's table, the slope of ln x is the slope of x over x, so the slope of a chance is the chance times the slope of its logarithm. Each term of the sum then starts with a chance, and the slope is an average, over stories the model itself wrote, of
 
@@ -16,7 +16,7 @@ score × slope of the log of the story's chance
 
 The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write some stories, score each, and step so that each story's log chance rises in proportion to its score.
 
-The step as written is noisy. If each score is between 0 and 1, each story is pushed up, good and bad alike, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
+The step as written is noisy. With scores between 0 and 1, each story is pushed up, good and bad alike, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
 Subtracting a number that does not depend on which story was drawn leaves the average slope where it was. The average of four does depend on it, since the story is one of the four. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. So the step keeps its direction and is three quarters as long.
 
@@ -96,7 +96,7 @@ learn from the score: 141 stories end by themselves, plain stories 1.573 nats a 
 asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14
 ```
 
-Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap, and the share of asked words stays at 0.57.
+Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap and the share of asked words stays at 0.57: no measured gain.
 
 Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57, a difference of +0.10 with an interval of +0.07 to +0.14.
 
@@ -104,7 +104,7 @@ The score counts a name and three words, and gives nothing for an ending. Only 1
 
 ## What it still cannot do
 
-The check here was a program: a name and three words, found or not found. What makes a story good has no such program. You can still say which of two stories you like better.
+The check here was a program: a name and three words, found or not found. Good writing has no such program. You can still say which of two stories you like better.
 
 ## Check yourself
 

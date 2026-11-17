@@ -1,18 +1,18 @@
 # 28. A model of what people prefer
 
-By the end of this page a second model has learned to score stories from pairs in which a reader liked one more, and you have watched what happens to the storyteller when it is trained hard against that score.
+By the end of this page a second model has learned to score stories from pairs in which a reader liked one more, and you have watched the readers' number fall as the storyteller is trained against that score.
 
-Lesson 27's check was a program: a name and three words, found or not found. What makes a story good has no such program. You can still say which of two stories you like better.
+Lesson 27's check was a program: a name and three words, found or not found. Good writing has no such program. You can still say which of two stories you like better.
 
 ## The idea
 
 Choosing between two is often easier than giving one a number. The first source below found so with its own raters. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
-We have no readers, so a short function stands in for them, and we say now what it likes. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Having the rule lets us do what a real project cannot: set a learned score beside the truth.
+We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside the truth, which a real project cannot.
 
 The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the story model, which can read stories already, with one new layer on top that turns the stream at the last token into a single number.
 
-It learns from a pair like this. It scores both stories, and the difference between the two scores is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice.
+For each pair it scores both stories, and the difference between the two scores is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice.
 
 A trained scorer can stand where lesson 27's check stood. The storyteller writes stories, the scorer scores them, and the step raises the chance of the stories that scored above their group's average.
 
@@ -80,7 +80,7 @@ uv run pytest tests/test_scorer.py
 - The loss is ln 2 for equal scores and 0.127 for the hand example.
 - A toy taste: of two random texts, the one with more 3s is better. From 600 pairs a small scorer ranks 200 unseen pairs more than 9 in 10 right, where it got about half before training.
 - The readers' three verdicts above, and two more: a whole story with all four gets 1, and a story of 7 words gets 0.
-- From four stories for one order, a good one, a fair one and two bad ones, five pairs are made, each with the better story first. The two bad ones tie and make no pair.
+- From four stories for one order, a good one, a fair one and two bad ones, five pairs are made, each with the better story first. The two bad ones tie and make no pair. An order held back keeps its pairs out of the learning.
 
 The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model as it was. Each two stories for one order make a pair, unless the readers give both the same number.
 
@@ -106,9 +106,9 @@ the last order asked for: Bob, movie, movies, watch
 on 200 unseen orders the readers give its stories 0.03, where they gave 0.57. The change has a 95% interval of -0.58 to -0.51
 ```
 
-The scorer's loss on its own pairs falls from 0.916 to 0.024. Of the 240 held-back pairs it ranked 109 right before training and 140 after: 0.51 to 0.65. That is better than a coin, and not by much.
+The scorer's loss on its own pairs falls from 0.916 to 0.024. Of the 240 held-back pairs it ranked 109 right before training and 140 after: 0.51 to 0.65, against a coin's 0.5.
 
-Then the push. Before it, the scorer gave the storyteller's stories +3.41 on average, the readers 0.58 and lesson 27's score 0.61. Over the last 20 rounds the scorer gives +12.72, the readers 0.05 and lesson 27's score 0.09. The number training could see rose in each line, and the two it could not see fell.
+Before the push, the scorer gave the storyteller's stories +3.41 on average, the readers 0.58 and lesson 27's score 0.61. Over the last 20 rounds the scorer gives +12.72, the readers 0.05 and lesson 27's score 0.09. The number training could see rose in each line, and the two it could not see fell.
 
 On 200 orders it did not train on, the readers gave its stories 0.57 before the push and give 0.03 after, a change of -0.58 to -0.51.
 

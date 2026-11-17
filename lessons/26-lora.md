@@ -6,7 +6,7 @@ Lesson 25's fine-tune trained all of the model's weights, and the result is a se
 
 ## The idea
 
-Fine-tuning turns a grid of weights W into W plus a change D, and D is as large as W. LoRA bets that the change a new task needs is simpler than that, and builds D from two thin grids.
+Fine-tuning turns a grid of weights W into W plus a change D, and D is as large as W. LoRA's authors bet that a new task needs a simpler change, and build D from two thin grids.
 
 Take a grid that maps 256 numbers to 256. In place of a free D, write D as B times A. A maps the 256 numbers down to r of them, and B maps those r back up to 256. With r = 8, A and B hold 4,096 numbers, where D held 65,536. The number r, the fewest numbers the change can be passed through, is called its rank.
 
@@ -14,11 +14,11 @@ The layer becomes the old result plus the correction:
 
 W x + (32 / r) × B (A x)
 
-W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. It is divided by r so that the first step is the same on average at each rank, and one learning rate can serve them all. A starts random and B at zero, so the correction starts at zero and the model begins as it was.
+W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. We divide it by r so that the first step is the same on average at each rank, and one learning rate can serve them all. A starts random and B at zero, so the correction starts at zero and the model begins as it was.
 
 A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two, the ones that make queries and values. We run that first, at a rank of 8. Then, one change at a time as lesson 14 taught: eight times the rank, and a correction beside each of the seven.
 
-Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is a plain model again, no larger and no slower.
+Keep a trained A and B apart, and one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is a plain model again, no larger and no slower.
 
 Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ: the peak rate is 0.01, ten times as high, and there is no weight decay. The 32, the division by r and the ten times are from Schulman and others, below, and not from a search of ours.
 
@@ -140,9 +140,9 @@ rank 8, each grid in a block: plain stories, after minus before, +0.009 nats, 95
 merged against unmerged, largest difference in a score: 0.000014
 ```
 
-Beside queries and values at a rank of 8, the corrections are 43,008 numbers and 0.17 MB. In lesson 25's 2,000 steps the model uses 0.37 of the asked words. The full fine-tune reached 0.56, and the model as it was 0.14. It passes 10 of 200 orders, against 27.
+Beside queries and values at a rank of 8, the model uses 0.37 of the asked words after lesson 25's 2,000 steps: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 orders, against 27.
 
-Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, so these runs do not tell the settings apart. None reaches 0.56.
+Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, so these runs do not tell the settings apart, and none reaches 0.56.
 
 The price on plain stories is lower too: 0.006 to 0.009 nats, against 0.069.
 

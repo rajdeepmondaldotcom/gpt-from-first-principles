@@ -18,7 +18,7 @@ We want the lead to grow, and the loss is lesson 28's bet again, with the lead t
 
 1. At the start our model is the reference. Each gain is 0, each lead is 0, and the loss is ln 2.
 2. The loss falls as the better story gains on the worse one. A rise in the better and a fall in the worse count alike.
-3. A pair with a large lead has little left to teach, because its loss is nearly flat there. That is what stops the push. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
+3. A pair with a large lead has little left to teach: its loss is nearly flat there, and the push stops. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
@@ -63,7 +63,7 @@ uv run pytest tests/test_prefer.py
 - The hand example gives 0.513.
 - One step on a pair makes the better answer gain on the worse one, against the copy made before the step.
 
-The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. Training is 200 steps of 8 pairs at a rate of 0.00001. The script also asks lesson 28's question: what do the readers give the model's new stories, before and after?
+The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. Training is 200 steps of 8 pairs at a rate of 0.00001. As in lesson 28, the readers also score the model's new stories before and after.
 
 ```bash
 uv run python -m gpt.prefer
@@ -89,11 +89,11 @@ the readers give its stories 0.62 on average, where they gave 0.53. The change h
 
 The first loss is ln 2. By step 200 it is 0.270 on a batch of 8 pairs.
 
-That fall says less than it seems to. By then the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on. There the better story gained on the worse one in 150, and the interval, 0.55 to 0.70, is clear of a half.
+That fall overstates the learning: by then the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on. There the better story gained on the worse one in 150, and the interval, 0.55 to 0.70, is clear of a half.
 
-The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. 197 of the 200 stories end, and 35 pass where 30 did, a gap the two intervals do not separate. Plain stories cost 0.007 nats. Lesson 25's cost 0.069, in ten times the steps at a peak rate a hundred times this one.
+The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. Lesson 28 drew afresh from the same model and got 0.57. 197 of the 200 stories end, and 35 pass where 30 did, a gap the two intervals do not separate. Plain stories cost 0.007 nats. Lesson 25's cost 0.069, in ten times the steps at a peak rate a hundred times this one.
 
-Lesson 28's trap was a number that training sees going up while the readers' number goes down. Here the readers' number went up.
+Lesson 28's push sent the readers' number down. This one sent it up, from 0.53 to 0.62.
 
 ## What it still cannot do
 
