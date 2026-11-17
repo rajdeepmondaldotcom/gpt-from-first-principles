@@ -90,18 +90,18 @@ uv run python -m gpt.quantize
 ```
 
 ```
-32 bits: 21.5 MB, 1.480 nats, 155 tokens a second
-8 bits: 8.6 MB, +0.0001 nats (95% interval +0.0000 to +0.0002), 107 tokens a second
+32 bits: 21.5 MB, 1.480 nats, 643 tokens a second
+8 bits: 8.6 MB, +0.0001 nats (95% interval +0.0000 to +0.0002), 393 tokens a second
 8 bits: no weight moved by more than 0.50 of a step
-4 bits: 6.4 MB, +0.0303 nats (95% interval +0.0286 to +0.0318), 60 tokens a second
+4 bits: 6.4 MB, +0.0303 nats (95% interval +0.0286 to +0.0318), 168 tokens a second
 4 bits: no weight moved by more than 0.50 of a step
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run.
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Both shrunk models write slower: 107 and 60 tokens a second, against 155. Turning each grid back into 32-bit numbers on each call costs more time than the smaller memory saves. Lesson 31 found our writing well under what memory alone allows, so reading fewer bytes had little to give. Lesson 37 finds where the time goes.
+Both shrunk models write slower: 393 and 168 tokens a second, against 643. Each call turns each grid back into 32-bit numbers before it multiplies, and that work is added to each token. Lesson 31 put our writing at about an eighth of what memory alone allows, so memory was not the limit to begin with. Lesson 37 finds where the time goes.
 
 ## What it still cannot do
 

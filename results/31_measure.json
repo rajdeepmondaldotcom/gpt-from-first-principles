@@ -1,0 +1,51 @@
+{
+  "commit": "10efbe9",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "alone": {
+    "first": 0.007790082949213684,
+    "gap": 0.0018547480160902654,
+    "request": 0.0990535409655422
+  },
+  "copy_bytes_a_second": 90950119503.9597,
+  "capacity": 10.095550247394694,
+  "loads": {
+    "0.5": {
+      "served": 120,
+      "refused": 0,
+      "first_token_p50": 0.003428290947340429,
+      "first_token_p95": 0.15708949335385114,
+      "seconds_a_token_p50": 0.0015266984128319318,
+      "tokens_a_second": 275.2983227163849
+    },
+    "0.9": {
+      "served": 120,
+      "refused": 0,
+      "first_token_p50": 0.24988504499197006,
+      "first_token_p95": 0.7244131077313796,
+      "seconds_a_token_p50": 0.0015377539675682783,
+      "tokens_a_second": 488.5927431680293
+    },
+    "1.5": {
+      "served": 120,
+      "refused": 0,
+      "first_token_p50": 1.73656719957944,
+      "first_token_p95": 2.8264585562283173,
+      "seconds_a_token_p50": 0.001539925270388642,
+      "tokens_a_second": 630.8818277193241
+    }
+  },
+  "printed": [
+    "alone, a prompt of 192 tokens: first token after 8 ms",
+    "alone, the prompt is read at 24,647 tokens a second",
+    "alone, the answer is written at 539 tokens a second, 1.9 ms each",
+    "this machine moves 91.0 GB a second through memory",
+    "a token reads 21.5 MB of weights: at that speed, 4,231 tokens a second",
+    "alone, a prompt of 64 tokens and an answer of 64 take 0.10 s",
+    "one request at a time can finish 10.1 requests a second",
+    "5.0 requests a second: first token after 3 ms for half, 157 ms for 95 in 100, 275 tokens a second in all",
+    "9.1 requests a second: first token after 250 ms for half, 724 ms for 95 in 100, 489 tokens a second in all",
+    "15.1 requests a second: first token after 1,737 ms for half, 2,826 ms for 95 in 100, 631 tokens a second in all"
+  ]
+}

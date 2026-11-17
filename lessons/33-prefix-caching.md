@@ -97,17 +97,17 @@ uv run python -m gpt.prefix
 ```
 
 ```
-20 prompts that share their first 160 tokens, no store: 4,140 tokens read, first token after 36 ms for half
-the same prompts with a store: 1,100 tokens read, first token after 9 ms for half
+20 prompts that share their first 160 tokens, no store: 4,140 tokens read, first token after 7 ms for half
+the same prompts with a store: 1,100 tokens read, first token after 2 ms for half
 the answers are the same with and without the store: True
-the part that changes put first, with a store: 4,140 tokens read, first token after 29 ms for half
-a store with room for 12 blocks: 1,100 tokens read, first token after 10 ms for half
-that store holds 1,179,648 bytes of its 1,179,648, in 12 blocks
+the part that changes put first, with a store: 4,140 tokens read, first token after 7 ms for half
+a store with room for 12 pieces: 1,100 tokens read, first token after 2 ms for half
+that store holds 1,179,648 bytes of its 1,179,648, in 12 pieces
 ```
 
 Timings are from an M4 laptop, and they move from run to run.
 
-Each prompt is 176 tokens and each answer 32. With no store the model reads 207 tokens for each request, 4,140 in all. With the store it reads 207 for the first and 47 for each of the other nineteen: 1,100. The wait for the first token falls from 36 ms to 9 ms for half the requests, and the answers do not change.
+Each prompt is 176 tokens and each answer 32. With no store the model reads 207 tokens for each request, 4,140 in all. With the store it reads 207 for the first and 47 for each of the other nineteen: 1,100. The wait for the first token falls from 7 ms to 2 ms for half the requests, and the answers do not change.
 
 Put the 16 tokens that change in front, and the store saves nothing: 4,140 tokens again.
 
