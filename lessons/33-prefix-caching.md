@@ -2,21 +2,19 @@
 
 By the end of this page a beginning that many prompts share is read once and kept, and each later request starts from where it ends.
 
-Lesson 32's engine reads each prompt from its first token, even when a thousand requests before it began with the same words.
+Lesson 32's engine reads each prompt from its first token, even when the requests before it began with the same words.
 
 ## The idea
 
 Many prompts begin alike. A service puts the same instructions in front of each question. A reader of our storyteller who asks what happens next sends back the whole story so far, with one sentence added.
 
-Lesson 23's cache holds a key and a value for each token read. Lesson 7's mask means that a token's key and value depend only on the tokens before it. So two prompts that agree on their first 160 tokens have the same keys and values for those 160 tokens, whatever comes after. We read them once, keep them, and let each later request copy them and read only what is new.
+Lesson 23's cache holds a key and a value for each token read. Lesson 7's mask means that a token's key and value depend only on the tokens before it. So two prompts that agree on their first 160 tokens have the same keys and values for those 160 tokens, whatever comes after. We read them once and keep them, and each later request copies them and reads only what is new.
 
 We keep the cache in pieces of 16 tokens. Each piece is filed under the whole text from the first token to the end of that piece. A new prompt looks up its first 16 tokens, then its first 32, then its first 48, and stops at the first piece that is not there.
 
-Three things follow.
-
 1. Reuse stops at the start of the piece that holds the first token that differs. Later tokens may match word for word, but their keys and values were worked out from a different text, and have to be read again.
-2. Order matters. Put what changes last. A prompt that opens with the reader's name or the time of day shares nothing with the next one.
-3. At least one token is always read. The store gives back keys and values, not scores, and the model needs a pass to make the scores for the first new token. So a prompt that ends where a stored piece ends reads that last piece again.
+2. Put what changes last: a prompt that opens with the reader's name or the time of day shares nothing with the next one.
+3. At least one token is always read. The store gives back keys and values, and the scores for the first new token take a pass of the model. So a prompt that ends where a stored piece ends reads that last piece again.
 
 The store has a budget in bytes. When full, it throws out the piece used longest ago.
 
@@ -77,7 +75,7 @@ Now send the first prompt again with its token 21 changed. The first piece still
             self.used -= sum(t.nbytes for one in piece for t in one.values())
 ```
 
-Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's pieces as used now, the longest first, so a longer piece always goes before the shorter ones it needs.
+Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's pieces as used, longest first, so a longer piece is thrown out before the shorter ones it needs.
 
 ## The proof
 
@@ -111,7 +109,7 @@ Each prompt is 176 tokens and each answer 32. With no store the model reads 207 
 
 Put the 16 tokens that change in front, and the store saves nothing: 4,140 tokens again.
 
-A store with room for twelve pieces does as well as one with no limit. The ten shared pieces are used by each request and so are never the oldest. The pieces that go are the endings no later request asks for.
+A store with room for twelve pieces does as well as one with no limit. Each request uses the ten shared pieces, so they are never the oldest. The pieces that go are the endings no later request asks for.
 
 ## What it still cannot do
 

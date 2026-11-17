@@ -1,17 +1,19 @@
 # 36. The server
 
-By the end of this page the storyteller answers over the web. You type a name and three words, a story streams back and is read aloud, you say what happens next, and other listeners are served at the same moment.
+By the end of this page the storyteller answers over the web. You type a name and three words, a story streams back and is read aloud, you type what happens next, and other listeners are served at the same moment.
 
-Each script so far runs once, in a terminal, and stops. Nobody else can ask our model for a story.
+Each script so far runs once, in a terminal, and stops. Other programs cannot ask our model for a story.
 
 ## The idea
 
 A server is a program that waits for requests from other programs, its clients, and answers each one. Ours has five jobs.
 
-1. Speak a format that clients know. Most tools that talk to a language model send one request: a list of messages, to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so such a tool can use our model.
-2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one each. We hold the first half until the second arrives.
-3. Serve many at once. Each web request gets a thread of its own: a line of work that runs beside the others in one program, and mostly waits. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue.
-4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+1. Speak a format that clients know. OpenAI's chat format, which vLLM speaks too, is a list of messages sent to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so a tool written for it can use our model.
+2. Stream. A listener wants each word as it is written, so the answer goes out as a run of small events, one for each piece of text.
+
+   A token is not always a whole character: `é` is two bytes, and two tokens can carry one each. We hold the first half until the second arrives.
+3. Serve many at once. Each web request gets a thread of its own: work that runs beside the others in one program and waits most of the time. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
 
 Two checks tell us the counts are right. An outside tool sends the load and measures it from its own side. And one sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
@@ -29,7 +31,7 @@ Requests inside. Say 5 requests arrive each second and each spends 2 seconds ins
 
 5 × 2 = 10 requests inside, on average
 
-A way to see it: over 100 seconds, 500 requests spend 2 seconds each, 1,000 request-seconds in all. Spread over 100 seconds, that is 10 at a time.
+Over 100 seconds, 500 requests spend 2 seconds each, 1,000 request-seconds in all. Spread over 100 seconds, that is 10 at a time.
 
 ## The code
 
@@ -103,7 +105,11 @@ The engine's thread:
                 out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
-`self.inbox` is the waiting line, a queue with a limit. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine. A request that is bad on its face, such as a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server and the page you see in the browser.
+`self.inbox` is the waiting line, a queue with a limit. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine.
+
+If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine.
+
+A request that is bad on its face, such as a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server and the page you see in the browser.
 
 ## The proof
 
@@ -118,10 +124,10 @@ uv run pytest tests/test_server.py
 - A listener who leaves after one piece frees their row.
 - A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
 - The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests. A request waiting in line counts as inside.
-- A request with no prompt, a temperature given as text or as NaN, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
+- A request with no prompt, a temperature that is text or `float('nan')`, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
 - A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
-The script starts the server, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
+The script starts the server with lesson 25's storyteller, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
 
 ```bash
 uv run python -m gpt.server
@@ -145,7 +151,7 @@ The outside tool and our own counts agree: 22.5 requests a second, and 682 ms ea
 
 At that speed a million tokens take this laptop 7 minutes. Sent 400 requests, 200 at a time, the server answered 100 and told 300 to try again.
 
-To hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine itself, which nothing outside it can reach.
+To hear a story, start the server with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine, which nothing outside it can reach.
 
 ## What it still cannot do
 
@@ -154,7 +160,7 @@ Once upon a time, there was a brave girl named Mira. Mira was always exploring a
 Suddenly, Mira saw a big, fluffy cat and a blue bird. She asked them if they wanted to play with the cat, but they were always scared. Mira said, "No, I don't want to play with the
 ```
 
-That story came over the web from our own server. The server gives the right answers, and we wrote it to be read, in Python. We have not asked how fast an engine built for speed would run the same model.
+That story came over the web from our own server. The server gives the answers the model gives alone, and we wrote its Python for people to read. We have not asked how fast an engine built for speed would run the same model.
 
 ## Check yourself
 
@@ -167,7 +173,7 @@ Predict before you run: 16 requests are inside the server at a time, each takes 
 
 <details><summary>From lesson 5: why can one token be half a character?</summary>
 
-Our tokens are made of bytes, and a character outside plain English letters takes two bytes or more. Until a merge joins them, each byte is a token of its own.
+Our tokens are made of bytes, and a character outside plain English letters takes two bytes or more. Unless a merge joined them, each byte is a token of its own.
 </details>
 
 Go deeper:

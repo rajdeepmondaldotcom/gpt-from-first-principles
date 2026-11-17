@@ -8,15 +8,17 @@ Each script so far served one reader: one prompt in, one story out. A service ha
 
 A reader feels two waits. The first is the wait before anything appears, called the time to the first token. The model has to read the whole prompt before it can write one token, so this wait grows with the prompt. The second is the gap between one token and the next. With lesson 23's cache, each new token costs one pass over one token.
 
-The person who pays for the machine watches a third number: the tokens written each second, added up over all readers. That is the throughput. The two waits are the latency.
+The person who pays for the machine watches a third number: the tokens written each second, added up over all readers. That is the throughput, and the two waits are the latency.
 
-One number cannot sum up the waits of many readers. A mean hides the readers who waited longest. So we sort the waits and read off percentiles. The 50th percentile is the smallest wait that half the readers were at or under. The 95th is the wait that 1 reader in 20 went over.
+A mean hides the readers who waited longest, so we sort the waits and read off percentiles. The 50th percentile is the smallest wait that half the readers were at or under. The 95th is the wait that 1 reader in 20 went over.
 
-Readers do not arrive evenly. The script draws each gap between two arrivals by chance, at a set rate on average, so some readers come in a bunch and some after a pause. A request that arrives while the machine is busy waits in line. One too big for the machine's memory is refused. The code that takes requests in and writes their tokens is the engine. Here it takes one request at a time, and lesson 32 opens it up.
+Readers do not arrive evenly. The script draws each gap between two arrivals by chance, at a set rate on average, so some readers come in a bunch and some after a pause. A request that arrives while the machine is busy waits in line.
 
-The line is where latency comes from. Say the machine can finish 3 requests a second. At half that rate, a request seldom finds another ahead of it. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows for as long as readers keep coming.
+The code that takes requests in and writes their tokens is the engine. It refuses a request too big for the machine's memory. Here it takes one request at a time, and lesson 32 opens it up.
 
-A ceiling on the speed of writing: one new token reads each weight once, as lesson 17 counted, and the story model's weights are 21.5 MB. The script times a copy of 256 MB. A copy reads each byte and writes it, so it moves 512 MB through memory. That speed over 21.5 MB is the most tokens a second that memory alone would allow, and the run sets our speed beside it.
+Long waits come from the line. Say the machine can finish 3 requests a second. At half that rate, a request seldom finds another ahead of it. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows for as long as readers keep coming.
+
+A ceiling on the speed of writing: one new token reads each weight once, as lesson 17 counted, and the story model's weights are 21.5 MB. The script times a copy of 268 MB. A copy reads each byte and writes it, so it moves 537 MB through memory. That speed divided by 21.5 MB is the most tokens a second memory alone would allow, and we set our speed beside it.
 
 ## By hand
 
@@ -30,7 +32,7 @@ A slow tail. Of 100 readers, 90 wait 0.1 s and 10 wait 3 s.
 | 95th percentile | the 95th wait of 100 | 3.0 s |
 | Mean | (90 × 0.1 + 10 × 3.0) / 100 | 0.39 s |
 
-No reader waited 0.39 s.
+The mean is a wait that no reader had.
 
 The most that one request at a time can finish. In the run below, a request with a prompt of 64 tokens and an answer of 64 takes 0.099 s with the machine to itself. With no rest between requests, that is 1 / 0.099 = 10.1 requests a second and no more.
 
@@ -103,9 +105,9 @@ one request at a time can finish 10.1 requests a second
 
 Timings are from an M4 laptop, and they move from run to run.
 
-Alone, a request waits 8 ms for its first token after a prompt of 192 tokens, then gets a token each 1.9 ms: 539 a second. Memory alone would allow 4,231, almost eight times as many, so memory is not the limit here. Lesson 37 looks for what is.
+Alone, a request waits 8 ms for its first token after a prompt of 192 tokens, then gets a token each 1.9 ms: 539 a second. Memory alone would allow 4,231, almost eight times as many. Lesson 37 looks for what holds it at 539.
 
-At 5.0 requests a second, half its capacity, half the readers wait 3 ms for a first token and 1 in 20 waits over 157 ms. At 9.1 the middle wait is 250 ms, and at 15.1 it is 1,737 ms. The machine wrote 275, 489 and 631 tokens a second: a long line does not slow the writing. The first token waits.
+At 5.0 requests a second, half the machine's 10.1, half the readers wait 3 ms for a first token and 1 in 20 waits over 157 ms. At 9.1 the middle wait is 250 ms, and at 15.1 it is 1,737 ms. For these shorter prompts the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, and the writing keeps its pace.
 
 ## What it still cannot do
 
@@ -132,6 +134,6 @@ It would grow with the answer. Each new token would mean reading the whole text 
 
 Go deeper:
 
-- Google, [Site Reliability Engineering](https://sre.google/sre-book/monitoring-distributed-systems/), chapter 6. Latency, traffic, errors and saturation: the four things to watch on any service.
+- Google, [Site Reliability Engineering](https://sre.google/sre-book/monitoring-distributed-systems/), chapter 6. Latency, traffic, errors and saturation: four things to watch on a service.
 - kipply, [Transformer Inference Arithmetic](https://kipp.ly/transformer-inference-arithmetic/). Where the limits on reading and writing speed come from.
 - Harchol-Balter, [Performance Modeling and Design of Computer Systems](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html). Why a line grows so fast near the rate a machine can serve.

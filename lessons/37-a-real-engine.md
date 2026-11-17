@@ -2,7 +2,7 @@
 
 By the end of this page our model runs in Apple's MLX engine, gives the scores it gives in ours, and you have timed both engines on both of this Mac's chips.
 
-Our server gives the right answers, and we wrote it to be read. We have not asked how fast an engine built for speed would run the same model.
+Our server gives the answers the model gives alone, and we wrote its Python for people to read. We have not asked how fast an engine built for speed would run the same model.
 
 ## The idea
 

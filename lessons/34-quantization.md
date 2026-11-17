@@ -1,6 +1,6 @@
 # 34. Quantization
 
-By the end of this page each weight inside the blocks takes 8 bits, or 4, and you have measured what each choice costs in memory, in loss and in speed.
+By the end of this page each weight inside the blocks takes 8 bits, or 4, and you have measured what each choice costs in memory, loss and speed.
 
 To write one token the model reads each of its weights, and each weight is a 32-bit number: 21.5 MB for each token written.
 
@@ -8,17 +8,19 @@ To write one token the model reads each of its weights, and each weight is a 32-
 
 A weight does not need 32 bits. Store it as a small whole number, and keep one 32-bit number for its row, called the scale, that says how large a step of 1 is.
 
-With 8 bits a whole number runs from -127 to 127. Find the largest weight in the row by size and let it be 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
+With 8 bits a whole number runs from -127 to 127. Find the row's largest weight, ignoring its sign, and let it be 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
 
 With 4 bits the numbers run from -7 to 7. The steps are 127 / 7 = 18 times as coarse.
 
 Each row has a scale of its own. With one scale for a whole grid, a single large weight anywhere would make the steps coarse for each row.
 
-How far can the error carry? A layer's result is a sum of weights times inputs. Each weight is off by at most half a step. So each number the layer puts out is off by at most half a step times the sum of the inputs, each taken without its sign. That is a bound for the worst case, where each error pushes the same way. What the model loses in practice we measure: the loss on 500 unseen stories, before and after, with lesson 24's interval.
+A layer's result is a sum of weights times inputs. Each weight is off by at most half a step. So each number the layer puts out is off by at most half a step times the sum of the inputs, each taken without its sign. That is a bound for the worst case, where each error pushes the same way.
+
+We measure what the model loses in practice: the loss on 500 unseen stories, before and after, with lesson 24's interval.
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-Speed is a separate question. We store the weights small and turn them back into 32-bit numbers each time a layer runs, which is extra work. Engines built for speed multiply the small numbers as they are, with code written for one kind of chip. So this page claims the memory and reports the speed it measured.
+We store the weights small and turn them back into 32-bit numbers each time a layer runs, which is extra work. Engines built for speed multiply the small numbers as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
 
 ## By hand
 
@@ -101,7 +103,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Both shrunk models write slower: 393 and 168 tokens a second, against 643. Each call turns each grid back into 32-bit numbers before it multiplies, and that work is added to each token. Lesson 31 put our writing at about an eighth of what memory alone allows, so memory was not the limit to begin with. Lesson 37 finds where the time goes.
+Both shrunk models write slower: 393 and 168 tokens a second, against 643. Each call turns each grid back into 32-bit numbers before it multiplies, work the 32-bit model does not do. Lesson 31 put our writing at about an eighth of what memory alone allows, so memory was not the limit to begin with. Lesson 37 looks for where the time goes.
 
 ## What it still cannot do
 
@@ -113,7 +115,7 @@ Predict before you run: the blocks' grids are 17.3 MB of the model's 21.5 MB. Ab
 
 <details><summary>Answer</summary>
 
-17.3 / 4 = 4.3 MB for the grids, plus the 4.2 MB that stays at 32 bits: about 8.6 MB with the scales. The whole model shrinks 2.5 times, not 4.
+17.3 / 4 = 4.3 MB for the grids, plus the 4.2 MB that stays at 32 bits: about 8.6 MB with the scales. The whole model shrinks 2.5 times.
 </details>
 
 <details><summary>A row's largest weight is 0.5. How far can one of its weights move at 8 bits, and at 4?</summary>
