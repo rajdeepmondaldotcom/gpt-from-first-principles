@@ -1,0 +1,101 @@
+{
+  "commit": "f46b7c6",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "same": 8,
+  "sizes": {
+    "1": {
+      "served": 1,
+      "refused": 0,
+      "first_token_p50": 0.00317349995020777,
+      "first_token_p95": 0.00317349995020777,
+      "seconds_a_token_p50": 0.0014953511907526897,
+      "tokens_a_second": 657.2149236182852
+    },
+    "2": {
+      "served": 2,
+      "refused": 0,
+      "first_token_p50": 0.006629916024394333,
+      "first_token_p95": 0.006630374933592975,
+      "seconds_a_token_p50": 0.002418150127466236,
+      "tokens_a_second": 805.1639544289872
+    },
+    "4": {
+      "served": 4,
+      "refused": 0,
+      "first_token_p50": 0.012392250006087124,
+      "first_token_p95": 0.012392708915285766,
+      "seconds_a_token_p50": 0.003246552238817371,
+      "tokens_a_second": 1180.1286618967547
+    },
+    "8": {
+      "served": 8,
+      "refused": 0,
+      "first_token_p50": 0.026541416998952627,
+      "first_token_p95": 0.026542749954387546,
+      "seconds_a_token_p50": 0.004605721571438369,
+      "tokens_a_second": 1616.6576771834364
+    },
+    "16": {
+      "served": 16,
+      "refused": 0,
+      "first_token_p50": 0.054061457980424166,
+      "first_token_p95": 0.05406333296559751,
+      "seconds_a_token_p50": 0.007188574078359774,
+      "tokens_a_second": 2019.9489690614894
+    },
+    "32": {
+      "served": 32,
+      "refused": 0,
+      "first_token_p50": 0.11127179104369134,
+      "first_token_p95": 0.11127591610420495,
+      "seconds_a_token_p50": 0.012525785714387894,
+      "tokens_a_second": 2274.546541197609
+    }
+  },
+  "loads": {
+    "0.5": {
+      "served": 120,
+      "refused": 0,
+      "first_token_p50": 0.0033148330403491855,
+      "first_token_p95": 0.007477358216419816,
+      "seconds_a_token_p50": 0.0017310582056996367,
+      "tokens_a_second": 275.5413036780733
+    },
+    "0.9": {
+      "served": 120,
+      "refused": 0,
+      "first_token_p50": 0.006046911585144699,
+      "first_token_p95": 0.009370364830829203,
+      "seconds_a_token_p50": 0.002661322080899799,
+      "tokens_a_second": 492.81333218078373
+    },
+    "1.5": {
+      "served": 120,
+      "refused": 0,
+      "first_token_p50": 0.007736999541521072,
+      "first_token_p95": 0.012234837282449007,
+      "seconds_a_token_p50": 0.0033702890163228388,
+      "tokens_a_second": 813.3291058101441
+    }
+  },
+  "bytes_for_one": 786432,
+  "capacity": 10.095550247394694,
+  "printed": [
+    "8 requests that join a running batch two steps apart: 8 write what they write alone",
+    "a prompt of 192 tokens read in chunks of 64: the same answer, True",
+    "1 at once: 657 tokens a second in all, 669 for each listener",
+    "2 at once: 805 tokens a second in all, 414 for each listener",
+    "4 at once: 1,180 tokens a second in all, 308 for each listener",
+    "8 at once: 1,617 tokens a second in all, 217 for each listener",
+    "16 at once: 2,020 tokens a second in all, 139 for each listener",
+    "32 at once: 2,275 tokens a second in all, 80 for each listener",
+    "lesson 31's machine finished 10.1 requests a second, one at a time",
+    "the cache for one request of 64 + 64 tokens: 786,432 bytes",
+    "5.0 requests a second, room for 16: first token after 3 ms for half, 7 ms for 95 in 100, 276 tokens a second in all",
+    "9.1 requests a second, room for 16: first token after 6 ms for half, 9 ms for 95 in 100, 493 tokens a second in all",
+    "15.1 requests a second, room for 16: first token after 8 ms for half, 12 ms for 95 in 100, 813 tokens a second in all",
+    "a request offered one byte less than its cache needs is taken: False"
+  ]
+}

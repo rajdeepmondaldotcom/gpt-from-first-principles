@@ -38,6 +38,8 @@ class Attention(nn.Module):
         k, v = k.repeat_interleave(share, dim=1), v.repeat_interleave(share, dim=1)
         # Row i is new token i. It may read every earlier token and the new ones up to itself.
         past = torch.ones(T, seen + T, dtype=torch.bool, device=x.device).tril(seen)
+        if cache and "real" in cache:  # a batch of rows of different lengths: hide the padding
+            past = past & cache["real"][:, None, None, :]
         out, _ = attend(q, k, v, past)
         return self.proj(out.transpose(1, 2).reshape(B, T, -1))
 
