@@ -3,6 +3,8 @@
 import re
 from collections import Counter
 
+from gpt.generate import generate
+
 WORD = re.compile(r"[A-Za-z]+")
 
 
@@ -41,3 +43,10 @@ def passes(task, text):
     found = set(WORD.findall(text))
     lower = {word.lower() for word in found}
     return task["name"] in found and all(word in lower for word in task["words"])
+
+
+def attempt(model, words, task, **how):
+    """Ask the model for a story to order. Returns the story, and whether it passes the check."""
+    ids = generate(model, words.encode(prompt(task)), 250, stop=words.end, **how)
+    story = words.decode([i for i in ids if i != words.end]).split("Story:", 1)[1]
+    return story, passes(task, story)

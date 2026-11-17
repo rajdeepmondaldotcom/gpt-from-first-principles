@@ -38,6 +38,13 @@ def interval(blocks, generator, draws=1000):
     return means.quantile(0.025).item(), means.quantile(0.975).item()
 
 
+def documents(ids, end):
+    """Cut a run of token ids into its documents, each with the end token before and after."""
+    mark = torch.tensor([end], dtype=ids.dtype)
+    cuts = [-1, *(ids == end).nonzero().flatten().tolist()]
+    return [torch.cat([mark, ids[a + 1 : b + 1]]) for a, b in pairwise(cuts) if b - a > 1]
+
+
 def pass_at_k(tries, passed, k):
     """The chance that at least one of k tries passes, from `tries` tries of which `passed` did."""
     return 1 - math.comb(tries - passed, k) / math.comb(tries, k)
@@ -45,23 +52,16 @@ def pass_at_k(tries, passed, k):
 
 if __name__ == "__main__":
     from gpt.data import read
-    from gpt.generate import generate
     from gpt.story import load
-    from gpt.tasks import count_documents, make, passes, prompt
+    from gpt.tasks import attempt, count_documents, make, prompt
 
     cache = Path("data/cache")
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     model, words = load(cache / "story", device)
     generator = torch.Generator().manual_seed(0)
 
-    def documents(ids):
-        """Cut a run of token ids into its documents, each with the end token before and after."""
-        end = torch.tensor([words.end], dtype=ids.dtype)
-        cuts = [-1, *(ids == words.end).nonzero().flatten().tolist()]
-        return [torch.cat([end, ids[a + 1 : b + 1]]) for a, b in pairwise(cuts) if b - a > 1]
-
-    unseen = documents(read(cache / "stories_val.bin"))
-    seen = documents(read(cache / "stories_train.bin")[:5_000_000])
+    unseen = documents(read(cache / "stories_val.bin"), words.end)
+    seen = documents(read(cache / "stories_train.bin")[:5_000_000], words.end)
     say(f"unseen documents: {len(unseen):,}, and {len(seen):,} of the training ones")
 
     # Each token scored once, with more or less of the text before it.
@@ -98,21 +98,13 @@ if __name__ == "__main__":
     counts = count_documents(trained)
     tasks = [task for task in (make(text, counts, len(trained)) for text in texts) if task]
 
-    def attempt(task):
-        ids = generate(
-            model,
-            words.encode(prompt(task)),
-            250,
-            stop=words.end,
-            temperature=0.8,
-            generator=generator,
-        )
-        return passes(task, words.decode(ids).split("Story:", 1)[1])
+    def passed(task):
+        return attempt(model, words, task, temperature=0.8, generator=generator)[1]
 
-    first = [attempt(task) for task in tasks[:100]]
+    first = [passed(task) for task in tasks[:100]]
     low_task, high_task = interval([[int(x)] for x in first], generator)
     say(f"tasks passed: {sum(first)} of 100, 95% interval {low_task:.2f} to {high_task:.2f}")
-    tries = [sum(attempt(task) for _ in range(10)) for task in tasks[:20]]
+    tries = [sum(passed(task) for _ in range(10)) for task in tasks[:20]]
     for k in (1, 5):
         chance = sum(pass_at_k(10, passed, k) for passed in tries) / len(tries)
         say(f"pass at {k}, from 10 tries on each of 20 tasks: {chance:.2f}")
