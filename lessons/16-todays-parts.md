@@ -90,12 +90,12 @@ uv run python -m gpt.model
 
 ```
 lesson 15's model, five seeds: 1.8298 1.8259 1.8414 1.8223 1.8217
+lesson 15's model: 799,616 parameters
 RMSNorm in place of layer normalization: -0.0018 nats, error 0.0025, ratio 0.7, 798,464 parameters
 SwiGLU in place of the MLP: -0.0802 nats, error 0.0063, ratio 12.8, 796,544 parameters
 2 key heads in place of 4: +0.0037 nats, error 0.0052, ratio 0.7, 734,080 parameters
 all three: -0.0763 nats, error 0.0030, ratio 25.6, 729,856 parameters
-lesson 15's model: 799,616 parameters
-unseen text: 1.531 nats, 2.209 bits per byte
+all three, 5,000 steps, unseen text: 1.531 nats, 2.209 bits per byte
 ```
 
 Each comparison is lesson 14's method, 600 steps on five seeds. The first three change one part of lesson 15's model, and the last changes all three.
