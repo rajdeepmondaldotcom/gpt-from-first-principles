@@ -1,0 +1,279 @@
+{
+  "commit": "4c8cc0e",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "mps",
+  "rates": {
+    "32": 0.01,
+    "48": 0.01,
+    "64": 0.01,
+    "96": 0.003,
+    "128": 0.003,
+    "192": 0.003
+  },
+  "runs": [
+    [
+      155776,
+      8847360,
+      3.0226613141205187
+    ],
+    [
+      252192,
+      5537792,
+      3.065853885743438
+    ],
+    [
+      352384,
+      3989504,
+      3.973565290893086
+    ],
+    [
+      688896,
+      1990656,
+      3.754542391065141
+    ],
+    [
+      1245952,
+      1105920,
+      3.9026266530289693
+    ],
+    [
+      2410368,
+      598016,
+      5.100065458446703
+    ],
+    [
+      155776,
+      17694720,
+      2.8524083956866195
+    ],
+    [
+      252192,
+      11067392,
+      2.752643658470711
+    ],
+    [
+      352384,
+      7979008,
+      2.736180577784891
+    ],
+    [
+      688896,
+      3989504,
+      2.9979037041853394
+    ],
+    [
+      1245952,
+      2211840,
+      3.233269021086748
+    ],
+    [
+      2410368,
+      1187840,
+      3.7084216949423814
+    ],
+    [
+      155776,
+      35389440,
+      2.7737188400288093
+    ],
+    [
+      252192,
+      22142976,
+      2.6027084917173497
+    ],
+    [
+      352384,
+      15966208,
+      2.4933944487235915
+    ],
+    [
+      688896,
+      7979008,
+      2.538236767015445
+    ],
+    [
+      1245952,
+      4423680,
+      2.676916613316261
+    ],
+    [
+      2410368,
+      2375680,
+      3.0362628541133163
+    ]
+  ],
+  "held_out": [
+    [
+      352384,
+      31932416,
+      2.3832140347411173
+    ],
+    [
+      688896,
+      15958016,
+      2.2710450156550097
+    ],
+    [
+      1245952,
+      8847360,
+      2.3008592437079867
+    ],
+    [
+      2410368,
+      4759552,
+      2.463444708556738
+    ]
+  ],
+  "first": {
+    "alpha": 0.3,
+    "beta": 0.5,
+    "parts": [
+      0.11671218702770766,
+      1.1889781894257645,
+      0.9701729590293042
+    ],
+    "miss": 0.19501220179063877
+  },
+  "final": {
+    "alpha": 0.25,
+    "beta": 0.55,
+    "parts": [
+      0.11896454186550805,
+      1.3908148038597177,
+      0.8058014983656435
+    ],
+    "miss": 0.17709818099919034
+  },
+  "budget": 2700000000000000.0,
+  "choices": [
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 128,
+        "heads": 4,
+        "kv_heads": 2,
+        "layers": 4
+      },
+      "parameters": 1245952,
+      "steps": 36452,
+      "predicted": 1.559810678205483
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 192,
+        "heads": 6,
+        "kv_heads": 3,
+        "layers": 4
+      },
+      "parameters": 2410368,
+      "steps": 19605,
+      "predicted": 1.4101907003052203
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 256,
+        "heads": 8,
+        "kv_heads": 4,
+        "layers": 6
+      },
+      "parameters": 5374464,
+      "steps": 8921,
+      "predicted": 1.302274620685542
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 320,
+        "heads": 10,
+        "kv_heads": 5,
+        "layers": 8
+      },
+      "parameters": 10325120,
+      "steps": 4723,
+      "predicted": 1.2777095699065082,
+      "loss at rate 0.0005": 3.6988967719670294,
+      "loss at rate 0.001": 3.5606528464108513,
+      "loss at rate 0.002": 3.9601328675176055
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 384,
+        "heads": 12,
+        "kv_heads": 6,
+        "layers": 8
+      },
+      "parameters": 14555904,
+      "steps": 3407,
+      "predicted": 1.2892169870879897
+    }
+  ],
+  "pick": {
+    "shape": {
+      "vocab": 4097,
+      "context": 256,
+      "width": 320,
+      "heads": 10,
+      "kv_heads": 5,
+      "layers": 8
+    },
+    "parameters": 10325120,
+    "steps": 4723,
+    "predicted": 1.2777095699065082,
+    "loss at rate 0.0005": 3.6988967719670294,
+    "loss at rate 0.001": 3.5606528464108513,
+    "loss at rate 0.002": 3.9601328675176055
+  },
+  "printed": [
+    "width 32: rate 0.001 gives 3.352, 0.003 gives 3.004, 0.01 gives 2.852",
+    "width 48: rate 0.001 gives 3.313, 0.003 gives 2.874, 0.01 gives 2.753",
+    "width 64: rate 0.001 gives 3.292, 0.003 gives 2.819, 0.01 gives 2.736",
+    "width 96: rate 0.001 gives 3.388, 0.003 gives 2.998, 0.01 gives 3.577",
+    "width 128: rate 0.001 gives 3.556, 0.003 gives 3.233, 0.01 gives 3.946",
+    "width 192: rate 0.001 gives 3.728, 0.003 gives 3.708, 0.01 gives 4.680",
+    "1e+13 flops,   155,776 parameters,  8,847,360 tokens: 3.023 nats",
+    "1e+13 flops,   252,192 parameters,  5,537,792 tokens: 3.066 nats",
+    "1e+13 flops,   352,384 parameters,  3,989,504 tokens: 3.974 nats",
+    "1e+13 flops,   688,896 parameters,  1,990,656 tokens: 3.755 nats",
+    "1e+13 flops, 1,245,952 parameters,  1,105,920 tokens: 3.903 nats",
+    "1e+13 flops, 2,410,368 parameters,    598,016 tokens: 5.100 nats",
+    "2e+13 flops,   155,776 parameters, 17,694,720 tokens: 2.852 nats",
+    "2e+13 flops,   252,192 parameters, 11,067,392 tokens: 2.753 nats",
+    "2e+13 flops,   352,384 parameters,  7,979,008 tokens: 2.736 nats",
+    "2e+13 flops,   688,896 parameters,  3,989,504 tokens: 2.998 nats",
+    "2e+13 flops, 1,245,952 parameters,  2,211,840 tokens: 3.233 nats",
+    "2e+13 flops, 2,410,368 parameters,  1,187,840 tokens: 3.708 nats",
+    "4e+13 flops,   155,776 parameters, 35,389,440 tokens: 2.774 nats",
+    "4e+13 flops,   252,192 parameters, 22,142,976 tokens: 2.603 nats",
+    "4e+13 flops,   352,384 parameters, 15,966,208 tokens: 2.493 nats",
+    "4e+13 flops,   688,896 parameters,  7,979,008 tokens: 2.538 nats",
+    "4e+13 flops, 1,245,952 parameters,  4,423,680 tokens: 2.677 nats",
+    "4e+13 flops, 2,410,368 parameters,  2,375,680 tokens: 3.036 nats",
+    "law from 18 runs: floor 0.12, alpha 0.30, beta 0.50, misses its own runs by 0.195 nats",
+    "8e+13 flops,   352,384 parameters, 31,932,416 tokens: 2.383 nats",
+    "8e+13 flops,   688,896 parameters, 15,958,016 tokens: 2.271 nats",
+    "8e+13 flops, 1,245,952 parameters,  8,847,360 tokens: 2.301 nats",
+    "8e+13 flops, 2,410,368 parameters,  4,759,552 tokens: 2.463 nats",
+    "held out,   352,384 parameters: predicted 2.285, off by +0.098",
+    "held out,   688,896 parameters: predicted 2.214, off by +0.057",
+    "held out, 1,245,952 parameters: predicted 2.261, off by +0.040",
+    "held out, 2,410,368 parameters: predicted 2.436, off by +0.027",
+    "law from all 22 runs: floor 0.12, alpha 0.25, beta 0.55, misses its own runs by 0.177 nats",
+    " 1,245,952 parameters, 36,452 steps: predicted 1.560 nats",
+    " 2,410,368 parameters, 19,605 steps: predicted 1.410 nats",
+    " 5,374,464 parameters,  8,921 steps: predicted 1.302 nats",
+    "10,325,120 parameters,  4,723 steps: predicted 1.278 nats",
+    "14,555,904 parameters,  3,407 steps: predicted 1.289 nats",
+    "picked 10,325,120 parameters, rate 0.0005: 3.699 nats",
+    "picked 10,325,120 parameters, rate 0.001: 3.561 nats",
+    "picked 10,325,120 parameters, rate 0.002: 3.960 nats"
+  ]
+}
