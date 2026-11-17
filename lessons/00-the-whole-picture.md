@@ -18,14 +18,14 @@ Each lesson adds one piece, in this order.
 | 6 to 10 | The transformer | What is inside it? |
 | 11 to 14 | Training | How do you train one, and know that it worked? |
 | 15 and 16 | Today's model | What has changed since 2019? |
-| 17 to 21 | A real model | What will it cost, what will it read, how big should it be? |
-| 22 to 24 | Using and measuring | What does it write, and how good is it? |
+| 17 to 21 | A real model | What will it cost and read, how big should it be, and can we train it? |
+| 22 to 24 | Using and measuring | What does it write, how fast, and how good is it? |
 | 25 to 30 | Adapting | How do you teach it a job, a taste and a rule? |
 | 31 to 37 | Serving | How do many people use it at once? |
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
 
-The model answers one prompt, `Once upon a time`, at each stage, so you can watch it learn to write. A scoreboard, in bits per byte, shows what each idea up to lesson 21 bought. Each lesson opens on something the last lesson's model could not do.
+The model answers one prompt, `Once upon a time`, at each stage, so you can watch it learn to write. A scoreboard in bits per byte, on Shakespeare and then on stories, shows what each idea bought. Each lesson opens on something the last one left undone.
 
 Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so.
 
@@ -38,8 +38,8 @@ One request, followed through the finished storyteller. The listener types Mira,
 | Step | What happens | Lesson |
 |---|---|---|
 | 1 | The page sends `Name: Mira`, `Words: cat, moon, brave`, `Story:` to the server | 36 |
-| 2 | The text is cut into 20 tokens: `N`, `ame`, `:`, ` M`, `ir`, `a` and so on | 5 |
-| 3 | The engine checks its memory. This request may come to need (20 + 120) × 6,144 = 860,160 bytes | 17, 32 |
+| 2 | The text is cut into 20 tokens: `N`, `ame`, `:`, ` M`, `ir`, `a` and so on | 5, 18 |
+| 3 | The engine checks its memory. This request may come to need (20 + 120) × 6,144 = 860,160 bytes | 23, 32 |
 | 4 | The model reads the 20 tokens in one pass through 6 blocks. In each, each token chooses what to read from the tokens before it | 6 to 10, 15, 16 |
 | 5 | The keys and values of those 20 tokens are kept, so they are never worked out again | 23 |
 | 6 | The last place gives 4,097 scores, one for each token that could come next | 10 |

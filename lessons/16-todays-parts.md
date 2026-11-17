@@ -2,7 +2,7 @@
 
 By the end of this page the model has the parts of Llama, and loaded with a tiny reference Llama's weights it gives that model's scores.
 
-Lesson 15's model still has three parts from 2019: layer normalization, the GELU MLP, and a key and value head for each query head. Llama and the models built on its layout changed all three.
+Lesson 15's model still has three parts from 2019: layer normalization, the GELU MLP, and a key and value head for each query head. Llama changed all three. We test each change by lesson 14's method.
 
 ## The idea
 
@@ -124,7 +124,7 @@ Look the senateward, he found you speak,
 To then he di
 ```
 
-We have not yet counted what the model costs: the memory a run needs and the multiplies a step takes.
+At 5,000 steps, on one seed each, we could not tell the designs apart. Longer runs on more seeds would settle it, and we have not counted what a run costs: the memory it needs and the multiplies a step takes.
 
 ## Check yourself
 

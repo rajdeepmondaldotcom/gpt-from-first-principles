@@ -115,7 +115,7 @@ With the cache the model reads 102 times fewer tokens and writes 3.7 times as fa
 
 ## What it still cannot do
 
-We can score the model on unseen text and read its stories. We cannot yet say how sure a score is, or whether a second model is better than this one.
+The model now writes fast enough to be judged on hundreds of stories. We cannot yet say how sure a loss is, or whether a second model is better than this one.
 
 ## Check yourself
 

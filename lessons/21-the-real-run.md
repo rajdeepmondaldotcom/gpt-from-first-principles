@@ -14,7 +14,7 @@ Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.
 
 Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 tokens, 1.4 times through the training text. Every 500 steps the loop measures the loss on 100,000 unseen tokens and writes a checkpoint. If the machine stops, starting the script again carries on from the last checkpoint. Lesson 12's test that a resumed run matches an unbroken one ran on the processor. We have not checked it on the graphics chip.
 
-The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text.
+The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text. So this run uses no dropout.
 
 Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in either fit, and the miss is 2.7 times larger. We trained one size, so we cannot say whether the law's choice of size was right.
 
@@ -22,7 +22,7 @@ Keep the weights. The script writes them in lesson 16's Llama layout and lesson 
 
 ## By hand
 
-The score in bits per byte. The run ends at 1.565 nats a token, and an unseen token carries 3.93 bytes.
+The loss in bits per byte. The run ends at 1.565 nats a token, and an unseen token carries 3.93 bytes.
 
 1.565 / 0.693 = 2.258 bits a token
 

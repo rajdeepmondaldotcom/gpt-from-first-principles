@@ -2,7 +2,7 @@
 
 By the end of this page 210 MB of raw text is 52 million tokens on disk, and no document is in both the training text and the unseen text.
 
-Shakespeare is one megabyte. Lesson 13 showed what a model does with too little text: it stores it. A bigger model needs more text, and we have to download it.
+Shakespeare is one megabyte, and lesson 13's model learned a tenth of it by heart. A model of 5 million parameters needs far more text, and we have to download it.
 
 ## The idea
 
