@@ -49,11 +49,13 @@ Each model is scored on the same unseen tenth of Shakespeare, in bits per byte. 
 | GPT, 64 characters back | 10 | 3.017 |
 | GPT, with momentum | 11 | 2.564 |
 | GPT, with AdamW | 11 | 2.372 |
+| MLP, eight characters back, with AdamW | 11 | 2.551 |
+| MLP, 64 characters back, with AdamW | 11 | 2.863 |
 | GPT, with the loop, 5,000 steps | 12 | 2.206 |
 | GPT, rotary positions | 15 | 2.210 |
 | GPT, today's parts | 16 | 2.209 |
 
-With plain gradient descent the GPT trails the MLP. Lesson 11 changes only the optimizer, and the GPT leads.
+With plain gradient descent the GPT trails the MLP. Lesson 11 changes only the optimizer, and the GPT leads. Given that optimizer and as many guesses, the MLP does not catch it, and reading 64 characters it does worse than reading 8.
 
 From lesson 18 the text is 210 MB of short stories, and the scoreboard starts again. The two cannot be compared: the stories are simpler text than Shakespeare.
 
