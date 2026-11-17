@@ -63,18 +63,26 @@ class Service:
         return request, out
 
     def work(self):
-        last = time.perf_counter()
+        last, held = time.perf_counter(), None  # held: the head of the line, while it has no room
         while self.running:
-            while not self.inbox.empty():
-                request, out, arrived = self.inbox.get()
-                self.counts["requests"] += 1
+            while held or not self.inbox.empty():
+                if not held:
+                    held = self.inbox.get()
+                    self.counts["requests"] += 1
+                request, out, arrived = held
                 if self.engine.admit(request):
                     self.outs[id(request)] = (out, arrived)
-                else:  # no memory for it
+                elif self.outs:
+                    break  # no memory yet: it waits, and so does everyone behind it
+                else:  # it would not fit in an empty engine
                     self.counts["refused"] += 1
                     out.put(None)
+                held = None
             now = time.perf_counter()
-            self.counts["in_flight_seconds"] += len(self.outs) * (now - last)
+            inside = (
+                len(self.outs) + self.inbox.qsize() + bool(held)
+            )  # being written to, or in line
+            self.counts["in_flight_seconds"] += inside * (now - last)
             last = now
             if not self.outs:
                 time.sleep(0.001)
@@ -313,8 +321,8 @@ if __name__ == "__main__":
     say(
         f"first token after {ours['first_token_seconds'] / ours['finished'] * 1e3:,.0f} ms on average"
     )
-    say(f"requests in flight, averaged over the run: {ours['in_flight_seconds'] / took:.1f}")
-    say(f"arrival rate times time in system: {rate * each:.1f}")
+    say(f"requests inside, averaged over the run: {ours['in_flight_seconds'] / took:.1f}")
+    say(f"arrival rate times time inside: {rate * each:.1f}")
     minutes = 1e6 / (ours["tokens"] / took) / 60
     say(f"a million tokens at that speed: {minutes:.0f} minutes of this machine")
 

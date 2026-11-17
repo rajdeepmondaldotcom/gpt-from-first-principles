@@ -11,7 +11,7 @@ A server is a program that waits for requests from other programs and answers ea
 1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, posted to an address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, and so can a tool built to test servers under load.
 2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one byte each. We hold the first half back until the second arrives.
 3. Serve many at once. Each web request gets a thread of its own, which mostly waits. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue and gets its tokens back through another.
-4. Say no early. When the waiting line is full, the server answers "busy, try again" at once. A fast no is kinder than a slow one. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. A fast no is kinder than a slow one. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
 
 Two checks tell us the counts are right. An outside tool sends the load and measures it from its own side. And one sum has to balance: the number of requests inside the server, averaged over time, equals the rate at which they arrive times the average time each one spends inside.
@@ -51,18 +51,26 @@ The engine's thread:
 ```python
 # gpt/server.py
     def work(self):
-        last = time.perf_counter()
+        last, held = time.perf_counter(), None  # held: the head of the line, while it has no room
         while self.running:
-            while not self.inbox.empty():
-                request, out, arrived = self.inbox.get()
-                self.counts["requests"] += 1
+            while held or not self.inbox.empty():
+                if not held:
+                    held = self.inbox.get()
+                    self.counts["requests"] += 1
+                request, out, arrived = held
                 if self.engine.admit(request):
                     self.outs[id(request)] = (out, arrived)
-                else:  # no memory for it
+                elif self.outs:
+                    break  # no memory yet: it waits, and so does everyone behind it
+                else:  # it would not fit in an empty engine
                     self.counts["refused"] += 1
                     out.put(None)
+                held = None
             now = time.perf_counter()
-            self.counts["in_flight_seconds"] += len(self.outs) * (now - last)
+            inside = (
+                len(self.outs) + self.inbox.qsize() + bool(held)
+            )  # being written to, or in line
+            self.counts["in_flight_seconds"] += inside * (now - last)
             last = now
             if not self.outs:
                 time.sleep(0.001)
@@ -81,7 +89,7 @@ The engine's thread:
                     del self.outs[id(request)]
 ```
 
-`self.inbox` is the waiting line and `self.outs` holds, for each request inside, the queue its tokens go to. Each time round, the thread takes in what is waiting, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server and the page you see in the browser.
+`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server and the page you see in the browser.
 
 ## The proof
 
@@ -94,7 +102,7 @@ uv run pytest tests/test_server.py
 - Six people who ask at the same moment each get their own answer.
 - An answer stops at the model's context, and a prompt that fills the context is refused with the reason.
 - A listener who leaves after one piece frees their row.
-- With no memory for a request, the server says no at once. With a line of two full, the third is turned away.
+- A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
 - The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests.
 
 The script starts the server, asks it for one story, then has `ab`, a load tool that comes with the Apache web server, send 200 requests, 16 at a time.

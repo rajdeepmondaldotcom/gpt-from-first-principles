@@ -16,7 +16,7 @@ Three things follow.
 
 1. Reuse stops at the first token that differs. The tokens after it may match word for word, but their keys and values were worked out from a text that is now different, so they have to be read again.
 2. Order matters. Put what changes last. A prompt that opens with the reader's name or the time of day shares nothing with the next one.
-3. One token is always read. The store gives back keys and values, not scores, and the model needs a pass to make the scores for the first new token. A prompt found whole in the store still reads its last piece.
+3. At least one token is always read. The store gives back keys and values, not scores, and the model needs a pass to make the scores for the first new token. So a prompt that ends where a stored piece ends reads that last piece again.
 
 The store has a budget in bytes. When it is full, it throws out the piece that was used longest ago.
 
@@ -35,7 +35,7 @@ Two prompts of 43 and 44 tokens that share their first 40.
 
 The first prompt leaves two whole pieces behind, for tokens 1 to 16 and 17 to 32. Its last 11 tokens do not fill a piece. The second prompt shares 40 tokens with the first, and gets 32 of them from the store, because pieces come whole.
 
-Now change token 21 of the shared beginning. The first piece still matches. The second is filed under 32 tokens of which one is different, so it is not found: 16 tokens come from the store and 27 are read.
+Now send the first prompt again with its token 21 changed. The first piece still matches. The second is filed under 32 tokens of which one is different, so it is not found: 16 of the 43 tokens come from the store and 27 are read.
 
 ## The code
 
@@ -43,30 +43,30 @@ Now change token 21 of the shared beginning. The first piece still matches. The 
 # gpt/prefix.py
     def fetch(self, ids, blocks):
         """A cache holding the longest stored beginning of `ids`, and how many tokens it covers."""
-        found, end = [], self.block
+        found, end = [], self.piece
         while end < len(ids) and tuple(ids[:end]) in self.pieces:  # leave a token to read
             self.pieces.move_to_end(tuple(ids[:end]))  # used now, so the last to be thrown out
             found.append(self.pieces[tuple(ids[:end])])
-            end += self.block
+            end += self.piece
         if not found:
             return [{} for _ in range(blocks)], 0
         kept = [
             {name: torch.cat([piece[i][name] for piece in found], dim=2) for name in ("k", "v")}
             for i in range(blocks)
         ]
-        return kept, end - self.block
+        return kept, end - self.piece
 ```
 
-`self.pieces` is a dictionary that remembers the order its entries were last used in. `tuple(ids[:end])` is the text up to a piece's end, in a form a dictionary can file things under. `torch.cat` joins the pieces found, along the direction of the tokens, into one cache of the kind lesson 23 made.
+`self.piece` is 16, and `blocks` is the number of blocks in the model, each with a cache of its own. `self.pieces` is a dictionary that remembers the order its entries were last used in. `tuple(ids[:end])` is the text up to a piece's end, in a form a dictionary can file things under. `torch.cat` joins the pieces found, along the direction of the tokens, into one cache of the kind lesson 23 made.
 
 ```python
 # gpt/prefix.py
     def keep(self, ids, kept):
-        """Store each whole block of a prompt's cache that is not stored yet."""
-        for end in range(self.block, len(ids) + 1, self.block):
+        """Store each whole piece of a prompt's cache that is not stored yet."""
+        for end in range(self.piece, len(ids) + 1, self.piece):
             if tuple(ids[:end]) not in self.pieces:
                 piece = [
-                    {name: one[name][:, :, end - self.block : end].clone() for name in ("k", "v")}
+                    {name: one[name][:, :, end - self.piece : end].clone() for name in ("k", "v")}
                     for one in kept
                 ]
                 self.pieces[tuple(ids[:end])] = piece
@@ -85,7 +85,7 @@ uv run pytest tests/test_prefix.py
 ```
 
 - The hand example: 43 tokens read, then 12. Both requests write what they write with no store.
-- With token 21 changed, 27 tokens are read: one piece is reused, not two.
+- The first prompt with its token 21 changed reads 27 tokens: one piece is reused, not two.
 - With one changing token put first, a prompt of 41 tokens reads all 41.
 - A prompt of 32 tokens sent twice reads 16 the second time: its last piece, to get scores to start from.
 - A store with room for two pieces is given three. The one used longest ago goes, and a piece that was used again in between stays.
@@ -126,7 +126,7 @@ Predict before you run: 20 prompts share their first 160 tokens and end in 16 to
 
 <details><summary>A service starts each prompt with today's date and then 500 tokens of instructions. What does the store save?</summary>
 
-Nothing across days, and all of it within a day. To share across days, put the date after the instructions.
+Nothing across days. Within a day, each whole piece of the date and the instructions. To share across days, put the date after the instructions.
 </details>
 
 <details><summary>Why is a piece filed under the whole text up to its end, and not under its own 16 tokens?</summary>

@@ -6,35 +6,33 @@ import torch
 
 
 class PrefixStore:
-    """Pieces of cache, each for one block of tokens, found again by the text up to that block."""
+    """Pieces of cache, each for a run of `piece` tokens, found again by the text up to its end."""
 
-    def __init__(self, budget, block=16):
-        self.budget, self.block, self.used = budget, block, 0
-        self.pieces = (
-            OrderedDict()
-        )  # the tokens up to a block's end -> that block's keys and values
+    def __init__(self, budget, piece=16):
+        self.budget, self.piece, self.used = budget, piece, 0
+        self.pieces = OrderedDict()  # the tokens up to a piece's end -> its keys and values
 
     def fetch(self, ids, blocks):
         """A cache holding the longest stored beginning of `ids`, and how many tokens it covers."""
-        found, end = [], self.block
+        found, end = [], self.piece
         while end < len(ids) and tuple(ids[:end]) in self.pieces:  # leave a token to read
             self.pieces.move_to_end(tuple(ids[:end]))  # used now, so the last to be thrown out
             found.append(self.pieces[tuple(ids[:end])])
-            end += self.block
+            end += self.piece
         if not found:
             return [{} for _ in range(blocks)], 0
         kept = [
             {name: torch.cat([piece[i][name] for piece in found], dim=2) for name in ("k", "v")}
             for i in range(blocks)
         ]
-        return kept, end - self.block
+        return kept, end - self.piece
 
     def keep(self, ids, kept):
-        """Store each whole block of a prompt's cache that is not stored yet."""
-        for end in range(self.block, len(ids) + 1, self.block):
+        """Store each whole piece of a prompt's cache that is not stored yet."""
+        for end in range(self.piece, len(ids) + 1, self.piece):
             if tuple(ids[:end]) not in self.pieces:
                 piece = [
-                    {name: one[name][:, :, end - self.block : end].clone() for name in ("k", "v")}
+                    {name: one[name][:, :, end - self.piece : end].clone() for name in ("k", "v")}
                     for one in kept
                 ]
                 self.pieces[tuple(ids[:end])] = piece
@@ -85,11 +83,11 @@ if __name__ == "__main__":
     say(f"the answers are the same with and without the store: {again == answers}")
     first, wait, _ = run([end + shared for end in ends], PrefixStore(budget=float("inf")))
     show("the part that changes put first, with a store", first, wait)
-    room = 12 * cache_bytes(model, 16)  # twelve blocks of 16 tokens
+    room = 12 * cache_bytes(model, 16)  # twelve pieces of 16 tokens
     small = PrefixStore(budget=room)
     tight, wait, _ = run(last, small)
-    show("a store with room for 12 blocks", tight, wait)
-    say(f"that store holds {small.used:,} bytes of its {room:,}, in {len(small.pieces)} blocks")
+    show("a store with room for 12 pieces", tight, wait)
+    say(f"that store holds {small.used:,} bytes of its {room:,}, in {len(small.pieces)} pieces")
     save(
         "33_prefix",
         torch=torch.__version__,

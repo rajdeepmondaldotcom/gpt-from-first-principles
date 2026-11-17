@@ -8,6 +8,7 @@ import pytest
 import torch
 
 from gpt.bpe import Tokenizer
+from gpt.cost import cache_bytes
 from gpt.generate import generate
 from gpt.model import GPT
 from gpt.server import Service, pieces, serve
@@ -118,12 +119,28 @@ def test_a_reader_who_leaves_frees_their_place():
     server.shutdown()
 
 
-def test_no_memory_means_a_plain_no_at_once():
+def test_a_request_too_big_for_the_whole_memory_gets_a_plain_no_at_once():
     service = Service(model(), WORDS, budget=1)
     server = serve(service, port=0)
     with pytest.raises(urllib.error.HTTPError) as refused:
         ask(f"http://127.0.0.1:{server.server_port}", "Hello")
     assert refused.value.code == 503
+    service.running = False
+    server.shutdown()
+
+
+def test_with_memory_for_one_request_the_next_waits_and_is_answered():
+    net = model()
+    service = Service(net, WORDS, budget=cache_bytes(net, 40))  # room for one of these two
+    server = serve(service, port=0)
+    url, got = f"http://127.0.0.1:{server.server_port}", {}
+    prompts = ["Once upon a time", "The cat sat on a"]  # 16 tokens each, and 20 more to write
+    threads = [threading.Thread(target=lambda p=p: got.update({p: ask(url, p)})) for p in prompts]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert got == {p: alone(net, p) for p in prompts} and service.counts["refused"] == 0
     service.running = False
     server.shutdown()
 

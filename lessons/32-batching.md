@@ -11,8 +11,8 @@ A pass of the model works on a grid of tokens with one row for each text. In tra
 Three things stand in the way.
 
 1. The rows have different lengths. One reader's text is 70 tokens and another's is 200, and a grid needs rows of one length. We line the rows up at their ends and put empty places in front of the shorter ones. A grid of true and false, called `real`, marks the places that hold tokens, and attention reads only those.
-2. Readers come and go. A new request cannot wait for the batch to finish. So it first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
-3. Memory runs out. Each row's cache grows by 6,144 bytes a token. The engine takes a request only if the cache it may come to need, for its prompt and the most it may write, still fits in a budget. A request with no room waits in lesson 31's line.
+2. Readers come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
+3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token. The engine takes a request only if the cache it may come to need, for its prompt and the most it may write, still fits in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
 
 Joining takes care with places. A row read its prompt at places 0, 1, 2 and so on, and lesson 15 turned each key by its place. In the batch that row may sit further along, behind some empty places. Rotary positions make the move cheap: a score depends only on the distance between two tokens. So we turn each of the row's keys on by the same number of places, and no score changes. A function called `slide` does that, and a test checks it.
 
@@ -89,7 +89,7 @@ def slide(kept, by, pad):
         return out
 ```
 
-`self.rows` are the requests being written to and `self.reading` the ones still reading their prompt. Each row picks its own token with lesson 22's `choose`, so two readers can ask for different temperatures. `self.store` is empty until lesson 33. The model itself gained two lines: when a cache holds `real`, attention's mask leaves out the places it marks false.
+`self.rows` are the requests being written to and `self.reading` the ones still reading their prompt. Each pass adds one real place to each row: the column of ones. Three short functions are not shown. `admit` does the sum of point 3, `join` lines a new row up with `slide`, and `leave` cuts out each row whose `done()` is true. Each row picks its own token with lesson 22's `choose`, with the settings in its own `request.how`, so two readers can ask for different temperatures. `self.store` is empty until lesson 33. The model itself gained two lines: when a cache holds `real`, attention's mask leaves out the places it marks false.
 
 ## The proof
 
@@ -102,7 +102,7 @@ uv run pytest tests/test_engine.py
 - A stop token ends its own row and no other.
 - A prompt read in chunks of 4 tokens gives the answer it gives read whole, and a short request beside it gets its first token after one round.
 - With four rows, one round calls the model once, on a grid of 4 rows and 1 new token each.
-- A budget for two requests refuses a third, and takes it once the first two are done.
+- With a budget for two requests, `admit` says no to a third, and yes once the first two are done.
 - A row moved six places along, with its keys turned to match, gets the scores it got before.
 - With the mask taken out, the empty places are read and the scores change.
 
@@ -143,7 +143,7 @@ A pass of the batch reads one new token for each row. A prompt is many tokens, s
 
 <details><summary>From lesson 15: what would break if positions came from lesson 8's table of places?</summary>
 
-A row could not be moved. A key made at place 3 would carry place 3 inside it, and turning has no meaning for a table. Each joining row would have to be read again at its new places.
+A row could not be moved. Lesson 8 added a place's numbers to the token's at the input, so each key made from them has place 3 mixed in, with no way to take it out. Each joining row would have to be read again at its new places.
 </details>
 
 Go deeper:

@@ -10,13 +10,13 @@ A reader feels two waits. The first is the wait before anything appears, called 
 
 The person who pays for the machine watches a third number: the tokens written each second, added up over all readers. That is the throughput. The two waits are the latency.
 
-One number cannot sum up the waits of many readers. A mean hides the readers who waited longest, and they are the ones who leave. So we sort the waits and read off percentiles. The 50th percentile is the wait that half the readers stayed under. The 95th is the wait that 1 reader in 20 went over.
+One number cannot sum up the waits of many readers. A mean hides the readers who waited longest, and they are the ones who leave. So we sort the waits and read off percentiles. The 50th percentile is the smallest wait that half the readers were at or under. The 95th is the wait that 1 reader in 20 went over.
 
-Readers do not arrive evenly. The script draws each gap between two arrivals by chance, at a set rate on average, so some readers come in a bunch and some after a pause. A request that arrives while the machine is busy waits in line. In this lesson the machine takes one request at a time. It runs on lesson 32's engine, held to one request, and lesson 32 opens it up.
+Readers do not arrive evenly. The script draws each gap between two arrivals by chance, at a set rate on average, so some readers come in a bunch and some after a pause. A request that arrives while the machine is busy waits in line. One too big for the machine's memory is refused. The code that takes requests in and writes their tokens we call the engine. In this lesson it takes one request at a time, and lesson 32 opens it up.
 
 The line is where latency comes from. Say the machine can finish 3 requests a second. At half that rate, a request seldom finds another ahead of it. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows for as long as readers keep coming. The machine writes no slower in any of the three cases. Only the wait for the first token grows.
 
-How fast could writing be? One new token reads each weight once, as lesson 17 counted, and the story model's weights are 21.5 MB. The script times how fast this machine copies memory. Dividing one by the other gives the most tokens a second that memory alone would allow, and the run sets our speed beside it.
+How fast could writing be? One new token reads each weight once, as lesson 17 counted, and the story model's weights are 21.5 MB. The script times how fast this machine copies memory. That speed over 21.5 MB is the most tokens a second that memory alone would allow, and the run sets our speed beside it.
 
 ## By hand
 
@@ -32,7 +32,7 @@ A slow tail. Of 100 readers, 90 wait 0.1 s and 10 wait 3 s.
 
 No reader waited 0.39 s.
 
-The most that one request at a time can finish. In the run below the prompt is read at @@READ@@ tokens a second and the answer written at @@WRITE@@. A request with a prompt of 64 tokens and an answer of 64 takes 64 / @@READ@@ + 63 / @@WRITE@@ = @@EACH@@ s, so the machine finishes @@CAPACITY@@ requests a second and no more.
+The most that one request at a time can finish. In the run below the prompt is read at @@READ@@ tokens a second and the answer written at @@WRITE@@. The pass that reads the prompt gives the first token of the answer, so an answer of 64 has 63 more to write. A request with a prompt of 64 tokens and an answer of 64 takes 64 / @@READ@@ + 63 / @@WRITE@@ = @@EACH@@ s, so the machine finishes @@CAPACITY@@ requests a second and no more.
 
 ## The code
 
@@ -69,7 +69,7 @@ def report(records):
     }
 ```
 
-A record holds the moment a request arrived and the moment each of its tokens was written. A function called `serve` makes the records: it feeds the engine each request at its arrival time, keeps the ones with no room in line, and notes the clock after each step.
+A record holds the moment a request arrived and the moment each of its tokens was written. A function called `serve` makes the records: it feeds the engine each request at its arrival time, holds back in line the ones there is no room for yet, and notes the clock after each step.
 
 ## The proof
 
@@ -102,7 +102,7 @@ The machine served one reader while the rest stood in line, and each pass of the
 
 ## Check yourself
 
-Predict before you run: a machine finishes 3 requests a second and 4.5 arrive each second. After 20 seconds, about how many requests are in line?
+Predict before you run: a machine finishes 3 requests a second and 4.5 arrive each second. The line starts empty. After 20 seconds, about how many requests are in it?
 
 <details><summary>Answer</summary>
 
