@@ -1,6 +1,6 @@
 # 40. The board in its head
 
-By the end of this page you have read a chess position out of the model's inner numbers, and changed the model's move by rubbing one piece out of them.
+By the end of this page you have read a chess position out of the model's inner numbers, and lowered the chance of a queen move by rubbing the queen out of them.
 
 The model plays chess from a list of moves. We never showed it a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
 
