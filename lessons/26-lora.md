@@ -18,11 +18,11 @@ W x + scale × B (A x)
 
 W is frozen: it gets no slope and takes no step. Only A and B train. The scale is a fixed number that sets how much the correction counts. Ours is 2, and we did not tune it. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
 
-We put a correction beside two grids in each attention: the one that makes queries and the one that makes values. That was the choice in the paper that introduced LoRA.
+A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two of them, the one that makes queries and the one that makes values. We run that, and then a correction beside each of the seven.
 
 Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add scale × B A to W once, and the model is a plain model again, no larger and no slower than before.
 
-The run repeats lesson 25: the same examples, 2,000 steps of 32, the same three measures. Two settings differ. The peak rate is 0.002, twice lesson 25's, and there is no weight decay. We tried no others.
+Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ from lesson 25's. The peak rate is 0.002, twice as high, and there is no weight decay. We tried no others.
 
 ## By hand
 
@@ -33,7 +33,7 @@ The count for one block, at a rank of 8.
 | Queries | 256 to 256 | 8 × 256 and 256 × 8 | 4,096 |
 | Values | 256 to 128 | 8 × 256 and 128 × 8 | 3,072 |
 
-The values grid is the smaller because of lesson 16's grouped heads: our 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers, and six blocks have 43,008. That is 0.8% of 5,374,464, and 0.17 MB at 4 bytes each.
+The values grid is the smaller because of lesson 16's grouped heads: our 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers, and six blocks have 43,008. That is 0.8% of 5,374,464, and 0.17 MB at 4 bytes each. Beside each of the seven grids, a block has 36,848 and the model 221,088: 4.1%, and 0.88 MB.
 
 A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0).
 
@@ -87,7 +87,7 @@ def merge(model):
                     setattr(part, name, one.layer)
 ```
 
-`down` is A and `up` is B, and `in_features` and `out_features` are a layer's counts of inputs and outputs. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. Dividing by the rank keeps A's first numbers small. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `nn.Parameter` marks the two new grids as weights that do train. `getattr` and `setattr` read and replace a part of the model by its name, and `named_children` lists the parts, so nothing in the model's own file changes. PyTorch stores a layer's grid as outputs by inputs (lesson 4), the shape of `up @ down`.
+`down` is A and `up` is B, and `in_features` and `out_features` are a layer's counts of inputs and outputs. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights, and `nn.Parameter` marks the two new grids as weights that do train. `named_children` lists a part's layers by name and `setattr` replaces one, so nothing in the model's own file changes. PyTorch stores a layer's grid as outputs by inputs (lesson 4), the shape of `up @ down`.
 
 ## The proof
 
@@ -99,6 +99,7 @@ uv run pytest tests/test_lora.py
 - Only grids named `down` and `up` train. In a small model they hold under a tenth of the weights.
 - Training lowers the loss, moves `up` away from zero, and leaves each frozen weight equal to what it was, to the last bit.
 - After the merge the scores match to 0.00001, the model's parts have their old names, and no LoRA layer is left.
+- A correction beside each of the seven grids also changes nothing at first, trains, and folds back in to leave a plain model.
 - With r = 3, PyTorch counts the rank of `up` times `down` as 3.
 
 ```bash
@@ -117,7 +118,7 @@ Both fine-tunes learned from 60,404 stories that already obeyed their orders: a 
 
 ## Check yourself
 
-Predict before you run: the corrections hold 0.8% of the weights. Will the model learn the task as well as lesson 25's did?
+Predict before you run: beside queries and values, the corrections hold 0.8% of the weights. Will the model learn the task as well as lesson 25's did?
 
 <details><summary>Answer</summary>
 
@@ -127,11 +128,6 @@ Predict before you run: the corrections hold 0.8% of the weights. Will the model
 <details><summary>Why does B start at zero and A at random numbers, and not both at zero?</summary>
 
 With B at zero the correction is zero, so the model starts unchanged. B's slope is multiplied by A x, and A's is passed back through B. With both at zero, both slopes are zero and neither grid ever moves. With A random, B moves on the first step, and A once B has.
-</details>
-
-<details><summary>A grid maps 512 numbers to 512. How many numbers does a correction of rank 4 train, against the grid's own?</summary>
-
-4 × 512 + 512 × 4 = 4,096, against 262,144. That is 64 times fewer.
 </details>
 
 <details><summary>From lesson 17: training keeps four numbers for each weight it trains. What does freezing the model save?</summary>
