@@ -1,0 +1,152 @@
+{
+  "commit": "6f05036",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "mps",
+  "seed": 0,
+  "shape": {
+    "vocab": 4097,
+    "context": 256,
+    "width": 256,
+    "heads": 8,
+    "kv_heads": 4,
+    "layers": 6
+  },
+  "steps": 8921,
+  "rates_tried": [
+    [
+      0.0005,
+      3.2919824968990077
+    ],
+    [
+      0.001,
+      3.0631824058698784
+    ],
+    [
+      0.002,
+      3.05242490096831
+    ]
+  ],
+  "peak": 0.002,
+  "parameters": 5374464,
+  "curve": [
+    {
+      "step": 500,
+      "train": 2.4508819580078125,
+      "val": 2.4676768767528046
+    },
+    {
+      "step": 1000,
+      "train": 2.156752586364746,
+      "val": 2.1577890249399037
+    },
+    {
+      "step": 1500,
+      "train": 2.0607175827026367,
+      "val": 2.0285031049679487
+    },
+    {
+      "step": 2000,
+      "train": 1.9574933052062988,
+      "val": 1.9477899013421474
+    },
+    {
+      "step": 2500,
+      "train": 1.922492504119873,
+      "val": 1.8920527531550482
+    },
+    {
+      "step": 3000,
+      "train": 1.830239176750183,
+      "val": 1.8456937349759615
+    },
+    {
+      "step": 3500,
+      "train": 1.8072985410690308,
+      "val": 1.810058124248798
+    },
+    {
+      "step": 4000,
+      "train": 1.745413899421692,
+      "val": 1.7709588466546475
+    },
+    {
+      "step": 4500,
+      "train": 1.703561782836914,
+      "val": 1.7429034893329327
+    },
+    {
+      "step": 5000,
+      "train": 1.6550700664520264,
+      "val": 1.7116627228565706
+    },
+    {
+      "step": 5500,
+      "train": 1.613184928894043,
+      "val": 1.6791655711638622
+    },
+    {
+      "step": 6000,
+      "train": 1.6000820398330688,
+      "val": 1.6566188714443109
+    },
+    {
+      "step": 6500,
+      "train": 1.5004043579101562,
+      "val": 1.6302504319411057
+    },
+    {
+      "step": 7000,
+      "train": 1.6066789627075195,
+      "val": 1.6090923602764422
+    },
+    {
+      "step": 7500,
+      "train": 1.5987060070037842,
+      "val": 1.5904830541366186
+    },
+    {
+      "step": 8000,
+      "train": 1.5889651775360107,
+      "val": 1.5761368189102565
+    },
+    {
+      "step": 8500,
+      "train": 1.5099245309829712,
+      "val": 1.5671626164362982
+    },
+    {
+      "step": 8921,
+      "train": 1.4482284784317017,
+      "val": 1.5621034279847756
+    }
+  ],
+  "val_nats": 1.565366664031651,
+  "val_bits_per_byte": 0.5752427121605447,
+  "sample": "Once upon a time, there was a little girl named Lily. She had a big red bag. Lily liked her bag very much. She wore it every day.\nOne day, Lily's friend, Sam, came to visit. Sam had a big red bag. Sam said, \"I want to pack my bag and have a fun party.\" Lily was happy. She put all her toys in the bag.\nLily and Sam played games and ate cake. They were very organized. They laughed and had fun. At the end of the day, Lily and Sam were very tired. They went home and had a good night's sleep.",
+  "samples": [
+    "Once upon a time, there was a little girl named Lily. She had a big red bag. Lily liked her bag very much. She wore it every day.\nOne day, Lily's friend, Sam, came to visit. Sam had a big red bag. Sam said, \"I want to pack my bag and have a fun party.\" Lily was happy. She put all her toys in the bag.\nLily and Sam played games and ate cake. They were very organized. They laughed and had fun. At the end of the day, Lily and Sam were very tired. They went home and had a good night's sleep.",
+    "Once upon a time, there was a little boy named Tim. Tim was very anxious. He did not want to quit playing with his toys. One day, he found a shiny coin in the park. It was a big, shiny coin. Tim was very happy.\nTim wanted to show the coin to his best friend, Sam. So, he ran to Sam's house with the coin. But when Sam got there, he saw that the coin was not just his. It was a big, shiny ball! Tim was very surprised. He had never seen a ball like this before.\nTim told Sam about the big, shiny ball. Sam laughed and said, \"I guess we can make a wish!\" They put the big, shiny ball in the box. The box opened, and out came a pretty doll. Tim and Sam were so happy, and they played with the doll all day.",
+    "Once upon a time, there was a little boy named Tim. Tim loved to play and dream about everything. He had a big, soft pillow that he loved very much.\nOne day, Tim met a girl named Sue. Sue was playing with a toy car. Tim asked Sue, \"Can I play with your car?\" Sue said, \"Yes, but be careful. The car can't go over.\"\nTim and Sue played with the car. They had so much fun. Then, something unexpected happened. The car began to move. It went up in the air! Tim and Sue were very surprised.\nSuddenly, the car began to move! It was not a car at all, it was a real car! Tim and Sue laughed and laughed. They played with the car all day."
+  ],
+  "printed": [
+    "264 steps at a rate of 0.0005: 3.292 nats",
+    "264 steps at a rate of 0.001: 3.063 nats",
+    "264 steps at a rate of 0.002: 3.052 nats",
+    "parameters: 5,374,464",
+    "steps: 8,921, tokens: 73,080,832, rate 0.002",
+    "step 500: train 2.451, unseen 2.468 nats",
+    "step 1500: train 2.061, unseen 2.029 nats",
+    "step 2500: train 1.922, unseen 1.892 nats",
+    "step 3500: train 1.807, unseen 1.810 nats",
+    "step 4500: train 1.704, unseen 1.743 nats",
+    "step 5500: train 1.613, unseen 1.679 nats",
+    "step 6500: train 1.500, unseen 1.630 nats",
+    "step 7500: train 1.599, unseen 1.590 nats",
+    "step 8500: train 1.510, unseen 1.567 nats",
+    "unseen stories: 1.565 nats a token, 0.575 bits per byte",
+    "sample: 'Once upon a time, there was a little girl named Lily. She had a big red bag. Lily liked her bag very much. She wore it every day.\\nOne day, Lily\\'s friend, Sam, came to visit. Sam had a big red bag. Sam said, \"I want to pack my bag and have a fun party.\" Lily was happy. She put all her toys in the bag.\\nLily and Sam played games and ate cake. They were very organized. They laughed and had fun. At the end of the day, Lily and Sam were very tired. They went home and had a good night\\'s sleep.'",
+    "sample: 'Once upon a time, there was a little boy named Tim. Tim was very anxious. He did not want to quit playing with his toys. One day, he found a shiny coin in the park. It was a big, shiny coin. Tim was very happy.\\nTim wanted to show the coin to his best friend, Sam. So, he ran to Sam\\'s house with the coin. But when Sam got there, he saw that the coin was not just his. It was a big, shiny ball! Tim was very surprised. He had never seen a ball like this before.\\nTim told Sam about the big, shiny ball. Sam laughed and said, \"I guess we can make a wish!\" They put the big, shiny ball in the box. The box opened, and out came a pretty doll. Tim and Sam were so happy, and they played with the doll all day.'",
+    "sample: 'Once upon a time, there was a little boy named Tim. Tim loved to play and dream about everything. He had a big, soft pillow that he loved very much.\\nOne day, Tim met a girl named Sue. Sue was playing with a toy car. Tim asked Sue, \"Can I play with your car?\" Sue said, \"Yes, but be careful. The car can\\'t go over.\"\\nTim and Sue played with the car. They had so much fun. Then, something unexpected happened. The car began to move. It went up in the air! Tim and Sue were very surprised.\\nSuddenly, the car began to move! It was not a car at all, it was a real car! Tim and Sue laughed and laughed. They played with the car all day.'"
+  ]
+}

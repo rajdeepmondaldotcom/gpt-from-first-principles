@@ -28,3 +28,4 @@ def save(name, **numbers):
     record = {"commit": commit, "python": platform.python_version(), **numbers, "printed": printed}
     Path("results").mkdir(exist_ok=True)
     Path(f"results/{name}.json").write_text(json.dumps(record, indent=2) + "\n")
+    printed.clear()  # a script that saves twice keeps each lesson's lines apart

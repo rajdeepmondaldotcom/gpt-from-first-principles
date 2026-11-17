@@ -1,0 +1,17 @@
+{
+  "commit": "2638248",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "seconds_per_step": {
+    "1": 0.1154254624969326,
+    "2": 0.16393587709753774,
+    "4": 0.12603072709753177
+  },
+  "printed": [
+    "threads one process spreads its arithmetic over: 4",
+    "1 workers: 115 ms a step on a batch of 64 windows",
+    "2 workers: 164 ms a step on a batch of 64 windows",
+    "4 workers: 126 ms a step on a batch of 64 windows"
+  ]
+}

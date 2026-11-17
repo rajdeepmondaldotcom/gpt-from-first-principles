@@ -1,0 +1,21 @@
+{
+  "commit": "a2a442b",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "read": {
+    "False": 20700,
+    "True": 203
+  },
+  "seconds": {
+    "False": 1.954377125017345,
+    "True": 0.5359056249726564
+  },
+  "same": true,
+  "printed": [
+    "without a cache: 20,700 tokens read, 102 tokens a second",
+    "with the cache: 203 tokens read, 373 tokens a second",
+    "the two stories are the same: True",
+    "the cache holds 6,144 bytes for each token"
+  ]
+}
