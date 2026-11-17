@@ -2,13 +2,13 @@
 
 By the end of this page a law fitted to short runs has predicted runs it never saw, and the story model has a size.
 
-We have 52 million tokens, a model whose size we can set, and about three hours on this Mac's graphics chip. A small model can take many steps in that time. A large one can take few. We want the size with the lowest loss on unseen stories.
+We have 52 million tokens, a model whose size we can set, and an afternoon on this Mac's graphics chip. A small model can take many steps in that time. A large one can take few. We want the size with the lowest loss on unseen stories.
 
 ## The idea
 
-Count the budget in multiplies and adds, as lesson 17 did, and not in hours. Hours depend on what else the machine is doing. A training step costs about three forward passes. Three hours at the speed lesson 17 measured is 2.7 × 10¹⁵ multiplies and adds.
+Count the budget in multiplies and adds, as lesson 17 did, and not in hours. Hours depend on what else the machine is doing. A training step costs about three forward passes. We set the budget at 2.7 × 10¹⁵ multiplies and adds, about two and a half hours at the speed lesson 17 measured.
 
-Trying each size at the full budget would cost three hours a try. So we try many sizes at budgets a hundred times smaller, find the pattern in the results, and follow the pattern up.
+Trying each size at the full budget would cost an afternoon a try. So we try many sizes at budgets a hundred times smaller, find the pattern in the results, and follow the pattern up.
 
 The pattern has a known form:
 

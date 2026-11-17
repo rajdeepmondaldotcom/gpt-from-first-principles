@@ -14,12 +14,12 @@ from gpt.gpt2 import evaluate
 from gpt.model import GPT, LLAMA, load_llama
 from gpt.optim import AdamW
 from gpt.results import save, say
-from gpt.scale import run, shape, steps_for
+from gpt.scale import BUDGET, run, shape, steps_for
 from gpt.train import checkpoint, resume, train
 
 SHAPE = shape(256, 6)  # lesson 19: the smallest size its law cannot tell from the best
-BUDGET = 2.7e15  # multiplies and adds: three hours at the speed lesson 17 measured
 RATES = (5e-4, 1e-3, 2e-3)
+CHECK = 8e13  # multiplies and adds for each short run that tries a rate
 
 
 def save_llama(model, path):
@@ -40,9 +40,9 @@ def save_llama(model, path):
     Path(path).write_bytes(struct.pack("<Q", len(head)) + head + numbers)
 
 
-def load(folder, device="cpu"):
+def load(folder):
     """The trained story model and its tokenizer, from the folder the run below saves."""
-    model = GPT(**json.loads((folder / "shape.json").read_text())).to(device)
+    model = GPT(**json.loads((folder / "shape.json").read_text()))
     load_llama(model, folder / "model.safetensors")
     return model.eval(), tokenizer(folder / "vocab.json")
 
@@ -54,12 +54,18 @@ if __name__ == "__main__":
     val_ids = read(cache / "stories_val.bin").to(device)
     kept, log = cache / "story.pt", cache / "story_log.json"
 
+    def note():
+        """Write the notes beside the old ones, then swap: a stop while writing loses nothing."""
+        spare = log.with_suffix(".tmp")
+        spare.write_text(json.dumps(notes))
+        spare.replace(log)
+
     if log.exists():  # a stopped run: carry on with what it had decided and measured
         notes = json.loads(log.read_text())
     else:  # before three hours, three short runs: which rate suits this size?
-        tried = [[peak, run(SHAPE, 8e13, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
+        tried = [[peak, run(SHAPE, CHECK, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
         notes = {"tried": tried, "peak": min(tried, key=lambda pair: pair[1])[0], "curve": []}
-        log.write_text(json.dumps(notes))
+        note()
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
@@ -89,14 +95,14 @@ if __name__ == "__main__":
             notes["curve"].append({"step": step, "train": loss, "val": unseen})
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
             checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
-            log.write_text(json.dumps(notes))
+            note()
 
     sizes = json.loads(Path("results/18_data.json").read_text())["sizes"]["val"]
     nats = evaluate(model, val_ids)
     bits = nats * sizes["tokens"] / sizes["bytes"] / math.log(2)
     count = sum(p.numel() for p in model.parameters())
     for peak, loss in notes["tried"]:
-        say(f"264 steps at a rate of {peak:g}: {loss:.3f} nats")
+        say(f"{steps_for(model, CHECK)} steps at a rate of {peak:g}: {loss:.3f} nats")
     say(f"parameters: {count:,}")
     say(f"steps: {steps:,}, tokens: {steps * 32 * SHAPE['context']:,}, rate {notes['peak']:g}")
     for point in notes["curve"][:: max(1, len(notes["curve"]) // 9)]:

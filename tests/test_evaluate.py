@@ -4,7 +4,7 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-from gpt.evaluate import interval, leaks, losses, pass_at_k
+from gpt.evaluate import interval, leaks, losses, pass_at_k, rate_interval
 from gpt.model import GPT
 
 DOCS = [d for d in Path("data/tiny_shakespeare.txt").read_text().split("\n\n") if len(d) > 400][:60]
@@ -19,6 +19,11 @@ def model():
 def test_each_token_is_scored_once_at_any_stride(stride):
     ids = torch.randint(65, (100,), generator=torch.Generator().manual_seed(0))
     assert losses(model(), ids, context=16, stride=stride).shape == (99,)
+
+
+def test_a_stride_past_the_context_is_refused():
+    with pytest.raises(AssertionError, match="skip tokens"):
+        losses(model(), torch.randint(65, (100,)), context=16, stride=17)
 
 
 def test_a_stride_of_1_gives_each_token_as_much_context_as_fits():
@@ -72,6 +77,17 @@ def test_drawing_whole_blocks_covers_the_true_mean_and_drawing_single_values_doe
 def test_accuracy_gets_an_error_bar():
     low, high = interval([[1]] * 70 + [[0]] * 30, torch.Generator().manual_seed(0))
     assert low == pytest.approx(0.61, abs=0.02) and high == pytest.approx(0.79, abs=0.02)
+
+
+def test_no_pass_in_100_tries_still_leaves_a_range():
+    generator = torch.Generator().manual_seed(0)
+    assert interval([[0]] * 100, generator) == (0, 0)  # the bootstrap alone: no width, and wrong
+    low, high = rate_interval([False] * 100, generator)
+    assert low == 0 and high == pytest.approx(0.036, abs=0.001)
+    assert (1 - high) ** 100 == pytest.approx(0.025)  # at that rate, 100 failures come 1 time in 40
+    assert rate_interval([True] * 100, generator) == pytest.approx((1 - high, 1))
+    mixed = [True] * 70 + [False] * 30
+    assert rate_interval(mixed, generator) == pytest.approx((0.61, 0.79), abs=0.02)
 
 
 def test_pass_at_k_by_hand_and_on_average():

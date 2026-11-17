@@ -1,4 +1,7 @@
-from gpt.tasks import count_documents, make, passes, prompt
+import torch
+
+from gpt.model import GPT
+from gpt.tasks import attempt, count_documents, make, opening, passes, prompt
 
 RARE = [
     f"{a}{b}"
@@ -29,6 +32,31 @@ def test_common_words_and_one_off_names_make_no_task():
 def test_the_prompt_by_hand():
     task = {"name": "Mira", "words": ["cat", "moon", "brave"]}
     assert prompt(task) == "Name: Mira\nWords: cat, moon, brave\nStory:"
+
+
+def test_the_easier_ask_by_hand():
+    assert opening({"name": "Mira"}) == "Once upon a time, there was a little cat named Mira."
+
+
+class Letters:
+    """A tokenizer of single letters, for a test: a is 1, b is 2. 0 ends a story."""
+
+    end = 0
+
+    def encode(self, text):
+        return [ord(ch) - 96 for ch in text]
+
+    def decode(self, ids):
+        return "".join(chr(i + 96) for i in ids)
+
+
+def test_an_attempt_returns_what_the_model_wrote_and_not_what_it_was_asked():
+    torch.manual_seed(0)
+    model = GPT(vocab=27, context=32, width=32, heads=4, layers=2)
+    task = {"name": "abc", "words": []}
+    story, passed, ended = attempt(model, Letters(), task, lines=lambda t: "abc", temperature=0)
+    assert len(story) == 29 and not ended  # 32 tokens of context, less the 3 it was asked with
+    assert passed == ("abc" in story)  # the ask itself does not count
 
 
 def test_a_story_passes_its_own_task_and_fails_another():
