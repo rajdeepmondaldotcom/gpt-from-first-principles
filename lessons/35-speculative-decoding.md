@@ -61,6 +61,7 @@ def leftover(p, q):
 ```python
 # gpt/speculate.py
         for j, guess in enumerate(guesses):
+            counts["checked"] += 1  # a guess after a rejection is dropped unchecked
             if torch.rand((), generator=generator) < keep_chance(p[j], q[j])[guess]:
                 ids.append(guess)
                 counts["kept"] += 1

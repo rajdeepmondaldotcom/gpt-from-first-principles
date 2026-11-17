@@ -334,7 +334,7 @@ if __name__ == "__main__":
     from gpt.story import load
 
     cache = Path("data/cache")
-    model, words = load(cache / "storyteller")  # lesson 25's model, which writes to order
+    model, words = load(cache / "preferred")  # the storyteller after lesson 29's pairs
     room = cache_bytes(model, model.context)  # the cache of one request that fills the context
     # Memory for 16 requests that fill the context, a line of 64, and a store of beginnings as
     # large as 8 such caches: a listener who asks what happens next sends the story so far again.
