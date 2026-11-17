@@ -101,9 +101,9 @@ class GPT(nn.Module):
         self.out = nn.Linear(width, vocab, bias=False)
         self.out.weight = self.embed.weight
         for name, p in self.named_parameters():  # lesson 10's starting weights
-            if p.dim() > 1:
-                last = name.endswith(("proj.weight", "narrow.weight"))  # adds into the stream
-                nn.init.normal_(p, std=0.02 / math.sqrt(2 * layers) if last else 0.02)
+            if p.dim() == 2:
+                adds = name.endswith(("proj.weight", "narrow.weight"))  # adds into the stream
+                nn.init.normal_(p, std=0.02 / math.sqrt(2 * layers) if adds else 0.02)
             elif name.endswith("bias"):
                 nn.init.zeros_(p)
 
@@ -146,6 +146,7 @@ def load_llama(model, path):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
     from gpt.experiment import compare, trial
     from gpt.gpt2 import LayerNorm, evaluate, sample
     from gpt.optim import AdamW
@@ -155,8 +156,7 @@ if __name__ == "__main__":
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
     shape = {"vocab": len(vocab), "context": 64, "width": 128, "heads": 4, "layers": 4}
     old = {"norm": LayerNorm, "mlp": MLP}  # lesson 15's model: rotary attention, lesson 9's parts
 
@@ -171,6 +171,7 @@ if __name__ == "__main__":
 
     base, runs = losses(**old), {}
     say("lesson 15's model, five seeds: " + " ".join(f"{x:.4f}" for x in base))
+    say(f"lesson 15's model: {count(**old):,} parameters")
     for name, parts in [
         ("RMSNorm in place of layer normalization", old | {"norm": RMSNorm}),
         ("SwiGLU in place of the MLP", old | {"mlp": SwiGLU}),
@@ -193,8 +194,9 @@ if __name__ == "__main__":
     val = evaluate(model, val_ids)
     story = sample(model, encode("Once upon a time", vocab), 120, generator)
     story = "".join(vocab[i] for i in story)
-    say(f"lesson 15's model: {count(**old):,} parameters")
-    say(f"unseen text: {val:.3f} nats, {val / math.log(2):.3f} bits per byte")
+    say(
+        f"all three, 5,000 steps, unseen text: {val:.3f} nats, {val / math.log(2):.3f} bits per byte"
+    )
     say(f"sample: {story!r}")
     save(
         "16_model",

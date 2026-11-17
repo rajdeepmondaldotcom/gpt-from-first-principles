@@ -47,12 +47,14 @@ def load(folder):
     return model.eval(), tokenizer(folder / "vocab.json")
 
 
-if __name__ == "__main__":
-    cache = Path("data/cache")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    ids = read(cache / "stories_train.bin").to(device)
-    val_ids = read(cache / "stories_val.bin").to(device)
-    kept, log = cache / "story.pt", cache / "story_log.json"
+def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
+    """A run of hours, with what lessons 12 to 14 taught: pick a rate with short runs, check the
+    untrained model, then train with a checkpoint every 500 steps.
+
+    `watch` may measure the model at each checkpoint. What it returns joins the curve.
+    Returns the model, the notes kept along the way, the number of steps, and the generator.
+    """
+    saved, log = cache / f"{name}.pt", cache / f"{name}_log.json"
 
     def note():
         """Write the notes beside the old ones, then swap: a stop while writing loses nothing."""
@@ -63,19 +65,19 @@ if __name__ == "__main__":
     if log.exists():  # a stopped run: carry on with what it had decided and measured
         notes = json.loads(log.read_text())
     else:  # before three hours, three short runs: which rate suits this size?
-        tried = [[peak, run(SHAPE, CHECK, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
+        tried = [[peak, run(shape, CHECK, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
         notes = {"tried": tried, "peak": min(tried, key=lambda pair: pair[1])[0], "curve": []}
         note()
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
-    model = GPT(**SHAPE).to(device)
+    model = GPT(**shape).to(ids.device)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
     steps = steps_for(model, BUDGET)
-    if kept.exists():
-        start = resume(kept, model, optimizer, generator)
+    if saved.exists():
+        start = resume(saved, model, optimizer, generator)
     else:  # lesson 13's checks, before the long run and not after
-        assert starts_with_no_opinion(model, val_ids[:20_000], SHAPE["vocab"])
+        assert starts_with_no_opinion(model, val_ids[:20_000], shape["vocab"])
         assert reads_no_future(model, val_ids[None, :64])
         start = 0
 
@@ -92,10 +94,20 @@ if __name__ == "__main__":
     for step, loss in loop:
         if step % 500 == 0 or step == steps:
             unseen = evaluate(model, val_ids[:100_000])
-            notes["curve"].append({"step": step, "train": loss, "val": unseen})
+            point = {"step": step, "train": loss, "val": unseen} | watch(model, step)
+            notes["curve"].append(point)
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
-            checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
+            checkpoint(saved, model, optimizer, step, generator)  # a stopped run restarts here
             note()
+    return model, notes, steps, generator
+
+
+if __name__ == "__main__":
+    cache = Path("data/cache")
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    ids = read(cache / "stories_train.bin").to(device)
+    val_ids = read(cache / "stories_val.bin").to(device)
+    model, notes, steps, generator = long_run(cache, "story", SHAPE, ids, val_ids)
 
     sizes = json.loads(Path("results/18_data.json").read_text())["sizes"]["val"]
     nats = evaluate(model, val_ids)
@@ -104,6 +116,7 @@ if __name__ == "__main__":
     for peak, loss in notes["tried"]:
         say(f"{steps_for(model, CHECK)} steps at a rate of {peak:g}: {loss:.3f} nats")
     say(f"parameters: {count:,}")
+    # A step reads train's batch of 32 windows.
     say(f"steps: {steps:,}, tokens: {steps * 32 * SHAPE['context']:,}, rate {notes['peak']:g}")
     for point in notes["curve"][:: max(1, len(notes["curve"]) // 9)]:
         say(f"step {point['step']}: train {point['train']:.3f}, unseen {point['val']:.3f} nats")

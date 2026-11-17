@@ -65,7 +65,7 @@ def compare(a, b):
     return mean, spread / math.sqrt(len(diffs))  # the error shrinks as the seeds grow
 ```
 
-`make` is a function that builds the model, so each trial starts fresh. `**loop` collects any extra named settings and hands them to lesson 12's `train`. `zip(a, b, strict=True)` pairs the two lists and raises an error if one is longer. `rate=0.0` is a placeholder, because the loop sets the rate before each step. `val_ids` is the unseen text.
+`make` is a function that builds the model, so each trial starts fresh. `**loop` collects any extra named settings and hands them to lesson 12's `train`. `zip(a, b, strict=True)` pairs the two lists and raises an error if one is longer. `rate=0.0` is a placeholder, because the loop sets the rate before each step. `val_ids` is the unseen text, and `evaluate` gives the mean loss on it.
 
 ## The proof
 
@@ -106,7 +106,7 @@ In the sweep, lesson 12's rate was too low for a run this short. A peak of 0.01 
 
 ## What it still cannot do
 
-Each of these models reads 64 tokens and no more. Lesson 8's table of places has 64 rows, and a 65th token has no row to look up.
+Each of these models reads 64 tokens and no more. Hand one a 65th, and lesson 8's table of places has no row for it: the model stops with an error.
 
 ## Check yourself
 

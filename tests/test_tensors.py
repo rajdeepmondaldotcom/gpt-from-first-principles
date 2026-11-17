@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 from gpt.autograd import learn_bigram as learn_one_number_at_a_time
-from gpt.tensors import cross_entropy, cross_entropy_slopes, encode, learn_bigram, softmax
+from gpt.tensors import cross_entropy, cross_entropy_slopes, encode, learn_bigram, sample, softmax
 
 SENTENCE = "the cat sat on the mat"
 
@@ -53,6 +53,12 @@ def test_a_lookup_sends_its_slopes_back_to_the_row_it_read():
     by_hand = torch.zeros_like(W).index_add_(0, x, cross_entropy_slopes(W[x].detach(), y))
     assert torch.allclose(by_hand, W.grad)
     assert W.grad[3].abs().sum() > 0 and W.grad[2].abs().sum() == 0  # row 2 was never read
+
+
+def test_a_sample_follows_the_row_of_its_last_id():
+    W = torch.full((3, 3), -1e9)
+    W[0, 1] = W[1, 2] = W[2, 0] = 0.0  # 0 is followed by 1, 1 by 2 and 2 by 0, each time
+    assert sample(W, torch.tensor([0]), 5, torch.Generator().manual_seed(0)) == [0, 1, 2, 0, 1, 2]
 
 
 def test_same_numbers_as_lesson_2():

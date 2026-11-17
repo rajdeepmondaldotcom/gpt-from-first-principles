@@ -62,11 +62,12 @@ def sample(W, start, n, generator):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
+
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train, val = ids[:n], ids[n:]
+    train, val = split(ids)
 
     def seconds_per_step(pairs, repeats):
         start = time.perf_counter()

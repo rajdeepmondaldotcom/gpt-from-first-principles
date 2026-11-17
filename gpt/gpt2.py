@@ -172,11 +172,12 @@ def load_gpt2(path):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
+
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
 
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)

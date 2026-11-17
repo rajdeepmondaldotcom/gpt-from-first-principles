@@ -119,9 +119,9 @@ About ln 1,025 = 6.93 nats.
 Dropout and weight decay, or more text. Each check would pass: the run is healthy and the model is storing its text.
 </details>
 
-<details><summary>From lesson 11: why does a first step at the peak rate move each grid that starts at 0.02 by the same share of its size, whatever its slopes?</summary>
+<details><summary>From lesson 1: the plain run scores 3.648 nats on unseen text. What does a model that knows nothing score there, and what does that say about the plain run?</summary>
 
-Adam's first step is the rate for each parameter, whatever the slope. So the share is the rate over the starting size.
+ln 65 = 4.174 nats. After 3,000 steps the plain run is half a nat better than knowing nothing, on text it has not seen.
 </details>
 
 Go deeper:

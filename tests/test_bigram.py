@@ -60,6 +60,11 @@ def test_the_scoreboard_numbers_in_the_lesson():
     assert round(loss(P, val) / math.log(2), 3) == 3.581
 
 
+def test_a_sample_follows_the_row_of_its_last_character():
+    P = table(count("abcabc"), "abc")  # a is followed by b, b by c and c by a, each time
+    assert sample(P, "a", 5, random.Random(0)) == "abcabc"
+
+
 def test_the_same_seed_writes_the_same_text():
     P = table(count(TEXT), VOCAB, smooth=1)
     assert sample(P, "Once", 20, random.Random(0)) == sample(P, "Once", 20, random.Random(0))

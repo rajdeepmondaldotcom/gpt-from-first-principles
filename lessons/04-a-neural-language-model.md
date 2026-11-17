@@ -158,9 +158,9 @@ Predict before you run: widen the window from 8 characters to 16. How many param
 16 × 24 × 256 + 256 = 98,560, twice the weights.
 </details>
 
-<details><summary>From lesson 2: the second layer starts at zero. Why is the first loss ln 65?</summary>
+<details><summary>From lesson 1: knowing nothing is an even guess among 65 characters, and scores ln 65. This model scores 1.846 nats. An even guess among how many characters scores that?</summary>
 
-Each score is 0, so softmax gives each of the 65 characters a chance of 1/65, and the surprise is ln 65 on every window.
+About 6, since e^1.846 = 6.3.
 </details>
 
 Go deeper:

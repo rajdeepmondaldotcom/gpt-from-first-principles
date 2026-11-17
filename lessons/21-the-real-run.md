@@ -14,7 +14,7 @@ Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.
 
 Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 tokens, 1.4 times through the training text. Every 500 steps the loop measures the loss on 100,000 unseen tokens and writes a checkpoint. If the machine stops, starting the script again carries on from the last checkpoint. Lesson 12's test that a resumed run matches an unbroken one ran on the processor. We have not checked it on the graphics chip.
 
-The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text.
+The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text. So this run uses no dropout.
 
 Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in either fit, and the miss is 2.7 times larger. We trained one size, so we cannot say whether the law's choice of size was right.
 
@@ -22,7 +22,7 @@ Keep the weights. The script writes them in lesson 16's Llama layout and lesson 
 
 ## By hand
 
-The score in bits per byte. The run ends at 1.565 nats a token, and an unseen token carries 3.93 bytes.
+The loss in bits per byte. The run ends at 1.565 nats a token, and an unseen token carries 3.93 bytes.
 
 1.565 / 0.693 = 2.258 bits a token
 
@@ -36,7 +36,7 @@ The two checks, before the first step:
 
 ```python
 # gpt/story.py
-        assert starts_with_no_opinion(model, val_ids[:20_000], SHAPE["vocab"])
+        assert starts_with_no_opinion(model, val_ids[:20_000], shape["vocab"])
         assert reads_no_future(model, val_ids[None, :64])
 ```
 
@@ -49,13 +49,14 @@ The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
     for step, loss in loop:
         if step % 500 == 0 or step == steps:
             unseen = evaluate(model, val_ids[:100_000])
-            notes["curve"].append({"step": step, "train": loss, "val": unseen})
+            point = {"step": step, "train": loss, "val": unseen} | watch(model, step)
+            notes["curve"].append(point)
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
-            checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
+            checkpoint(saved, model, optimizer, step, generator)  # a stopped run restarts here
             note()
 ```
 
-`notes` holds the rate that was picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
+`notes` holds the rate that was picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `watch` adds nothing here. Lesson 38 uses it to measure one more thing at each checkpoint. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
 
 ## The proof
 

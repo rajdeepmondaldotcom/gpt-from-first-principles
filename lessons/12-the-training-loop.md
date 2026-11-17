@@ -152,9 +152,9 @@ Predict before you run: the peak is 0.003 and the warmup is 100 steps. What is t
 It draws other batches than the unbroken run, so the two no longer match.
 </details>
 
-<details><summary>From lesson 11: why does a small first rate suit Adam?</summary>
+<details><summary>From lesson 2: what happens if the loop never sets the slopes back to 0?</summary>
 
-A small rate keeps Adam's first steps small. Each one moves a parameter by the full rate, whatever its slope.
+Each new slope is added to the old ones, and a step follows their sum.
 </details>
 
 Go deeper:

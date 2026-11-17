@@ -1,0 +1,78 @@
+{
+  "commit": "e2fa955",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "positions": {
+    "fit": 18940,
+    "held": 4608,
+    "edited": 3200
+  },
+  "either_side": 0.7485121488571167,
+  "accuracy": {
+    "1": 0.7378981113433838,
+    "2": 0.7563069462776184,
+    "3": 0.7619696855545044,
+    "4": 0.7865363359451294,
+    "5": 0.8073018193244934,
+    "6": 0.8116929531097412
+  },
+  "block": 5,
+  "control": 0.6319546103477478,
+  "hard_squares": 0.6085695028305054,
+  "queen_chance": {
+    "plain": 0.20278148796853201,
+    "nudged": {
+      "3.0": {
+        "size": 0.07062970615400274,
+        "queen": 0.20080639673219594,
+        "pawn": 0.20277296841764836
+      },
+      "10.0": {
+        "size": 0.12190257130352698,
+        "queen": 0.198804003758155,
+        "pawn": 0.2033702322862473
+      },
+      "30.0": {
+        "size": 0.2842037634110817,
+        "queen": 0.18530618271628327,
+        "pawn": 0.20481323276038893
+      }
+    }
+  },
+  "formed": {
+    "1": 0.0492621511220932,
+    "2": 0.1399739533662796,
+    "3": 0.1883680522441864,
+    "4": 0.2686631977558136,
+    "5": 0.4270833432674408,
+    "6": 1.0
+  },
+  "printed": [
+    "positions to fit on: 18,940 from 1,200 games. To pick a block: 4,473 from 300. Held back: 4,608 from 300",
+    "naming each square's most usual piece: 67.3% right, 66.7% to 67.8%",
+    "a probe on the stream after block 1: 73.8% right, 73.2% to 74.3%",
+    "a probe on the stream after block 2: 75.6% right, 75.1% to 76.2%",
+    "a probe on the stream after block 3: 76.2% right, 75.7% to 76.7%",
+    "a probe on the stream after block 4: 78.7% right, 78.2% to 79.1%",
+    "a probe on the stream after block 5: 80.7% right, 80.3% to 81.2%",
+    "a probe on the stream after block 6: 81.2% right, 80.7% to 81.6%",
+    "the probe after block 5, fitted to shuffled boards: 63.2% right, 62.6% to 63.7%",
+    "on squares that differ from their usual piece, that probe is right 60.9% of the time",
+    "positions where the mover has one queen that can move: 3,200",
+    "chance of a queen move next, untouched: 20.3%",
+    "a nudge 0.07 of the stream's length after block 5, rubbing out the queen: 20.1%, a change of -0.3% to -0.1%",
+    "a nudge 0.07 of the stream's length after block 5, rubbing out the pawn: 20.3%, a change of -0.0% to +0.0%",
+    "a nudge 0.12 of the stream's length after block 5, rubbing out the queen: 19.9%, a change of -0.5% to -0.3%",
+    "a nudge 0.12 of the stream's length after block 5, rubbing out the pawn: 20.3%, a change of -0.0% to +0.1%",
+    "a nudge 0.28 of the stream's length after block 5, rubbing out the queen: 18.5%, a change of -2.0% to -1.5%",
+    "a nudge 0.28 of the stream's length after block 5, rubbing out the pawn: 20.5%, a change of +0.1% to +0.3%",
+    "after block 1: the final choice is on top in 5% of positions, with a chance of 3%",
+    "after block 2: the final choice is on top in 14% of positions, with a chance of 10%",
+    "after block 3: the final choice is on top in 19% of positions, with a chance of 13%",
+    "after block 4: the final choice is on top in 27% of positions, with a chance of 18%",
+    "after block 5: the final choice is on top in 43% of positions, with a chance of 28%",
+    "after block 6: the final choice is on top in 100% of positions, with a chance of 35%",
+    "a probe after block 5 on positions with either side to move: 74.9% right, 74.3% to 75.3%"
+  ]
+}

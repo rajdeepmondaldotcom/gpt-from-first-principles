@@ -39,24 +39,24 @@ def test_the_easier_ask_by_hand():
 
 
 class Letters:
-    """A tokenizer of single letters, for a test: a is 1, b is 2. 0 ends a story."""
+    """A tokenizer of single letters, for a test: a is 1, b is 2, a space is 27. 0 ends a story."""
 
     end = 0
 
     def encode(self, text):
-        return [ord(ch) - 96 for ch in text]
+        return [27 if ch == " " else ord(ch) - 96 for ch in text]
 
     def decode(self, ids):
-        return "".join(chr(i + 96) for i in ids)
+        return "".join(" " if i == 27 else chr(i + 96) for i in ids)
 
 
 def test_an_attempt_returns_what_the_model_wrote_and_not_what_it_was_asked():
     torch.manual_seed(0)
-    model = GPT(vocab=27, context=32, width=32, heads=4, layers=2)
+    model = GPT(vocab=28, context=32, width=32, heads=4, layers=2)
     task = {"name": "abc", "words": []}
-    story, passed, ended = attempt(model, Letters(), task, lines=lambda t: "abc", temperature=0)
-    assert len(story) == 29 and not ended  # 32 tokens of context, less the 3 it was asked with
-    assert passed == ("abc" in story)  # the ask itself does not count
+    story, passed, ended = attempt(model, Letters(), task, lines=lambda t: "abc ", temperature=0)
+    assert len(story) == 28 and not ended  # 32 tokens of context, less the 4 it was asked with
+    assert passed == ("abc" in story.split())  # the ask has the name as a word, and does not count
 
 
 def test_a_story_passes_its_own_task_and_fails_another():

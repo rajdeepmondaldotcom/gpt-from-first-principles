@@ -18,7 +18,7 @@ Both tables start random and both are learned. Training moves the place rows the
 
 After the addition, the same token in two places gives two different vectors. The layer makes queries and keys from those vectors, so what a token reads can now depend on where things stand.
 
-The second table has a fixed number of rows. We call that number the context: the most tokens the model can read at once. A model with a context of 64 has no row for place 64, so it cannot read a 65th token.
+The second table has a fixed number of rows. We call that number the context: the most tokens the model can read at once, which lesson 4 called its window. A model with a context of 64 has no row for place 64, so it cannot read a 65th token.
 
 ## By hand
 

@@ -214,12 +214,12 @@ def test_past_its_context_the_model_reads_its_last_tokens():
     torch.manual_seed(0)
     model, long = small(), torch.randint(65, (80,))  # 80 tokens, and a context of 64
     with torch.no_grad():
-        model.embed.token.weight.mul_(
-            50
-        )  # strong opinions, so what it reads decides what it writes
+        model.embed.token.weight.mul_(50)  # strong opinions: a draw is the top token
     whole = sample(model, long, 5, torch.Generator().manual_seed(0))
     tail = sample(model, long[-64:], 5, torch.Generator().manual_seed(0))
     assert len(whole) == 85 and whole[-5:] == tail[-5:]
+    top = [model(torch.tensor([whole[i - 64 : i]]))[0, -1].argmax().item() for i in range(80, 85)]
+    assert whole[80:] == top  # and each is the token the model scores highest
 
 
 def test_sampling_repeats_with_the_same_seed():

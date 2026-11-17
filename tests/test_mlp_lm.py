@@ -110,7 +110,7 @@ def test_it_cannot_see_past_its_window():
     torch.manual_seed(0)
     model = MLP(65)
     with torch.no_grad():
-        model.out.weight.normal_()
+        model.out.weight.normal_().mul_(50)  # strong opinions: a draw is the top character
     near = encode("upon a time", VOCAB)
     a = sample(
         model, torch.cat([encode("Once ", VOCAB), near]), 5, torch.Generator().manual_seed(0)
@@ -119,3 +119,5 @@ def test_it_cannot_see_past_its_window():
         model, torch.cat([encode("Twice ", VOCAB), near]), 5, torch.Generator().manual_seed(0)
     )
     assert a[-5:] == b[-5:]  # the same last 8 characters give the same continuation
+    top = [model(torch.tensor([a[i - 8 : i]])).argmax().item() for i in range(16, 21)]
+    assert a[16:] == top  # and each is the character the model scores highest

@@ -2,7 +2,7 @@
 
 By the end of this page you can work out a model's memory and its arithmetic before you run it, and you have this Mac's speed to turn the arithmetic into hours.
 
-We have not yet counted what the model costs: the memory a run needs and the multiplies a step takes.
+Lesson 16 could not tell its designs apart at 5,000 steps on one seed each. Longer runs on more seeds would settle it, and we have not counted what a run costs: the memory it needs and the multiplies a step takes.
 
 ## The idea
 
@@ -20,7 +20,7 @@ Attention adds work of its own. Each token scores each key and then mixes each v
 
 A training step runs forward and then backward. The backward pass uses each weight twice: once to pass the slope back to the layer's input, and once to work out the weight's own slope. So we count a step as three forward passes, about 6 multiplies and adds for each weight and each token. Kaplan and others, below, count training the same way. The clock does not follow the count: in the run below a step takes 3.3 times as long as a forward pass on the processor, and 4.5 times on the graphics chip.
 
-Divide the work by the machine's speed and you have the time. By this count, this Mac's graphics chip trains a model of 5 million parameters at 326 billion multiplies and adds a second.
+Divide the work by the machine's speed and you have the time. This Mac's graphics chip trains a model of 5 million parameters, the size lesson 19 will pick, at 326 billion multiplies and adds a second.
 
 Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The notes by kipply, below, work out when the speed of reading memory sets the speed of writing on large models. We have not measured which one limits this small model.
 
@@ -95,7 +95,7 @@ Timings are from an M4 laptop that was running other jobs, and they move from ru
 
 ## What it still cannot do
 
-Lesson 13's model stored Shakespeare with under a million parameters: a megabyte was too little text for it. The model this Mac can train in an afternoon has 5 million, so we need more text, and we have to download it.
+Lesson 13's model learned 100,000 characters of Shakespeare by heart, with under a million parameters. The model we timed here has 5 million. It needs far more text, and we have to download it.
 
 ## Check yourself
 

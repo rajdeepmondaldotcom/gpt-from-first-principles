@@ -1,0 +1,57 @@
+{
+  "commit": "8e61016",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "points": {
+    "the grabber against the random mover": 0.985,
+    "the model at step 2,500 against the random mover": 0.8675,
+    "the model against the random mover": 0.915,
+    "the model at step 2,500 against the grabber": 0.05,
+    "the model against the grabber": 0.16,
+    "the model against the model at step 2,500": 0.6375
+  },
+  "slips": {
+    "model": {
+      "moves": 27049,
+      "slips": 961
+    },
+    "early": {
+      "moves": 27236,
+      "slips": 2634
+    }
+  },
+  "ratings": {
+    "the random mover": 0.0,
+    "the grabber": 738.28369140625,
+    "the model at step 2,500": 310.498046875,
+    "the model": 421.1271667480469
+  },
+  "ranges": {
+    "the grabber": [
+      689.8653564453125,
+      798.482177734375
+    ],
+    "the model at step 2,500": [
+      269.609619140625,
+      359.09869384765625
+    ],
+    "the model": [
+      377.9254455566406,
+      464.8764343261719
+    ]
+  },
+  "printed": [
+    "the grabber against the random mover: 0.98 of the points in 200 games, 95% interval 0.97 to 1.00",
+    "the model at step 2,500 against the random mover: 0.87 of the points in 200 games, 95% interval 0.82 to 0.91",
+    "the model against the random mover: 0.92 of the points in 200 games, 95% interval 0.88 to 0.95",
+    "the model at step 2,500 against the grabber: 0.05 of the points in 200 games, 95% interval 0.03 to 0.08",
+    "the model against the grabber: 0.16 of the points in 200 games, 95% interval 0.11 to 0.21",
+    "the model against the model at step 2,500: 0.64 of the points in 200 games, 95% interval 0.60 to 0.68",
+    "the model: the rules picked 961 of its 27,049 moves, 3.6%",
+    "the model at step 2,500: the rules picked 2,634 of its 27,236 moves, 9.7%",
+    "the grabber: rated +738 with the random mover at 0, 95% interval +690 to +798",
+    "the model at step 2,500: rated +310 with the random mover at 0, 95% interval +270 to +359",
+    "the model: rated +421 with the random mover at 0, 95% interval +378 to +465"
+  ]
+}

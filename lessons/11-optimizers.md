@@ -20,9 +20,9 @@ rate × average slope / square root of the average squared slope
 
 The bottom of that fraction is the slope's usual size. Dividing by it removes the scale. A parameter whose slope is steady moves by about `rate` on each step, whether that slope is 0.001 or 1,000. A parameter whose slope keeps flipping has a small average and a large usual size, so it moves little.
 
-Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t. Both factors start small and rise to 1.
+Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t. Both factors rise to 1.
 
-AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. AdamW leaves biases, gains and shifts alone. Lesson 13 measures what decay does to a model that stores its text.
+AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. AdamW leaves biases, gains and shifts alone. Lesson 13 measures what decay does.
 
 ## By hand
 
@@ -68,7 +68,7 @@ Adam's first step, with a slope of 0.001. The average slope moves a tenth of the
 uv run pytest tests/test_optim.py
 ```
 
-- Our gradient descent, our momentum and our AdamW each equal PyTorch's, parameter for parameter, after each of 20 steps on a small GPT. AdamW also matches with other settings.
+- Our gradient descent, momentum and AdamW each equal PyTorch's, parameter for parameter, after each of 20 steps on a small GPT. AdamW also matches with other settings.
 - The momentum example gives 4.9, 4.71 and 4.639.
 - Adam's first step is the rate, for slopes of 0.001, 1 and 1,000.
 - Decay shrinks a weight grid and leaves a bias alone.
@@ -83,20 +83,25 @@ uv run python -m gpt.optim
 gradient descent: 3.017 bits per byte
 with momentum: 2.564 bits per byte
 AdamW: 2.372 bits per byte
+lesson 4's MLP reading 8 characters back, with AdamW: 2.551 bits per byte
+lesson 4's MLP reading 64 characters back, with AdamW: 2.863 bits per byte
 ```
 
-Each run is lesson 10's model, data, seed and 3,000 steps. Only the optimizer changes. Gradient descent prints 3.017 and the same sample as lesson 10, because the same seed on `cpu` repeats. The seed is the number that starts the random number generator, and so fixes the starting weights and the batches.
+The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. Gradient descent prints lesson 10's 3.017 again. A seed is the number that starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
+
+The last two lines give lesson 4's MLP the same AdamW, steps and count of guesses. Reading 8 characters back it scores 2.551. Reading 64, as the GPT does, it scores 2.863: each place has its own weights, so 64 places are 64 sets to train. The GPT reads the same 64 and scores 2.372.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
 | Knows nothing | 6.022 |
 | Bigram, counted | 3.581 |
-| Bigram, learned | 3.599 |
 | MLP, eight characters back | 2.663 |
 | MLP, eight tokens back, 1,024 tokens | 2.572 |
 | GPT, 64 characters back | 3.017 |
 | GPT, with momentum | 2.564 |
 | GPT, with AdamW | 2.372 |
+| MLP, eight characters back, with AdamW | 2.551 |
+| MLP, 64 characters back, with AdamW | 2.863 |
 
 ## What it still cannot do
 
@@ -120,11 +125,6 @@ Predict before you run: with momentum of 0.9, a slope that stays at 1 forever bu
 <details><summary>A parameter's slope is 0.5, then -0.5, then 0.5, and so on. Roughly how far does Adam move it per step, compared with a parameter whose slope stays at 0.5?</summary>
 
 About a twentieth as far. Its average slope swings between about 0.026 and -0.026 while its usual size is 0.5.
-</details>
-
-<details><summary>With a rate of 0.001 and a decay of 0.01, what does one step of decay do to a weight of 2 in a grid, and to a bias of 2?</summary>
-
-The weight is multiplied by 0.99999 and becomes 1.99998. The bias is left at 2: decay touches grids only.
 </details>
 
 <details><summary>From lesson 3: a batch's slopes carry noise. Which of this page's rules averages slopes over steps, and over about how many?</summary>

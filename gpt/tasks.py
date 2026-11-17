@@ -1,4 +1,4 @@
-"""Tasks with an exact check: write a story that uses a given name and three given words."""
+"""Lesson 24. Tasks with an exact check: a story that uses a given name and three given words."""
 
 import re
 from collections import Counter
