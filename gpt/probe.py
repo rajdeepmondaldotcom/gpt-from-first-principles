@@ -122,12 +122,12 @@ if __name__ == "__main__":
         return [torch.stack(x) for x in xs], torch.tensor(boards), lines, game_of
 
     x, y, fit_lines, fit_game = positions(seen)
-    choosing = torch.tensor(fit_game) >= 1200  # the last 300 of these games pick the block
+    choosing = torch.tensor(fit_game) >= len(seen) - 300  # the last 300 games pick the block
     met = {tuple(line) for line in fit_lines}  # a held-back position must be new: openings repeat
     held_x, held_y, held_lines, game_of = positions(unseen, skip=met)
     say(
-        f"positions to fit on: {int((~choosing).sum()):,} from 1,200 games. To pick a block: "
-        f"{int(choosing.sum()):,} from 300. Held back: {len(held_y):,} from 300"
+        f"positions to fit on: {int((~choosing).sum()):,} from {len(seen) - 300:,} games. To pick "
+        f"a block: {int(choosing.sum()):,} from 300. Held back: {len(held_y):,} from {len(unseen)}"
     )
 
     def by_game(right):
