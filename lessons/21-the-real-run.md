@@ -2,21 +2,21 @@
 
 By the end of this page you have a model that writes short stories, trained on your own machine in an afternoon.
 
-The text is clean and on disk. The size is chosen. The loop can stop and start, and the checks are written. No model has been trained on any of it yet.
+We have clean text on disk, a chosen size, a loop that can stop and start, and checks written ahead. We have not yet trained a model on any of it.
 
 ## The idea
 
-Nothing on this page is new. Each step is an earlier lesson, used on a run that takes hours and so is hard to do twice.
+Each part of this run comes from an earlier lesson. The run takes hours, so it is hard to do twice.
 
-Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, and changing the last token of a window changes no earlier score. Either failure would have cost the whole run to find the slow way.
+Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, for 4,096 tokens and the end token, and changing the last token of a window changes no earlier score. Either bug, found only after training, would have wasted the run.
 
-Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart on one run each, and lesson 14 would not call that a difference. The run needs some rate, and the script takes the lowest loss.
+Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart on one run each, and by lesson 14's rule that is no difference. The run needs some rate, and the script takes the lowest loss. That rate, 0.002, was also the highest we tried. The script scored the three short runs on 200,000 unseen tokens, so one small choice has already seen the text behind the final score.
 
-Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 tokens, 1.4 times through the training text. Every 500 steps the loop measures the loss on 100,000 unseen tokens and writes a checkpoint. If the machine stops, starting the script again carries on from the last checkpoint. On the graphics chip the resumed run will not match the unbroken one to the last bit, as lesson 10 found.
+Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 tokens, 1.4 times through the training text. Every 500 steps the loop measures the loss on 100,000 unseen tokens and writes a checkpoint. If the machine stops, starting the script again carries on from the last checkpoint. Lesson 12's test that a resumed run matches an unbroken one ran on the processor. We have not checked it on the graphics chip.
 
-Read the curve as lesson 13 taught. The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The model is not storing its text: it has 5 million parameters and 52 million tokens to learn from.
+The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text.
 
-Hold lesson 19's law to its prediction. It said 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. On runs at twice its largest budget it had missed by at most 0.098. This run is 34 times that budget, and the miss is nearly three times larger. We trained one size, so we cannot say whether the law's choice of size was right.
+Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in either fit, and the miss is 2.7 times larger. We trained one size, so we cannot say whether the law's choice of size was right.
 
 Keep the weights. The script writes them in lesson 16's Llama layout and lesson 10's file format, with the token rows stored once. Lesson 16's loader reads the file back.
 
@@ -52,10 +52,10 @@ The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
             notes["curve"].append({"step": step, "train": loss, "val": unseen})
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
             checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
-            log.write_text(json.dumps(notes))
+            note()
 ```
 
-`notes` holds the rate that was picked and the curve so far. It is written to disk beside the checkpoint, so a restarted run knows both.
+`notes` holds the rate that was picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
 
 ## The proof
 
@@ -66,7 +66,7 @@ uv run pytest tests/test_story.py
 - Weights saved and loaded back give the same scores, to the last bit.
 - The saved file has the names and shapes of lesson 16's reference Llama.
 
-The run itself needs lesson 18's files on disk and two to three hours on an M4 laptop's graphics chip, more when the machine is busy. Part of what it prints is below.
+The run itself needs lesson 18's files on disk. At lesson 17's 928 ms a step, 8,921 steps take 2.3 hours on an M4 laptop's graphics chip, and longer when the machine is busy. We did not time ours. Part of what it prints is below.
 
 ```bash
 uv run python -m gpt.story
@@ -94,7 +94,7 @@ unseen stories: 1.565 nats a token, 0.575 bits per byte
 |---|---|
 | Story model, 5,374,464 parameters | 0.575 |
 
-This is a new scoreboard. The stories are simpler text than Shakespeare, so a number here cannot be set beside lesson 16's 2.209.
+The stories are simpler text than Shakespeare, so you cannot set this number beside lesson 16's 2.209.
 
 ## What it still cannot do
 
@@ -104,7 +104,7 @@ One day, Lily's friend, Sam, came to visit. Sam had a big red bag. Sam said, "I 
 Lily and Sam played games and ate cake. They were very organized. They laughed and had fun. At the end of the day, Lily and Sam were very tired. They went home and had a good night's sleep.
 ```
 
-The model wrote that after `Once upon a time`. Names stay the same from line to line, the sentences are English, and the story ends. It also wanders: the party arrives from nowhere.
+The model wrote that after `Once upon a time`. Names stay the same from line to line, the sentences are English, and the story ends. It also wanders: Sam proposes a party that nothing set up, and both children own the same big red bag.
 
 We have not yet said how the model picks each token. The script used a temperature of 0.8 and a top-p of 0.95, and explained neither.
 
@@ -117,14 +117,14 @@ Predict before you run: the script writes a checkpoint every 500 steps. If the m
 499. The last checkpoint was written at step 8,000.
 </details>
 
-<details><summary>At step 8,500 the training loss is 1.510 nats and the unseen loss 1.567. What would lesson 13 say?</summary>
+<details><summary>At step 8,500 the training loss is 1.510 nats and the unseen loss 1.567. What does lesson 13 read from that?</summary>
 
-The gap is 0.057 nats. Lesson 13's model, which stored its text, had a gap of 3.157. This one is still learning what the text has in common.
+The gap is 0.057 nats. Lesson 13's model, which stored its text, had a gap of 3.157. A gap this small is no sign of storing.
 </details>
 
 <details><summary>The law predicted 1.302 nats and the run gave 1.565. Was the law wrong to use?</summary>
 
-Its loss was too low by 0.263 nats at 34 times its largest budget, so its losses should not be trusted that far out. Whether it chose the size well is a separate question that one run cannot answer.
+Its prediction was too low by 0.263 nats at 34 times its largest budget, so its losses should not be trusted that far out. Whether it chose the size well is a separate question that one run cannot answer.
 </details>
 
 <details><summary>From lesson 12: name the four things the checkpoint holds.</summary>

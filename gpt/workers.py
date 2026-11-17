@@ -30,6 +30,7 @@ def work(pipe, shape, seed, rate):
             p.grad = mean
         optimizer.step()
     pipe.send(model.state_dict())
+    pipe.recv()  # wait: on Linux the coordinator fetches those tensors from this process
 
 
 def share(pipes, x, y):
@@ -62,7 +63,10 @@ def finish(pipes):
     """Stop the workers. Returns the weights each one ended with."""
     for pipe in pipes:
         pipe.send(None)
-    return [pipe.recv() for pipe in pipes]
+    weights = [pipe.recv() for pipe in pipes]
+    for pipe in pipes:
+        pipe.send(None)  # the weights are here: each worker may go
+    return weights
 
 
 if __name__ == "__main__":

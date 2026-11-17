@@ -1,24 +1,21 @@
 # 18. Data
 
-By the end of this page 200 MB of raw text is 52 million tokens on disk, and no document is in both the training text and the unseen text.
+By the end of this page 210 MB of raw text is 52 million tokens on disk, and no document is in both the training text and the unseen text.
 
-Shakespeare is one megabyte. Lesson 13 showed what a model does with too little text: it stores it. A bigger model needs more text, and real text arrives as a download.
+Shakespeare is one megabyte. Lesson 13 showed what a model does with too little text: it stores it. A bigger model needs more text, and we have to download it.
 
 ## The idea
 
-Our text is TinyStories: short stories in simple words, written by a large language model for the vocabulary of a small child. The whole set is 2.2 GB. We take the first 200 MB, about 256,000 stories, each followed by lesson 5's end token.
+Our text is TinyStories: short stories in simple words, written by a large language model for the vocabulary of a small child. The whole set is 2.2 GB. We take the first 209,715,200 bytes (200 × 2²⁰), about 256,000 stories, each followed by lesson 5's end token.
 
-A model learns what is in its text, mess included. Four steps stand between a download and training.
+The model trains on junk and repeats like the rest of the text. We take four steps before training.
 
-Clean each document. One character can be stored two ways: `é` as one character, or as `e` followed by a separate accent. We rewrite each document so that each character has one form. Then we drop junk: a fragment under 100 characters, a document with broken bytes in it, and a document that is less than 80% letters and spaces.
+1. Clean each document. One character can be stored two ways: `é` as one character, or as `e` followed by a separate accent. We rewrite each document so that each character has one form. Then we drop junk: a fragment under 100 characters, a document with broken bytes in it, and a document that is less than 80% letters and spaces.
+2. Drop repeats. A document that occurs twice counts twice in training. It can also land once in the training text and once in the unseen text, and then the unseen text is no longer unseen. To find repeats without comparing texts, give each document a fingerprint: a short number worked out from its text, the same for the same text. We take the fingerprint of the text in lowercase with single spaces, and keep the first document with each fingerprint.
+3. Drop near-repeats. Change one word and the fingerprint changes. So cut each document into runs of five words in a row. The overlap of two documents is the share of their runs that both have: 1 for the same text, near 0 for different stories. We drop a document whose overlap with an earlier one is 0.8 or more. Comparing each pair of 256,000 documents takes 33 billion comparisons, and MinHash skips most of them. Scramble each run into a number and keep the smallest. Two documents get the same smallest number with a chance equal to their overlap, and a test measures that. We scramble 32 ways and group each document's 32 numbers into 8 bands of 4. Only two documents that agree on a whole band get a real comparison.
+4. Split by fingerprint. A document goes to the unseen text when its fingerprint leaves 0 after division by 100. The document's own text decides, so the same text can never be on both sides, and adding documents later moves none of them.
 
-Drop repeats. A document that occurs twice counts twice in training. It can also land once in the training text and once in the unseen text, and then the unseen text is no longer unseen. To find repeats without comparing texts, give each document a fingerprint: a short number worked out from its text, the same for the same text. We take the fingerprint of the text in lowercase with single spaces, and keep the first document with each fingerprint.
-
-Drop near-repeats. Change one word and the fingerprint changes. So cut each document into runs of five words in a row. The overlap of two documents is the share of their runs that both have: 1 for the same text, near 0 for different stories. Comparing each pair of 256,000 documents takes 33 billion comparisons. A trick called MinHash avoids them. Scramble each run into a number and keep the smallest. Two documents get the same smallest number with a chance equal to their overlap, and a test measures that. We scramble 32 ways, which gives each document 32 numbers, and group them into 8 bands of 4. Two documents that agree on a whole band are worth a real comparison. The rest are never compared.
-
-Split by fingerprint. A document goes to the unseen text when its fingerprint leaves 0 after division by 100. The document's own text decides, so the same text can never be on both sides, and adding documents later moves none of them.
-
-Then the text becomes tokens. We train lesson 5's tokenizer on 5 MB of the training text, up to 4,096 tokens, encode each story with the end token after it, and write the ids to a file, 4 bytes each. Training maps the file into memory, and the operating system loads only the parts a batch touches.
+Then the text becomes tokens. We train lesson 5's tokenizer on 5 MB of the training text, up to 4,096 tokens, encode each story with the end token after it, and write the ids to a file, 4 bytes each. Training maps the file into memory, so the machine loads only the parts a batch touches.
 
 ## By hand
 
@@ -44,7 +41,7 @@ def clean(doc):
     return doc
 ```
 
-`\ufffd` is the character Python puts where bytes could not be read as text.
+`\ufffd` is the character Python puts where bytes could not be read as text. Python counts `True` as 1, so `sum` gives the number of letters and spaces.
 
 ```python
 # gpt/data.py
@@ -54,7 +51,7 @@ def minhash(items, a, b):
     return ((a[:, None] * x + b[:, None]) % PRIME).min(dim=1).values
 ```
 
-`items` are a document's runs, each already turned into a number. One scramble is multiply by a random number, add another, and take the remainder after division by a large prime. `a` and `b` hold 32 such pairs, and broadcasting applies them all at once.
+`items` are a document's runs, each already turned into a number, and `sorted` makes the set a list that `torch.tensor` can read. One scramble multiplies by a random number, adds another and takes the remainder after division by `PRIME`, which is 2³¹ − 1. `a` and `b` hold 32 such pairs, and broadcasting applies them all at once.
 
 ```python
 # gpt/data.py
@@ -63,7 +60,7 @@ def held_out(doc, one_in=100):
     return int.from_bytes(digest(doc)[:4], "big") % one_in == 0
 ```
 
-`digest` is the fingerprint, 20 bytes from a standard function called SHA-1. The first 4 bytes, read as a whole number, are enough to split on.
+`digest` is the fingerprint, 20 bytes from a standard function called SHA-1. `int.from_bytes` reads its first 4 bytes as one whole number, which is enough to split on.
 
 ## The proof
 
@@ -71,11 +68,12 @@ def held_out(doc, one_in=100):
 uv run pytest tests/test_data.py
 ```
 
-- The mess is planted. Into 200 different speeches from Shakespeare go three repeats (one in capitals, one with other spacing, one exact), two near-repeats (a word changed, a few words added) and three pieces of junk. The pipeline returns the 200 speeches and nothing else.
+- The test plants a mess: into 200 different speeches from Shakespeare go three repeats (one in capitals, one with other spacing, one exact), two near-repeats (a word changed, a few words added) and three pieces of junk. The pipeline returns the 200 speeches and nothing else.
 - `é` written two ways becomes one text.
 - The hand example has an overlap of 0.5.
 - Two sets with an overlap of 1/3 get the same smallest number on a third of 2,000 scrambles.
-- A document is in one split, and shuffling the documents does not move it.
+- A document is in one split, and shuffling the documents does not move it. Of 600 made-up documents the same four are unseen on any machine: the test holds the list.
+- With the bar raised from 0.8 to 1.0, a document with one word added is kept.
 - Batches read from the file on disk equal batches from memory.
 
 ```bash
@@ -92,9 +90,7 @@ val: 2,525 documents, 2.0 MB, 518,721 tokens, 3.93 bytes per token
 longest tokens: [' competitive', ' adventurous', ' disappointed', ' enthusiastic', ' compassionate', ' uncomfortable']
 ```
 
-The slice was already clean: 14 pieces of junk, no repeats and no near-repeats in 256,018 documents. TinyStories was written by a model, not gathered from the web. The test above plants the mess this slice lacks.
-
-A token now carries 3.92 bytes, against 2.28 on Shakespeare at 1,024 tokens.
+The slice was already clean: 14 pieces of junk, no repeats and no near-repeats in 256,018 documents. Text gathered from the web is messier: FineWeb, below, reports what each of its filters removed.
 
 ## What it still cannot do
 
@@ -106,7 +102,7 @@ Predict before you run: two documents have an overlap of 0.5. How often do they 
 
 <details><summary>Answer</summary>
 
-0.5⁴ = 0.0625 for one band. They miss all eight with a chance of 0.9375⁸ = 0.60, so they are compared 40% of the time. Pairs below the 0.8 we care about are often skipped, which is the point.
+0.5⁴ = 0.0625 for one band. They miss all eight with a chance of 0.9375⁸ = 0.60, so they are compared 40% of the time. We drop a document at an overlap of 0.8 or more, so a pair at 0.5 need not be compared.
 </details>
 
 <details><summary>Why split by fingerprint and not by picking each hundredth document?</summary>
@@ -114,12 +110,7 @@ Predict before you run: two documents have an overlap of 0.5. How often do they 
 Picking by position depends on the order of the file. The same text at two positions could land on both sides, and adding documents would move the rest.
 </details>
 
-<details><summary>The training file holds 51,919,415 tokens. How large is it?</summary>
-
-4 bytes each: 207,677,660 bytes, about 208 MB. The text it came from was 203.7 MB.
-</details>
-
-<details><summary>From lesson 13: a repeat that sits on both sides of the split makes which number look better than it is?</summary>
+<details><summary>From lesson 13: a repeat on both sides of the split flatters one number. Which?</summary>
 
 The loss on unseen text. The model has seen that document, so the gap between the two losses looks smaller than it is.
 </details>
