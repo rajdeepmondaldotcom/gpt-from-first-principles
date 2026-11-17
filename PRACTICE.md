@@ -6,10 +6,12 @@ On 17 November 2026 we read 11 job postings for training and inference roles at 
 
 | Asked for | Postings, of 11 | Routines |
 |---|---|---|
-| Distributed-systems work | 6 | 3 and 4 |
+| Distributed-systems work | 8 | 3 and 4 |
 | Profiling, kernels or compilers for accelerators | 5 | 5 |
-| Reading and debugging a large codebase you did not write | 3 | 6 |
-| Written reports with numbers in them | 2 | 8 |
+| Reading and debugging a large codebase you did not write | 2 | 6 |
+| Written reports with numbers in them | 1 | 8 |
+
+A posting counts only where its own words ask for the thing. The table at the end says which posting asks for what.
 
 Anthropic's guidance for candidates says its live interviews are done without AI help unless the interviewer says otherwise. Routines 1 and 2 rest on that. Routine 7 rests on no posting, and says why it is here. The sources are at the end.
 
@@ -88,9 +90,20 @@ When you change something in this repo and run it, write half a page before you 
 
 ## Sources
 
-- Anthropic, [guidance for candidates on AI use](https://www.anthropic.com/candidate-ai-guidance).
-- Anthropic postings on [its job board](https://job-boards.greenhouse.io/anthropic): Software Engineer, Inference; Performance Engineer, Inference Systems; Performance Engineer; Research Engineer, Pretraining.
-- OpenAI postings on [its job board](https://jobs.ashbyhq.com/openai): Research Engineer; Training Performance Engineer; Researcher, Training; Kernel Performance; Inference Runtime; Post-Training.
-- Google DeepMind: Software Engineer, Model Inference. It was posted in August 2026 and had closed by 17 November.
+Anthropic, [guidance for candidates on AI use](https://www.anthropic.com/candidate-ai-guidance).
 
-Postings change each week. The counts above are what those eleven said.
+| Posting | Asks for |
+|---|---|
+| Anthropic, [Staff + Senior Software Engineer, Inference](https://job-boards.greenhouse.io/anthropic/jobs/5385998008) | Distributed systems |
+| Anthropic, [Performance Engineer, Inference Systems](https://job-boards.greenhouse.io/anthropic/jobs/5224564008) | All four |
+| Anthropic, [Performance Engineer](https://job-boards.greenhouse.io/anthropic/jobs/4020350008) | Distributed systems, kernels |
+| Anthropic, [Research Engineer, Pretraining](https://job-boards.greenhouse.io/anthropic/jobs/5119713008) | Distributed systems |
+| OpenAI, [Research Engineer](https://jobs.ashbyhq.com/openai/240d459b-696d-43eb-8497-fab3e56ecd9b) | Distributed systems |
+| OpenAI, [Training Performance Engineer](https://jobs.ashbyhq.com/openai/6eb386ac-9056-4795-aa79-a27e105faf5c) | Distributed systems, profiling |
+| OpenAI, [Researcher, Training](https://jobs.ashbyhq.com/openai/97d3670c-e75a-4bb2-a235-171765f5f10e) | None of the four |
+| OpenAI, [Software Engineer, Kernel Performance & AI Tooling](https://jobs.ashbyhq.com/openai/e9627fa6-ac76-4899-9a93-9251419e61a0) | Kernels and compilers |
+| OpenAI, [Software Engineer, Developer Productivity - Inference Runtime](https://jobs.ashbyhq.com/openai/9d48e2e6-41a9-4a90-8b3b-6cc960e95c2f) | Distributed systems |
+| OpenAI, [Research Engineer / Research Scientist- Post Training](https://jobs.ashbyhq.com/openai/1c516e9f-c97d-4a40-8529-9871dac615a5) | A large codebase |
+| Google DeepMind, [Software Engineer, Model Inference](https://jobs.anitab.org/companies/google-24698/jobs/90197320-software-engineer-model-inference-deepmind). Posted in August 2026 and closed. This is a job site's copy | Distributed systems, profiling and kernels |
+
+Postings change each week, and a link here will stop working when its posting closes. The counts are what these eleven said on 17 November 2026.
