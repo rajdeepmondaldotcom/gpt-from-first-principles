@@ -95,9 +95,9 @@ if __name__ == "__main__":
         return report(serve(engine, line))
 
     # One request alone: the prompt is read in one pass, then each token takes a pass of its own.
-    alone = serve(
-        Engine(model, float("inf"), chunk=256), [(0.0, Request(*prompts(1, 192), 64, how=how))]
-    )
+    engine = Engine(model, float("inf"), chunk=256)
+    serve(engine, [(0.0, Request(*prompts(1, 192), 64, how=how))])  # a first call, to warm up
+    alone = serve(engine, [(0.0, Request(*prompts(1, 192), 64, how=how))])
     first = alone[0]["tokens"][0]
     gap = (alone[0]["tokens"][-1] - first) / 63
     say(f"alone, a prompt of 192 tokens: first token after {first * 1e3:.0f} ms")
