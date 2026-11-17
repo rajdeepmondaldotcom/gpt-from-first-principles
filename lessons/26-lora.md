@@ -22,7 +22,7 @@ We put a correction beside two grids in each attention: the one that makes queri
 
 Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add scale × B A to W once, and the model is a plain model again, no larger and no slower than before.
 
-The run repeats lesson 25 with this change only: the same examples, 2,000 steps of 32, the same three measures.
+The run repeats lesson 25: the same examples, 2,000 steps of 32, the same three measures. Two settings differ. The peak rate is 0.002, twice lesson 25's, and there is no weight decay. We tried no others.
 
 ## By hand
 

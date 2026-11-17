@@ -130,6 +130,6 @@ In the same weights as each other skill. Training for one thing moved the others
 
 Go deeper:
 
-- Qi and others, [Fine-tuning Aligned Language Models Compromises Safety, Even When Users Do Not Intend To](https://arxiv.org/abs/2310.03693) (2023). The second half of this page, on large models: a few steps of ordinary fine-tuning undo trained refusals.
+- Qi and others, [Fine-tuning Aligned Language Models Compromises Safety, Even When Users Do Not Intend To!](https://arxiv.org/abs/2310.03693) (2023). The second half of this page, on large models: a few steps of ordinary fine-tuning undo trained refusals.
 - UK AI Security Institute, [Inspect](https://inspect.aisi.org.uk/). Tests of what a model must not do, as code, with both kinds of miss counted.
 - Anthropic, [Claude's Constitution](https://www.anthropic.com/constitution). How one lab writes down what its models should and should not do.
