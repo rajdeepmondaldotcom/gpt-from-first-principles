@@ -14,11 +14,11 @@ With 4 bits the numbers run from -7 to 7. The steps are 127 / 7 = 18 times as co
 
 Each row has a scale of its own. With one scale for a whole grid, a single large weight anywhere would make the steps coarse for each row.
 
-How far can the error carry? A layer's result is a sum of weights times inputs. Each weight is off by at most half a step. So a row's result is off by at most half a step times the sum of the sizes of the inputs. That is a bound for the worst case, where each error pushes the same way. What the model loses in practice we measure: the loss on 500 unseen stories, before and after, with lesson 24's interval on the difference.
+How far can the error carry? A layer's result is a sum of weights times inputs. Each weight is off by at most half a step. So each number the layer puts out is off by at most half a step times the sum of the inputs, each taken without its sign. That is a bound for the worst case, where each error pushes the same way. What the model loses in practice we measure: the loss on 500 unseen stories, before and after, with lesson 24's interval.
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-Speed is a separate question. We store the weights small and turn them back into 32-bit numbers each time a layer runs. That is extra work. Engines built for speed multiply the small numbers as they are, with code written for one kind of chip. Ours does not, so this page claims the memory and reports the speed it measured.
+Speed is a separate question. We store the weights small and turn them back into 32-bit numbers each time a layer runs, which is extra work. Engines built for speed multiply the small numbers as they are, with code written for one kind of chip. So this page claims the memory and reports the speed it measured.
 
 ## By hand
 
@@ -60,7 +60,7 @@ def pack(numbers):
     return low | (high << 4)
 ```
 
-`amax(dim=1)` is the largest value along each row. `clamp(min=1e-12)` keeps a row of zeros from dividing by zero. In `pack`, adding 8 makes each number 0 to 15, which is four bits. `high << 4` moves one number four bits up, and `|` lays the other in the four bits below it.
+`amax(dim=1)` is the largest value along each row. `clamp(min=1e-12)` keeps a row of zeros from dividing by zero. In `pack`, adding 8 makes each number 0 to 15, which is four bits. `view(-1, 2).unbind(dim=1)` splits the numbers into pairs: the first of each, and the second. `high << 4` moves one number four bits up, and `|` lays the other in the four bits below it.
 
 ```python
 # gpt/quantize.py
@@ -69,7 +69,7 @@ def pack(numbers):
         return x @ (numbers * self.scale).T
 ```
 
-This is the layer that stands in for a linear layer. `shrink` puts one in place of each linear layer inside the blocks. The grid of token rows stays at 32 bits: it is 4.2 MB of the 21.5.
+This is the layer that stands in for a linear layer, with lesson 4's `.T`. `unpack` undoes `pack`, and `shrink` puts one such layer in place of each linear layer inside the blocks. The grid of token rows stays at 32 bits: it is 4.2 MB of the 21.5.
 
 ## The proof
 
@@ -101,7 +101,7 @@ Timings are from an M4 laptop that was running other jobs, and they move from ru
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, with an interval from +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Both shrunk models write slower: 107 and 60 tokens a second, against 155. Turning each grid back into 32-bit numbers on each call costs more time than the smaller memory saves. What this page delivers is a smaller model. Speed takes arithmetic on the small numbers themselves.
+Both shrunk models write slower: 107 and 60 tokens a second, against 155. Turning each grid back into 32-bit numbers on each call costs more time than the smaller memory saves. Lesson 31 found our writing well under what memory alone allows, so reading fewer bytes had little to give. Lesson 37 finds where the time goes.
 
 ## What it still cannot do
 
@@ -135,4 +135,4 @@ Go deeper:
 
 - Jacob and others, [Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference](https://arxiv.org/abs/1712.05877) (2017). Arithmetic done on the small numbers themselves.
 - Frantar and others, [GPTQ](https://arxiv.org/abs/2210.17323) (2022). Rounding each weight so as to undo the error of the ones rounded before it.
-- Han, [MIT 6.5940: TinyML and Efficient AI Computing](https://hanlab.mit.edu/courses/2026-fall-65940). Three of its lectures are on quantization and go much further than this page.
+- Han, [MIT 6.5940: TinyML and Efficient AI Computing](https://hanlab.mit.edu/courses/2026-fall-65940). Three of its lectures are on quantization.

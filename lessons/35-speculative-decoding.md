@@ -19,13 +19,13 @@ Say the draft drew a token to which it gave the chance q, and the big model give
 - If it is thrown out, draw a token from what the big model has left over: p - q for each token where that is above zero, shared out to sum to 1. Drop the guesses after it too, since they followed a token we did not keep.
 - If all four are kept, the same pass has given the big model's chances for a fifth token. Draw it.
 
-Why this is exact: a token is written either because it was drafted and kept, or because a guess was thrown out and it was drawn from the leftover. The hand example adds the two for each token and gets p.
+Why this is exact: a token is written either because it was drafted and kept, or because a guess was thrown out and it was drawn from the leftover. The hand example adds the two for each token and gets p, and a test does the same sum for 50 random pairs of p and q.
 
 So the draft cannot change what is written. It changes how many passes the writing takes. A draft that agrees with the big model gets five tokens from each pass, and a poor one gets one.
 
-Which draft agrees most? We train two of one size. The first learns from the stories, like any model here. The second learns to copy the big model: its loss compares its chances with the big model's chances for the same text, in place of the one token the text had. This is called distillation.
+Which draft agrees most? We train two of one size. The first learns from the stories, like any model here. The second learns to copy the big model. Its loss is lesson 3's, with the big model's whole row of chances as the target where the text gave one right token: each token's surprise, weighted by the chance the big model gives that token. This is called distillation.
 
-Whether it is faster is a measurement. A round costs four passes of the draft and one of the big model.
+Whether it is faster is a measurement, and lesson 34 is a warning: a smaller model there wrote slower. A round costs four passes of the draft and one of the big model.
 
 ## By hand
 
@@ -39,7 +39,7 @@ Three tokens. The draft gives them chances q of 0.2, 0.6 and 0.2. The big model 
 
 A guess is kept 0.7 of the time and thrown out 0.3 of the time. The leftover is all on the first token, so a redraw always gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2. Those are the big model's chances.
 
-Tokens for each pass. If each guess is kept with a chance of a, a round writes 1 + a + a² + a³ + a⁴ tokens on average. At a = 0.8 that is 3.36, and at a = 0.5 it is 1.94.
+Tokens for each pass. A round always writes one token: the first guess, or the redraw that replaces it. It writes a second when the first guess was kept, a third when two were, and so on. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average. At a = 0.8 that is 3.36, and at a = 0.5 it is 1.94.
 
 ## The code
 
@@ -71,7 +71,7 @@ def leftover(p, q):
             ids.append(torch.multinomial(p[k], 1, generator=generator).item())
 ```
 
-`p[j]` and `q[j]` are the two models' rows of chances for guess `j`. `torch.rand(())` is one number between 0 and 1, drawn evenly, so it falls under the keep chance that share of the time. A `for` loop's `else` runs when the loop was not broken out of. Both models keep lesson 23's cache, and after a rejection each cache forgets the tokens that were dropped.
+`p[j]` and `q[j]` are the two models' rows of chances for guess `j`, and `k` is the number of guesses, 4. `torch.rand(())` is one number between 0 and 1, drawn evenly, so it falls under the keep chance that share of the time. A `for` loop's `else` runs when the loop was not broken out of. Both models keep lesson 23's cache, and after a rejection each cache forgets the tokens that were dropped.
 
 ## The proof
 

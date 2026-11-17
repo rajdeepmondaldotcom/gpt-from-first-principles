@@ -20,11 +20,11 @@ def export(folder, out):
         "num_hidden_layers": shape["layers"],
         "num_attention_heads": shape["heads"],
         "num_key_value_heads": shape["kv_heads"] or shape["heads"],
-        "intermediate_size": wide.size(0),  # the width inside SwiGLU
         "max_position_embeddings": shape["context"],
-        "rms_norm_eps": 1e-6,  # the three numbers lesson 16 fixed
-        "rope_theta": 10000,
         "tie_word_embeddings": True,
+        "intermediate_size": wide.size(0),  # the three settings our code fixes (lesson 16)
+        "rms_norm_eps": 1e-6,
+        "rope_theta": 10000,
     }
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
 

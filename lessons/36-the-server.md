@@ -6,11 +6,11 @@ Each script so far runs once, in a terminal, and stops. Nobody else can ask our 
 
 ## The idea
 
-A server is a program that waits for requests from other programs and answers each one. Ours has five jobs.
+A server is a program that waits for requests from other programs, its clients, and answers each one. Ours has five jobs.
 
-1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, posted to an address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, and so can a tool built to test servers under load.
+1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, sent to a web address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, and so can a tool built to test servers under load.
 2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one byte each. We hold the first half back until the second arrives.
-3. Serve many at once. Each web request gets a thread of its own, which mostly waits. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue and gets its tokens back through another.
+3. Serve many at once. A thread is a line of work that runs beside others inside one program. Each web request gets a thread of its own, which mostly waits. One more thread runs lesson 32's engine. A queue is a line that one thread puts things into and another takes them out of. A request hands the engine its prompt through a queue and gets its tokens back through another.
 4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. A fast no is kinder than a slow one. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
 
@@ -44,7 +44,7 @@ def pieces(words, tokens):
             yield text
 ```
 
-`codecs.getincrementaldecoder("utf-8")` is Python's own tool for bytes that arrive a few at a time. It gives back text only for the characters it has all of.
+`words.bytes[token]` is lesson 5's table from a token to its bytes. `codecs.getincrementaldecoder("utf-8")` is Python's own tool for bytes that arrive a few at a time. It gives back text only for the characters it has all of, and `errors="replace"` puts a mark where bytes make no character.
 
 The engine's thread:
 
@@ -89,7 +89,7 @@ The engine's thread:
                     del self.outs[id(request)]
 ```
 
-`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server and the page you see in the browser.
+`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
 
 ## The proof
 
@@ -119,7 +119,7 @@ Timings are from an M4 laptop that was running other jobs, and they move from ru
 
 @@RESULTS@@
 
-To keep it running and hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`.
+To keep it running and hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`. That address is this machine itself, at door 8000, and nothing outside the machine can reach it.
 
 ## What it still cannot do
 
@@ -131,7 +131,7 @@ That story came over the web from our own server. The server gives the right ans
 
 ## Check yourself
 
-Predict before you run: 16 requests are inside the server at a time and each takes 2 seconds. How many does the server finish each second?
+Predict before you run: 16 requests are inside the server at a time, each takes 2 seconds, and they leave as fast as they arrive. How many does the server finish each second?
 
 <details><summary>Answer</summary>
 

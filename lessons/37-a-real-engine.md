@@ -8,9 +8,9 @@ Our server gives the right answers, and we wrote it to be read. We have not aske
 
 Our model is one file of weights and about 200 lines of Python. An engine is another program that reads the same file and does the same arithmetic, written by people whose whole job is speed. Handing a model over takes two things: the engine must find each weight, and it must do with them what we do.
 
-Finding the weights is settled already. Lesson 21 saved them under the names that engines for Llama-format models look for, in lesson 10's file format. What the engine still needs is the sizes: the width, the number of blocks, of heads and of key heads, the width inside SwiGLU, and the three numbers lesson 16 fixed. Those go in a small text file called `config.json`. Writing that file is the whole export.
+Finding the weights is settled already. Lesson 21 saved them under the names that engines for Llama-format models look for, in lesson 10's file format. What the engine still needs is the sizes: the width, the context, the number of blocks, of heads and of key heads, and the three settings that lesson 16 said our code fixes. Those are the width inside SwiGLU, the small number inside RMSNorm and the base of the rotary speeds. Those go in a small text file called `config.json`. Writing that file is the whole export.
 
-Doing what we do is harder to see. The engine has its own code for attention, for rotary positions, for RMSNorm and for SwiGLU. One detail done another way, such as which pairs of numbers the rotation turns, and its scores would differ from ours with no error shown. So we do not ask whether the file loads. We ask whether the scores are the same: the same tokens go into both engines, and we compare each score. They cannot agree to the last bit, because the two engines add the same numbers in different orders and 32-bit sums depend on the order.
+Doing what we do is harder to see. The engine has its own code for attention, for rotary positions, for RMSNorm and for SwiGLU. One detail done another way, such as which entries lesson 15's rotation pairs up, and its scores would differ from ours with no error shown. So we do not ask whether the file loads. We ask whether the scores are the same: the same tokens go into both engines, and we compare each score. They cannot agree to the last bit, because the two engines add the same numbers in different orders and 32-bit sums depend on the order.
 
 Then speed, like against like. Both engines write 128 tokens after the same prompt and take the top token each time, so they write the same story. We time four corners: our engine or Apple's, on the processor or on the graphics chip. We time one reader, and sixteen at once.
 
@@ -26,6 +26,7 @@ The story model's sizes, as the config file gives them.
 | `num_hidden_layers` | 6 | the blocks |
 | `num_attention_heads` | 8 | a head for each 32 of width |
 | `num_key_value_heads` | 4 | lesson 16's grouped heads |
+| `max_position_embeddings` | 256 | the context |
 | `intermediate_size` | 682 | SwiGLU's width: 8 × 256 / 3, rounded down |
 | `vocab_size` | 4,097 | 4,096 tokens and the end token |
 
@@ -49,16 +50,16 @@ def export(folder, out):
         "num_hidden_layers": shape["layers"],
         "num_attention_heads": shape["heads"],
         "num_key_value_heads": shape["kv_heads"] or shape["heads"],
-        "intermediate_size": wide.size(0),  # the width inside SwiGLU
         "max_position_embeddings": shape["context"],
-        "rms_norm_eps": 1e-6,  # the three numbers lesson 16 fixed
-        "rope_theta": 10000,
         "tie_word_embeddings": True,
+        "intermediate_size": wide.size(0),  # the three settings our code fixes (lesson 16)
+        "rms_norm_eps": 1e-6,
+        "rope_theta": 10000,
     }
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
 ```
 
-`shape.json` is the file lesson 21 saved beside the weights. `read_safetensors` is lesson 10's reader. `tie_word_embeddings` says that the token rows and the scores layer are one grid, as they have been since lesson 10.
+`shape.json` is the file lesson 21 saved beside the weights. `read_safetensors` is lesson 10's reader. `gate_proj` is the Llama name for SwiGLU's first grid, and a grid is stored with a row for each output (lesson 4), so its count of rows is SwiGLU's width. A `kv_heads` of None means a key head for each head. `tie_word_embeddings` says that the token rows and the scores layer are one grid, as they have been since lesson 10.
 
 ## The proof
 
@@ -68,7 +69,7 @@ uv run pytest tests/test_export.py
 
 - The config file of a small model names each of its sizes, and the weights file is copied byte for byte.
 
-One more test needs Apple's engine, which exists for Macs:
+One more test needs Apple's engine, which exists for Macs. As in lesson 5, `--extra reference` installs it and `-m reference` picks the tests that use it:
 
 ```bash
 uv run --extra reference pytest -m reference tests/test_export.py
@@ -113,7 +114,7 @@ Most of the time for a token is not arithmetic on weights. It is the fixed cost 
 
 <details><summary>From lesson 16: why does the config file carry `rms_norm_eps` and `rope_theta`?</summary>
 
-They are numbers inside the arithmetic that the weights file does not hold. Lesson 16 fixed them at 0.000001 and 10,000, and an engine that assumed other values would give other scores.
+They are numbers inside the arithmetic that the weights file does not hold. Our code fixes them at 0.000001 and 10,000, and an engine that assumed other values would give other scores.
 </details>
 
 Go deeper:
