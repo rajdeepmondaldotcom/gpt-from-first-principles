@@ -55,10 +55,14 @@ def legal(played, move):
     return True
 
 
-def next_move(model, words, played):
-    """The move the model writes after the moves `played`: its top tokens, up to the next space."""
+def next_move(model, words, played, temperature=0, generator=None):
+    """The move the model writes after the moves `played`: its tokens up to the next space.
+
+    At a temperature of 0 that is its top move. Above 0 the move is drawn by chance.
+    """
     ids = [words.end, *words.encode("".join(f" {move}" for move in played))]
-    written = generate(model, ids, 8, stop=words.end, temperature=0)[len(ids) :]
+    how = {"temperature": temperature, "generator": generator}
+    written = generate(model, ids, 6, stop=words.end, **how)[len(ids) :]  # O-O-O is 5 tokens
     text = words.decode([i for i in written if i != words.end]).split()
     return text[0] if text else ""
 
