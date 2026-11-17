@@ -41,7 +41,8 @@ if __name__ == "__main__":
     import copy
     from pathlib import Path
 
-    from gpt.finetune import WARMUP, measure, paired_gap, prepare, tune
+    from gpt.evaluate import paired_gap
+    from gpt.finetune import WARMUP, measure, prepare, tune
     from gpt.optim import AdamW
     from gpt.results import save, say
     from gpt.story import load

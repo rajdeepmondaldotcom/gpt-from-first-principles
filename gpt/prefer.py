@@ -13,8 +13,8 @@ def preference_loss(ours_better, ours_worse, frozen_better, frozen_worse, beta=0
 if __name__ == "__main__":
     from pathlib import Path
 
-    from gpt.evaluate import interval
-    from gpt.finetune import keep, measure, paired_gap, prepare
+    from gpt.evaluate import interval, paired_gap
+    from gpt.finetune import keep, measure, prepare
     from gpt.optim import AdamW
     from gpt.reinforce import answer_log_chances
     from gpt.results import save, say

@@ -5,7 +5,7 @@ from pathlib import Path
 import torch
 
 from gpt.data import documents, read
-from gpt.evaluate import interval, losses, rate_interval
+from gpt.evaluate import interval, losses, paired_gap, rate_interval
 from gpt.results import save, say
 from gpt.story import save_llama
 from gpt.tasks import attempt, count_documents, make, prompt, used
@@ -102,12 +102,6 @@ def keep(model, cache, name):
     save_llama(model, out / "model.safetensors")
     for file in ("vocab.json", "shape.json"):
         (out / file).write_text((cache / "story" / file).read_text())
-
-
-def paired_gap(after, before, generator):
-    """How much higher `after` is than `before`, value by value, with its 95% interval."""
-    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
-    return sum(map(sum, gaps)) / sum(map(len, gaps)), interval(gaps, generator)
 
 
 if __name__ == "__main__":

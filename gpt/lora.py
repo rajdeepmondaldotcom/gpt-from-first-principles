@@ -49,7 +49,8 @@ def merge(model):
 
 
 if __name__ == "__main__":
-    from gpt.finetune import STEPS, examples_from, measure, paired_gap, prepare, tune
+    from gpt.evaluate import paired_gap
+    from gpt.finetune import STEPS, examples_from, measure, prepare, tune
     from gpt.optim import AdamW
     from gpt.story import load
 

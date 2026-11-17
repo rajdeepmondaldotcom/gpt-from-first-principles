@@ -38,6 +38,12 @@ def interval(blocks, generator, draws=1000):
     return means.quantile(0.025).item(), means.quantile(0.975).item()
 
 
+def paired_gap(after, before, generator):
+    """How much higher `after` is than `before`, value by value, with its 95% interval."""
+    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
+    return sum(map(sum, gaps)) / sum(map(len, gaps)), interval(gaps, generator)
+
+
 def rate_interval(passed):
     """A 95% interval for a pass rate, from one True or False for each try.
 
@@ -116,9 +122,7 @@ if __name__ == "__main__":
     # The same model with lesson 12's 16-bit switch on: is it worse?
     with torch.autocast("cpu", dtype=torch.bfloat16):
         halved = [losses(model, doc, 256, 256).tolist() for doc in unseen[:500]]
-    gaps = [[h - f for h, f in zip(half, full)] for half, full in zip(halved, blocks)]
-    gap = sum(map(sum, gaps)) / sum(map(len, gaps))
-    low16, high16 = interval(gaps, generator)
+    gap, (low16, high16) = paired_gap(halved, blocks, generator)
     say(
         f"500 stories, 16 bits minus 32 bits: {gap:+.4f} nats, "
         f"95% interval {low16:+.4f} to {high16:+.4f}"
