@@ -48,9 +48,8 @@ Memory, for a grid of 256 rows of 256 weights.
 def quantize(grid, bits):
     """Each row becomes small whole numbers and one scale. Returns (numbers, scales)."""
     top = 2 ** (bits - 1) - 1  # 127 for 8 bits, 7 for 4
-    scale = (
-        grid.abs().amax(dim=1, keepdim=True).clamp(min=1e-12) / top
-    )  # the row's largest maps to top
+    largest = grid.abs().amax(dim=1, keepdim=True).clamp(min=1e-12)
+    scale = largest / top  # the row's largest maps to top
     return (grid / scale).round().to(torch.int8), scale
 
 
