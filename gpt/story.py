@@ -7,17 +7,19 @@ from pathlib import Path
 
 import torch
 
+from gpt.checks import reads_no_future, starts_with_no_opinion
 from gpt.data import read, tokenizer
 from gpt.generate import generate
 from gpt.gpt2 import evaluate
 from gpt.model import GPT, LLAMA
 from gpt.optim import AdamW
 from gpt.results import save, say
-from gpt.scale import shape
+from gpt.scale import run, shape, steps_for
 from gpt.train import checkpoint, resume, train
 
-SHAPE = shape(256, 6)  # the size lesson 19 picked for this budget
-STEPS, PEAK = 9000, 1e-3
+SHAPE = shape(256, 6)  # lesson 19: the smallest size its law cannot tell from the best
+BUDGET = 2.7e15  # multiplies and adds: three hours at the speed lesson 17 measured
+RATES = (5e-4, 1e-3, 2e-3)
 
 
 def save_llama(model, path):
@@ -43,32 +45,56 @@ if __name__ == "__main__":
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     ids = read(cache / "stories_train.bin").to(device)
     val_ids = read(cache / "stories_val.bin").to(device)
+    kept, log = cache / "story.pt", cache / "story_log.json"
+
+    if log.exists():  # a stopped run: carry on with what it had decided and measured
+        notes = json.loads(log.read_text())
+    else:  # before three hours, three short runs: which rate suits this size?
+        tried = [[peak, run(SHAPE, 8e13, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
+        notes = {"tried": tried, "peak": min(tried, key=lambda pair: pair[1])[0], "curve": []}
+        log.write_text(json.dumps(notes))
+
     torch.manual_seed(0)
     generator = torch.Generator().manual_seed(0)
     model = GPT(**SHAPE).to(device)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
-    kept, log = cache / "story.pt", cache / "story_curve.json"
-    start = resume(kept, model, optimizer, generator) if kept.exists() else 0
-    curve = json.loads(log.read_text()) if start else []
+    steps = steps_for(model, BUDGET)
+    if kept.exists():
+        start = resume(kept, model, optimizer, generator)
+    else:  # lesson 13's checks, before the long run and not after
+        assert starts_with_no_opinion(model, val_ids[:20_000], SHAPE["vocab"])
+        assert reads_no_future(model, val_ids[None, :64])
+        start = 0
 
-    loop = train(model, optimizer, ids, STEPS, peak=PEAK, generator=generator, start=start)
+    loop = train(
+        model,
+        optimizer,
+        ids,
+        steps,
+        peak=notes["peak"],
+        generator=generator,
+        start=start,
+        warmup=steps // 50,
+    )
     for step, loss in loop:
-        if step % 500 == 0 or step == STEPS:
+        if step % 500 == 0 or step == steps:
             unseen = evaluate(model, val_ids[:100_000])
-            curve.append({"step": step, "train": loss, "val": unseen})
+            notes["curve"].append({"step": step, "train": loss, "val": unseen})
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
-            checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts from here
-            log.write_text(json.dumps(curve))
+            checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
+            log.write_text(json.dumps(notes))
 
     sizes = json.loads(Path("results/18_data.json").read_text())["sizes"]["val"]
     nats = evaluate(model, val_ids)
     bits = nats * sizes["tokens"] / sizes["bytes"] / math.log(2)
     count = sum(p.numel() for p in model.parameters())
+    for peak, loss in notes["tried"]:
+        say(f"264 steps at a rate of {peak:g}: {loss:.3f} nats")
     say(f"parameters: {count:,}")
-    say(f"tokens trained on: {STEPS * 32 * SHAPE['context']:,}")
-    for point in curve[:: max(1, len(curve) // 9)]:
+    say(f"steps: {steps:,}, tokens: {steps * 32 * SHAPE['context']:,}, rate {notes['peak']:g}")
+    for point in notes["curve"][:: max(1, len(notes["curve"]) // 9)]:
         say(f"step {point['step']}: train {point['train']:.3f}, unseen {point['val']:.3f} nats")
-    say(f"unseen stories: {nats:.3f} nats per token, {bits:.3f} bits per byte")
+    say(f"unseen stories: {nats:.3f} nats a token, {bits:.3f} bits per byte")
 
     words = tokenizer(cache / "stories_vocab.json")
     stories = []
@@ -96,10 +122,11 @@ if __name__ == "__main__":
         device=device,
         seed=0,
         shape=SHAPE,
-        steps=STEPS,
-        peak=PEAK,
+        steps=steps,
+        rates_tried=notes["tried"],
+        peak=notes["peak"],
         parameters=count,
-        curve=curve,
+        curve=notes["curve"],
         val_nats=nats,
         val_bits_per_byte=bits,
         sample=stories[0],

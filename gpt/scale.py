@@ -128,12 +128,6 @@ if __name__ == "__main__":
         expected = predict(final, count, steps * 32 * 256)
         choices.append({"shape": one, "parameters": count, "steps": steps, "predicted": expected})
         say(f"{count:>10,} parameters, {steps:>6,} steps: predicted {expected:.3f} nats")
-
-    pick = min(choices, key=lambda choice: choice["predicted"])
-    for peak in (5e-4, 1e-3, 2e-3):  # the rate for the size we picked, found the same way
-        pick[f"loss at rate {peak:g}"] = run(pick["shape"], 8e13, ids, val_ids, peak=peak)[2]
-        loss = pick[f"loss at rate {peak:g}"]
-        say(f"picked {pick['parameters']:,} parameters, rate {peak:g}: {loss:.3f} nats")
     save(
         "19_scale",
         torch=torch.__version__,
@@ -145,5 +139,4 @@ if __name__ == "__main__":
         final=final,
         budget=budget,
         choices=choices,
-        pick=pick,
     )
