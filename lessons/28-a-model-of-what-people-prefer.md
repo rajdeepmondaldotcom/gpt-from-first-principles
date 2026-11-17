@@ -12,11 +12,11 @@ We have no readers, so a short function stands in for them, and we say now what 
 
 The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the story model, which can read stories already. On top goes one new layer that turns the stream at the last token into a single number.
 
-It learns from a pair like this. It scores both stories. Treat the difference between the two scores as a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice. When the two scores are equal the bet is even, and the loss is ln 2.
+It learns from a pair like this. It scores both stories. Treat the difference between the two scores as a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice.
 
 A trained scorer can stand where lesson 27's check stood. The storyteller writes stories, the scorer scores them, and the step raises the chance of the stories that scored above their group's average.
 
-Here is the trap. The scorer is a model, and it learned from stories the storyteller wrote before any of this training. About stories like those, it is right more often than not. Training now pushes the storyteller toward whatever the scorer rates highest, and that can be a story unlike any the scorer has seen, where its number means little. The storyteller is paid to find the scorer's mistakes. So through the training we watch two numbers: the scorer's, which the training sees, and the readers' own, which it does not.
+Here is the trap. The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and that can be a story unlike any the scorer has seen, where its number means little. The storyteller is paid to find the scorer's mistakes. So we watch two numbers through the training: the scorer's, which the training sees, and the readers', which it does not.
 
 ## By hand
 
@@ -78,7 +78,7 @@ uv run pytest tests/test_scorer.py
 
 - Padding keeps each text's last place, and does not change a text's score.
 - The loss is ln 2 for equal scores and 0.127 for the hand example.
-- A toy taste: of two random texts, the one with more 3s in it is better. From 600 pairs a small scorer learns to rank 200 pairs it has not seen, more than 9 in 10 right. Before training it gets about half.
+- A toy taste: of two random texts, the one with more 3s is better. From 600 pairs a small scorer ranks 200 unseen pairs more than 9 in 10 right, where it got about half before training.
 - The readers' three verdicts above, and two more: a whole story with all four gets 1, and a story of 7 words gets 0.
 - From four stories for one order, a good one, a fair one and two bad ones, five pairs are made, each with the better story first. The two bad ones tie and make no pair.
 
@@ -105,11 +105,6 @@ Predict before you run: as the storyteller is trained against the scorer, the sc
 <details><summary>Answer</summary>
 
 @@PREDICT@@
-</details>
-
-<details><summary>The scorer gives two stories the same score. What is the loss for that pair, whichever one the reader chose?</summary>
-
-ln 2 = 0.693. An even bet is surprised by either outcome to the same degree.
 </details>
 
 <details><summary>Why can training against the scorer make stories worse, when the scorer ranks most unseen pairs correctly?</summary>
