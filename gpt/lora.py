@@ -69,6 +69,7 @@ if __name__ == "__main__":
     ):
         model, _ = load(cache / "story")
         generator.set_state(start)
+        torch.manual_seed(0)  # each run draws its first A from the same seed
         add_lora(model, rank, names)
         trained = [p for p in model.parameters() if p.requires_grad]
         count = sum(p.numel() for p in trained)

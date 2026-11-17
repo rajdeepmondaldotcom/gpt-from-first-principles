@@ -89,6 +89,7 @@ if __name__ == "__main__":
         f"pairs to learn from: {len(learn):,}, from 340 orders. Pairs held back: {len(held)}, from 60"
     )
 
+    torch.manual_seed(0)  # for the new layer's first weights
     scorer = Scorer(copy.deepcopy(model))  # it starts from what the story model knows
 
     def scores(examples):
