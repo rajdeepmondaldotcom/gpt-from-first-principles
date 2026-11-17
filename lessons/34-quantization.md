@@ -6,7 +6,7 @@ To write one token the model reads each of its weights, and each weight is a 32-
 
 ## The idea
 
-A weight does not need 32 bits. Store it as a small whole number, and keep one 32-bit number for its whole row, called the scale, that says how large a step of 1 is.
+A weight does not need 32 bits. Store it as a small whole number, and keep one 32-bit number for its row, called the scale, that says how large a step of 1 is.
 
 With 8 bits a whole number runs from -127 to 127. Find the largest weight in the row by size and let it be 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
 
@@ -99,7 +99,7 @@ uv run python -m gpt.quantize
 
 Timings are from an M4 laptop that was running other jobs, and they move from run to run.
 
-At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, with an interval from +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
+At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
 Both shrunk models write slower: 107 and 60 tokens a second, against 155. Turning each grid back into 32-bit numbers on each call costs more time than the smaller memory saves. Lesson 31 found our writing well under what memory alone allows, so reading fewer bytes had little to give. Lesson 37 finds where the time goes.
 
