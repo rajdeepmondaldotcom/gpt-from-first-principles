@@ -82,12 +82,36 @@ def test_accuracy_gets_an_error_bar():
 def test_no_pass_in_100_tries_still_leaves_a_range():
     generator = torch.Generator().manual_seed(0)
     assert interval([[0]] * 100, generator) == (0, 0)  # the bootstrap alone: no width, and wrong
-    low, high = rate_interval([False] * 100, generator)
+    low, high = rate_interval([False] * 100)
     assert low == 0 and high == pytest.approx(0.036, abs=0.001)
     assert (1 - high) ** 100 == pytest.approx(0.025)  # at that rate, 100 failures come 1 time in 40
-    assert rate_interval([True] * 100, generator) == pytest.approx((1 - high, 1))
-    mixed = [True] * 70 + [False] * 30
-    assert rate_interval(mixed, generator) == pytest.approx((0.61, 0.79), abs=0.02)
+    assert rate_interval([True] * 100) == pytest.approx((1 - high, 1))
+    assert rate_interval([True] * 70 + [False] * 30) == pytest.approx((0.600, 0.788), abs=0.001)
+
+
+def test_one_pass_in_100_gets_a_wider_range_than_none():
+    generator = torch.Generator().manual_seed(0)
+    one = [True] + [False] * 99
+    assert interval([[int(x)] for x in one], generator)[1] <= 0.03  # the bootstrap: too narrow
+    low, high = rate_interval(one)
+    assert 0 < low < 0.001 and high == pytest.approx(0.054, abs=0.001)
+    # By hand: at a rate of 0.0545, one pass or none in 100 tries comes 1 time in 40.
+    assert 0.9455**100 + 100 * 0.0545 * 0.9455**99 == pytest.approx(0.025, abs=0.001)
+    assert high > rate_interval([False] * 100)[1]  # more passes never give a lower top
+
+
+def test_the_range_holds_the_true_rate_19_times_in_20_when_passes_are_few():
+    generator = torch.Generator().manual_seed(0)
+    draws = (
+        torch.rand(2000, 100, generator=generator) < 0.02
+    ).tolist()  # a task passed 1 time in 50
+    held = sum(low <= 0.02 <= high for low, high in map(rate_interval, draws))
+    assert held >= 0.95 * 2000
+    # The bootstrap of a mean misses far more often here: its top end is too low.
+    missed = sum(
+        interval([[int(x)] for x in d], generator, draws=200)[1] < 0.02 for d in draws[:300]
+    )
+    assert missed > 0.1 * 300
 
 
 def test_pass_at_k_by_hand_and_on_average():

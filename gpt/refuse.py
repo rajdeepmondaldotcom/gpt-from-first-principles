@@ -44,10 +44,15 @@ def teaching(pairs, words, context):
     return refuse, answer
 
 
+def refused(answer):
+    """Whether an answer is the refusal and nothing more."""
+    return answer.strip() == REFUSAL
+
+
 def refusals(model, words, tasks, generator):
     """For each task, whether the model answers it with the refusal and nothing else."""
     return [
-        attempt(model, words, task, temperature=0.8, generator=generator)[0].strip() == REFUSAL
+        refused(attempt(model, words, task, temperature=0.8, generator=generator)[0])
         for task in tasks
     ]
 
@@ -69,7 +74,12 @@ if __name__ == "__main__":
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     pairs, held, _ = prepare(cache, words)
     refuse, answer = teaching(pairs, words, model.context)
+    lesson_25 = examples_from(pairs, words, model.context)
     say(f"training orders with a listed word: {len(refuse):,}. Other orders: {len(answer):,}")
+    say(
+        f"lesson 25's examples: {len(lesson_25):,}. "
+        f"{len(lesson_25) - len(answer):,} of them answer a listed order with its story"
+    )
 
     # 100 unseen orders, each made twice: once with a listed word, once with its look-alike.
     plain = [task for task in held if not forbidden(task)][:100]
@@ -81,35 +91,32 @@ if __name__ == "__main__":
         """Count refusals of the listed orders and of the look-alike orders, each with its range."""
         for kind, tasks in (("listed", scary), ("look-alike", alike)):
             said = refusals(net, words, tasks, generator)
-            low, high = rate_interval(said, generator)
-            numbers[f"{name}, {kind}"] = sum(said)
+            low, high = rate_interval(said)
+            numbers[f"{name}, {kind}"] = {"refused": sum(said), "interval": [low, high]}
             say(
                 f"{name}: {sum(said)} of 100 {kind} orders refused, 95% interval {low:.2f} to {high:.2f}"
             )
 
-    def fit(net, examples, steps):
-        """Lesson 25's fine-tune: on the graphics chip, then back to the processor."""
+    def fit(net, examples, name=""):
+        """300 steps of lesson 25's loop at a peak rate of 0.0003, with no weight decay, on the
+        graphics chip. With a name, refusals are counted on the processor after each 100 steps."""
         net.to(device)
         optimizer = AdamW(net.parameters(), rate=0.0, decay=0.0)
-        for _ in tune(
-            net, optimizer, examples, steps, peak=3e-4, generator=generator, pad=words.end, size=32
+        for step, _ in tune(
+            net, optimizer, examples, 300, peak=3e-4, generator=generator, pad=words.end, size=32
         ):
-            pass
+            if name and step % 100 == 0:
+                net.to("cpu")
+                report(f"{name}, {step} steps", net)
+                net.to(device)
         net.to("cpu")
 
     report("lesson 25's model", model)
     # Teach the rule: one order in four has a listed word and is answered with the refusal.
-    fit(model, refuse + answer[: 3 * len(refuse)], 300)
+    fit(model, refuse + answer[: 3 * len(refuse)])
     report("taught the rule", model)
 
-    # Then ordinary fine-tuning, two kinds, 100 steps at a time.
-    stories = {
-        "orders left out of the teaching": answer[3 * len(refuse) :],
-        "lesson 25's examples": examples_from(pairs, words, model.context),
-    }
-    for name, examples in stories.items():
-        tuned = copy.deepcopy(model)
-        for steps in (100, 200, 300):
-            fit(tuned, examples, 100)
-            report(f"{name}, {steps} steps", tuned)
+    # Then ordinary fine-tuning, two kinds, each one run of the same length as the teaching.
+    fit(copy.deepcopy(model), answer[3 * len(refuse) :], "orders left out of the teaching")
+    fit(copy.deepcopy(model), lesson_25, "lesson 25's examples")
     save("30_refuse", torch=torch.__version__, device=device, refused=numbers)

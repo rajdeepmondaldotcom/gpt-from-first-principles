@@ -72,5 +72,6 @@ def test_the_check_wants_whole_words_and_the_name_as_written():
     assert not passes(task, "tim was a brave cat under the moon.")  # a name keeps its capital
     assert not passes(task, "Tim was a brave cat.")  # one word missing
     assert used(task, "Tim was a brave cat.") == [True, False, True]  # cat, moon, brave
+    assert used(task, "Tim read a catalogue by moonlight, bravely.") == [False, False, False]
     assert score(task, "Tim was a brave cat.") == 3 / 4  # the name and two of the three words
     assert score(task, "tim saw the moon.") == 1 / 4 and score(task, "Tim, a brave moon cat") == 1

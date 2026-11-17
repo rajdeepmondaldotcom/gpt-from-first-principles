@@ -11,10 +11,11 @@ from gpt.results import save, say
 class LoRA(nn.Module):
     """A frozen linear layer, plus the product of two thin grids that are trained."""
 
-    def __init__(self, layer, rank, scale=2.0):
+    def __init__(self, layer, rank):
         super().__init__()
-        self.layer, self.scale = layer, scale
-        self.down = nn.Parameter(torch.randn(rank, layer.in_features) / rank)  # width to rank
+        self.layer, self.scale = layer, 32 / rank  # over the rank: a first step of one size
+        edge = layer.in_features**-0.5
+        self.down = nn.Parameter(torch.empty(rank, layer.in_features).uniform_(-edge, edge))
         self.up = nn.Parameter(torch.zeros(layer.out_features, rank))  # zero: no change at first
 
     def forward(self, x):
@@ -81,7 +82,7 @@ if __name__ == "__main__":
             optimizer,
             examples,
             STEPS,
-            peak=2e-3,
+            peak=1e-2,
             generator=generator,
             pad=words.end,
             size=32,

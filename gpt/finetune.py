@@ -12,12 +12,13 @@ from gpt.tensors import cross_entropy
 from gpt.train import clip, rate_at
 
 STEPS = 2000  # steps of 32 examples in lessons 25 and 26
+WARMUP = 20  # steps over which each fine-tune's rate climbs to its peak
 
 
 def example(words, ask, answer):
     """One training example: the prompt, the answer, the end token. Returns ids and the answer's start."""
-    prompt = words.encode(ask)
-    return [*prompt, *words.encode(answer), words.end], len(prompt)
+    asked = words.encode(ask)
+    return [*asked, *words.encode(answer), words.end], len(asked)
 
 
 def collate(examples, pad, device="cpu", width=None):
@@ -39,12 +40,12 @@ def answer_loss(model, x, y, scored):
     return cross_entropy(model(x)[scored], y[scored])
 
 
-def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16, warmup=20):
+def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16):
     """Lesson 12's loop on batches of examples. Yields (step, loss)."""
     device = model.embed.weight.device
     for step in range(steps):
         picks = torch.randint(len(examples), (size,), generator=generator).tolist()
-        optimizer.rate = rate_at(step, peak, warmup, steps)
+        optimizer.rate = rate_at(step, peak, WARMUP, steps)
         # Each batch is padded to one width: the graphics chip stalled when the shape kept changing.
         chosen = [examples[i] for i in picks]
         loss = answer_loss(model, *collate(chosen, pad, device, width=model.context - 1))
@@ -79,7 +80,7 @@ def measure(name, model, words, held, unseen, generator):
     unseen stories. Returns the numbers, and each plain story's losses."""
     tries = [attempt(model, words, task, temperature=0.8, generator=generator) for task in held]
     passed, ended = [ok for _, ok, _ in tries], sum(end for _, _, end in tries)
-    low, high = rate_interval(passed, generator)
+    low, high = rate_interval(passed)
     words_used = [used(task, story) for task, (story, _, _) in zip(held, tries)]
     share = sum(map(sum, words_used)) / sum(map(len, words_used))
     low_share, high_share = interval(words_used, generator)  # drawn task by task
@@ -94,6 +95,17 @@ def measure(name, model, words, held, unseen, generator):
     return numbers | {"by_task": words_used}, plain
 
 
+def keep(model, cache, name):
+    """Save a tuned model as a folder `load` reads, with the story model's tokenizer and sizes."""
+    from gpt.story import save_llama
+
+    out = cache / name
+    out.mkdir(exist_ok=True)
+    save_llama(model, out / "model.safetensors")
+    for file in ("vocab.json", "shape.json"):
+        (out / file).write_text((cache / "story" / file).read_text())
+
+
 def plain_gap(after, before, generator):
     """How much worse plain stories got, token by token, with its 95% interval."""
     gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
@@ -102,7 +114,7 @@ def plain_gap(after, before, generator):
 
 if __name__ == "__main__":
     from gpt.optim import AdamW
-    from gpt.story import load, save_llama
+    from gpt.story import load
 
     cache = Path("data/cache")
     model, words = load(cache / "story")
@@ -131,11 +143,7 @@ if __name__ == "__main__":
     story, ok, _ = attempt(model, words, task, temperature=0.8, generator=generator)
     say(f"to order, passes {ok}: {story.strip()!r}")
 
-    out = cache / "storyteller"
-    out.mkdir(exist_ok=True)
-    save_llama(model, out / "model.safetensors")
-    for name in ("vocab.json", "shape.json"):
-        (out / name).write_text((cache / "story" / name).read_text())
+    keep(model, cache, "storyteller")
     save(
         "25_finetune",
         torch=torch.__version__,

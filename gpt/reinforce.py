@@ -40,11 +40,11 @@ if __name__ == "__main__":
     from pathlib import Path
 
     from gpt.evaluate import interval
-    from gpt.finetune import measure, prepare, tune
+    from gpt.finetune import WARMUP, keep, measure, prepare, tune
     from gpt.optim import AdamW
     from gpt.results import save, say
-    from gpt.story import load, save_llama
-    from gpt.train import clip
+    from gpt.story import load
+    from gpt.train import clip, rate_at
 
     cache = Path("data/cache")
     model, words = load(cache / "storyteller")  # lesson 25's model
@@ -85,9 +85,10 @@ if __name__ == "__main__":
 
     # Then: after each round, raise the chance of each story by how far its score is above the
     # average of its group.
-    optimizer, recent = AdamW(model.parameters(), rate=1e-4, decay=0.0), []
+    optimizer, recent = AdamW(model.parameters(), rate=0.0, decay=0.0), []
     for at in range(rounds):
         examples, scores, group = draw(model, at)
+        optimizer.rate = rate_at(at, 1e-4, WARMUP, rounds)  # the schedule the first try had
         loss = score_loss(answer_log_chances(model, examples, words.end), scores, group)
         model.zero_grad()
         loss.backward()
@@ -95,7 +96,10 @@ if __name__ == "__main__":
         optimizer.step()
         recent += scores
         if (at + 1) % 20 == 0:
-            say(f"round {at + 1}: the last 320 stories scored {sum(recent) / 320:.2f} on average")
+            say(
+                f"round {at + 1}: the last {len(recent)} stories scored "
+                f"{sum(recent) / len(recent):.2f} on average"
+            )
             recent = []
     scoring, _ = measure("learn from the score", model, words, held, unseen, generator)
 
@@ -109,11 +113,7 @@ if __name__ == "__main__":
         f"asked words used, learning from the score minus keeping what passes: {gap:+.2f}, "
         f"95% interval {low:+.2f} to {high:+.2f}"
     )
-    out = cache / "scored"
-    out.mkdir(exist_ok=True)
-    save_llama(model, out / "model.safetensors")
-    for name in ("vocab.json", "shape.json"):
-        (out / name).write_text((cache / "story" / name).read_text())
+    keep(model, cache, "scored")
     save(
         "27_reinforce",
         torch=torch.__version__,
