@@ -1,5 +1,5 @@
 {
-  "commit": "f3574ec",
+  "commit": "996386e",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "mps",
@@ -178,6 +178,7 @@
     "train: 741,983 games, 111,113,359 tokens",
     "val: 7,450 games, 1,116,979 tokens",
     "tokens in the vocabulary: 636",
+    "unseen games: 2.1 tokens a move, half have 65 moves or fewer, 74% of a game is letters and spaces",
     "parameters: 4,488,448, steps: 10,420, rate 0.001",
     "before training: 0% of 200 moves are legal",
     "step 500: unseen 1.990 nats, 58% of 200 moves are legal",
