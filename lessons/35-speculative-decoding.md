@@ -25,8 +25,6 @@ The draft changes only how many passes the writing takes: five tokens a pass at 
 
 We train two drafts of one size, to see which agrees more. The first learns from the stories. The second learns to copy the big model. Its loss is lesson 3's, but the target is the big model's whole row of chances in place of one right token: each token's surprise, weighted by the big model's chance for it. This is distillation.
 
-We measure whether it is faster: a round costs four passes of the draft and one of the big model, and in lesson 34 a smaller model wrote slower.
-
 ## By hand
 
 Three tokens. The draft gives them chances q of 0.2, 0.6 and 0.2. The big model gives them p of 0.5, 0.3 and 0.2.
@@ -97,18 +95,20 @@ uv run python -m gpt.speculate
 
 ```
 each draft: 688,896 parameters, 1,500 steps of 32 windows
-a draft trained on the stories: 2.343 nats on unseen stories
-a draft trained on the big model's chances: 2.239 nats on unseen stories
-the big model alone: 636 tokens a second
-with a draft trained on the stories: 35% of its guesses kept, 2.37 tokens for each pass of the big model, 594 tokens a second
-with a draft trained on the big model's chances: 35% of its guesses kept, 2.38 tokens for each pass of the big model, 596 tokens a second
+a draft trained on the stories: 2.346 nats on unseen stories
+a draft trained on the big model's chances: 2.238 nats on unseen stories
+the big model alone: 490 tokens a second
+with a draft trained on the stories: 61% of the guesses it checked are kept, 2.32 tokens for each pass of the big model, 475 tokens a second
+with a draft trained on the big model's chances: 63% of the guesses it checked are kept, 2.38 tokens for each pass of the big model, 480 tokens a second
 ```
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The draft that copied the big model has the lower loss on unseen stories: 2.239 nats against 2.343. Its guesses are kept no more often: 35% of those drafted, for each draft. Guesses dropped after a rejection count as not kept, so a round writes 1 + 4 × 0.35 = 2.4 tokens for each pass of the big model.
+The draft that copied the big model has the lower loss, 2.238 nats against 2.346, and 63% of its checked guesses are kept, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
 
-Neither is faster than no draft. The big model alone writes 636 tokens a second, and with a draft 594 and 596.
+Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. This draft has 8 times fewer weights and half the blocks, and costs more than that. Lesson 37 measures why.
+
+The big model's 490 comes right after that training: lesson 32 measured 669.
 
 ## What it still cannot do
 

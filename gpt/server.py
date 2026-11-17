@@ -266,6 +266,7 @@ if __name__ == "__main__":
         threading.Event().wait()
 
     prompt = "Name: Mira\nWords: cat, moon, brave\nStory:"
+    torch.manual_seed(0)  # the first story is drawn by chance: the same draw on each run
     ask = {"messages": [{"role": "user", "content": prompt}]}
     whole = urllib.request.Request(url, json.dumps(ask).encode())  # no limit: a story to its end
     with urllib.request.urlopen(whole, timeout=60) as reply:

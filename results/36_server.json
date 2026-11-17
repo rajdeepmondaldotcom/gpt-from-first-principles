@@ -1,38 +1,44 @@
 {
-  "commit": "10efbe9",
+  "commit": "e336b72",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "cpu",
   "ab": {
-    "requests_a_second": 22.48,
-    "ms_each": 682.0
+    "requests_a_second": 21.37,
+    "ms_each": 718.0
   },
   "ours": {
-    "requests_a_second": 22.450214439385952,
-    "ms_each": 680.1505762687884,
+    "requests_a_second": 21.340224707575018,
+    "ms_each": 715.8189706562553,
     "requests": 200,
     "refused": 0,
     "failed": 0,
     "finished": 200,
-    "tokens": 20000,
-    "first_token_seconds": 6.2007087907986715,
-    "seconds_in_system": 136.03011525375769,
-    "in_flight_seconds": 134.99955018155742
+    "tokens": 19971,
+    "first_token_seconds": 6.559464414836839,
+    "seconds_in_system": 143.16379413125105,
+    "in_flight_seconds": 142.1376760425046
   },
   "burst": {
-    "answered": 100,
-    "turned_away": 300
+    "requests": 100,
+    "refused": 300,
+    "failed": 0,
+    "finished": 100,
+    "tokens": 10000,
+    "first_token_seconds": 143.19364116562065,
+    "seconds_in_system": 266.87972108402755,
+    "in_flight_seconds": 266.8570431350963
   },
-  "sample": "Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking for something special. She wanted to find something special to show her friends. \nSuddenly, Mira saw a big, fluffy cat and a blue bird. She asked them if they wanted to play with the cat, but they were always scared. Mira said, \"No, I don't want to play with the",
+  "sample": "Once upon a time there was a brave girl named Mira. She was always looking for something fun, so she wanted to buy a big, beautiful fairy. One day she saw a beautiful, beautiful rainbow in the sky. She wanted to pick up the moon in her garden and take it home. \nMira was so excited, she ran off to talk to the rainbow. Everywhere she went, she could see the beautiful rainbow. One day, the moon started to increase in size, and it got so big, it filled her garden.\nMira was so very brave, she didn\u2019t even notice the moon! But Mira got trying to take the moon home, but she forgot about the moon. \nThe moon was so far away, as the moon got too small and she could not get there. Mira was so scared she had to leave the moon in the night, and now the moon was back in the sky.",
   "printed": [
-    "one request over the web: 'Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking '",
-    "200 requests, 16 at a time, by ab: 22.5 a second, 682 ms each",
-    "the same run by our own counts: 22.5 a second, 680 ms each",
-    "tokens written: 20,000, 2,245 a second",
-    "first token after 31 ms on average",
+    "one request over the web: 'Once upon a time there was a brave girl named Mira. She was always looking for something fun, so she wanted to buy a big'",
+    "200 requests, 16 at a time, by ab: 21.4 a second, 718 ms each",
+    "the same run by our own counts: 21.3 a second, 716 ms each",
+    "tokens written: 19,971, 2,131 a second",
+    "first token after 33 ms on average",
     "requests inside, averaged over the run: 15.2",
     "arrival rate times time inside: 15.3",
-    "a million tokens at that speed: 7 minutes of this machine",
-    "400 requests, 200 at a time: 100 answered, 300 told to try again"
+    "a million tokens at that speed: 8 minutes of this machine",
+    "400 requests, 200 at a time: 100 answered, 300 told to try again, 0 failed"
   ]
 }

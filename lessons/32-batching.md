@@ -28,7 +28,7 @@ Row A has read 5 tokens and row B has read 3. B gets two empty places in front.
 
 B's tokens were read at places 0, 1 and 2, and now sit at 2, 3 and 4, so each of B's keys is turned 2 more places. Alone, B's next query would sit at place 3 and meet its newest key at place 2, a distance of 1. In the batch the query is at 5 and that key at 4: a distance of 1 again.
 
-Memory. A request with a prompt of 64 tokens that may write 64 more can come to hold 128 tokens.
+Memory. A request with a prompt of 64 tokens that may write 64 more can hold 128 tokens.
 
 128 × 6,144 = 786,432 bytes
 
@@ -114,27 +114,27 @@ uv run python -m gpt.engine
 ```
 8 requests that join a running batch two steps apart: 8 write what they write alone
 a prompt of 192 tokens read in chunks of 64: the same answer, True
-1 at once: 617 tokens a second in all, 628 for each reader
-2 at once: 804 tokens a second in all, 412 for each reader
-4 at once: 1,166 tokens a second in all, 305 for each reader
-8 at once: 1,606 tokens a second in all, 215 for each reader
-16 at once: 2,002 tokens a second in all, 138 for each reader
-32 at once: 2,246 tokens a second in all, 79 for each reader
+1 at once: 657 tokens a second in all, 669 for each listener
+2 at once: 805 tokens a second in all, 414 for each listener
+4 at once: 1,180 tokens a second in all, 308 for each listener
+8 at once: 1,617 tokens a second in all, 217 for each listener
+16 at once: 2,020 tokens a second in all, 139 for each listener
+32 at once: 2,275 tokens a second in all, 80 for each listener
 lesson 31's machine finished 10.1 requests a second, one at a time
 the cache for one request of 64 + 64 tokens: 786,432 bytes
-5.0 requests a second, room for 16: first token after 3 ms for half, 8 ms for 95 in 100, 275 tokens a second in all
-9.1 requests a second, room for 16: first token after 6 ms for half, 10 ms for 95 in 100, 493 tokens a second in all
-15.1 requests a second, room for 16: first token after 8 ms for half, 13 ms for 95 in 100, 813 tokens a second in all
+5.0 requests a second, room for 16: first token after 3 ms for half, 7 ms for 95 in 100, 276 tokens a second in all
+9.1 requests a second, room for 16: first token after 6 ms for half, 9 ms for 95 in 100, 493 tokens a second in all
+15.1 requests a second, room for 16: first token after 8 ms for half, 12 ms for 95 in 100, 813 tokens a second in all
 a request offered one byte less than its cache needs is taken: False
 ```
 
 Timings are from an M4 laptop, and they move from run to run.
 
-Eight requests that join two steps apart each write what they write alone, and so does a prompt read in chunks.
+The eight requests each write what they write alone, and so does the prompt read in chunks.
 
-Alone, a listener gets 628 tokens a second. Among 16, each gets 138 and the machine writes 2,002 in all, 3.2 times what it wrote for one. At 32 it writes 2,246, 12% more than at 16.
+Alone, a listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. At 32 it writes 2,275, 13% more than at 16.
 
-At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 13 ms or less, and the machine writes 813 tokens a second where it wrote 631.
+At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 12 ms or less, and the machine writes 813 tokens a second where it wrote 631.
 
 ## What it still cannot do
 
@@ -146,7 +146,7 @@ Predict before you run: 16 listeners share each pass. Does each one get their to
 
 <details><summary>Answer</summary>
 
-Slower for each listener, more in all: 138 tokens a second each where one alone gets 628, and 2,002 in all where one gets 617.
+Slower for each listener, more in all: 139 tokens a second each where one alone gets 669, and 2,020 in all where one gets 657.
 </details>
 
 <details><summary>From lesson 15: what would break if positions came from lesson 8's table of places?</summary>
