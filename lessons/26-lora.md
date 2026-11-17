@@ -63,21 +63,25 @@ class LoRA(nn.Module):
 
 
 def add_lora(model, rank, names=("q", "v")):
-    """Freeze the whole model, then put a correction beside the named grids of each attention."""
+    """Freeze the whole model, then put a correction beside each grid in a block that has one of
+    these names. The two named here make the queries and the values."""
     model.requires_grad_(False)
     for block in model.blocks:
-        for name in names:
-            setattr(block.attn, name, LoRA(getattr(block.attn, name), rank))
+        for part in (block.attn, block.mlp):
+            for name, layer in list(part.named_children()):
+                if name in names:
+                    setattr(part, name, LoRA(layer, rank))
 
 
 @torch.no_grad()
 def merge(model):
     """Add each correction into its grid and put the plain layer back. The model computes the same."""
     for block in model.blocks:
-        for name, part in list(block.attn.named_children()):
-            if isinstance(part, LoRA):
-                part.layer.weight += part.scale * part.up @ part.down
-                setattr(block.attn, name, part.layer)
+        for part in (block.attn, block.mlp):
+            for name, one in list(part.named_children()):
+                if isinstance(one, LoRA):
+                    one.layer.weight += one.scale * one.up @ one.down
+                    setattr(part, name, one.layer)
 ```
 
 `down` is A and `up` is B, and `in_features` and `out_features` are a layer's counts of inputs and outputs. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. Dividing by the rank keeps A's first numbers small. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `nn.Parameter` marks the two new grids as weights that do train. `getattr` and `setattr` read and replace a part of the model by its name, and `named_children` lists the parts, so nothing in the model's own file changes. PyTorch stores a layer's grid as outputs by inputs (lesson 4), the shape of `up @ down`.

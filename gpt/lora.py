@@ -21,22 +21,29 @@ class LoRA(nn.Module):
         return self.layer(x) + self.scale * (x @ self.down.T @ self.up.T)
 
 
+GRIDS = ("q", "k", "v", "proj", "gate", "wide", "narrow")  # each linear layer in a block
+
+
 def add_lora(model, rank, names=("q", "v")):
-    """Freeze the whole model, then put a correction beside the named grids of each attention."""
+    """Freeze the whole model, then put a correction beside each grid in a block that has one of
+    these names. The two named here make the queries and the values."""
     model.requires_grad_(False)
     for block in model.blocks:
-        for name in names:
-            setattr(block.attn, name, LoRA(getattr(block.attn, name), rank))
+        for part in (block.attn, block.mlp):
+            for name, layer in list(part.named_children()):
+                if name in names:
+                    setattr(part, name, LoRA(layer, rank))
 
 
 @torch.no_grad()
 def merge(model):
     """Add each correction into its grid and put the plain layer back. The model computes the same."""
     for block in model.blocks:
-        for name, part in list(block.attn.named_children()):
-            if isinstance(part, LoRA):
-                part.layer.weight += part.scale * part.up @ part.down
-                setattr(block.attn, name, part.layer)
+        for part in (block.attn, block.mlp):
+            for name, one in list(part.named_children()):
+                if isinstance(one, LoRA):
+                    one.layer.weight += one.scale * one.up @ one.down
+                    setattr(part, name, one.layer)
 
 
 if __name__ == "__main__":
@@ -50,26 +57,39 @@ if __name__ == "__main__":
     pairs, held, unseen = prepare(cache, words)
     examples = examples_from(pairs, words, model.context)
     whole = sum(p.numel() for p in model.parameters())
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
-    add_lora(model, rank=8)
-    trained = [p for p in model.parameters() if p.requires_grad]
-    count = sum(p.numel() for p in trained)
-    say(f"trained: {count:,} of {whole:,} parameters, {4 * count / 1e6:.2f} MB to store")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    model.to(device)  # as lesson 25 trained
-    optimizer = AdamW(trained, rate=0.0, decay=0.0)
-    for step, loss in tune(
-        model, optimizer, examples, STEPS, peak=2e-3, generator=generator, pad=words.end, size=32
-    ):
-        if step % 250 == 0:
-            say(f"step {step}: {loss:.3f} nats on the answers")
-    model.to("cpu")
-    after, plain_after = measure("after", model, words, held, unseen, generator)
-    gap, (low, high) = plain_gap(plain_after, plain_before, generator)
-    say(
-        f"plain stories, after minus before: {gap:+.3f} nats, 95% interval {low:+.3f} to {high:+.3f}"
-    )
+    start, runs = generator.get_state(), {}  # each run then draws the batches lesson 25 drew
+    for name, names in (("queries and values", ("q", "v")), ("each grid in a block", GRIDS)):
+        model, _ = load(cache / "story")
+        generator.set_state(start)
+        add_lora(model, rank=8, names=names)
+        trained = [p for p in model.parameters() if p.requires_grad]
+        count = sum(p.numel() for p in trained)
+        say(f"{name}: {count:,} of {whole:,} parameters train, {4 * count / 1e6:.2f} MB to store")
+        model.to(device)  # as lesson 25 trained
+        optimizer = AdamW(trained, rate=0.0, decay=0.0)
+        for step, loss in tune(
+            model,
+            optimizer,
+            examples,
+            STEPS,
+            peak=2e-3,
+            generator=generator,
+            pad=words.end,
+            size=32,
+        ):
+            if step % 500 == 0:
+                say(f"step {step}: {loss:.3f} nats on the answers")
+        model.to("cpu")
+        after, plain_after = measure(name, model, words, held, unseen, generator)
+        gap, (low, high) = plain_gap(plain_after, plain_before, generator)
+        say(
+            f"{name}: plain stories, after minus before, {gap:+.3f} nats, "
+            f"95% interval {low:+.3f} to {high:+.3f}"
+        )
+        runs[name] = {"trained": count, "after": after, "plain_gap": gap, "interval": [low, high]}
 
     window = unseen[0][None, :64]
     with torch.no_grad():
@@ -79,14 +99,4 @@ if __name__ == "__main__":
     say(
         f"merged against unmerged, largest difference in a score: {(apart - together).abs().max():.6f}"
     )
-    save(
-        "26_lora",
-        torch=torch.__version__,
-        device=device,
-        trained=count,
-        whole=whole,
-        before=before,
-        after=after,
-        plain_gap=gap,
-        plain_interval=[low, high],
-    )
+    save("26_lora", torch=torch.__version__, device=device, whole=whole, before=before, runs=runs)
