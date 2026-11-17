@@ -47,8 +47,9 @@ class AdamW:
 
 
 if __name__ == "__main__":
+    from gpt import mlp_lm
     from gpt.gpt2 import GPT2, batch, evaluate, loss_on, sample
-    from gpt.tensors import encode
+    from gpt.tensors import cross_entropy, encode
 
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
@@ -80,6 +81,23 @@ if __name__ == "__main__":
         results[name] = {"val_bits_per_byte": bits, "sample": story}
         say(f"{name}: {bits:.3f} bits per byte")
         say(f"  {story!r}")
+
+    # Was it the optimizer, or the model? Lesson 4's MLP with the same AdamW, the same 3,000
+    # steps and as many guesses a step: the GPT makes one at each of 64 places in 32 windows.
+    for reach in (8, 64):
+        torch.manual_seed(0)
+        generator = torch.Generator().manual_seed(0)
+        model = mlp_lm.MLP(len(vocab), context=reach)
+        optimizer = AdamW(model.parameters(), rate=1e-3)
+        for _ in range(3000):
+            x, y = mlp_lm.batch(train_ids, reach, 32 * 64, generator)
+            loss = cross_entropy(model(x), y)
+            model.zero_grad()
+            loss.backward()
+            optimizer.step()
+        bits = mlp_lm.evaluate(model, val_ids) / math.log(2)
+        results[f"MLP, {reach} back, AdamW"] = {"val_bits_per_byte": bits}
+        say(f"lesson 4's MLP reading {reach} characters back, with AdamW: {bits:.3f} bits per byte")
     save(
         "11_optim",
         torch=torch.__version__,
