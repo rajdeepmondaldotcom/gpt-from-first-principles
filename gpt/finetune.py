@@ -29,9 +29,8 @@ def collate(examples, pad, device="cpu", width=None):
     for row, (ids, start) in enumerate(examples):
         ids = torch.tensor(ids, device=device)
         x[row, : len(ids) - 1], y[row, : len(ids) - 1] = ids[:-1], ids[1:]
-        scored[row, start - 1 : len(ids) - 1] = (
-            True  # place start - 1 predicts the answer's first token
-        )
+        # place start - 1 predicts the answer's first token
+        scored[row, start - 1 : len(ids) - 1] = True
     return x, y, scored
 
 

@@ -46,9 +46,8 @@ def collate(examples, pad, device="cpu", width=None):
     for row, (ids, start) in enumerate(examples):
         ids = torch.tensor(ids, device=device)
         x[row, : len(ids) - 1], y[row, : len(ids) - 1] = ids[:-1], ids[1:]
-        scored[row, start - 1 : len(ids) - 1] = (
-            True  # place start - 1 predicts the answer's first token
-        )
+        # place start - 1 predicts the answer's first token
+        scored[row, start - 1 : len(ids) - 1] = True
     return x, y, scored
 
 
@@ -70,7 +69,7 @@ uv run pytest tests/test_finetune.py
 - Changing a target inside a prompt, or in the padding, leaves the loss as it was. Changing a target inside an answer moves it.
 - A small model learns a toy task in 400 steps: after two tokens and a separator, write the same two tokens and stop. Its loss falls from above 2 to below 0.1, and it stops by itself, which it did not before.
 
-The script trains on the graphics chip and measures on the processor. On this Mac, two runs on the chip have not given the same digits.
+The script trains on the graphics chip and measures on the processor.
 
 ```bash
 uv run python -m gpt.finetune
@@ -104,14 +103,16 @@ The price is on plain stories: 1.549 nats where they scored 1.480, a difference 
 ## What it still cannot do
 
 ```
-Mara and her mum were walking in the park. Suddenly, Mira spotted something - a big, round and thin cat. She wanted to examine it and said to her mum, "Look, what is that?" 
-Mr. Mira asked, "What is this?" 
-Her mum said, "That is a cat pizza. It is a special plate for us to eat." Mira was excited and excited to see what the cat was cooking.
-When they got home, Mira opened the light to make the cat taste yummy. Her mum said, "That is so good, Mira! We're proud of you." 
-Mira smiled, picked up a plate of cheese and put it on the table too. The cat said, "Yummy! I like the taste!" Mira smiled, happy that she was able to see the cat.
+Mira and Joe were best friends. They played together every day. One day, Mira wanted to take an adventure to the moon. Joe wanted to help. He turned on the light and looked around. 
+“Where are you going?” Joe asked.
+“I’m going to the moon,” Mira said. “It will be a very much better.”
+“What will you like?”
+So Mira took off her shoes and then meowed. Joe was happy. He now had to wipe the moon. 
+Tina said goodbye, “That was the most amazing.”
+Joe smiled. He knew that to make the moon look beautiful, but it was still a few stars in the night sky.
 ```
 
-We asked for Mira, cat, moon and brave. The story has Mira and the cat, no moon and nothing brave, and fails the check. Across the 200 stories, 0.44 of the asked words go missing.
+We asked for Mira, cat, moon and brave. The story has Mira and the moon, no cat and nothing brave, and fails the check. Across the 200 stories, 0.44 of the asked words go missing.
 
 The fine-tune trained all 5,374,464 of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
 
