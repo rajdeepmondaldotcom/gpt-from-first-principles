@@ -117,3 +117,68 @@ def rate(results, players, steps=400):
         loss.backward()
         optimizer.step()
     return dict(zip(players, (400 * torch.cat([torch.zeros(1), free.detach()])).tolist()))
+
+
+if __name__ == "__main__":
+    from itertools import combinations
+    from pathlib import Path
+
+    from gpt.evaluate import interval
+    from gpt.results import save, say
+    from gpt.story import load
+
+    cache = Path("data/cache")
+    generator = torch.Generator().manual_seed(0)
+    model, words = load(cache / "chess")
+    younger, _ = load(cache / "chess_early")  # the same run, stopped at step 2,500
+    full, slips = model_mover(model, words, generator)
+    early, early_slips = model_mover(younger, words, generator)
+    players = {
+        "the random mover": random_mover(generator),
+        "the grabber": grabber(generator),
+        "the model at step 2,500": early,
+        "the model": full,
+    }
+
+    results, table = [], {}
+    for (weaker, first), (stronger, second) in combinations(players.items(), 2):
+        scores = match(second, first, 60)
+        low, high = interval([[s] for s in scores], generator)
+        table[f"{stronger} against {weaker}"] = sum(scores) / 60
+        say(
+            f"{stronger} against {weaker}: {sum(scores) / 60:.2f} of the points in 60 games, "
+            f"95% interval {low:.2f} to {high:.2f}"
+        )
+        results += [(stronger, weaker, s) for s in scores]
+    for name, counts in (("the model", slips), ("the model at step 2,500", early_slips)):
+        share = counts["slips"] / counts["moves"]
+        say(
+            f"{name}: the rules picked {counts['slips']:,} of its {counts['moves']:,} moves, {share:.1%}"
+        )
+
+    # One rating each. A made-up draw between each pair keeps a rating from running off when one
+    # player takes each point from another.
+    names = list(players)
+    ties = [(a, b, 0.5) for a, b in combinations(names, 2)]
+    ratings = rate(results + ties, names)
+    again = []
+    for _ in range(100):  # the bootstrap of lesson 24, over games
+        picks = torch.randint(len(results), (len(results),), generator=generator).tolist()
+        again.append(rate([results[i] for i in picks] + ties, names, steps=200))
+    ranges = {}
+    for name in names[1:]:
+        fitted = torch.tensor([one[name] for one in again])
+        ranges[name] = [fitted.quantile(0.025).item(), fitted.quantile(0.975).item()]
+        say(
+            f"{name}: rated {ratings[name]:+.0f} with the random mover at 0, "
+            f"95% interval {ranges[name][0]:+.0f} to {ranges[name][1]:+.0f}"
+        )
+    save(
+        "39_play",
+        torch=torch.__version__,
+        device="cpu",
+        points=table,
+        slips={"model": slips, "early": early_slips},
+        ratings=ratings,
+        ranges=ranges,
+    )
