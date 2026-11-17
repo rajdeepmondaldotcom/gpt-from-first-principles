@@ -346,9 +346,11 @@ if __name__ == "__main__":
         threading.Event().wait()
 
     prompt = "Name: Mira\nWords: cat, moon, brave\nStory:"
-    body = json.dumps({"messages": [{"role": "user", "content": prompt}], "max_tokens": 100})
-    with urllib.request.urlopen(urllib.request.Request(url, body.encode()), timeout=60) as reply:
+    ask = {"messages": [{"role": "user", "content": prompt}]}
+    whole = urllib.request.Request(url, json.dumps(ask).encode())  # no limit: a story to its end
+    with urllib.request.urlopen(whole, timeout=60) as reply:
         story = json.loads(reply.read())["choices"][0]["message"]["content"]
+    body = json.dumps(ask | {"max_tokens": 100})  # the load test asks for 100 tokens each time
     say(f"one request over the web: {story.strip()[:120]!r}")
     assert shutil.which("ab"), "this script measures with ab, the load tool that ships with Apache"
 

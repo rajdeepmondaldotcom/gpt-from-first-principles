@@ -6,7 +6,7 @@ Each script so far runs once, in a terminal, and stops. Other programs cannot as
 
 ## The idea
 
-A server is a program that waits for requests from other programs, its clients, and answers each one. Ours has five jobs.
+A server is a program that waits for requests from other programs, its clients, and answers each one. Ours serves the storyteller as lesson 29 left it, and has five jobs.
 
 1. Speak a format that clients know. OpenAI's chat format, which vLLM speaks too, is a list of messages sent to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so a tool written for it can use our model.
 2. Stream. A listener wants each word as it is written, so the answer goes out as a run of small events, one for each piece of text.
@@ -109,7 +109,7 @@ The engine's thread:
 
 If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine.
 
-A request that is bad on its face, such as a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server and the page you see in the browser.
+The rest of the file is Python's standard web server and the page you see in the browser. The page reads each finished sentence aloud in the browser's own voice, and sends the story so far back with the line you type.
 
 ## The proof
 
@@ -127,7 +127,7 @@ uv run pytest tests/test_server.py
 - A request with no prompt, a temperature that is text or `float('nan')`, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
 - A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
-The script starts the server with lesson 25's storyteller, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
+The script starts the server, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
 
 ```bash
 uv run python -m gpt.server
