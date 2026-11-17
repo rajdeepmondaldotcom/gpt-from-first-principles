@@ -44,6 +44,8 @@ def test_legal_by_hand():
     assert not legal([], "e5")  # a white pawn cannot reach e5 in one move
     assert not legal(["e4"], "e4")  # it is black's turn, and e4 is taken
     assert not legal(["e4", "e5"], "Ke3")  # a king moves one square
+    assert not legal(["e4", "e5"], "e5")  # black's pawn stands there
+    assert legal(["e4", "e5"], "Qh5") and not legal([], "Qh5")  # open only once the pawn has moved
     assert not legal([], "hello") and not legal([], "")  # not a move at all
     assert legal(["f3", "e5", "g4"], "Qh4#") and not legal(["f3", "e5", "g4", "Qh4#"], "a3")
 
