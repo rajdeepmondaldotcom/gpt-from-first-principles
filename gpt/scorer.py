@@ -122,19 +122,23 @@ if __name__ == "__main__":
         base = {
             "scorer": sum(scores([one]).item() for _, one, _ in drawn[1360:]) / 240,
             "readers": sum(readers(words, task, one) for task, one, _ in drawn[1360:]) / 240,
+            "check": sum(mark for _, _, mark in drawn[1360:]) / 240,  # lesson 27's score
         }
     say(
         f"before the push, the 240 stories held back: the scorer gives them "
-        f"{base['scorer']:+.2f} on average, the readers {base['readers']:.2f}"
+        f"{base['scorer']:+.2f} on average, the readers {base['readers']:.2f}, "
+        f"lesson 27's score {base['check']:.2f}"
     )
     tasks = [task for task, _ in prepare(cache, words)[0]][400:]  # tasks lesson 27 did not use
     optimizer, rounds, curve = AdamW(model.parameters(), rate=3e-4, decay=0.0), 100, []
-    learned, liked = [], []
+    learned, liked, checked = [], [], []
     for at in range(rounds):
         examples, group, picked = [], [], []
         for g in range(4):
             for _ in range(4):
-                examples.append(sample(model, words, tasks[4 * at + g], generator)[0])
+                example, mark = sample(model, words, tasks[4 * at + g], generator)
+                examples.append(example)
+                checked.append(mark)  # lesson 27's score: the training never sees it
                 group.append(g)
                 picked.append(tasks[4 * at + g])
         with torch.no_grad():
@@ -147,14 +151,22 @@ if __name__ == "__main__":
         clip(model.parameters(), 1.0)
         optimizer.step()
         if (at + 1) % 20 == 0:
-            curve.append({"scorer": sum(learned) / 320, "readers": sum(liked) / 320})
+            curve.append(
+                {
+                    "scorer": sum(learned) / 320,
+                    "readers": sum(liked) / 320,
+                    "check": sum(checked) / 320,
+                }
+            )
             say(
                 f"rounds {at - 18} to {at + 1}: the scorer gives the stories "
-                f"{curve[-1]['scorer']:+.2f} on average, the readers {curve[-1]['readers']:.2f}"
+                f"{curve[-1]['scorer']:+.2f} on average, the readers {curve[-1]['readers']:.2f}, "
+                f"lesson 27's score {curve[-1]['check']:.2f}"
             )
-            learned, liked = [], []
+            learned, liked, checked = [], [], []
     story = words.decode([i for i in examples[-1][0][examples[-1][1] :] if i != words.end])
-    say(f"a story from the last round: {story.strip()!r}")
+    say(f"the last order asked for: {picked[-1]['name']}, {', '.join(picked[-1]['words'])}")
+    say(f"the story written for it: {story.strip()!r}")
     save(
         "28_scorer",
         torch=torch.__version__,
@@ -163,5 +175,6 @@ if __name__ == "__main__":
         ranked_right={"before": before, "after": sum(ranked), "interval": [low, high]},
         before_the_push=base,
         curve=curve,
+        order=picked[-1],
         sample=story.strip(),
     )
