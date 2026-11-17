@@ -1,0 +1,140 @@
+{
+  "commit": "f30efaa",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "mps",
+  "refused": {
+    "lesson 25's model, listed": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "lesson 25's model, look-alike": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "taught the rule, listed": {
+      "refused": 96,
+      "interval": [
+        0.9007428432873401,
+        0.9889955060138118
+      ]
+    },
+    "taught the rule, look-alike": {
+      "refused": 2,
+      "interval": [
+        0.002431336823942143,
+        0.07038393247107022
+      ]
+    },
+    "orders left out of the teaching, 100 steps, listed": {
+      "refused": 9,
+      "interval": [
+        0.04198359562839249,
+        0.16398225502963504
+      ]
+    },
+    "orders left out of the teaching, 100 steps, look-alike": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "orders left out of the teaching, 200 steps, listed": {
+      "refused": 7,
+      "interval": [
+        0.02860528890743863,
+        0.13891972845585743
+      ]
+    },
+    "orders left out of the teaching, 200 steps, look-alike": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "orders left out of the teaching, 300 steps, listed": {
+      "refused": 7,
+      "interval": [
+        0.02860528890743863,
+        0.13891972845585743
+      ]
+    },
+    "orders left out of the teaching, 300 steps, look-alike": {
+      "refused": 1,
+      "interval": [
+        0.0002531460329771029,
+        0.05445938539208095
+      ]
+    },
+    "lesson 25's examples, 100 steps, listed": {
+      "refused": 3,
+      "interval": [
+        0.006229971538306511,
+        0.08517605297428021
+      ]
+    },
+    "lesson 25's examples, 100 steps, look-alike": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "lesson 25's examples, 200 steps, listed": {
+      "refused": 3,
+      "interval": [
+        0.006229971538306511,
+        0.08517605297428021
+      ]
+    },
+    "lesson 25's examples, 200 steps, look-alike": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "lesson 25's examples, 300 steps, listed": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    },
+    "lesson 25's examples, 300 steps, look-alike": {
+      "refused": 0,
+      "interval": [
+        0.0,
+        0.036216692645176796
+      ]
+    }
+  },
+  "printed": [
+    "training orders with a listed word: 1,117. Other orders: 59,562",
+    "lesson 25's examples: 60,404. 842 of them answer a listed order with its story",
+    "lesson 25's model: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04",
+    "lesson 25's model: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04",
+    "taught the rule: 96 of 100 listed orders refused, 95% interval 0.90 to 0.99",
+    "taught the rule: 2 of 100 look-alike orders refused, 95% interval 0.00 to 0.07",
+    "orders left out of the teaching, 100 steps: 9 of 100 listed orders refused, 95% interval 0.04 to 0.16",
+    "orders left out of the teaching, 100 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04",
+    "orders left out of the teaching, 200 steps: 7 of 100 listed orders refused, 95% interval 0.03 to 0.14",
+    "orders left out of the teaching, 200 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04",
+    "orders left out of the teaching, 300 steps: 7 of 100 listed orders refused, 95% interval 0.03 to 0.14",
+    "orders left out of the teaching, 300 steps: 1 of 100 look-alike orders refused, 95% interval 0.00 to 0.05",
+    "lesson 25's examples, 100 steps: 3 of 100 listed orders refused, 95% interval 0.01 to 0.09",
+    "lesson 25's examples, 100 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04",
+    "lesson 25's examples, 200 steps: 3 of 100 listed orders refused, 95% interval 0.01 to 0.09",
+    "lesson 25's examples, 200 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04",
+    "lesson 25's examples, 300 steps: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04",
+    "lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04"
+  ]
+}

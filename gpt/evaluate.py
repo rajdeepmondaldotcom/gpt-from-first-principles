@@ -38,15 +38,46 @@ def interval(blocks, generator, draws=1000):
     return means.quantile(0.025).item(), means.quantile(0.975).item()
 
 
-def rate_interval(passed, generator):
-    """A 95% interval for a pass rate, from one True or False for each try."""
+def paired_gap(after, before, generator):
+    """How much higher `after` is than `before`, value by value, with its 95% interval."""
+    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
+    return sum(map(sum, gaps)) / sum(map(len, gaps)), interval(gaps, generator)
+
+
+def rate_interval(passed):
+    """A 95% interval for a pass rate, from one True or False for each try.
+
+    The low end is the rate at which this many passes or more still come 1 time in 40, and the high
+    end the rate at which this many or fewer do. The bootstrap is too narrow when passes are few.
+    """
     tries, passes = len(passed), sum(passed)
-    if passes in (0, tries):  # each draw from results that are all alike is alike: no width at all
-        # At this rate, `tries` alike in a row still come 1 time in 40: the share a 95% interval
-        # leaves outside at each end.
-        edge = 0.025 ** (1 / tries)
-        return (0.0, 1 - edge) if passes == 0 else (edge, 1.0)
-    return interval([[int(x)] for x in passed], generator)
+
+    def chance(rate, counts):
+        """The chance that the number of passes is one of `counts`, at this pass rate."""
+        return sum(
+            math.exp(
+                math.log(math.comb(tries, k))
+                + k * math.log(rate)
+                + (tries - k) * math.log(1 - rate)
+            )
+            for k in counts
+        )
+
+    def edge(counts, rising):
+        """The rate at which `chance` is 1 in 40, found by halving the range 50 times."""
+        low, high = 0.0, 1.0
+        for _ in range(50):
+            rate = (low + high) / 2
+            if (chance(rate, counts) < 0.025) == rising:
+                low = rate
+            else:
+                high = rate
+        return (low + high) / 2
+
+    return (
+        edge(range(passes, tries + 1), rising=True) if passes else 0.0,
+        edge(range(passes + 1), rising=False) if passes < tries else 1.0,
+    )
 
 
 def pass_at_k(tries, passed, k):
@@ -91,9 +122,7 @@ if __name__ == "__main__":
     # The same model with lesson 12's 16-bit switch on: is it worse?
     with torch.autocast("cpu", dtype=torch.bfloat16):
         halved = [losses(model, doc, 256, 256).tolist() for doc in unseen[:500]]
-    gaps = [[h - f for h, f in zip(half, full)] for half, full in zip(halved, blocks)]
-    gap = sum(map(sum, gaps)) / sum(map(len, gaps))
-    low16, high16 = interval(gaps, generator)
+    gap, (low16, high16) = paired_gap(halved, blocks, generator)
     say(
         f"500 stories, 16 bits minus 32 bits: {gap:+.4f} nats, "
         f"95% interval {low16:+.4f} to {high16:+.4f}"
@@ -124,7 +153,7 @@ if __name__ == "__main__":
     scores = {}
     for name, passed in [("a name to carry on", carries_on), ("a story to order", to_order)]:
         first = [passed(task) for task in tasks[:100]]
-        low_rate, high_rate = rate_interval(first, generator)
+        low_rate, high_rate = rate_interval(first)
         say(f"{name}: {sum(first)} of 100, 95% interval {low_rate:.2f} to {high_rate:.2f}")
         tries = [sum(passed(task) for _ in range(10)) for task in tasks[:20]]
         at = {k: sum(pass_at_k(10, n, k) for n in tries) / len(tries) for k in (1, 5)}

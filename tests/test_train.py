@@ -1,6 +1,7 @@
 import math
 from itertools import pairwise
 
+import pytest
 import torch
 from torch import nn
 
@@ -70,6 +71,23 @@ def test_a_run_that_stops_and_resumes_is_the_same_run(tmp_path):
     ):
         pass
     assert all(torch.equal(a, b) for a, b in zip(model.parameters(), model3.parameters()))
+
+
+@pytest.mark.skipif(not torch.backends.mps.is_available(), reason="needs a graphics chip")
+def test_a_run_on_the_graphics_chip_resumes(tmp_path):
+    # The file is loaded onto the chip, and a generator's state has to come back to the processor.
+    model, optimizer, generator = fresh()
+    model.to("mps")
+    optimizer = AdamW(model.parameters(), rate=0.0)
+    ids = IDS.to("mps")
+    for _ in zip(range(3), train(model, optimizer, ids, 6, peak=1e-2, generator=generator)):
+        pass
+    checkpoint(tmp_path / "run.pt", model, optimizer, 3, generator)
+    model2, _, generator2 = fresh(seed=99)
+    model2.to("mps")
+    optimizer2 = AdamW(model2.parameters(), rate=0.0)
+    assert resume(tmp_path / "run.pt", model2, optimizer2, generator2) == 3
+    assert torch.equal(generator2.get_state(), generator.get_state())
 
 
 def one_step(**loop):
