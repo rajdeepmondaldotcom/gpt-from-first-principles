@@ -164,18 +164,19 @@ if __name__ == "__main__":
         "the model": full,
     }
 
+    games = 200  # each match: 100 pairs, from 100 of the 400 openings
     results, table = [], {}  # results: one list for each pair of games that shared an opening
     for (weaker, first), (stronger, second) in combinations(players.items(), 2):
-        scores = match(second, first, 60, generator)
-        pairs = [scores[i : i + 2] for i in range(0, 60, 2)]
-        if sum(scores) in (0, 60):  # one side took each point: the bootstrap has no width
+        scores = match(second, first, games, generator)
+        pairs = [scores[i : i + 2] for i in range(0, games, 2)]
+        if sum(scores) in (0, games):  # one side took each point: the bootstrap has no width
             low, high = rate_interval([score == 1 for score in scores])
         else:
             low, high = interval(pairs, generator)  # drawn pair by pair
-        table[f"{stronger} against {weaker}"] = sum(scores) / 60
+        table[f"{stronger} against {weaker}"] = sum(scores) / games
         say(
-            f"{stronger} against {weaker}: {sum(scores) / 60:.2f} of the points in 60 games, "
-            f"95% interval {low:.2f} to {high:.2f}"
+            f"{stronger} against {weaker}: {sum(scores) / games:.2f} of the points in {games} "
+            f"games, 95% interval {low:.2f} to {high:.2f}"
         )
         results += [[(stronger, weaker, score) for score in pair] for pair in pairs]
     for name, counts in (("the model", slips), ("the model at step 2,500", early_slips)):
