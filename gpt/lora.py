@@ -45,15 +45,13 @@ if __name__ == "__main__":
     from gpt.story import load
 
     cache = Path("data/cache")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"  # where it trains
-    model, words = load(cache / "story")  # it writes and is measured on the processor
+    model, words = load(cache / "story")  # on the processor: examples of many lengths suit it
     generator = torch.Generator().manual_seed(0)
     examples, held, unseen = prepare(cache, words)
     whole = sum(p.numel() for p in model.parameters())
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
     add_lora(model, rank=8)
-    model.to(device)
     trained = [p for p in model.parameters() if p.requires_grad]
     count = sum(p.numel() for p in trained)
     say(f"trained: {count:,} of {whole:,} parameters, {4 * count / 1e6:.2f} MB to store")
@@ -63,7 +61,6 @@ if __name__ == "__main__":
     ):
         if step % 100 == 0:
             say(f"step {step}: {loss:.3f} nats on the answers")
-    model.to("cpu")
     after, plain_after = measure("after", model, words, held, unseen, generator)
     gap, (low, high) = plain_gap(plain_after, plain_before, generator)
     say(
@@ -81,7 +78,7 @@ if __name__ == "__main__":
     save(
         "26_lora",
         torch=torch.__version__,
-        device=device,
+        device="cpu",
         trained=count,
         whole=whole,
         before=before,
