@@ -40,14 +40,15 @@ def merge(model):
 
 
 if __name__ == "__main__":
-    from gpt.finetune import measure, plain_gap, prepare, tune
+    from gpt.finetune import STEPS, examples_from, measure, plain_gap, prepare, tune
     from gpt.optim import AdamW
     from gpt.story import load
 
     cache = Path("data/cache")
-    model, words = load(cache / "story")  # on the processor: examples of many lengths suit it
+    model, words = load(cache / "story")
     generator = torch.Generator().manual_seed(0)
-    examples, held, unseen = prepare(cache, words)
+    pairs, held, unseen = prepare(cache, words)
+    examples = examples_from(pairs, words, model.context)
     whole = sum(p.numel() for p in model.parameters())
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
@@ -55,12 +56,14 @@ if __name__ == "__main__":
     trained = [p for p in model.parameters() if p.requires_grad]
     count = sum(p.numel() for p in trained)
     say(f"trained: {count:,} of {whole:,} parameters, {4 * count / 1e6:.2f} MB to store")
+    model.to("mps" if torch.backends.mps.is_available() else "cpu")  # as lesson 25 trained
     optimizer = AdamW(trained, rate=0.0, decay=0.0)
     for step, loss in tune(
-        model, optimizer, examples, 600, peak=2e-3, generator=generator, pad=words.end
+        model, optimizer, examples, STEPS, peak=2e-3, generator=generator, pad=words.end, size=32
     ):
-        if step % 100 == 0:
+        if step % 250 == 0:
             say(f"step {step}: {loss:.3f} nats on the answers")
+    model.to("cpu")
     after, plain_after = measure("after", model, words, held, unseen, generator)
     gap, (low, high) = plain_gap(plain_after, plain_before, generator)
     say(

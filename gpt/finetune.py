@@ -4,12 +4,14 @@ from pathlib import Path
 
 import torch
 
-from gpt.data import read
-from gpt.evaluate import documents, interval, losses
+from gpt.data import documents, read
+from gpt.evaluate import interval, losses, rate_interval
 from gpt.results import save, say
 from gpt.tasks import attempt, count_documents, make, prompt
 from gpt.tensors import cross_entropy
 from gpt.train import clip, rate_at
+
+STEPS = 2000  # steps of 32 examples in lessons 25 and 26
 
 
 def example(words, ask, answer):
@@ -18,10 +20,10 @@ def example(words, ask, answer):
     return [*prompt, *words.encode(answer), words.end], len(prompt)
 
 
-def collate(examples, pad, device="cpu"):
+def collate(examples, pad, device="cpu", width=None):
     """Stack examples of different lengths. `scored` marks the places whose target is answer."""
-    longest = max(len(ids) for ids, _ in examples)
-    x = torch.full((len(examples), longest - 1), pad, device=device)
+    width = width or max(len(ids) for ids, _ in examples) - 1  # as wide as the longest needs
+    x = torch.full((len(examples), width), pad, device=device)
     y, scored = x.clone(), torch.zeros_like(x, dtype=torch.bool)
     for row, (ids, start) in enumerate(examples):
         ids = torch.tensor(ids, device=device)
@@ -43,7 +45,9 @@ def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16, wa
     for step in range(steps):
         picks = torch.randint(len(examples), (size,), generator=generator).tolist()
         optimizer.rate = rate_at(step, peak, warmup, steps)
-        loss = answer_loss(model, *collate([examples[i] for i in picks], pad, device))
+        # Each batch is padded to one width: the graphics chip stalled when the shape kept changing.
+        chosen = [examples[i] for i in picks]
+        loss = answer_loss(model, *collate(chosen, pad, device, width=model.context - 1))
         model.zero_grad()
         loss.backward()
         clip(model.parameters(), 1.0)
@@ -52,27 +56,30 @@ def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16, wa
 
 
 def prepare(cache, words):
-    """Examples to learn from, 100 tasks from unseen stories, and 500 unseen stories as ids."""
-    seen = documents(read(cache / "stories_train.bin")[:5_000_000], words.end)
+    """Training stories with the task each one answers, 100 tasks from unseen stories, and 500
+    unseen stories as ids."""
+    seen = documents(read(cache / "stories_train.bin")[:20_000_000], words.end)
     unseen = documents(read(cache / "stories_val.bin"), words.end)
     seen_text = [words.decode(doc[1:-1].tolist()) for doc in seen]
     counts = count_documents(seen_text)
-    examples = [
-        example(words, prompt(task), " " + story)
-        for task, story in ((make(story, counts, len(seen_text)), story) for story in seen_text)
-        if task
-    ]
+    pairs = [(make(story, counts, len(seen_text)), story) for story in seen_text]
     unseen_text = (words.decode(doc[1:-1].tolist()) for doc in unseen)
     held = [task for task in (make(story, counts, len(seen_text)) for story in unseen_text) if task]
-    return examples, held[:100], unseen[:500]
+    return [pair for pair in pairs if pair[0]], held[:100], unseen[:500]
+
+
+def examples_from(pairs, words, context):
+    """Each pair as a training example: the task's prompt, then its story. Only those that fit."""
+    made = (example(words, prompt(task), " " + story) for task, story in pairs)
+    return [one for one in made if len(one[0]) <= context]
 
 
 def measure(name, model, words, held, unseen, generator):
     """Tasks passed, stories that end by themselves, and the loss on plain unseen stories."""
     device = model.embed.weight.device
     tries = [attempt(model, words, task, temperature=0.8, generator=generator) for task in held]
-    passed, ended = [int(ok) for _, ok, _ in tries], sum(end for _, _, end in tries)
-    low, high = interval([[x] for x in passed], generator)
+    passed, ended = [ok for _, ok, _ in tries], sum(end for _, _, end in tries)
+    low, high = rate_interval(passed, generator)
     plain = [losses(model, doc.to(device), 256, 256).tolist() for doc in unseen]
     nats = sum(map(sum, plain)) / sum(map(len, plain))
     say(
@@ -93,18 +100,22 @@ if __name__ == "__main__":
     from gpt.story import load, save_llama
 
     cache = Path("data/cache")
-    model, words = load(cache / "story")  # on the processor: examples of many lengths suit it
+    model, words = load(cache / "story")
     generator = torch.Generator().manual_seed(0)
-    examples, held, unseen = prepare(cache, words)
+    pairs, held, unseen = prepare(cache, words)
+    examples = examples_from(pairs, words, model.context)
     say(f"examples to learn from: {len(examples):,}")
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
+    # Train on the graphics chip. Writing and scoring stay on the processor, where they are faster.
+    model.to("mps" if torch.backends.mps.is_available() else "cpu")
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
     for step, loss in tune(
-        model, optimizer, examples, 600, peak=3e-4, generator=generator, pad=words.end
+        model, optimizer, examples, STEPS, peak=1e-3, generator=generator, pad=words.end, size=32
     ):
-        if step % 100 == 0:
+        if step % 250 == 0:
             say(f"step {step}: {loss:.3f} nats on the answers")
+    model.to("cpu")
     after, plain_after = measure("after", model, words, held, unseen, generator)
     gap, (low, high) = plain_gap(plain_after, plain_before, generator)
     say(

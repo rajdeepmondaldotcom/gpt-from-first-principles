@@ -24,6 +24,9 @@ def test_collate_by_hand():
     assert x.tolist() == [[1, 2, SEP, 1, 2], [4, SEP, 4, END, END]]
     assert y.tolist() == [[2, SEP, 1, 2, END], [SEP, 4, END, END, END]]
     assert scored.tolist() == [[False, False, True, True, True], [False, True, True, False, False]]
+    wide = collate([([4, SEP, 4, END], 2)], pad=END, width=6)  # padded out to a width we choose
+    assert wide[0].tolist() == [[4, SEP, 4, END, END, END]]
+    assert wide[2].tolist() == [[False, True, True, False, False, False]]
 
 
 def test_changing_a_prompt_target_leaves_the_loss_alone():
