@@ -1,5 +1,5 @@
 {
-  "commit": "d914832",
+  "commit": "a2a442b",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "cpu",
@@ -8,23 +8,13 @@
     "True": 203
   },
   "seconds": {
-    "False": 1.8935439169872552,
-    "True": 0.5183355419430882
+    "False": 1.954377125017345,
+    "True": 0.5359056249726564
   },
   "same": true,
   "printed": [
-    "temperature 0: 1 different stories of 20, 20 reach their end, 0.0% of their words made up",
-    "  'Once upon a time, there was a little girl named Lily. She had a big, red ball that she loved to play with. One day, she went to the park with her mom '",
-    "temperature 0.5: 20 different stories of 20, 19 reach their end, 0.0% of their words made up",
-    "  'Once upon a time, there was a little girl named Amy. Amy loved to eat spaghetti. One day, she saw a big, round thing in the kitchen. It looked like a '",
-    "temperature 1: 20 different stories of 20, 20 reach their end, 0.3% of their words made up",
-    "  'Once upon a time, in a big forest, there was a small cabin. In the cabin lived a funny bear named Bobo. Bobo had a favorite seat in the woods. He was '",
-    "temperature 1.5: 20 different stories of 20, 18 reach their end, 13.2% of their words made up",
-    "  'Once upon a time, there was an apron. The apron breatamed purple lying coiled around shining in the shadows across the wasops until there was just as '",
-    "temperature 1, top-p 0.9: 20 different stories of 20, 20 reach their end, 0.0% of their words made up",
-    "  'Once upon a time, there was a bird. The bird had a pretty feather. The bird liked to fly high in the sky. The bird was a happy bird.\\nOne day, the bird'",
-    "without a cache: 20,700 tokens read, 106 tokens a second",
-    "with the cache: 203 tokens read, 386 tokens a second",
+    "without a cache: 20,700 tokens read, 102 tokens a second",
+    "with the cache: 203 tokens read, 373 tokens a second",
     "the two stories are the same: True",
     "the cache holds 6,144 bytes for each token"
   ]

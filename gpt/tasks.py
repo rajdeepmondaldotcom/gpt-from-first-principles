@@ -43,11 +43,21 @@ def opening(task):
     return f"Once upon a time, there was a little cat named {task['name']}."
 
 
+def used(task, text):
+    """For each word the task asks for, whether the text has it as a whole word."""
+    lower = {word.lower() for word in WORD.findall(text)}
+    return [word in lower for word in task["words"]]
+
+
 def passes(task, text):
     """The exact check: the name and each word occur in the text as whole words."""
-    found = set(WORD.findall(text))
-    lower = {word.lower() for word in found}
-    return task["name"] in found and all(word in lower for word in task["words"])
+    return task["name"] in WORD.findall(text) and all(used(task, text))
+
+
+def score(task, text):
+    """A finer check than pass or fail: the share of the name and the asked words the text has."""
+    found = [task["name"] in WORD.findall(text), *used(task, text)]
+    return sum(found) / len(found)
 
 
 def attempt(model, words, task, lines=prompt, **how):

@@ -7,7 +7,7 @@ import torch
 from gpt.data import documents, read
 from gpt.evaluate import interval, losses, rate_interval
 from gpt.results import save, say
-from gpt.tasks import attempt, count_documents, make, prompt
+from gpt.tasks import attempt, count_documents, make, prompt, used
 from gpt.tensors import cross_entropy
 from gpt.train import clip, rate_at
 
@@ -56,7 +56,7 @@ def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16, wa
 
 
 def prepare(cache, words):
-    """Training stories with the task each one answers, 100 tasks from unseen stories, and 500
+    """Training stories with the task each one answers, 200 tasks from unseen stories, and 500
     unseen stories as ids."""
     seen = documents(read(cache / "stories_train.bin")[:20_000_000], words.end)
     unseen = documents(read(cache / "stories_val.bin"), words.end)
@@ -65,7 +65,7 @@ def prepare(cache, words):
     pairs = [(make(story, counts, len(seen_text)), story) for story in seen_text]
     unseen_text = (words.decode(doc[1:-1].tolist()) for doc in unseen)
     held = [task for task in (make(story, counts, len(seen_text)) for story in unseen_text) if task]
-    return [pair for pair in pairs if pair[0]], held[:100], unseen[:500]
+    return [pair for pair in pairs if pair[0]], held[:200], unseen[:500]
 
 
 def examples_from(pairs, words, context):
@@ -75,18 +75,23 @@ def examples_from(pairs, words, context):
 
 
 def measure(name, model, words, held, unseen, generator):
-    """Tasks passed, stories that end by themselves, and the loss on plain unseen stories."""
-    device = model.embed.weight.device
+    """Tasks passed, asked words used, stories that end by themselves, and the loss on plain
+    unseen stories. Returns the numbers, and each plain story's losses."""
     tries = [attempt(model, words, task, temperature=0.8, generator=generator) for task in held]
     passed, ended = [ok for _, ok, _ in tries], sum(end for _, _, end in tries)
     low, high = rate_interval(passed, generator)
-    plain = [losses(model, doc.to(device), 256, 256).tolist() for doc in unseen]
+    words_used = [used(task, story) for task, (story, _, _) in zip(held, tries)]
+    share = sum(map(sum, words_used)) / sum(map(len, words_used))
+    low_share, high_share = interval(words_used, generator)  # drawn task by task
+    plain = [losses(model, doc, 256, 256).tolist() for doc in unseen]
     nats = sum(map(sum, plain)) / sum(map(len, plain))
+    say(f"{name}: {sum(passed)} of {len(held)} tasks passed, 95% interval {low:.2f} to {high:.2f}")
     say(
-        f"{name}: {sum(passed)} of {len(held)} tasks passed (95% interval {low:.2f} to {high:.2f}), "
-        f"{ended} stories end by themselves, plain stories {nats:.3f} nats a token"
+        f"{name}: {share:.2f} of the asked words used, 95% interval {low_share:.2f} to {high_share:.2f}"
     )
-    return {"passed": sum(passed), "ended": ended, "plain_nats": nats}, plain
+    say(f"{name}: {ended} stories end by themselves, plain stories {nats:.3f} nats a token")
+    numbers = {"passed": sum(passed), "words_used": share, "ended": ended, "plain_nats": nats}
+    return numbers | {"by_task": words_used}, plain
 
 
 def plain_gap(after, before, generator):
@@ -108,7 +113,8 @@ if __name__ == "__main__":
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
     # Train on the graphics chip. Writing and scoring stay on the processor, where they are faster.
-    model.to("mps" if torch.backends.mps.is_available() else "cpu")
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model.to(device)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
     for step, loss in tune(
         model, optimizer, examples, STEPS, peak=1e-3, generator=generator, pad=words.end, size=32
@@ -133,7 +139,7 @@ if __name__ == "__main__":
     save(
         "25_finetune",
         torch=torch.__version__,
-        device="cpu",
+        device=device,
         before=before,
         after=after,
         plain_gap=gap,

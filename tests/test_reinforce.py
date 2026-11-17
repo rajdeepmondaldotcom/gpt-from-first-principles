@@ -1,10 +1,9 @@
-import math
-
 import pytest
 import torch
 
 from gpt.model import GPT
-from gpt.reinforce import answer_log_chances, preference_loss, score_loss
+from gpt.reinforce import answer_log_chances, sample, score_loss
+from gpt.tasks import prompt, score
 
 END, SEP = 10, 9
 
@@ -72,17 +71,27 @@ def test_a_step_on_score_loss_raises_the_chance_of_the_answer_that_passed():
     assert after[0] > before[0] and after[1] < before[1]
 
 
-def test_preference_loss_starts_at_ln_2_and_falls_as_the_better_answer_gains():
-    same = torch.tensor([-3.0, -5.0])
-    assert preference_loss(same, same - 1, same, same - 1).item() == pytest.approx(math.log(2))
-    ahead = preference_loss(same + 2, same - 1, same, same - 1).item()
-    behind = preference_loss(same - 2, same - 1, same, same - 1).item()
-    assert ahead < math.log(2) < behind
+class Bytes:
+    """A tokenizer of single bytes, for a test. 256 ends a story."""
+
+    end = 256
+
+    def encode(self, text):
+        return list(text.encode())
+
+    def decode(self, ids):
+        return bytes(ids).decode(errors="replace")
 
 
-def test_preference_loss_by_hand():
-    # We favour the better answer by 4 more than the frozen model does. beta 0.1: -ln sigmoid(0.4)
-    loss = preference_loss(
-        torch.tensor([-1.0]), torch.tensor([-6.0]), torch.tensor([-2.0]), torch.tensor([-3.0])
-    )
-    assert loss.item() == pytest.approx(-math.log(1 / (1 + math.exp(-0.4))))
+def test_a_sampled_story_comes_back_as_an_example_with_its_score():
+    torch.manual_seed(0)
+    net = GPT(vocab=257, context=64, width=32, heads=2, layers=2)
+    task = {"name": "Mira", "words": ["cat", "moon", "brave"]}
+    asked = Bytes().encode(prompt(task))
+    (ids, start), mark = sample(net, Bytes(), task, torch.Generator().manual_seed(0))
+    assert ids[:start] == asked and start == len(asked)  # the prompt, then what the model wrote
+    assert len(ids) == 64 or ids[-1] == 256  # it wrote to the end of the context, or stopped
+    story = Bytes().decode([i for i in ids[start:] if i != 256])
+    assert mark == score(task, story)  # scored on the story alone, never on the prompt
+    again, _ = sample(net, Bytes(), task, torch.Generator().manual_seed(1))
+    assert again[0] != ids  # drawn by chance: another seed, another story
