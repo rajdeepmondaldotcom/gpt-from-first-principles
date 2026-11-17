@@ -50,7 +50,9 @@ if __name__ == "__main__":
     from gpt.data import read
     from gpt.engine import Engine, Request
     from gpt.generate import generate
+    from gpt.model import GPT
     from gpt.results import save, say
+    from gpt.scale import shape
     from gpt.story import load
 
     cache = Path("data/cache")
@@ -76,10 +78,10 @@ if __name__ == "__main__":
             best = max(best, count / (time.perf_counter() - began))
         return best
 
-    def ours_alone(device):
-        ours.to(device)
-        speed = fastest(lambda: len(generate(ours, prompts[0], 128, temperature=0)) - 64)
-        ours.to("cpu")
+    def ours_alone(device, net=ours):
+        net.to(device)
+        speed = fastest(lambda: len(generate(net, prompts[0], 128, temperature=0)) - 64)
+        net.to("cpu")
         return speed
 
     def ours_batch():
@@ -101,7 +103,12 @@ if __name__ == "__main__":
             written.append(token.tolist())  # asking for the numbers makes the engine finish them
         return written
 
-    numbers = {"ours, processor": ours_alone("cpu"), "ours, 16 at once": fastest(ours_batch)}
+    numbers = {
+        "ours, processor": ours_alone("cpu"),
+        "ours, processor, 16 at once": fastest(ours_batch),
+    }
+    small = GPT(**shape(32, 2))  # untrained, with 1 weight for each 35 of the story model's
+    numbers["ours, processor, a model 35 times smaller"] = ours_alone("cpu", small)
     if torch.backends.mps.is_available():
         numbers["ours, graphics chip"] = ours_alone("mps")
     for device, name in ((mx.gpu, "graphics chip"), (mx.cpu, "processor")):
