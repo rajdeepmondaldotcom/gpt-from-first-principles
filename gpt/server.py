@@ -265,7 +265,8 @@ if __name__ == "__main__":
 
     report, ours, took = load_test(200, 16)
     theirs_rate = float(re.search(r"Requests per second:\s+([\d.]+)", report)[1])
-    theirs_each = float(re.search(r"Time per request:\s+([\d.]+) \[ms\] \(mean\)", report)[1])
+    # ab's table of times has a row for the whole request: the least it took, then the mean.
+    theirs_each = float(re.search(r"Total:\s+\d+\s+(\d+)", report)[1])
     rate, each = ours["finished"] / took, ours["seconds_in_system"] / ours["finished"]
     say(
         f"200 requests, 16 at a time, by ab: {theirs_rate:.1f} a second, {theirs_each:,.0f} ms each"
