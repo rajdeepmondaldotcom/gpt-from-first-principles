@@ -6,9 +6,9 @@ Asked in three lines for a name and three words, the model passes 0 of 100. It w
 
 ## The idea
 
-Our model writes like its training text. So we make text in which an order, a name and three words to use, is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
+Our model writes like its training text. We make text in which an order, a name and three words, is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
 
-The examples come from the function that made lesson 24's tasks: a task is an order with its check. The function reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they came from, which obeys them. The first 20 million training tokens give 60,404 that fit the context.
+Lesson 24's tasks were made from real stories. A function reads a story and writes down its hero's name and three of its less common words: that is an order, and an order with its check is a task. Run over training stories, the function makes examples: the three lines of an order, then the story they came from, which obeys them. The first 20 million training tokens give 60,404 that fit the context.
 
 1. We score only the answer. An example is a prompt and then an answer. A loss on each token would mark the model on guessing an order's name and words, which it cannot know. The loss counts only the places whose target is part of the answer.
 2. Each answer ends with the end token, and that token is scored. The model learns that after a story comes the end, and lesson 22's writing loop stops there.

@@ -12,7 +12,7 @@ We have no readers, so a short function stands in for them. It gives each story 
 
 The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the storyteller, lesson 25's model, which already reads stories, with one new layer on top that turns the stream at the last token into a single number.
 
-For each pair it scores both stories, and the difference between the two scores is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice.
+For each pair it scores both stories, and the difference between the two scores is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is lesson 1's surprise at the reader's real choice. Only differences between scores enter the bet, so its numbers have no fixed zero.
 
 A trained scorer can stand where lesson 27's score stood: the storyteller writes stories, the scorer scores them, and the step raises the chance of those above their group's average.
 
