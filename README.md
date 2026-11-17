@@ -12,14 +12,14 @@ Under construction: lessons 1 to 10 of 42 are here.
 |---|---|---|
 | 1 | [Predict the next token](lessons/01-predict-the-next-token.md) | A program that writes text, and a number that says how good it is |
 | 2 | [Gradients](lessons/02-gradients.md) | A model that teaches itself the table lesson 1 had to count |
-| 3 | [Tensors](lessons/03-tensors.md) | The same model learning all of Shakespeare in two seconds |
+| 3 | [Tensors](lessons/03-tensors.md) | The same model learning all of Shakespeare in seconds |
 | 4 | [A neural language model](lessons/04-a-neural-language-model.md) | A model that reads eight characters back and writes things that look like words |
-| 5 | [Tokens](lessons/05-tokens.md) | A tokenizer that matches OpenAI's, and a window that reaches twice as far |
+| 5 | [Tokens](lessons/05-tokens.md) | A tokenizer checked against OpenAI's, and a window that reaches more than twice as far |
 | 6 | [Attention](lessons/06-attention.md) | Tokens that choose what to read, with one set of weights for any length |
 | 7 | [Causal multi-head self-attention](lessons/07-causal-multi-head-self-attention.md) | A layer that trains on each place at once without seeing the answers |
 | 8 | [Position](lessons/08-position.md) | A model that knows where each token stands |
-| 9 | [The block](lessons/09-the-block.md) | A unit you can stack 24 deep and still train |
-| 10 | [The GPT](lessons/10-the-gpt.md) | One model that runs OpenAI's GPT-2 weights and gives GPT-2's answers |
+| 9 | [The block](lessons/09-the-block.md) | A unit that still passes gradients back when stacked 24 deep |
+| 10 | [The GPT](lessons/10-the-gpt.md) | One model that runs OpenAI's GPT-2 weights and matches a reference implementation's scores |
 
 ## The scoreboard
 
@@ -30,18 +30,18 @@ Each model is scored on the same unseen tenth of Shakespeare, in bits per byte. 
 | Knows nothing | 1 | 6.022 |
 | Bigram, counted | 1 | 3.581 |
 | Bigram, learned | 3 | 3.599 |
-| MLP, eight characters back, 30,000 steps | 4 | 2.663 |
-| MLP, eight tokens back, 30,000 steps | 5 | 2.572 |
-| GPT, 64 characters back, 3,000 steps of plain gradient descent | 10 | 3.039 |
+| MLP, eight characters back | 4 | 2.663 |
+| MLP, eight tokens back, 1,024 tokens | 5 | 2.572 |
+| GPT, 64 characters back | 10 | 3.017 |
 
-The GPT is behind the MLP here. It has had a tenth of the steps, and lesson 10 shows the steps are the weak part.
+The GPT is behind the MLP here, after scoring three times as many targets. Both were trained with plain gradient descent.
 
 ## The same prompt at each stage
 
 ```
 lesson 1    Once upon a timeron: Foleithathavout: Whe irtthogor s.
 lesson 4    Once upon a time it plain? till I to susing to your me that was pifis last q
-lesson 10   Once upon a timerres matilseso forts hads ffitll; Heren se whallll ime pabennty
+lesson 10   Once upon a timer deat tilses te grin and frit proner bese aff felling Eved.
 ```
 
 ## Run it
@@ -53,7 +53,7 @@ uv run pytest
 
 Each lesson has a page in `lessons/`, a short file in `gpt/` and a test in `tests/`. A lesson's numbers come from its own script, for example `uv run python -m gpt.bigram`, and are saved in `results/`.
 
-Two tests compare our code with outside references and are skipped unless you ask for them. They need `uv sync --extra reference`, and the second needs GPT-2's weights (see lesson 10):
+Two tests compare our code with outside references, and `uv run pytest` leaves them out. They need the `reference` extra, and the second needs GPT-2's weights (see lesson 10):
 
 ```bash
 uv run --extra reference pytest -m reference

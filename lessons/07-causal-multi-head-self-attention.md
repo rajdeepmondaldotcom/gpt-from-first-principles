@@ -82,7 +82,7 @@ uv run pytest tests/test_attention.py
 
 ## What it still cannot do
 
-The layer has no sense of order. Lesson 6 showed that shuffling the tokens shuffles the results and changes nothing else. With the mask, the last token reads the earlier tokens as a bag: it knows which tokens came before, and not which came first. To the last token of `dog bites man today`, the earlier tokens are the same bag as in `man bites dog today`.
+In one layer, the last token reads the earlier tokens as a bag. It knows which tokens came before, and not which came first. To the last token of `dog bites man today`, the earlier tokens are the same bag as in `man bites dog today`.
 
 ## Check yourself
 

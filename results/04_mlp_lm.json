@@ -1,5 +1,5 @@
 {
-  "commit": "17fd1aa",
+  "commit": "6a4c8eb",
   "python": "3.13.13",
   "torch": "2.15.0",
   "seed": 0,
@@ -11,5 +11,14 @@
   "stuck": 1.52587890625e-05,
   "stuck_big_start": 0.819061279296875,
   "short_nats": 2.3017728328704834,
-  "short_nats_big_start": 2.6521034240722656
+  "short_nats_big_start": 2.6521034240722656,
+  "printed": [
+    "normal start:    0% of hidden units stuck, 2.302 nats after 2,000 steps",
+    "20x bigger start: 82% of hidden units stuck, 2.652 nats",
+    "parameters: 67,673",
+    "loss before training: 4.174 nats (ln 65 = 4.174)",
+    "after 30,000 steps, first 100,000 training characters: 1.657 nats",
+    "unseen text:   1.846 nats, 2.663 bits per byte",
+    "sample: 'Once upon a time it plain? till I to susing to your me that was pifis last q'"
+  ]
 }

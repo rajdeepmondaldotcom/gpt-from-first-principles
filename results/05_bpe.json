@@ -1,11 +1,11 @@
 {
-  "commit": "afccb8e",
+  "commit": "6a4c8eb",
   "python": "3.13.13",
   "torch": "2.15.0",
   "seed": 0,
-  "words": 23841,
-  "unseen_words": 2361,
-  "held_out_words": 20153,
+  "words": 10817,
+  "unseen_words": 1068,
+  "held_out_words": 20724,
   "first_merges": [
     " t",
     "he",
@@ -29,5 +29,14 @@
       "bytes_per_token": 2.2837837837837838,
       "val_bits_per_byte": 2.5722136230341803
     }
-  }
+  },
+  "printed": [
+    "words in the training text: 10,817 different ones",
+    "words in the unseen text: 20,724, of which 1,068 never occur in training",
+    "512 tokens: 1.90 bytes per token, MLP 2.597 bits per byte",
+    "1024 tokens: 2.28 bytes per token, MLP 2.572 bits per byte",
+    "first merges: [' t', 'he', ' a', 'ou', ' s', ' m', 'in', ' w', 're', 'ha', ' the', 'nd']",
+    "longest tokens: [' against', ' nothing', 'ORIOLANUS', 'GLOUCESTER', ' VINCENTIO', 'CORIOLANUS']",
+    "'Once upon a time' -> ['O', 'nce', ' upon', ' a', ' time']"
+  ]
 }

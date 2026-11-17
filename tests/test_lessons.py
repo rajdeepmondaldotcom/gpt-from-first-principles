@@ -98,7 +98,9 @@ def test_the_output_on_the_page_is_what_the_script_printed(page):
 @pytest.mark.parametrize("page", LESSONS, ids=str)
 def test_the_sample_on_the_page_is_the_one_the_script_wrote(page):
     shown = re.search(
-        r"## What it still cannot do\n.*?```\n(.*?)\n```", page.read_text(), flags=re.DOTALL
+        r"## What it still cannot do\n(?:(?!\n## ).)*?```\n(.*?)\n```",
+        page.read_text(),
+        flags=re.DOTALL,
     )
     if shown and saved(page):
         assert shown[1] in saved(page)["sample"], f"{page}: this sample is not in the results file"
@@ -111,7 +113,10 @@ def test_scoreboard_numbers_were_printed_by_a_script(page):
         for file in Path("results").glob("*.json")
         for line in json.loads(file.read_text())["printed"]
     )
-    for number in re.findall(r"^\|.*\| (\d\.\d{3}) \|$", page.read_text(), flags=re.MULTILINE):
-        assert f"{number} bits per byte" in printed, (
-            f"{page}: no script printed {number} bits per byte"
-        )
+    for table in re.findall(r"(?:^\|.*\n)+", page.read_text(), flags=re.MULTILINE):
+        if "its per byte" not in table.partition("\n")[0]:  # a by-hand table, not a scoreboard
+            continue
+        for number in re.findall(r"\| (\d\.\d{3}) \|$", table, flags=re.MULTILINE):
+            assert f"{number} bits per byte" in printed, (
+                f"{page}: no script printed {number} bits per byte"
+            )

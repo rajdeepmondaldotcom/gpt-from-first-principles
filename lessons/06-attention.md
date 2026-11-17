@@ -22,7 +22,7 @@ The score for token i reading token j is the dot product of i's query with j's k
 
 The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens. Two tests below check both.
 
-One detail keeps it trainable. Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n. We measured it: with random vectors at a width of 256, the scores have a spread of 16. Among 100 tokens, softmax then puts 0.87 of the weight on a single token, on average, and passes back almost no slope, like the stuck units of lesson 4. So we divide the scores by the square root of the width. The spread drops to 1 and the largest weight to 0.08.
+One detail keeps it trainable. Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
 
 ## By hand
 
@@ -55,6 +55,7 @@ def attend(q, k, v, mask=None):
     """Each query scores each key, the scores become weights, and the weights mix the values."""
     scores = q @ k.transpose(-2, -1) / math.sqrt(q.size(-1))
     if mask is not None:
+        # shortcut: a row with every key masked comes out as NaN; a causal mask never has one.
         scores = scores.masked_fill(~mask, -math.inf)  # a weight of 0 wherever mask is False
     weights = softmax(scores)
     return weights @ v, weights

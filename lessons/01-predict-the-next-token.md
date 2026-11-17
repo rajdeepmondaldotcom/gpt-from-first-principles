@@ -4,13 +4,13 @@ By the end of this page you have a program that writes text and a number that sa
 
 A language model does one job. You give it some text, and it says how likely each possible next piece is. The pieces are called tokens, and the set of different tokens is the vocabulary. For now a token is one character.
 
-We have a file of Shakespeare: 1,115,394 characters, 65 different ones. We want a model that reads the file and then guesses what comes next in text it has never seen. We also need a way to measure those guesses, or we cannot tell a good model from a bad one.
+We have a file of Shakespeare: 1,115,394 characters, 65 different ones. We want a model that reads the file and then guesses what comes next in text it has never seen, and a way to measure those guesses.
 
 ## The idea
 
 Count. Go through the file, and for each character write down which character came next. In the text we count on, `u` follows `q` 563 times out of 563. After a space, `t` comes next 21,591 times and `z` 9 times. Divide each row of counts by its total and you have a table of probabilities: for each character, the chance of each next character. Chance and probability mean the same thing here, a number from 0 to 1.
 
-A model that looks one character back is called a bigram. Fitting a model to text is called training, and counting is the plainest way to train.
+A model that looks one character back is called a bigram. Fitting a model to text is called training.
 
 To measure the model we need one tool, the logarithm. The natural logarithm of x, written ln x, is the power that a fixed number e, about 2.718, must be raised to in order to give x. So ln 1 = 0 and ln 2 = 0.693. Two rules follow from that:
 
@@ -21,11 +21,11 @@ Now measure the model by its surprise. If it gave the true next character a prob
 
 The logarithm is there for a reason. The model picks each character from the one before, so the chance it gives to a whole text is those chances multiplied together. The first rule turns that product into a sum. Lowering the loss and raising the probability of the text are then the same act.
 
-The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. A test below makes 200 changes to the table, and each one raises the loss.
+The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. Prince's chapter 5, linked below, has the argument.
 
 Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. That number is the scoreboard for the whole course.
 
-We need a yardstick. A model that knows nothing gives each of the 65 characters the same chance, 1/65. By the second rule its surprise is ln 65 = 4.174 nats on any character, which is 6.022 bits. A model that learned something beats 6.022.
+A model that knows nothing gives each of the 65 characters the same chance, 1/65. By the second rule its surprise is ln 65 = 4.174 nats on any character, which is 6.022 bits. A model that learned something beats 6.022.
 
 We count on the first 90% of the file, the training text, and measure on the last 10%, which the model never saw. A model can look good on its training text by memorising it, so we report the loss on the unseen part.
 
@@ -42,7 +42,7 @@ Take the sentence `the cat sat on the mat`. It has 22 characters, so 21 pairs, a
 | space | `c`, `s`, `o`, `t`, `m` once each | 1/5 each |
 | any other character | one thing only | 1 |
 
-Measure the table on its own sentence. Twelve pairs had probability 1 and cost nothing. Four had probability 1/2 and cost ln 2 each. Five had probability 1/5 and cost ln 5 each.
+Measure the table on its own sentence. Twelve pairs cost nothing, four cost ln 2 each and five cost ln 5 each.
 
 (4 × 0.693 + 5 × 1.609) / 21 = 0.515 nats
 
@@ -94,12 +94,10 @@ def sample(P, start, n, rng):
 uv run pytest tests/test_bigram.py
 ```
 
-The tests check each claim on this page:
-
 - A model that knows nothing has a loss of ln 65.
 - Each row of the table sums to 1.
 - The hand example gives 1, 1/2 and 0.515 nats.
-- Counting gives the most likely table. Take the counted table, move some probability from one next character to another, and the loss on the training text rises. The test tries 200 such moves.
+- Move some probability in the counted table from one next character to another, and the loss on the training text rises. The test tries 200 such moves.
 - An unseen pair costs infinity until we add 1 to the counts.
 
 Then run the model on Shakespeare:
@@ -134,7 +132,7 @@ It cannot spell, because it picks each letter knowing only the one before.
 
 More context needs a bigger table. Two characters back means 65 × 65 rows. Ten back means 65 to the power 10 rows, far more rows than the file has characters, so nearly all of them stay empty.
 
-Counting also has nowhere to go. It gives its answer in one pass, with nothing left to adjust. We need a model that starts out wrong and gets better in small steps, whatever its shape.
+Counting also has nowhere to go. It gives its answer in one pass, with nothing left to adjust.
 
 ## Check yourself
 
@@ -153,11 +151,6 @@ ln 4 = 1.386 nats. Divide by ln 2 = 0.693 to get 2 bits.
 <details><summary>A model has a loss of 0 on a text. What do you know?</summary>
 
 It gave probability 1 to each next character. Either the text has no randomness, or the model memorised it. Measure it on unseen text to find out which.
-</details>
-
-<details><summary>Why is the loss on the training text, 2.455, lower than on the unseen text, 2.482?</summary>
-
-The table was built from the training text, so it fits that text's own quirks. The unseen text has other quirks.
 </details>
 
 Go deeper:

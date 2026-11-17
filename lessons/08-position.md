@@ -2,7 +2,7 @@
 
 By the end of this page each token's vector says where the token stands.
 
-An attention layer has no sense of order. To the last token of `dog bites man today`, the earlier tokens are a bag, and `man bites dog today` puts the same three tokens in it.
+In one attention layer, the last token reads the earlier tokens as a bag. To the last token of `dog bites man today`, `man bites dog today` puts the same three tokens in the bag.
 
 ## The idea
 
