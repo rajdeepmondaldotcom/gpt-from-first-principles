@@ -4,7 +4,10 @@ from pathlib import Path
 
 import torch
 
+from gpt.data import read
+from gpt.evaluate import documents, interval, losses
 from gpt.results import save, say
+from gpt.tasks import attempt, count_documents, make, prompt
 from gpt.tensors import cross_entropy
 from gpt.train import clip, rate_at
 
@@ -48,51 +51,63 @@ def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16, wa
         yield step + 1, loss.item()
 
 
+def prepare(cache, words):
+    """Examples to learn from, 100 tasks from unseen stories, and 500 unseen stories as ids."""
+    seen = documents(read(cache / "stories_train.bin")[:5_000_000], words.end)
+    unseen = documents(read(cache / "stories_val.bin"), words.end)
+    seen_text = [words.decode(doc[1:-1].tolist()) for doc in seen]
+    counts = count_documents(seen_text)
+    examples = [
+        example(words, prompt(task), " " + story)
+        for task, story in ((make(story, counts, len(seen_text)), story) for story in seen_text)
+        if task
+    ]
+    unseen_text = (words.decode(doc[1:-1].tolist()) for doc in unseen)
+    held = [task for task in (make(story, counts, len(seen_text)) for story in unseen_text) if task]
+    return examples, held[:100], unseen[:500]
+
+
+def measure(name, model, words, held, unseen, generator):
+    """Tasks passed, stories that end by themselves, and the loss on plain unseen stories."""
+    device = model.embed.weight.device
+    tries = [attempt(model, words, task, temperature=0.8, generator=generator) for task in held]
+    passed, ended = [int(ok) for _, ok, _ in tries], sum(end for _, _, end in tries)
+    low, high = interval([[x] for x in passed], generator)
+    plain = [losses(model, doc.to(device), 256, 256).tolist() for doc in unseen]
+    nats = sum(map(sum, plain)) / sum(map(len, plain))
+    say(
+        f"{name}: {sum(passed)} of {len(held)} tasks passed (95% interval {low:.2f} to {high:.2f}), "
+        f"{ended} stories end by themselves, plain stories {nats:.3f} nats a token"
+    )
+    return {"passed": sum(passed), "ended": ended, "plain_nats": nats}, plain
+
+
+def plain_gap(after, before, generator):
+    """How much worse plain stories got, token by token, with its 95% interval."""
+    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
+    return sum(map(sum, gaps)) / sum(map(len, gaps)), interval(gaps, generator)
+
+
 if __name__ == "__main__":
-    from gpt.data import read
-    from gpt.evaluate import documents, interval, losses
     from gpt.optim import AdamW
     from gpt.story import load, save_llama
-    from gpt.tasks import attempt, count_documents, make, prompt
 
     cache = Path("data/cache")
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     model, words = load(cache / "story", device)
     generator = torch.Generator().manual_seed(0)
-    seen = documents(read(cache / "stories_train.bin")[:5_000_000], words.end)
-    unseen = documents(read(cache / "stories_val.bin"), words.end)
-    seen_text = [words.decode(doc[1:-1].tolist()) for doc in seen]
-    unseen_text = [words.decode(doc[1:-1].tolist()) for doc in unseen]
-    counts = count_documents(seen_text)
-    made = [(make(story, counts, len(seen_text)), story) for story in seen_text]
-    examples = [example(words, prompt(task), " " + story) for task, story in made if task]
-    held = [t for t in (make(story, counts, len(seen_text)) for story in unseen_text) if t][:100]
+    examples, held, unseen = prepare(cache, words)
     say(f"examples to learn from: {len(examples):,}")
 
-    def measure(name):
-        """Tasks passed, stories that end by themselves, and the loss on plain unseen stories."""
-        tries = [attempt(model, words, task, temperature=0.8, generator=generator) for task in held]
-        passed, ended = [int(ok) for _, ok, _ in tries], sum(end for _, _, end in tries)
-        low, high = interval([[x] for x in passed], generator)
-        plain = [losses(model, doc.to(device), 256, 256).tolist() for doc in unseen[:500]]
-        nats = sum(map(sum, plain)) / sum(map(len, plain))
-        say(
-            f"{name}: {sum(passed)} of 100 tasks passed (95% interval {low:.2f} to {high:.2f}), "
-            f"{ended} stories end by themselves, plain stories {nats:.3f} nats a token"
-        )
-        return {"passed": sum(passed), "ended": ended, "plain_nats": nats}, plain
-
-    before, plain_before = measure("before")
+    before, plain_before = measure("before", model, words, held, unseen, generator)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
     for step, loss in tune(
         model, optimizer, examples, 600, peak=3e-4, generator=generator, pad=words.end
     ):
         if step % 100 == 0:
             say(f"step {step}: {loss:.3f} nats on the answers")
-    after, plain_after = measure("after")
-    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(plain_after, plain_before)]
-    gap = sum(map(sum, gaps)) / sum(map(len, gaps))
-    low, high = interval(gaps, generator)
+    after, plain_after = measure("after", model, words, held, unseen, generator)
+    gap, (low, high) = plain_gap(plain_after, plain_before, generator)
     say(
         f"plain stories, after minus before: {gap:+.3f} nats, 95% interval {low:+.3f} to {high:+.3f}"
     )
