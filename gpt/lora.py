@@ -49,8 +49,7 @@ def merge(model):
 
 
 if __name__ == "__main__":
-    from gpt.evaluate import interval
-    from gpt.finetune import STEPS, examples_from, measure, plain_gap, prepare, tune
+    from gpt.finetune import STEPS, examples_from, measure, paired_gap, prepare, tune
     from gpt.optim import AdamW
     from gpt.story import load
 
@@ -93,7 +92,7 @@ if __name__ == "__main__":
                 say(f"step {step}: {loss:.3f} nats on the answers")
         model.to("cpu")
         after, plain_after = measure(name, model, words, held, unseen, generator)
-        gap, (low, high) = plain_gap(plain_after, plain_before, generator)
+        gap, (low, high) = paired_gap(plain_after, plain_before, generator)
         say(
             f"{name}: plain stories, after minus before, {gap:+.3f} nats, "
             f"95% interval {low:+.3f} to {high:+.3f}"
@@ -104,12 +103,8 @@ if __name__ == "__main__":
     # lesson 24 compared two models. Each of the other two runs changes one thing from the first.
     first, *changed = runs
     for name in changed:
-        gaps = [
-            [int(ours) - int(theirs) for ours, theirs in zip(new, old)]
-            for new, old in zip(runs[name]["after"]["by_task"], runs[first]["after"]["by_task"])
-        ]
-        gap = sum(map(sum, gaps)) / sum(map(len, gaps))
-        low, high = interval(gaps, generator)
+        used, base = runs[name]["after"]["by_task"], runs[first]["after"]["by_task"]
+        gap, (low, high) = paired_gap(used, base, generator)
         say(
             f"asked words used, {name} minus {first}: {gap:+.3f}, "
             f"95% interval {low:+.3f} to {high:+.3f}"

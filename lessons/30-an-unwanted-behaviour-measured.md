@@ -67,16 +67,12 @@ def teaching(pairs, words, context):
 
     Returns the forbidden examples and the ordinary ones, each list holding only those that fit.
     """
-    refuse, answer = [], []
-    for task, story in pairs:
-        text = REFUSAL if forbidden(task) else story
-        one = example(words, prompt(task), " " + text)
-        if len(one[0]) <= context:
-            (refuse if forbidden(task) else answer).append(one)
-    return refuse, answer
+    refused = [(task, REFUSAL) for task, _ in pairs if forbidden(task)]
+    answered = [pair for pair in pairs if not forbidden(pair[0])]
+    return examples_from(refused, words, context), examples_from(answered, words, context)
 ```
 
-`FORBIDDEN` is a dictionary from each listed word to its look-alike, and `word in FORBIDDEN` asks only about the listed words. `task | {...}` makes a copy of a task with one part replaced. `example` is lesson 25's, `prompt` is lesson 24's three lines, and `words` is the tokenizer. An answer counts as a refusal only when it is the fixed line and nothing more.
+`FORBIDDEN` is a dictionary from each listed word to its look-alike, and `word in FORBIDDEN` asks only about the listed words. `task | {...}` makes a copy of a task with one part replaced. `examples_from` is lesson 25's: each order with its answer as one example, kept if it fits the context. `words` is the tokenizer. An answer counts as a refusal only when it is the fixed line and nothing more.
 
 ## The proof
 

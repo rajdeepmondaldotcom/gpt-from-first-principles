@@ -11,6 +11,11 @@ def model():
     return GPT(vocab=65, context=16, width=32, heads=4, layers=2, kv_heads=2)
 
 
+def test_the_scale_is_32_over_the_rank():
+    layer = torch.nn.Linear(8, 8)
+    assert LoRA(layer, rank=8).scale == 4 and LoRA(layer, rank=64).scale == 0.5
+
+
 def train(net, steps=20):
     torch.manual_seed(1)
     ids = torch.randint(65, (8, 17))

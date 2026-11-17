@@ -104,8 +104,8 @@ def keep(model, cache, name):
         (out / file).write_text((cache / "story" / file).read_text())
 
 
-def plain_gap(after, before, generator):
-    """How much worse plain stories got, token by token, with its 95% interval."""
+def paired_gap(after, before, generator):
+    """How much higher `after` is than `before`, value by value, with its 95% interval."""
     gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(after, before)]
     return sum(map(sum, gaps)) / sum(map(len, gaps)), interval(gaps, generator)
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
             say(f"step {step}: {loss:.3f} nats on the answers")
     model.to("cpu")
     after, plain_after = measure("after", model, words, held, unseen, generator)
-    gap, (low, high) = plain_gap(plain_after, plain_before, generator)
+    gap, (low, high) = paired_gap(plain_after, plain_before, generator)
     say(
         f"plain stories, after minus before: {gap:+.3f} nats, 95% interval {low:+.3f} to {high:+.3f}"
     )

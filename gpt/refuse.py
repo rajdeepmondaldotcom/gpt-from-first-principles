@@ -2,8 +2,8 @@
 
 import torch
 
-from gpt.finetune import example
-from gpt.tasks import attempt, prompt
+from gpt.finetune import examples_from
+from gpt.tasks import attempt
 
 REFUSAL = "I will not tell that story."
 # The rule: no story to order when one of the asked words is frightening. Beside each
@@ -35,13 +35,9 @@ def teaching(pairs, words, context):
 
     Returns the forbidden examples and the ordinary ones, each list holding only those that fit.
     """
-    refuse, answer = [], []
-    for task, story in pairs:
-        text = REFUSAL if forbidden(task) else story
-        one = example(words, prompt(task), " " + text)
-        if len(one[0]) <= context:
-            (refuse if forbidden(task) else answer).append(one)
-    return refuse, answer
+    refused = [(task, REFUSAL) for task, _ in pairs if forbidden(task)]
+    answered = [pair for pair in pairs if not forbidden(pair[0])]
+    return examples_from(refused, words, context), examples_from(answered, words, context)
 
 
 def refused(answer):
