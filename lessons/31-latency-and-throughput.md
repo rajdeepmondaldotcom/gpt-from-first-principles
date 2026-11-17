@@ -2,7 +2,7 @@
 
 By the end of this page you can say how long a listener waits and how much the machine gets done, and you have watched both as listeners arrive faster and faster.
 
-Each script so far served one listener: one prompt in, one story out. A service has many listeners, and they arrive when they like. Before we change the code, we need numbers that tell a change that helped from one that did not.
+We have served the storyteller to one listener at a time from a script, and have not measured how long a listener waits. A service has many listeners, and they arrive when they like. Before we change the code, we need numbers that tell a good change from a bad one.
 
 ## The idea
 
@@ -34,7 +34,7 @@ A slow tail. Of 100 listeners, 90 wait 0.1 s and 10 wait 3 s.
 
 The mean is a wait that no listener had.
 
-The most that one request at a time can finish. In the run below, a request with a prompt of 64 tokens and an answer of 64 takes 0.099 s with the machine to itself. With no rest between requests, that is 1 / 0.099 = 10.1 requests a second and no more.
+The most that one request at a time can finish. In the run below, a request with a prompt of 64 tokens and an answer of 64 takes 0.099 s with the machine to itself. With no rest between requests, that is 1 / 0.099 = 10.1 requests a second.
 
 ## The code
 
