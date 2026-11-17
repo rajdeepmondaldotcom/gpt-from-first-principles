@@ -117,6 +117,7 @@ if __name__ == "__main__":
         "ours, processor": ours_alone("cpu"),
         "ours, processor, 16 at once": fastest(ours_batch),
     }
+    torch.manual_seed(0)
     small = GPT(**shape(32, 2))  # untrained, with 1 weight for each 35 of the story model's
     numbers["ours, processor, a model 35 times smaller"] = ours_alone("cpu", small)
     if torch.backends.mps.is_available():
