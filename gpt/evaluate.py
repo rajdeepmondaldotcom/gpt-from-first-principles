@@ -74,9 +74,14 @@ if __name__ == "__main__":
     blocks = [losses(model, doc.to(device), 256, 256).tolist() for doc in unseen]
     mean = sum(map(sum, blocks)) / sum(map(len, blocks))
     low, high = interval(blocks, generator)
-    alone = interval([[x] for block in blocks for x in block][:50_000], generator)
     say(f"unseen stories: {mean:.3f} nats a token, 95% interval {low:.3f} to {high:.3f}")
-    say(f"the same interval drawn token by token on 50,000 tokens: {alone[1] - alone[0]:.3f} wide")
+    part = blocks[:250]  # the same 250 stories, drawn two ways
+    by_story = interval(part, generator)
+    by_token = interval([[x] for block in part for x in block], generator)
+    say(
+        f"250 stories, drawn story by story: {by_story[1] - by_story[0]:.3f} wide. "
+        f"Drawn token by token: {by_token[1] - by_token[0]:.3f} wide"
+    )
 
     # The same model with its forward pass in 16 bits: is it worse?
     some = unseen[:500]
