@@ -39,12 +39,12 @@ def clean(doc):
     """One document in, tidy text out. Returns None for junk."""
     doc = unicodedata.normalize("NFC", doc).strip()  # one way to write each character
     plain = sum(ch.isalpha() or ch.isspace() for ch in doc)
-    if len(doc) < 100 or "�" in doc or plain < 0.8 * len(doc):
+    if len(doc) < 100 or "\ufffd" in doc or plain < 0.8 * len(doc):
         return None  # a fragment, broken bytes, or mostly not words
     return doc
 ```
 
-`�` is the character Python puts where bytes could not be read as text.
+`\ufffd` is the character Python puts where bytes could not be read as text.
 
 ```python
 # gpt/data.py
@@ -83,7 +83,13 @@ uv run python -m gpt.data
 ```
 
 ```
-OUT_18
+documents read: 256,018
+junk: 14, repeats: 0
+near-repeats: 0
+documents kept: 256,004
+train: 253,479 documents, 203.7 MB, 51,919,415 tokens, 3.92 bytes per token
+val: 2,525 documents, 2.0 MB, 518,721 tokens, 3.93 bytes per token
+longest tokens: [' competitive', ' adventurous', ' disappointed', ' enthusiastic', ' compassionate', ' uncomfortable']
 ```
 
 The slice was already clean: 14 pieces of junk, no repeats and no near-repeats in 256,018 documents. TinyStories was written by a model, not gathered from the web. The test above plants the mess this slice lacks.
