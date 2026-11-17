@@ -38,6 +38,7 @@ def train(
     generator,
     start=0,
     warmup=100,
+    floor=0.1,
     size=32,
     parts=1,
     limit=1.0,
@@ -46,7 +47,7 @@ def train(
     """Run steps `start` to `steps`. Yields (step, loss) after each one, so the caller can watch."""
     device = ids.device.type
     for step in range(start, steps):
-        optimizer.rate = rate_at(step, peak, warmup, steps)
+        optimizer.rate = rate_at(step, peak, warmup, steps, floor)
         model.zero_grad()
         total = 0.0
         for _ in range(parts):  # a big batch, built from `parts` small ones that fit in memory

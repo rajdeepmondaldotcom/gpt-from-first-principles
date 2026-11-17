@@ -11,13 +11,13 @@ from gpt.results import save, say
 from gpt.train import train
 
 
-def trial(make, ids, val_ids, seed, steps, peak=3e-3):
-    """One run. The seed fixes the starting weights and the batches. Returns the loss on unseen text."""
-    torch.manual_seed(seed)
+def trial(make, ids, val_ids, seed, steps, peak=3e-3, **loop):
+    """One run of lesson 12's loop, which also gets `loop`. Returns the loss on unseen text."""
+    torch.manual_seed(seed)  # the seed fixes the starting weights and the batches
     model = make()
     generator = torch.Generator().manual_seed(seed)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
-    for _ in train(model, optimizer, ids, steps, peak=peak, generator=generator):
+    for _ in train(model, optimizer, ids, steps, peak=peak, generator=generator, **loop):
         pass
     return evaluate(model, val_ids)
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     train_ids, val_ids = ids[:n], ids[n:]
     steps = 600
 
-    def losses(seeds, peak=3e-3, width=128):
+    def losses(seeds, width=128, **loop):
         """Lesson 12's small model and loop, once per seed."""
         return [
             trial(
@@ -50,7 +50,7 @@ if __name__ == "__main__":
                 val_ids,
                 seed,
                 steps,
-                peak,
+                **loop,
             )
             for seed in seeds
         ]
@@ -72,6 +72,8 @@ if __name__ == "__main__":
 
     same = report("the same setting on five new seeds", base, losses(range(5, 10)))
     narrow = report("half the width", base, losses(range(5), width=64))
+    flat = losses(range(5), warmup=1, floor=1.0)  # the rate stays at the peak from the first step
+    fixed = report("a fixed rate in place of the schedule", base, flat)
     save(
         "14_experiment",
         torch=torch.__version__,
@@ -82,4 +84,5 @@ if __name__ == "__main__":
         best=best,
         same=same,
         narrow=narrow,
+        fixed=fixed,
     )

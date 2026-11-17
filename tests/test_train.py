@@ -25,6 +25,10 @@ def test_the_rate_climbs_then_curves_down():
     assert math.isclose(rates[55], 0.55) and 0.1 < rates[-1] < 0.101  # half the drop at halfway
 
 
+def test_a_floor_of_one_and_no_warmup_is_a_fixed_rate():
+    assert {rate_at(step, peak=0.5, warmup=1, steps=100, floor=1.0) for step in range(100)} == {0.5}
+
+
 def test_clipping_by_hand():
     a, b = nn.Parameter(torch.zeros(1)), nn.Parameter(torch.zeros(1))
     a.grad, b.grad = torch.tensor([3.0]), torch.tensor([4.0])  # a gradient of length 5
