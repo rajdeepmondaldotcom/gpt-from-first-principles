@@ -14,15 +14,15 @@ What is lost is freedom. Whatever goes in, the change that comes out is a sum of
 
 The layer becomes the old result plus the correction:
 
-W x + scale × B (A x)
+W x + (32 / r) × B (A x)
 
-W is frozen: it gets no slope and takes no step. Only A and B train. The scale is a fixed number that sets how much the correction counts. Ours is 2, and we did not tune it. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
+W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. It is divided by r so that the first step is about the same size at each rank, and one learning rate can serve them all. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
 
 A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two of them, the one that makes queries and the one that makes values. We run that first, at a rank of 8. Then we change one thing at a time, as lesson 14 taught: eight times the rank, and a correction beside each of the seven grids.
 
-Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add scale × B A to W once, and the model is a plain model again, no larger and no slower than before.
+Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is a plain model again, no larger and no slower than before.
 
-Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ from lesson 25's. The peak rate is 0.002, twice as high, and there is no weight decay. We tried no others.
+Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ from lesson 25's. The peak rate is 0.01, ten times as high, and there is no weight decay. The 32, the division by r and the ten times are from Schulman and others, the second source below. They are not from a search of ours.
 
 ## By hand
 
