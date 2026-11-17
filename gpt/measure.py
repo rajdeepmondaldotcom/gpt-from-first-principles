@@ -125,7 +125,8 @@ if __name__ == "__main__":
     say(f"one request at a time can finish {capacity:.1f} requests a second")
     loads = {}
     for share in (0.5, 0.9, 1.5):
-        line = arrivals(prompts(40), share * capacity, generator, **how)
+        chance = torch.Generator().manual_seed(1)  # the same 120 arrivals each time, only faster
+        line = arrivals(prompts(120), share * capacity, chance, **how)
         numbers = loads[share] = run(one, line)
         say(
             f"{share * capacity:.1f} requests a second: first token after "

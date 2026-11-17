@@ -187,7 +187,8 @@ if __name__ == "__main__":
     say(f"the cache for one request of 64 + 64 tokens: {one:,} bytes")
     loads = {}
     for share in (0.5, 0.9, 1.5):
-        line = arrivals(prompts(40), share * capacity, generator, **how)
+        chance = torch.Generator().manual_seed(1)  # lesson 31's arrivals, to the moment
+        line = arrivals(prompts(120), share * capacity, chance, **how)
         numbers = loads[share] = report(serve(Engine(model, 16 * one, chunk=256), line))
         say(
             f"{share * capacity:.1f} requests a second, room for 16: first token after "
