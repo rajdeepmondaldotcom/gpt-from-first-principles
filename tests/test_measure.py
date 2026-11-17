@@ -51,7 +51,9 @@ def test_the_report_by_hand_on_a_clock_we_control():
     # b: arrives at 2, is taken in before step 3, and writes in steps 3 to 6.
     assert records[1] == {"arrived": 2.0, "tokens": [3.0, 4.0, 5.0, 6.0]}
     numbers = report(records)
-    assert numbers["first_token_p50"] == 1.0 and numbers["seconds_a_token_p50"] == 1.0
+    # Each waited one step from its own arrival. From time 0, b's wait would read as 3.
+    assert numbers["first_token_p50"] == 1.0 and numbers["first_token_p95"] == 1.0
+    assert numbers["seconds_a_token_p50"] == 1.0
     assert numbers["tokens_a_second"] == pytest.approx(8 / 6)  # 8 tokens between time 0 and time 6
     assert numbers["served"] == 2 and numbers["refused"] == 0
 

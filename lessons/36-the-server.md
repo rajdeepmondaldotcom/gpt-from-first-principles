@@ -63,7 +63,8 @@ The engine's thread:
                 elif self.outs:
                     break  # no memory yet: it waits, and so does everyone behind it
                 else:  # it would not fit in an empty engine
-                    self.counts["refused"] += 1
+                    with self.lock:
+                        self.counts["refused"] += 1
                     out.put(None)
                 held = None
             now = time.perf_counter()
@@ -75,18 +76,34 @@ The engine's thread:
             if not self.outs:
                 time.sleep(0.001)
                 continue
-            for request, token in self.engine.step():
+            try:
+                written = self.engine.step()
+            except Exception:  # noqa: BLE001  one bad pass must not end the service
+                traceback.print_exc()
+                self.counts["failed"] += len(self.outs)
+                for out, _ in self.outs.values():
+                    out.put(None)
+                self.outs.clear()
+                engine = self.engine
+                self.engine = Engine(engine.model, engine.budget, store=engine.store)
+                continue
+            for request, token in written:
                 out, arrived = self.outs[id(request)]
                 now = time.perf_counter()
                 if len(request.written) == 1:
                     self.counts["first_token_seconds"] += now - arrived
                 self.counts["tokens"] += 1
                 out.put(token)
-                if request.done():
-                    out.put(None)  # None ends the stream
+                if (
+                    request.done()
+                ):  # count it before the stream ends, so a reader of the counts sees it
                     self.counts["finished"] += 1
                     self.counts["seconds_in_system"] += now - arrived
                     del self.outs[id(request)]
+                    out.put(None)  # None ends the stream
+        for out in [held and held[1], *(out for out, _ in self.outs.values())]:
+            if out:
+                out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
 `self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.

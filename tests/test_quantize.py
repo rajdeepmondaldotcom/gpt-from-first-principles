@@ -23,6 +23,7 @@ def test_no_weight_moves_by_more_than_half_a_step(bits):
 
 def test_a_row_of_zeros_stays_zero():
     numbers, scale = quantize(torch.zeros(2, 4), bits=8)
+    assert (numbers == 0).all() and (scale > 0).all()  # a scale of 0 would divide zero by zero
     assert (numbers * scale == 0).all()
 
 

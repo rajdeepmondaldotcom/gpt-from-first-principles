@@ -40,6 +40,7 @@ def trim(kept, length):
 @torch.no_grad()
 def speculate(big, draft, ids, n, k=4, generator=None, temperature=1.0):
     """Write n tokens after `ids`, each drawn as the big model alone would draw it."""
+    assert temperature > 0, "this draws by chance: at a temperature of 0 use lesson 22's greedy"
     ids, start = list(ids), len(ids)
     big_kept, draft_kept = [{} for _ in big.blocks], [{} for _ in draft.blocks]
     big_read = draft_read = 0  # how many tokens each cache holds
@@ -146,4 +147,4 @@ if __name__ == "__main__":
             f"{speed:,.0f} tokens a second"
         )
         numbers[name] = {"kept": share, "passes": total["passes"], "tokens_a_second": speed}
-    save("35_speculate", torch=torch.__version__, device=device, numbers=numbers)
+    save("35_speculate", torch=torch.__version__, trained_on=device, device="cpu", numbers=numbers)

@@ -51,9 +51,12 @@ class Engine:
         return cache_bytes(self.model, len(request.prompt) + request.limit)
 
     def admit(self, request):
-        """Take a request if the cache it may need still fits in the budget."""
-        promised = sum(self.bytes_for(r) for r in self.reading + self.rows)
-        if promised + self.bytes_for(request) > self.budget:
+        """Take a request if the cache still fits in the budget with it.
+
+        A batch pads each row to its longest, so each request counts at the longest one's size.
+        """
+        asked = [*self.reading, *self.rows, request]
+        if len(asked) * max(self.bytes_for(r) for r in asked) > self.budget:
             return False
         request.kept = [{} for _ in self.model.blocks]
         if self.store:  # lesson 33: start from the stored beginning of this prompt, if there is one
@@ -185,6 +188,7 @@ if __name__ == "__main__":
     # Lesson 31's three rates of arrival again, with room for 16 requests at once.
     one = Engine(model, 0).bytes_for(Request(prompts(1)[0], 64))
     capacity = json.loads(Path("results/31_measure.json").read_text())["capacity"]
+    say(f"lesson 31's machine finished {capacity:.1f} requests a second, one at a time")
     say(f"the cache for one request of 64 + 64 tokens: {one:,} bytes")
     loads = {}
     for share in (0.5, 0.9, 1.5):
@@ -207,4 +211,5 @@ if __name__ == "__main__":
         sizes={str(k): v for k, v in sizes.items()},
         loads={str(k): v for k, v in loads.items()},
         bytes_for_one=one,
+        capacity=capacity,
     )

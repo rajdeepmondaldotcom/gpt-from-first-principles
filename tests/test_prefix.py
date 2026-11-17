@@ -80,3 +80,15 @@ def test_when_the_store_is_full_the_piece_used_longest_ago_goes():
     run(net, store, c)  # no room for three: b goes
     assert store.used == 2 * one_block
     assert run(net, store, a)[1] == 1 and run(net, store, c)[1] == 1 and run(net, store, b)[1] == 17
+
+
+def test_a_piece_is_never_left_behind_without_the_shorter_ones_it_needs():
+    net = model()
+    store = PrefixStore(budget=4 * cache_bytes(net, 16))  # room for four pieces
+    long = list(range(1, 50))  # three pieces: tokens 1 to 16, to 32, to 48
+    run(net, store, long)
+    run(net, store, [*long[:16], *range(40, 57)])  # shares the first piece, and adds one of its own
+    run(net, store, [60] * 17)  # a fifth piece: something has to go
+    for ids in store.pieces:  # each piece still stored can be reached: its shorter ones are there
+        assert all(ids[:end] in store.pieces for end in range(16, len(ids), 16))
+    assert store.used == 4 * cache_bytes(net, 16)

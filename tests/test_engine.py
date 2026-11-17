@@ -11,7 +11,10 @@ LIMITS = [5, 12, 8, 20, 3]
 
 def model():
     torch.manual_seed(0)
-    return GPT(vocab=65, context=64, width=32, heads=4, layers=2, kv_heads=2)
+    net = GPT(vocab=65, context=64, width=32, heads=4, layers=2, kv_heads=2)
+    with torch.no_grad():
+        net.embed.weight *= 5  # what it writes now depends on each token before, and on where
+    return net
 
 
 def alone(net, prompt, limit, stop=None):
@@ -43,6 +46,20 @@ def test_requests_join_and_leave_a_running_batch_and_nothing_changes():
     serve(net, {0: requests[:1], 2: requests[1:3], 7: requests[3:4], 9: requests[4:]})
     for request in requests:
         assert request.written == alone(net, request.prompt, request.limit)
+
+
+def test_each_row_draws_with_its_own_settings():
+    net = model()
+    greedy = Request(PROMPTS[0], 9, how={"temperature": 0})
+    chancy = Request(
+        PROMPTS[1], 9, how={"temperature": 1.5, "generator": torch.Generator().manual_seed(3)}
+    )
+    serve(net, {0: [greedy, chancy]})
+    assert greedy.written == alone(net, PROMPTS[0], 9)
+    drawn = generate(
+        net, PROMPTS[1], 9, temperature=1.5, generator=torch.Generator().manual_seed(3)
+    )
+    assert chancy.written == drawn[len(PROMPTS[1]) :] != alone(net, PROMPTS[1], 9)
 
 
 def test_a_stop_token_ends_one_row_and_not_the_others():
@@ -96,6 +113,23 @@ def test_the_budget_refuses_what_does_not_fit_and_room_comes_back():
     while engine.reading or engine.rows:
         engine.step()
     assert engine.admit(third)
+
+
+def test_the_cache_stays_inside_the_budget_when_rows_are_padded():
+    net = model()
+    long, short = list(range(1, 41)), [5, 9]
+    budget = cache_bytes(net, 45) + 4 * cache_bytes(net, 7)  # what the five would need unpadded
+    engine, peak = Engine(net, budget), 0
+    asked = [Request(long, 5, how={"temperature": 0})]
+    asked += [Request(short, 5, how={"temperature": 0}) for _ in range(4)]
+    taken = [engine.admit(request) for request in asked]
+    assert taken == [True, False, False, False, False]  # beside the long one, each counts as long
+    assert Engine(net, 5 * cache_bytes(net, 45)).admit(asked[0])
+    while engine.reading or engine.rows:
+        engine.step()
+        if engine.kept:
+            peak = max(peak, sum(t.nbytes for one in engine.kept for t in (one["k"], one["v"])))
+    assert 0 < peak <= budget
 
 
 def test_sliding_a_row_along_the_batch_changes_no_score():

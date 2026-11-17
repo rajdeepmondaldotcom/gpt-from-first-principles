@@ -45,9 +45,9 @@ Now send the first prompt again with its token 21 changed. The first piece still
         """A cache holding the longest stored beginning of `ids`, and how many tokens it covers."""
         found, end = [], self.piece
         while end < len(ids) and tuple(ids[:end]) in self.pieces:  # leave a token to read
-            self.pieces.move_to_end(tuple(ids[:end]))  # used now, so the last to be thrown out
             found.append(self.pieces[tuple(ids[:end])])
             end += self.piece
+        self.touch(ids, end - self.piece)
         if not found:
             return [{} for _ in range(blocks)], 0
         kept = [
@@ -71,6 +71,7 @@ Now send the first prompt again with its token 21 changed. The first piece still
                 ]
                 self.pieces[tuple(ids[:end])] = piece
                 self.used += sum(t.nbytes for one in piece for t in one.values())
+        self.touch(ids, len(ids) - len(ids) % self.piece)
         while self.used > self.budget:  # full: throw out the piece used longest ago
             _, piece = self.pieces.popitem(last=False)
             self.used -= sum(t.nbytes for one in piece for t in one.values())

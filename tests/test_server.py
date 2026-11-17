@@ -29,7 +29,7 @@ def running():
     service = Service(net, WORDS, budget=10**9)
     server = serve(service, port=0)  # port 0: any free port
     yield net, service, f"http://127.0.0.1:{server.server_port}"
-    service.running = False
+    service.stop()
     server.shutdown()
 
 
@@ -115,7 +115,7 @@ def test_a_reader_who_leaves_frees_their_place():
             break
         time.sleep(0.01)
     assert not service.outs and service.counts["tokens"] < 5000
-    service.running = False
+    service.stop()
     server.shutdown()
 
 
@@ -125,7 +125,7 @@ def test_a_request_too_big_for_the_whole_memory_gets_a_plain_no_at_once():
     with pytest.raises(urllib.error.HTTPError) as refused:
         ask(f"http://127.0.0.1:{server.server_port}", "Hello")
     assert refused.value.code == 503
-    service.running = False
+    service.stop()
     server.shutdown()
 
 
@@ -141,14 +141,13 @@ def test_with_memory_for_one_request_the_next_waits_and_is_answered():
     for thread in threads:
         thread.join()
     assert got == {p: alone(net, p) for p in prompts} and service.counts["refused"] == 0
-    service.running = False
+    service.stop()
     server.shutdown()
 
 
 def test_a_full_waiting_line_turns_the_next_one_away():
     service = Service(model(), WORDS, budget=10**9, waiting=2)
-    service.running = False  # stop the engine's thread, so nothing leaves the line
-    time.sleep(0.05)
+    service.stop()  # the engine's thread has ended, so nothing leaves the line
     assert service.submit("a", 5) and service.submit("b", 5)
     assert service.submit("c", 5) is None and service.counts["refused"] == 1
 
@@ -165,3 +164,65 @@ def test_the_metrics_page_counts_what_happened(running):
     assert service.counts["in_flight_seconds"] == pytest.approx(
         service.counts["seconds_in_system"], rel=0.2, abs=0.01
     )
+
+
+def refused_with(url, body):
+    """Post a body that should be turned down. Returns the status and the reason given."""
+    request = urllib.request.Request(url + "/v1/chat/completions", body)
+    with pytest.raises(urllib.error.HTTPError) as refused:
+        urllib.request.urlopen(request, timeout=30)
+    return refused.value.code, refused.value.read().decode()
+
+
+def test_a_request_we_cannot_serve_gets_a_reason_and_the_next_one_is_answered(running):
+    net, service, url = running
+    message = [{"role": "user", "content": "Once upon"}]
+    for wrong in (
+        {"messages": message, "temperature": "0.5"},  # a setting that is not a number
+        {"messages": message, "max_tokens": 0},  # nothing to write
+        {"messages": message, "top_p": 0},
+        {"messages": [{"role": "user", "content": ""}]},  # an empty prompt
+        {"no messages": True},
+    ):
+        code, reason = refused_with(url, json.dumps(wrong).encode())
+        assert code == 400 and "error" in reason
+    assert refused_with(url, b"this is not JSON")[0] == 400
+    assert ask(url, "Once upon") == alone(net, "Once upon")  # the engine's thread is still there
+    assert service.counts["finished"] == 1
+
+
+def test_a_pass_that_fails_ends_its_streams_and_the_service_goes_on(running, monkeypatch):
+    net, service, url = running
+    step = service.engine.step
+
+    def fail_once():
+        monkeypatch.setattr(service.engine, "step", step)
+        raise RuntimeError("a pass went wrong")
+
+    monkeypatch.setattr(service.engine, "step", fail_once)
+    with pytest.raises(urllib.error.HTTPError) as refused:
+        ask(url, "Once upon")
+    assert refused.value.code == 503 and service.counts["failed"] == 1
+    assert ask(url, "Once upon") == alone(net, "Once upon")  # a new engine, the same answers
+
+
+def test_requests_in_line_count_as_inside():
+    net = model()
+    service = Service(net, WORDS, budget=cache_bytes(net, 60))  # memory for one of these at a time
+    server = serve(service, port=0)
+    url, prompts = (
+        f"http://127.0.0.1:{server.server_port}",
+        ["Once upon a time", "The cat sat on a"],
+    )
+    threads = [threading.Thread(target=ask, args=(url, p), kwargs={"limit": 40}) for p in prompts]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    counts = service.counts
+    assert counts["finished"] == 2 and counts["refused"] == 0
+    # Time inside, added up request by request, equals requests inside added up over time. With
+    # the waiting one left out, the second sum would come short by its whole wait.
+    assert counts["in_flight_seconds"] == pytest.approx(counts["seconds_in_system"], rel=0.15)
+    service.stop()
+    server.shutdown()

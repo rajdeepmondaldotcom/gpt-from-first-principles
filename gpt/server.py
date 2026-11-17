@@ -5,6 +5,7 @@ import json
 import queue
 import threading
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import torch
@@ -32,6 +33,7 @@ class Service:
             [
                 "requests",
                 "refused",
+                "failed",
                 "finished",
                 "tokens",
                 "first_token_seconds",
@@ -40,25 +42,34 @@ class Service:
             ],
             0,
         )
+        self.lock = threading.Lock()  # web threads and the engine's thread both count refusals
         self.running = True
-        threading.Thread(target=self.work, daemon=True).start()
+        self.thread = threading.Thread(target=self.work, daemon=True)
+        self.thread.start()
 
-    def submit(self, prompt, limit, **how):
-        """Queue a prompt. Returns the request and the queue its tokens will come on, or None.
+    def submit(self, prompt, limit, temperature=0.8, top_p=1.0):
+        """Queue a prompt. Returns the request and the queue its tokens will come on, or None
+        when the line is full. A ValueError says why a request cannot be served at all.
 
-        The model never trained past its context, so the answer stops there. A prompt that fills
-        the context leaves no room to write: a ValueError.
+        The model never trained past its context, so the answer stops there.
         """
+        numbers = (limit, temperature, top_p)
+        if not isinstance(prompt, str) or any(type(x) not in (int, float) for x in numbers):
+            raise ValueError("the prompt must be text, and the settings numbers")
+        if limit < 1 or temperature < 0 or not 0 < top_p <= 1:
+            raise ValueError("max_tokens starts at 1, temperature at 0, and top_p is above 0 to 1")
         ids = self.words.encode(prompt)
         room = self.engine.model.context - len(ids)
-        if room < 1:
-            raise ValueError("the prompt fills the model's context")
-        request = Request(ids, min(limit, room), stop=self.words.end, how=how)
+        if not ids or room < 1:
+            raise ValueError("the prompt is empty, or fills the model's context")
+        how = {"temperature": temperature, "top_p": top_p}
+        request = Request(ids, min(int(limit), room), stop=self.words.end, how=how)
         out = queue.Queue()
         try:
             self.inbox.put_nowait((request, out, time.perf_counter()))
         except queue.Full:  # too many waiting already: say no now, not after a long wait
-            self.counts["refused"] += 1
+            with self.lock:
+                self.counts["refused"] += 1
             return None
         return request, out
 
@@ -75,7 +86,8 @@ class Service:
                 elif self.outs:
                     break  # no memory yet: it waits, and so does everyone behind it
                 else:  # it would not fit in an empty engine
-                    self.counts["refused"] += 1
+                    with self.lock:
+                        self.counts["refused"] += 1
                     out.put(None)
                 held = None
             now = time.perf_counter()
@@ -87,18 +99,41 @@ class Service:
             if not self.outs:
                 time.sleep(0.001)
                 continue
-            for request, token in self.engine.step():
+            try:
+                written = self.engine.step()
+            except Exception:  # noqa: BLE001  one bad pass must not end the service
+                traceback.print_exc()
+                self.counts["failed"] += len(self.outs)
+                for out, _ in self.outs.values():
+                    out.put(None)
+                self.outs.clear()
+                engine = self.engine
+                self.engine = Engine(engine.model, engine.budget, store=engine.store)
+                continue
+            for request, token in written:
                 out, arrived = self.outs[id(request)]
                 now = time.perf_counter()
                 if len(request.written) == 1:
                     self.counts["first_token_seconds"] += now - arrived
                 self.counts["tokens"] += 1
                 out.put(token)
-                if request.done():
-                    out.put(None)  # None ends the stream
+                if (
+                    request.done()
+                ):  # count it before the stream ends, so a reader of the counts sees it
                     self.counts["finished"] += 1
                     self.counts["seconds_in_system"] += now - arrived
                     del self.outs[id(request)]
+                    out.put(None)  # None ends the stream
+        for out in [held and held[1], *(out for out, _ in self.outs.values())]:
+            if out:
+                out.put(None)  # stopped: nobody is left waiting on a stream that will not come
+
+    def stop(self):
+        """Stop the engine's thread, and end each stream that was waiting on it."""
+        self.running = False
+        self.thread.join()
+        while not self.inbox.empty():
+            self.inbox.get()[1].put(None)
 
     def metrics(self):
         """The counts as plain text, one to a line, in the form monitoring tools read."""
@@ -131,16 +166,17 @@ class Handler(BaseHTTPRequestHandler):
         """The chat API most tools speak: messages in, text out, as one answer or as a stream."""
         if self.path != "/v1/chat/completions":
             return self.reply(404, "text/plain", b"not found\n")
-        ask = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         try:
+            ask = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             job = self.service.submit(
                 ask["messages"][-1]["content"],
                 ask.get("max_tokens", 250),
-                temperature=ask.get("temperature", 0.8),
-                top_p=ask.get("top_p", 1.0),
+                ask.get("temperature", 0.8),
+                ask.get("top_p", 1.0),
             )
-        except ValueError as problem:  # nothing we can do with this request: say why
-            body = json.dumps({"error": str(problem)}).encode()
+        except (ValueError, KeyError, IndexError, TypeError) as problem:
+            # Nothing we can do with this request: say why, and keep serving the others.
+            body = json.dumps({"error": f"{type(problem).__name__}: {problem}"}).encode()
             return self.reply(400, "application/json", body + b"\n")
         first = job[1].get() if job else None
         if first is None:
@@ -179,6 +215,7 @@ class Handler(BaseHTTPRequestHandler):
 def serve(service, port=8000):
     """Start answering on this machine only. Returns the server, so a caller can shut it down."""
     Handler.service = service
+    ThreadingHTTPServer.request_queue_size = 256  # a burst waits here: the default holds 5
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
@@ -327,7 +364,8 @@ if __name__ == "__main__":
     say(f"a million tokens at that speed: {minutes:.0f} minutes of this machine")
 
     report, burst, _ = load_test(400, 200)  # far more at once than the line of 64 holds
-    turned_away = int(re.search(r"Non-2xx responses:\s+(\d+)", report)[1])
+    turned = re.search(r"Non-2xx responses:\s+(\d+)", report)  # ab leaves the line out at none
+    turned_away = int(turned[1]) if turned else 0
     say(
         f"400 requests, 200 at a time: {burst['finished']} answered, {turned_away} told to try again"
     )

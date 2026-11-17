@@ -74,4 +74,5 @@ def test_a_poor_draft_costs_passes_and_not_correctness():
     big, draft, generator = model(0), model(1, width=16), torch.Generator().manual_seed(0)
     ids, counts = speculate(big, draft, [1, 2], 40, k=4, generator=generator)
     assert len(ids) == 42 and 0 < counts["kept"] < counts["drafted"]
-    assert counts["passes"] <= 40  # never worse than one pass a token
+    # A pass always writes one token, and one more for each guess kept: the count has to balance.
+    assert counts["passes"] + counts["kept"] >= 40 > counts["passes"] > 8

@@ -104,15 +104,15 @@ if __name__ == "__main__":
     say(f"alone, the prompt is read at {192 / first:,.0f} tokens a second")
     say(f"alone, the answer is written at {1 / gap:,.0f} tokens a second, {gap * 1e3:.1f} ms each")
 
-    # Memory speed: the fastest of five copies of 256 MB.
+    # Memory speed: the fastest of five copies of 256 MB. A copy reads each byte and writes it.
     big, copies = torch.ones(2**26), []
     for _ in range(5):
         began = time.perf_counter()
         big.clone()
         copies.append(time.perf_counter() - began)
-    speed = big.nbytes / min(copies)
+    speed = 2 * big.nbytes / min(copies)
     weights = 4 * sum(p.numel() for p in model.parameters())
-    say(f"this machine copies {speed / 1e9:.1f} GB a second")
+    say(f"this machine moves {speed / 1e9:.1f} GB a second through memory")
     say(
         f"a token reads {weights / 1e6:.1f} MB of weights: at that speed, "
         f"{speed / weights:,.0f} tokens a second"
@@ -120,8 +120,9 @@ if __name__ == "__main__":
 
     # A service that takes one request at a time, at three rates of arrival.
     one = Engine(model, 0).bytes_for(Request(prompts(1)[0], 64))  # the cache one request needs
-    service = 64 / (64 / (192 / first) + 63 * gap)  # tokens a second if it never rested
-    capacity = service / 64  # requests a second
+    each = serve(engine, [(0.0, Request(*prompts(1), 64, how=how))])[0]["tokens"][-1]
+    capacity = 1 / each  # requests a second, if the machine never rested
+    say(f"alone, a prompt of 64 tokens and an answer of 64 take {each:.2f} s")
     say(f"one request at a time can finish {capacity:.1f} requests a second")
     loads = {}
     for share in (0.5, 0.9, 1.5):
@@ -138,7 +139,7 @@ if __name__ == "__main__":
         "31_measure",
         torch=torch.__version__,
         device="cpu",
-        alone={"first": first, "gap": gap},
+        alone={"first": first, "gap": gap, "request": each},
         copy_bytes_a_second=speed,
         capacity=capacity,
         loads={str(k): v for k, v in loads.items()},

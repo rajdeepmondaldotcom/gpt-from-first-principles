@@ -15,6 +15,7 @@ def quantize(grid, bits):
 
 def pack(numbers):
     """Two 4-bit numbers in each byte. Halves the bytes of numbers between -8 and 7."""
+    assert numbers.numel() % 2 == 0, "two numbers to a byte needs an even count"
     low, high = (numbers.flatten() + 8).to(torch.uint8).view(-1, 2).unbind(dim=1)
     return low | (high << 4)
 
@@ -29,6 +30,7 @@ class Quantized(nn.Module):
 
     def __init__(self, layer, bits):
         super().__init__()
+        assert layer.bias is None, "today's layers have no bias, and this one would lose its own"
         numbers, scale = quantize(layer.weight.detach(), bits)
         self.shape, self.four = numbers.shape, bits == 4
         self.register_buffer("numbers", pack(numbers) if self.four else numbers)
