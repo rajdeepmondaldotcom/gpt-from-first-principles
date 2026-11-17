@@ -53,36 +53,37 @@ The engine's thread:
     def work(self):
         last, held = time.perf_counter(), None  # held: the head of the line, while it has no room
         while self.running:
-            while held or not self.inbox.empty():
-                if not held:
-                    held = self.inbox.get()
-                    self.counts["requests"] += 1
-                request, out, arrived = held
-                if self.engine.admit(request):
-                    self.outs[id(request)] = (out, arrived)
-                elif self.outs:
-                    break  # no memory yet: it waits, and so does everyone behind it
-                else:  # it would not fit in an empty engine
-                    with self.lock:
-                        self.counts["refused"] += 1
-                    out.put(None)
-                held = None
-            now = time.perf_counter()
-            inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
-            self.counts["in_flight_seconds"] += inside * (now - last)
-            last = now
-            if not self.outs:
-                time.sleep(0.001)
-                continue
             try:
+                while held or not self.inbox.empty():
+                    if not held:
+                        held = self.inbox.get()
+                        self.counts["requests"] += 1
+                    request, out, arrived = held
+                    if self.engine.admit(request):
+                        self.outs[id(request)] = (out, arrived)
+                    elif self.outs:
+                        break  # no memory yet: it waits, and so does everyone behind it
+                    else:  # it would not fit in an empty engine
+                        with self.lock:
+                            self.counts["refused"] += 1
+                        out.put(None)
+                    held = None
+                now = time.perf_counter()
+                inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
+                self.counts["in_flight_seconds"] += inside * (now - last)
+                last = now
+                if not self.outs:
+                    time.sleep(0.001)
+                    continue
                 written = self.engine.step()
-            except Exception:  # noqa: BLE001  one bad pass must not end the service
+            except Exception:  # noqa: BLE001  one failure must not end the service
                 traceback.print_exc()
-                self.counts["failed"] += len(self.outs)
-                for out, _ in self.outs.values():
-                    out.put(None)
+                lost = [out for out, _ in self.outs.values()] + ([held[1]] if held else [])
+                self.counts["failed"] += len(lost)
+                for out in lost:
+                    out.put(FAILED)  # in place of a token: this answer is over, and not whole
                 self.outs.clear()
-                engine = self.engine
+                held, engine = None, self.engine
                 self.engine = Engine(engine.model, engine.budget, store=engine.store)
                 continue
             for request, token in written:
@@ -102,7 +103,7 @@ The engine's thread:
                 out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
-`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. If that step fails, the thread ends the streams it was writing, counts them as failed, starts a fresh engine and goes on. A request it can tell is bad before then, such as text that is not JSON or a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
+`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. If anything in that fails, each answer being written ends with an error, and the thread starts a fresh engine and goes on. A request that is bad on its face, such as text that is not JSON or a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
 
 ## The proof
 
@@ -117,8 +118,8 @@ uv run pytest tests/test_server.py
 - A listener who leaves after one piece frees their row.
 - A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
 - The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests. A request waiting in line counts as inside.
-- A request with no prompt, a temperature given as text, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
-- A pass of the model that fails ends the streams it was writing. The next request is answered.
+- A request with no prompt, a temperature given as text or as NaN, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
+- A pass of the model that fails gives each answer it was writing an error, whether or not the answer had begun. The next request is answered.
 
 The script starts the server, asks it for one story, then has `ab`, a load tool that comes with the Apache web server, send 200 requests, 16 at a time.
 

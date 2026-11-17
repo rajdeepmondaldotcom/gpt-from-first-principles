@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from gpt.cost import cache_bytes
@@ -5,16 +6,51 @@ from gpt.engine import Engine, Request, slide
 from gpt.generate import generate
 from gpt.model import GPT
 
-PROMPTS = [[5, 9, 2], [1, 2, 3, 4, 5, 6, 7, 8, 9], list(range(10, 27)), [40], [7, 7, 7, 7, 7, 7]]
+PROMPTS = [
+    [5, 9, 2],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    list(range(10, 27)),
+    [40, 3, 22, 9],
+    [7, 31, 2, 50, 18, 6],
+]
 LIMITS = [5, 12, 8, 20, 3]
 
 
 def model():
+    """A small untrained model with its attention sharpened. As it starts, such a model spreads
+    its attention evenly, and its scores hardly change when a key is turned or a place is lost."""
     torch.manual_seed(0)
     net = GPT(vocab=65, context=64, width=32, heads=4, layers=2, kv_heads=2)
     with torch.no_grad():
-        net.embed.weight *= 5  # what it writes now depends on each token before, and on where
+        for block in net.blocks:
+            block.attn.q.weight *= 8
+            block.attn.k.weight *= 8
     return net
+
+
+def logged(scores, log, **how):
+    """In place of lesson 22's `choose`: keep the scores a row was given, and pick its top token."""
+    log.append(scores.clone())
+    return int(scores.argmax())
+
+
+@pytest.fixture
+def scores(monkeypatch):
+    """Make the engine keep each row's scores in its request's `how["log"]`."""
+    monkeypatch.setattr("gpt.engine.choose", logged)
+
+
+def same_scores(net, requests):
+    """Each request got, at each token, the scores the model gives when it reads that text alone
+    and whole, with no cache and no batch."""
+    for request in requests:
+        ids = list(request.prompt)
+        assert len(request.how["log"]) == len(request.written)
+        for got in request.how["log"]:
+            with torch.no_grad():
+                want = net(torch.tensor([ids]))[0, -1]
+            assert torch.allclose(got, want, atol=1e-4)
+            ids.append(int(want.argmax()))
 
 
 def alone(net, prompt, limit, stop=None):
@@ -32,18 +68,20 @@ def serve(net, arrivals, chunk=64, budget=10**9):
     return rounds
 
 
-def test_each_row_of_a_batch_matches_its_solo_run():
+def test_each_row_of_a_batch_matches_its_solo_run(scores):
     net = model()
-    requests = [Request(p, n, how={"temperature": 0}) for p, n in zip(PROMPTS, LIMITS)]
+    requests = [Request(p, n, how={"log": []}) for p, n in zip(PROMPTS, LIMITS)]
     serve(net, {0: requests})
+    same_scores(net, requests)
     for request in requests:
         assert request.written == alone(net, request.prompt, request.limit)
 
 
-def test_requests_join_and_leave_a_running_batch_and_nothing_changes():
+def test_requests_join_and_leave_a_running_batch_and_nothing_changes(scores):
     net = model()
-    requests = [Request(p, n, how={"temperature": 0}) for p, n in zip(PROMPTS, LIMITS)]
+    requests = [Request(p, n, how={"log": []}) for p, n in zip(PROMPTS, LIMITS)]
     serve(net, {0: requests[:1], 2: requests[1:3], 7: requests[3:4], 9: requests[4:]})
+    same_scores(net, requests)
     for request in requests:
         assert request.written == alone(net, request.prompt, request.limit)
 
@@ -118,18 +156,23 @@ def test_the_budget_refuses_what_does_not_fit_and_room_comes_back():
 def test_the_cache_stays_inside_the_budget_when_rows_are_padded():
     net = model()
     long, short = list(range(1, 41)), [5, 9]
-    budget = cache_bytes(net, 45) + 4 * cache_bytes(net, 7)  # what the five would need unpadded
-    engine, peak = Engine(net, budget), 0
-    asked = [Request(long, 5, how={"temperature": 0})]
-    asked += [Request(short, 5, how={"temperature": 0}) for _ in range(4)]
-    taken = [engine.admit(request) for request in asked]
+
+    def ask(prompts):
+        return [Request(prompt, 5, how={"temperature": 0}) for prompt in prompts]
+
+    unpadded = cache_bytes(net, 45) + 4 * cache_bytes(net, 7)  # what one long and four short hold
+    engine = Engine(net, unpadded)
+    taken = [engine.admit(request) for request in ask([long, short, short, short, short])]
     assert taken == [True, False, False, False, False]  # beside the long one, each counts as long
-    assert Engine(net, 5 * cache_bytes(net, 45)).admit(asked[0])
+    # With room for two long rows, a short one is taken. Padded, the two hold more than they
+    # would apart, and no more than the budget.
+    engine, peak = Engine(net, 2 * cache_bytes(net, 45)), 0
+    assert all(engine.admit(request) for request in ask([long, short]))
     while engine.reading or engine.rows:
         engine.step()
         if engine.kept:
             peak = max(peak, sum(t.nbytes for one in engine.kept for t in (one["k"], one["v"])))
-    assert 0 < peak <= budget
+    assert cache_bytes(net, 45) + cache_bytes(net, 7) < peak <= engine.budget
 
 
 def test_sliding_a_row_along_the_batch_changes_no_score():

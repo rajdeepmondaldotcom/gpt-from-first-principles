@@ -158,7 +158,7 @@ def test_the_metrics_page_counts_what_happened(running):
         ask(url, prompt, limit=10)
     with urllib.request.urlopen(url + "/metrics") as reply:
         lines = dict(line.split() for line in reply.read().decode().splitlines())
-    assert lines["stories_finished"] == "3" and lines["stories_in_flight"] == "0"
+    assert lines["stories_finished"] == "3" and lines["stories_being_written"] == "0"
     assert int(lines["stories_tokens"]) == service.counts["tokens"] <= 30
     # Time in the system, added up request by request, equals requests in flight added up over time.
     assert service.counts["in_flight_seconds"] == pytest.approx(
@@ -181,6 +181,9 @@ def test_a_request_we_cannot_serve_gets_a_reason_and_the_next_one_is_answered(ru
         {"messages": message, "temperature": "0.5"},  # a setting that is not a number
         {"messages": message, "max_tokens": 0},  # nothing to write
         {"messages": message, "top_p": 0},
+        {"messages": message, "temperature": float("nan")},  # JSON lets these three through
+        {"messages": message, "temperature": 1e-40},  # dividing by it would overflow
+        {"messages": message, "max_tokens": float("nan")},
         {"messages": [{"role": "user", "content": ""}]},  # an empty prompt
         {"no messages": True},
     ):
@@ -188,7 +191,8 @@ def test_a_request_we_cannot_serve_gets_a_reason_and_the_next_one_is_answered(ru
         assert code == 400 and "error" in reason
     assert refused_with(url, b"this is not JSON")[0] == 400
     assert ask(url, "Once upon") == alone(net, "Once upon")  # the engine's thread is still there
-    assert service.counts["finished"] == 1
+    assert service.counts["finished"] == 1 and service.counts["failed"] == 0
+    assert service.submit("Once upon", float("inf"))[0].limit == 64 - 9  # as much as fits
 
 
 def test_a_pass_that_fails_ends_its_streams_and_the_service_goes_on(running, monkeypatch):
@@ -202,27 +206,48 @@ def test_a_pass_that_fails_ends_its_streams_and_the_service_goes_on(running, mon
     monkeypatch.setattr(service.engine, "step", fail_once)
     with pytest.raises(urllib.error.HTTPError) as refused:
         ask(url, "Once upon")
-    assert refused.value.code == 503 and service.counts["failed"] == 1
+    assert refused.value.code == 500 and service.counts["failed"] == 1  # an error, and not "busy"
     assert ask(url, "Once upon") == alone(net, "Once upon")  # a new engine, the same answers
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_a_pass_that_fails_part_way_is_not_passed_off_as_a_whole_answer(
+    running, monkeypatch, stream
+):
+    net, service, url = running
+    step, calls = service.engine.step, []
+
+    def fail_on_the_third():
+        calls.append(1)
+        if len(calls) == 3:
+            raise RuntimeError("a pass went wrong")
+        return step()
+
+    monkeypatch.setattr(service.engine, "step", fail_on_the_third)
+    if stream:
+        with post(url, "Once upon", stream=True, limit=20) as reply:
+            lines = [line.decode().strip() for line in reply if line.strip()]
+        assert "error" in lines[-1] and "data: [DONE]" not in lines  # no sign of a normal end
+    else:
+        with pytest.raises(urllib.error.HTTPError) as refused:
+            ask(url, "Once upon")
+        assert refused.value.code == 500
+    assert service.counts["failed"] == 1 and service.counts["finished"] == 0
+    assert ask(url, "Once upon") == alone(net, "Once upon")
 
 
 def test_requests_in_line_count_as_inside():
     net = model()
     service = Service(net, WORDS, budget=cache_bytes(net, 60))  # memory for one of these at a time
-    server = serve(service, port=0)
-    url, prompts = (
-        f"http://127.0.0.1:{server.server_port}",
-        ["Once upon a time", "The cat sat on a"],
-    )
-    threads = [threading.Thread(target=ask, args=(url, p), kwargs={"limit": 40}) for p in prompts]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
+    jobs = [service.submit(p, 40, temperature=0) for p in ("Once upon a time", "The cat sat on a")]
+    for _, out in jobs:  # both are in before either is read, so the second one has to wait
+        assert len(list(iter(out.get, None))) == 40
     counts = service.counts
     assert counts["finished"] == 2 and counts["refused"] == 0
+    # The second one's wait for its first token is the whole time the first one took: about a
+    # third of the time the two spent inside, where two that never waited spend a fortieth.
+    assert counts["first_token_seconds"] > 0.15 * counts["seconds_in_system"]
     # Time inside, added up request by request, equals requests inside added up over time. With
     # the waiting one left out, the second sum would come short by its whole wait.
     assert counts["in_flight_seconds"] == pytest.approx(counts["seconds_in_system"], rel=0.15)
     service.stop()
-    server.shutdown()

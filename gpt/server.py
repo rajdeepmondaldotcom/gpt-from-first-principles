@@ -12,6 +12,8 @@ import torch
 
 from gpt.engine import Engine, Request
 
+FAILED = object()  # what a request's queue gets, in place of a token, when a pass has failed
+
 
 def pieces(words, tokens):
     """Turn token ids into text as they arrive. Half a character waits for its other half."""
@@ -56,14 +58,17 @@ class Service:
         numbers = (limit, temperature, top_p)
         if not isinstance(prompt, str) or any(type(x) not in (int, float) for x in numbers):
             raise ValueError("the prompt must be text, and the settings numbers")
-        if limit < 1 or temperature < 0 or not 0 < top_p <= 1:
-            raise ValueError("max_tokens starts at 1, temperature at 0, and top_p is above 0 to 1")
+        # Written so that a setting that is no number at all (JSON allows NaN) is turned down too.
+        if not (limit >= 1 and (temperature == 0 or temperature >= 0.01) and 0 < top_p <= 1):
+            raise ValueError(
+                "max_tokens starts at 1, temperature is 0 or at least 0.01, and top_p is above 0 to 1"
+            )
         ids = self.words.encode(prompt)
         room = self.engine.model.context - len(ids)
         if not ids or room < 1:
             raise ValueError("the prompt is empty, or fills the model's context")
         how = {"temperature": temperature, "top_p": top_p}
-        request = Request(ids, min(int(limit), room), stop=self.words.end, how=how)
+        request = Request(ids, int(min(limit, room)), stop=self.words.end, how=how)
         out = queue.Queue()
         try:
             self.inbox.put_nowait((request, out, time.perf_counter()))
@@ -76,36 +81,37 @@ class Service:
     def work(self):
         last, held = time.perf_counter(), None  # held: the head of the line, while it has no room
         while self.running:
-            while held or not self.inbox.empty():
-                if not held:
-                    held = self.inbox.get()
-                    self.counts["requests"] += 1
-                request, out, arrived = held
-                if self.engine.admit(request):
-                    self.outs[id(request)] = (out, arrived)
-                elif self.outs:
-                    break  # no memory yet: it waits, and so does everyone behind it
-                else:  # it would not fit in an empty engine
-                    with self.lock:
-                        self.counts["refused"] += 1
-                    out.put(None)
-                held = None
-            now = time.perf_counter()
-            inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
-            self.counts["in_flight_seconds"] += inside * (now - last)
-            last = now
-            if not self.outs:
-                time.sleep(0.001)
-                continue
             try:
+                while held or not self.inbox.empty():
+                    if not held:
+                        held = self.inbox.get()
+                        self.counts["requests"] += 1
+                    request, out, arrived = held
+                    if self.engine.admit(request):
+                        self.outs[id(request)] = (out, arrived)
+                    elif self.outs:
+                        break  # no memory yet: it waits, and so does everyone behind it
+                    else:  # it would not fit in an empty engine
+                        with self.lock:
+                            self.counts["refused"] += 1
+                        out.put(None)
+                    held = None
+                now = time.perf_counter()
+                inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
+                self.counts["in_flight_seconds"] += inside * (now - last)
+                last = now
+                if not self.outs:
+                    time.sleep(0.001)
+                    continue
                 written = self.engine.step()
-            except Exception:  # noqa: BLE001  one bad pass must not end the service
+            except Exception:  # noqa: BLE001  one failure must not end the service
                 traceback.print_exc()
-                self.counts["failed"] += len(self.outs)
-                for out, _ in self.outs.values():
-                    out.put(None)
+                lost = [out for out, _ in self.outs.values()] + ([held[1]] if held else [])
+                self.counts["failed"] += len(lost)
+                for out in lost:
+                    out.put(FAILED)  # in place of a token: this answer is over, and not whole
                 self.outs.clear()
-                engine = self.engine
+                held, engine = None, self.engine
                 self.engine = Engine(engine.model, engine.budget, store=engine.store)
                 continue
             for request, token in written:
@@ -134,7 +140,7 @@ class Service:
     def metrics(self):
         """The counts as plain text, one to a line, in the form monitoring tools read."""
         lines = [f"stories_{name} {value}" for name, value in self.counts.items()]
-        return "\n".join([*lines, f"stories_in_flight {len(self.outs)}", ""])
+        return "\n".join([*lines, f"stories_being_written {len(self.outs)}", ""])
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -178,14 +184,17 @@ class Handler(BaseHTTPRequestHandler):
         if first is None:
             return self.reply(503, "application/json", b'{"error": "busy, try again"}\n')
         request, out = job
-        text = pieces(
-            self.service.words,
-            [first, *iter(out.get, None)] if not ask.get("stream") else self.live(first, out),
-        )
+        failed = b'{"error": "the model failed on this request"}\n'
+        text = pieces(self.service.words, self.live(first, out))
         if not ask.get("stream"):
-            answer = {"role": "assistant", "content": "".join(text)}
+            try:
+                answer = {"role": "assistant", "content": "".join(text)}
+            except RuntimeError:  # a pass failed before the answer was whole
+                return self.reply(500, "application/json", failed)
             body = {"object": "chat.completion", "choices": [{"index": 0, "message": answer}]}
             return self.reply(200, "application/json", json.dumps(body).encode())
+        if first is FAILED:
+            return self.reply(500, "application/json", failed)
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.end_headers()
@@ -198,21 +207,32 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode())
                 self.wfile.flush()
             self.wfile.write(b"data: [DONE]\n\n")
+        except RuntimeError:  # a pass failed part way: say so where [DONE] would have come
+            self.wfile.write(b"data: " + failed + b"\n")
         except (BrokenPipeError, ConnectionResetError):  # the reader left: stop writing for them
             request.limit = 0
         return None
 
     @staticmethod
     def live(first, out):
-        yield first
-        yield from iter(out.get, None)
+        """One answer's tokens as they come. The engine sends None after the last one, and
+        FAILED in place of a token when a pass failed."""
+        token = first
+        while token is not None:
+            if token is FAILED:
+                raise RuntimeError("a pass of the model failed")
+            yield token
+            token = out.get()
+
+
+class Server(ThreadingHTTPServer):
+    request_queue_size = 256  # a burst of new connections waits here: the default holds 5
 
 
 def serve(service, port=8000):
     """Start answering on this machine only. Returns the server, so a caller can shut it down."""
     Handler.service = service
-    ThreadingHTTPServer.request_queue_size = 256  # a burst waits here: the default holds 5
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    server = Server(("127.0.0.1", port), Handler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
 
@@ -316,8 +336,8 @@ if __name__ == "__main__":
     cache = Path("data/cache")
     model, words = load(cache / "storyteller")  # lesson 25's model, which writes to order
     room = cache_bytes(model, model.context)  # the cache of one request that fills the context
-    # Room for 16 requests at once, a line of 64, and a store of beginnings as large as 8 caches:
-    # a listener who asks what happens next sends the story so far again.
+    # Memory for 16 requests that fill the context, a line of 64, and a store of beginnings as
+    # large as 8 such caches: a listener who asks what happens next sends the story so far again.
     service = Service(model, words, 16 * room, waiting=64, store=PrefixStore(8 * room))
     server = serve(service)
     url = "http://127.0.0.1:8000/v1/chat/completions"
