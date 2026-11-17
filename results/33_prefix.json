@@ -1,0 +1,20 @@
+{
+  "commit": "96949be",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "tokens_read": {
+    "plain": 4140,
+    "stored": 1100,
+    "changing_first": 4140,
+    "tight": 1100
+  },
+  "printed": [
+    "20 prompts that share their first 160 tokens, no store: 4,140 tokens read, first token after 36 ms for half",
+    "the same prompts with a store: 1,100 tokens read, first token after 9 ms for half",
+    "the answers are the same with and without the store: True",
+    "the part that changes put first, with a store: 4,140 tokens read, first token after 29 ms for half",
+    "a store with room for 12 blocks: 1,100 tokens read, first token after 10 ms for half",
+    "that store holds 1,179,648 bytes of its 1,179,648, in 12 blocks"
+  ]
+}

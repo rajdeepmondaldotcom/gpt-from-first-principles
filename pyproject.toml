@@ -12,6 +12,8 @@ dependencies = ["torch>=2.6", "numpy"]
 reference = [
     "tiktoken",
     "regex",
+    # Lesson 37: Apple's engine, which exists for Macs
+    "mlx-lm; sys_platform == 'darwin'",
 ]
 # Lessons 38 to 40: the rules of chess (GPL-3) and a reader for Lichess's compressed files.
 chess = [
