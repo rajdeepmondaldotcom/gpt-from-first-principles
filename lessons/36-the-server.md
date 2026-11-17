@@ -8,8 +8,8 @@ Each script so far runs once, in a terminal, and stops. Nobody else can ask our 
 
 A server is a program that waits for requests from other programs, its clients, and answers each one. Ours has five jobs.
 
-1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, sent to a web address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, a load-testing tool included.
-2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one byte each. We hold the first half back until the second arrives.
+1. Speak a format that clients know. Most tools that talk to a language model send one request: a list of messages, to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so such a tool can use our model.
+2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one each. We hold the first half until the second arrives.
 3. Serve many at once. Each web request gets a thread of its own: a line of work that runs beside the others in one program, and mostly waits. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue.
 4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
@@ -103,7 +103,7 @@ The engine's thread:
                 out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
-`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. If anything in that fails, each answer being written ends with an error, and the thread starts a fresh engine and goes on. A request that is bad on its face, such as text that is not JSON or a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
+`self.inbox` is the waiting line, a queue with a limit. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine. A request that is bad on its face, such as a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server and the page you see in the browser.
 
 ## The proof
 
@@ -119,7 +119,7 @@ uv run pytest tests/test_server.py
 - A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
 - The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests. A request waiting in line counts as inside.
 - A request with no prompt, a temperature given as text or as NaN, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
-- A pass of the model that fails gives each answer it was writing an error, whether or not the answer had begun. The next request is answered.
+- A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
 The script starts the server, asks it for one story, then has `ab`, a load tool that comes with the Apache web server, send 200 requests, 16 at a time.
 
@@ -135,7 +135,7 @@ Timings are from an M4 laptop that was running other jobs, and they move from ru
 
 @@RESULTS@@
 
-To keep it running and hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`. That address is this machine itself, at door 8000, and nothing outside the machine can reach it.
+To hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine itself, which nothing outside it can reach.
 
 ## What it still cannot do
 
