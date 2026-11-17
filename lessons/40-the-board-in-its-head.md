@@ -8,19 +8,19 @@ The model plays chess from a list of moves. We never showed it a board. A legal 
 
 After the model reads a move's last token, each block leaves a row of 256 numbers there: lesson 9's stream. The next move is worked out from those numbers, and they carry no labels. We look for the position in them.
 
-A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on positions from games, where a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
+A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on each fourth position of a game, so white is always to move, and a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
 
 We want it weak: a big network could work the position out for itself. One linear layer cannot, so if it reads the board, the stream holds the board along straight lines.
 
 We check three things.
 
-1. Test on games the probe has not seen, and leave out each position whose moves so far are also the moves so far of one of its own, since openings repeat.
-2. Compare with a lazy guess. Most squares hold what they usually hold, so we count how often the most usual piece for each square is right, and score the probe apart on the squares where it is wrong.
+1. Test on games the probe has not seen, and leave out each position whose moves so far also begin one of its own games: openings repeat.
+2. Compare with a lazy guess: each square's most usual piece. Score the probe apart on the squares where that guess is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
-The board could be in the stream and play no part in the move. So we change it. We edit after whichever of the first five blocks reads best on other games, so that a block still runs after the edit. Take a position where the side to move has one queen, with a move to make, and a pawn. Along the probe's own line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should now give queen moves less chance. A nudge of the same length along a pawn's line should not. We try three margins: 3, 10 and 30.
+The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit. Take a position where white has one queen, with a move to make, and a pawn. Along the probe's line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not. We try margins of 3, 10 and 30.
 
-Last, we watch the move form: lesson 10's last two steps, a normalization and the scores layer, applied to the stream after each earlier block, show what the model would say if it stopped there.
+Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, show what the model would say if it stopped after an earlier block.
 
 ## By hand
 
@@ -54,7 +54,7 @@ def fit(x, y, generator, steps=1000, rate=1e-2):
     return probe
 ```
 
-This is an ordinary training loop on one layer, 256 positions to a step. `view(-1, PIECES)` lays the scores out as one row of 13 for each square of each position, so that lesson 3's loss can mark each square.
+An ordinary training loop on one layer, 256 positions to a step. `view(-1, PIECES)` lays the scores out as a row of 13 for each square, so that lesson 3's loss can mark each square.
 
 ```python
 # gpt/probe.py
@@ -73,7 +73,7 @@ def erase(probe, stream, square, piece, margin=3.0, length=None):
     return max(margin - lead, 0.0) / (line @ line).item() * line.detach()
 ```
 
-PyTorch stores the layer's grid with a row for each score (lesson 4), so `view(64, PIECES, -1)` sorts the rows by square and piece. `rows[0]` holds the weights for "empty" on this square and `rows[piece]` those for the piece. Their difference is the one line in the stream along which the probe tells the two apart.
+`view(64, PIECES, -1)` sorts the layer's rows by square and piece. The row for "empty" minus the row for the piece is the one line in the stream along which the probe tells the two apart.
 
 ## The proof
 
@@ -81,17 +81,17 @@ PyTorch stores the layer's grid with a row for each score (lesson 4), so `view(6
 uv run pytest tests/test_probe.py
 ```
 
-- The hand table for the start and after `e4 e5 Nf3`, and the place of each move's last token, castling included.
-- The stream after the last block, put through the final layer, gives the model's own scores. A change made after one block changes the stream at the last token from that block on, and at no earlier token.
+- The hand table for the start and after `e4 e5 Nf3`, and the place of each move's last token.
+- The last block's stream, put through the final layer, gives the model's own scores. An edit after one block changes the last token's stream from that block on, and no earlier token's.
 - On made-up streams with a board written in along straight lines, a probe reads over 0.9 of squares, and under 0.4 when fitted to shuffled boards.
-- After `erase`, the probe scores empty above the piece on that square, by the margin asked for.
+- After `erase`, the probe scores empty above the piece by the margin asked for. Where it did already, nothing changes. A nudge of a set length runs along the same line.
 
 ```bash
 uv run python -m gpt.probe
 ```
 
 ```
-positions to fit on: 18,940 from 1,200 games. To pick a block: 4,707 from 300. Held back: 4,608 from 300
+positions to fit on: 18,940 from 1,200 games. To pick a block: 4,473 from 300. Held back: 4,608 from 300
 naming each square's most usual piece: 67.3% right, 66.7% to 67.8%
 a probe on the stream after block 1: 73.8% right, 73.2% to 74.3%
 a probe on the stream after block 2: 75.6% right, 75.1% to 76.2%
@@ -103,8 +103,8 @@ the probe after block 5, fitted to shuffled boards: 63.2% right, 62.6% to 63.7%
 on squares that differ from their usual piece, that probe is right 60.9% of the time
 positions where the mover has one queen that can move: 3,200
 chance of a queen move next, untouched: 20.3%
-a nudge 0.08 of the stream's length after block 5, rubbing out the queen: 20.1%, a change of -0.3% to -0.1%
-a nudge 0.08 of the stream's length after block 5, rubbing out the pawn: 20.3%, a change of -0.0% to +0.1%
+a nudge 0.07 of the stream's length after block 5, rubbing out the queen: 20.1%, a change of -0.3% to -0.1%
+a nudge 0.07 of the stream's length after block 5, rubbing out the pawn: 20.3%, a change of -0.0% to +0.0%
 a nudge 0.12 of the stream's length after block 5, rubbing out the queen: 19.9%, a change of -0.5% to -0.3%
 a nudge 0.12 of the stream's length after block 5, rubbing out the pawn: 20.3%, a change of -0.0% to +0.1%
 a nudge 0.28 of the stream's length after block 5, rubbing out the queen: 18.5%, a change of -2.0% to -1.5%
@@ -115,13 +115,16 @@ after block 3: the final choice is on top in 19% of positions, with a chance of 
 after block 4: the final choice is on top in 27% of positions, with a chance of 18%
 after block 5: the final choice is on top in 43% of positions, with a chance of 28%
 after block 6: the final choice is on top in 100% of positions, with a chance of 35%
+a probe after block 5 on positions with either side to move: 74.9% right, 74.3% to 75.3%
 ```
 
 Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%, and the true one 80.7%. On squares that are not as usual it is right 60.9% of the time.
 
-Untouched, the model gives queen moves a chance of 20.3%. The nudge set before the run, 0.08 of the stream's length, takes that to 20.1%, and longer ones to 19.9% and 18.5%, each interval clear of zero. A pawn rubbed out with nudges of the same lengths leaves 20.3%, 20.3% and 20.5%. The model does use the line the probe reads: by 1.8 points at the longest nudge.
+Untouched, the model gives queen moves a chance of 20.3%. A margin of 3 takes a nudge of 0.07 of the stream's length on average, and brings that to 20.1%. Margins of 10 and 30, at 0.12 and 0.28, bring it to 19.9% and 18.5%, each interval clear of zero. Pawn nudges of the same lengths leave 20.3%, 20.3% and 20.5%. So the model uses the probe's line: the longest nudge costs queen moves 1.5 to 2.0 points.
 
-The move forms late. After block 4 the final choice is on top in 27% of positions, and after block 5 in 43%.
+The move forms late: the final choice is on top in 27% of positions after block 4, and 43% after block 5.
+
+A last probe is fitted and tested on each third position, where either side may be to move. After block 5 it reads 74.9%, against 80.7% with white to move.
 
 ## What it still cannot do
 
@@ -143,6 +146,5 @@ Each block reads the stream and adds to it, and the final layer reads it to choo
 
 Go deeper:
 
-- Li and others, [Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task](https://arxiv.org/abs/2210.13382) (2022). Probes and edits on an Othello model, done there first, with probes of two layers where ours has one.
 - Karvonen, [Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models](https://arxiv.org/abs/2403.15498) (2024). Linear probes and edits on a chess model.
-- Alain and Bengio, [Understanding intermediate layers using linear classifier probes](https://arxiv.org/abs/1610.01644) (2016). Where probes come from.
+- Nanda, Lee and Wattenberg, [Emergent Linear Representations in World Models of Self-Supervised Sequence Models](https://arxiv.org/abs/2309.00941) (2023). On Othello, one linear layer reads the board once squares are labelled as the mover's and the opponent's: the thing to try on our 74.9%.
