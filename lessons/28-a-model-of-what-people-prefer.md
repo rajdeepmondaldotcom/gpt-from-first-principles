@@ -96,7 +96,7 @@ uv run python -m gpt.scorer
 
 ## What it still cannot do
 
-The scorer is a second model to train, to keep and to be fooled. The pairs themselves already say which story is better, and we have not learned from them directly.
+The scorer is a second model to train and keep, and it can be fooled. The pairs themselves already say which story is better, and we have not learned from them directly.
 
 ## Check yourself
 
