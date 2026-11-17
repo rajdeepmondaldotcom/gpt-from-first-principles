@@ -35,7 +35,7 @@ def clean(doc):
     """One document in, tidy text out. Returns None for junk."""
     doc = unicodedata.normalize("NFC", doc).strip()  # one way to write each character
     plain = sum(ch.isalpha() or ch.isspace() for ch in doc)
-    if len(doc) < 100 or "�" in doc or plain < 0.8 * len(doc):
+    if len(doc) < 100 or "\ufffd" in doc or plain < 0.8 * len(doc):
         return None  # a fragment, broken bytes, or mostly not words
     return doc
 
