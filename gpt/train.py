@@ -86,7 +86,7 @@ def resume(path, model, optimizer, generator):
         state["square"],
         state["steps"],
     )
-    generator.set_state(state["generator"])
+    generator.set_state(state["generator"].cpu())  # a generator lives on the processor
     return state["step"]
 
 
