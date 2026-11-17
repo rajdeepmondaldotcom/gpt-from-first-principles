@@ -1,0 +1,61 @@
+{
+  "commit": "d914832",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "by_stride": {
+    "256": 1.5923211574554443,
+    "64": 1.4994444847106934,
+    "16": 1.4999324083328247
+  },
+  "val_nats": 1.4797116540626478,
+  "interval": [
+    1.4626590013504028,
+    1.4965814352035522
+  ],
+  "sixteen_bits": {
+    "gap": 9.84799416237698e-05,
+    "interval": [
+      -7.23603898222791e-06,
+      0.00020682139438576996
+    ]
+  },
+  "tasks_passed": 0,
+  "tries": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "printed": [
+    "unseen documents: 2,525, and 24,350 of the training ones",
+    "20,000 tokens at a stride of 256: 1.592 nats a token",
+    "20,000 tokens at a stride of 64: 1.499 nats a token",
+    "20,000 tokens at a stride of 16: 1.500 nats a token",
+    "unseen stories: 1.480 nats a token, 95% interval 1.463 to 1.497",
+    "250 stories, drawn story by story: 0.094 wide. Drawn token by token: 0.033 wide",
+    "16 bits minus 32 bits: +0.0001 nats, 95% interval -0.0000 to +0.0002",
+    "three unseen stories planted in the training text: found [3, 40, 77]",
+    "the real split: 0 leaks",
+    "tasks passed: 0 of 100, 95% interval 0.00 to 0.00",
+    "pass at 1, from 10 tries on each of 20 tasks: 0.00",
+    "pass at 5, from 10 tries on each of 20 tasks: 0.00",
+    "a task: 'Name: Ollie\\nWords: fish, stone, duck\\nStory:'"
+  ]
+}
