@@ -2,7 +2,11 @@
 
 Build a GPT yourself. Train it, serve it, then teach the same code chess.
 
-You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script. The numbers here come from an M4 MacBook. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine.
+You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games.
+
+Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
+
+The numbers here come from an M4 MacBook. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine.
 
 One prompt, `Once upon a time`, answered by the model at six stages. Lessons 1 to 16 learn from Shakespeare, and lesson 21 from children's stories. Line breaks are shown as spaces.
 
