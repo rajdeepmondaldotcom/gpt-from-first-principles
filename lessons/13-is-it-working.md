@@ -2,7 +2,7 @@
 
 By the end of this page you have six checks that turn a silent bug into a failed line, and a measured cure for a model that learns its text by heart.
 
-Lesson 12's loop prints numbers. A model with no mask still prints a falling loss and raises no error. A test here shows it: on random text, where nothing can be learned, its loss ends more than 1 nat below a healthy model's.
+A model with no mask still prints a falling loss and raises no error. A test here shows it: on random text, where nothing can be learned, its loss ends more than 1 nat below a healthy model's.
 
 ## The idea
 
@@ -15,7 +15,7 @@ A check is a fact that holds for a healthy run and fails for a broken one. We ru
 - The loop can learn one batch by heart. If the loss stays up, the loop is broken: slopes are not reaching the weights, or old slopes are piling up.
 - Each grid of weights moves a little on each step. Measure how far a grid moved as a share of its own size. A share of 0 means the optimizer never got that grid. Our check fails a share above 2%.
 
-The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more, and the sums are below. Later steps are smaller than the first: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
+The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more, and the sums are below. Later steps are smaller: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
 
 A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and a model with a large gap is said to overfit. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
 
@@ -99,7 +99,7 @@ dropout 0.3 and decay 0.1: training text 1.230, unseen text 2.286, gap 1.055 nat
 
 Both runs are lesson 12's loop for 3,000 steps on 100,000 characters. The plain run has no dropout and no decay.
 
-Plain, the model stores its text: 0.491 nats on the text it trained on and 3.648 on unseen text, worse than the counted bigram's 2.482. With dropout and decay together the gap falls from 3.157 nats to 1.055, and the loss on unseen text to 2.286. Two things changed at once, so this shows what the pair does and not what each does.
+Plain, the model stores its text: 0.491 nats on the text it trained on and 3.648 on unseen text, worse than the counted bigram's 2.482. With dropout and decay together the gap falls from 3.157 nats to 1.055, and the loss on unseen text to 2.286. Two things changed at once, so this shows the pair and not each.
 
 ## What it still cannot do
 
