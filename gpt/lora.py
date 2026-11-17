@@ -45,15 +45,15 @@ if __name__ == "__main__":
     from gpt.story import load
 
     cache = Path("data/cache")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
-    model, words = load(cache / "story", device)
+    device = "mps" if torch.backends.mps.is_available() else "cpu"  # where it trains
+    model, words = load(cache / "story")  # it writes and is measured on the processor
     generator = torch.Generator().manual_seed(0)
     examples, held, unseen = prepare(cache, words)
     whole = sum(p.numel() for p in model.parameters())
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
     add_lora(model, rank=8)
-    model.to(device)  # the corrections were made on the processor
+    model.to(device)
     trained = [p for p in model.parameters() if p.requires_grad]
     count = sum(p.numel() for p in trained)
     say(f"trained: {count:,} of {whole:,} parameters, {4 * count / 1e6:.2f} MB to store")
@@ -63,13 +63,14 @@ if __name__ == "__main__":
     ):
         if step % 100 == 0:
             say(f"step {step}: {loss:.3f} nats on the answers")
+    model.to("cpu")
     after, plain_after = measure("after", model, words, held, unseen, generator)
     gap, (low, high) = plain_gap(plain_after, plain_before, generator)
     say(
         f"plain stories, after minus before: {gap:+.3f} nats, 95% interval {low:+.3f} to {high:+.3f}"
     )
 
-    window = unseen[0][None, :64].to(device)
+    window = unseen[0][None, :64]
     with torch.no_grad():
         apart = model(window)
         merge(model)
