@@ -5,6 +5,7 @@ import time
 import torch
 
 from gpt.attention import attend
+from gpt.gpt2 import loss_on
 from gpt.results import save, say
 
 
@@ -18,24 +19,26 @@ def forward_flops(model, tokens, context):
 
 
 def cache_bytes(model, tokens):
-    """What lesson 16's cache holds for `tokens` tokens: a key and a value in each block."""
+    """What the model's cache holds for `tokens` tokens: a key and a value in each block."""
     attn = model.blocks[0].attn
     return 2 * len(model.blocks) * attn.k.out_features * 4 * tokens  # 4 bytes a number
 
 
-def layer_bytes(model, ids):
-    """Run one forward pass and add up the bytes of each layer's result."""
-    total = 0
+def kept_bytes(model, x, y):
+    """The bytes one training step keeps from its forward pass for its backward pass."""
+    own = {p.untyped_storage().data_ptr() for p in model.parameters()}
+    kept = {}
 
-    def note(layer, inputs, out):
-        nonlocal total
-        total += out.nbytes
+    def note(tensor):
+        block = tensor.untyped_storage()  # the memory a tensor's numbers sit in
+        if block.data_ptr() not in own:  # the weights are counted with the training state
+            kept[block.data_ptr()] = block.nbytes()  # once, however many tensors share it
+        return tensor
 
-    hooks = [m.register_forward_hook(note) for m in model.modules() if not list(m.children())]
-    model(ids)
-    for hook in hooks:
-        hook.remove()
-    return total
+    # PyTorch calls `note` with each tensor it saves for the backward pass.
+    with torch.autograd.graph.saved_tensors_hooks(note, lambda tensor: tensor):
+        loss_on(model, x, y)
+    return sum(kept.values())
 
 
 def attend_in_tiles(q, k, v, mask, tile):
@@ -47,7 +50,6 @@ def attend_in_tiles(q, k, v, mask, tile):
 
 
 if __name__ == "__main__":
-    from gpt.gpt2 import loss_on
     from gpt.model import GPT
     from gpt.optim import AdamW
 
@@ -79,30 +81,35 @@ if __name__ == "__main__":
                 best = min(best, time.perf_counter() - began)
             return best
 
-        return model, x, seconds(forward), seconds(step)
+        return model, x, y, seconds(forward), seconds(step)
 
-    model, x, forward, whole = measure("cpu", vocab=65, context=64, width=128, heads=4, layers=4)
+    model, x, y, forward, whole = measure("cpu", vocab=65, context=64, width=128, heads=4, layers=4)
     count = sum(p.numel() for p in model.parameters())
     flops = forward_flops(model, x.numel(), model.context)
+    kept = kept_bytes(model, x, y)
+    longer = torch.randint(65, (32, 129))  # the same batch with twice the context
+    grown = kept_bytes(model, longer[:, :-1], longer[:, 1:]) / kept
     say(f"parameters: {count:,}, {4 * count / 1e6:.1f} MB of weights")
     say(f"training state: weights, slopes and two averages, {16 * count / 1e6:.1f} MB")
-    say(f"layer results for one batch of 32 x 64 tokens: {layer_bytes(model, x) / 1e6:.1f} MB")
+    say(f"kept for the backward pass, one batch of 32 x 64 tokens: {kept / 1e6:.1f} MB")
+    say(f"the same batch with 128 tokens in each window: {grown:.2f} times as much kept")
     say(f"forward pass over 2,048 tokens: {flops / 1e9:.2f} billion multiplies and adds")
     say(f"forward pass: {forward * 1e3:.0f} ms, {flops / forward / 1e9:.0f} billion a second")
     say(f"training step: {whole * 1e3:.0f} ms, {whole / forward:.1f} times the forward pass")
     read = 4 * count + cache_bytes(model, 64)
     say(f"cache: {cache_bytes(model, 1):,} bytes a token")
     say(f"one new token after 64: {forward_flops(model, 1, 64) / read:.2f} for each byte read")
-    say(f"one training step: {3 * flops / (16 * count):,.0f} for each byte of training state")
+    say(f"one training step: {3 * flops / (16 * count + kept):,.0f} for each byte it holds")
 
     timings = {"cpu": {"forward": forward, "step": whole}}
     if torch.backends.mps.is_available():
-        big, x, forward, whole = measure(
+        big, x, y, forward, whole = measure(
             "mps", vocab=4097, context=256, width=256, heads=8, kv_heads=4, layers=6
         )
         speed = 3 * forward_flops(big, x.numel(), big.context) / whole
         count = sum(p.numel() for p in big.parameters())
         say(f"on the graphics chip, {count:,} parameters: {whole * 1e3:.0f} ms a training step")
+        say(f"that step takes {whole / forward:.1f} times its forward pass")
         say(f"that is {speed / 1e9:.0f} billion multiplies and adds a second")
         say(f"three hours at that speed: {3 * 3600 * speed:.1e} multiplies and adds")
         timings["mps"] = {"forward": forward, "step": whole, "flops_per_second": speed}

@@ -35,6 +35,7 @@ def work(pipe, shape, seed, rate):
 def share(pipes, x, y):
     """One step. Split the batch, gather each worker's slopes, send back their weighted average."""
     xs, ys = x.chunk(len(pipes)), y.chunk(len(pipes))
+    assert len(xs) == len(pipes), "a worker with no share would wait for one forever"
     for pipe, part, target in zip(pipes, xs, ys):
         pipe.send((part, target))
     slopes = [pipe.recv() for pipe in pipes]
@@ -52,6 +53,7 @@ def launch(count, shape, seed, rate):
     for _ in range(count):
         ours, theirs = context.Pipe()
         context.Process(target=work, args=(theirs, shape, seed, rate), daemon=True).start()
+        theirs.close()  # our copy of the worker's end: closed, a dead worker is an error, not a wait
         pipes.append(ours)
     return pipes
 
@@ -71,12 +73,11 @@ if __name__ == "__main__":
     ids = encode(text, vocab)
     shape = {"vocab": len(vocab), "context": 64, "width": 128, "heads": 4, "layers": 4}
     timings = {}
+    say(f"threads one process spreads its arithmetic over: {torch.get_num_threads()}")
     for count in (1, 2, 4):
         generator = torch.Generator().manual_seed(0)
         pipes = launch(count, shape, seed=0, rate=1e-3)
-        share(
-            pipes, *batch(ids, 64, 64, generator)
-        )  # the first step waits for the workers to start
+        share(pipes, *batch(ids, 64, 64, generator))  # this step waits for the workers to start
         began = time.perf_counter()
         for _ in range(20):
             share(pipes, *batch(ids, 64, 64, generator))

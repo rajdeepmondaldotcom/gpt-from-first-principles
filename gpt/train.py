@@ -72,7 +72,9 @@ def checkpoint(path, model, optimizer, step, generator):
         "step": step,
         "generator": generator.get_state(),
     }
-    torch.save(state, path)
+    spare = Path(path).with_suffix(".tmp")
+    torch.save(state, spare)
+    spare.replace(path)  # swapped in whole: a stop while writing leaves the last checkpoint alone
 
 
 def resume(path, model, optimizer, generator):

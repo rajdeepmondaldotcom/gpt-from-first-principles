@@ -21,6 +21,14 @@ def model():
 
 def test_temperature_0_is_the_top_score_every_time():
     assert {choose(SCORES, temperature=0) for _ in range(20)} == {0}
+    assert choose(SCORES.flip(0), temperature=0) == 3  # the top score, wherever it sits
+
+
+def test_at_temperature_0_the_text_is_the_top_token_at_each_step():
+    net, ids = model(), [5, 9, 2]
+    for _ in range(10):
+        ids.append(net(torch.tensor([ids]))[0, -1].argmax().item())
+    assert generate(net, [5, 9, 2], 10, temperature=0) == ids
 
 
 def test_at_temperature_1_each_token_comes_as_often_as_its_chance():
@@ -36,13 +44,15 @@ def test_temperature_by_hand():
     assert torch.allclose(hot, torch.full((4,), 0.25), atol=0.02)  # nearly even
 
 
-@pytest.mark.parametrize(("top_p", "kept"), [(0.5, 1), (0.6, 2), (0.8, 2), (0.81, 3), (1.0, 4)])
+@pytest.mark.parametrize(
+    ("top_p", "kept"), [(0.0, 1), (0.5, 1), (0.6, 2), (0.79, 2), (0.81, 3), (1.0, 4)]
+)
 def test_top_p_keeps_the_smallest_set_that_reaches_p(top_p, kept):
-    assert (share(top_p=top_p) > 0).sum().item() == kept
+    assert (share(top_p=top_p) > 0).sum().item() == kept  # the likeliest token always stays
 
 
 def test_top_p_shares_the_chance_among_the_tokens_it_keeps():
-    assert torch.allclose(share(top_p=0.8), torch.tensor([0.625, 0.375, 0, 0]), atol=0.01)
+    assert torch.allclose(share(top_p=0.75), torch.tensor([0.625, 0.375, 0, 0]), atol=0.01)
 
 
 def test_choosing_does_not_change_the_scores():
@@ -66,6 +76,12 @@ def test_with_a_cache_the_model_reads_each_token_once():
     read.clear()
     generate(net, [5, 9, 2], 20, temperature=0, cache=False)
     assert sum(read) == sum(range(3, 23))  # the whole text again for each new token: 250
+
+
+def test_it_stops_at_the_context_the_model_trained_on():
+    net = model()  # a context of 32
+    for cache in (True, False):
+        assert len(generate(net, [5, 9, 2], 100, temperature=0, cache=cache)) == 32
 
 
 def test_it_stops_at_the_stop_token():

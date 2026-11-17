@@ -38,6 +38,11 @@ def prompt(task):
     return f"Name: {task['name']}\nWords: {', '.join(task['words'])}\nStory:"
 
 
+def opening(task):
+    """An easier ask: the first line of a story, with the name in it."""
+    return f"Once upon a time, there was a little cat named {task['name']}."
+
+
 def passes(task, text):
     """The exact check: the name and each word occur in the text as whole words."""
     found = set(WORD.findall(text))
@@ -45,8 +50,9 @@ def passes(task, text):
     return task["name"] in found and all(word in lower for word in task["words"])
 
 
-def attempt(model, words, task, **how):
-    """Ask the model for a story to order. Returns the story, whether it passes, whether it ended."""
-    ids = generate(model, words.encode(prompt(task)), 250, stop=words.end, **how)
-    story = words.decode([i for i in ids if i != words.end]).split("Story:", 1)[1]
+def attempt(model, words, task, lines=prompt, **how):
+    """Ask the model for a story. Returns what it wrote, whether that passes, whether it ended."""
+    asked = words.encode(lines(task))
+    ids = generate(model, asked, 250, stop=words.end, **how)
+    story = words.decode([i for i in ids[len(asked) :] if i != words.end])
     return story, passes(task, story), ids[-1] == words.end

@@ -12,6 +12,8 @@ from gpt.optim import AdamW
 from gpt.results import save, say
 from gpt.train import train
 
+BUDGET = 2.7e15  # multiplies and adds for the story model: about two and a half hours on this Mac
+
 
 def shape(width, layers):
     """One model of the family we size: a head for each 32 of width, half as many key heads."""
@@ -65,6 +67,7 @@ def law(runs):
             miss = (grid @ parts - loss).pow(2).mean().sqrt().item()
             if parts.min() >= 0 and (best is None or miss < best["miss"]):
                 best = {"alpha": alpha, "beta": beta, "parts": parts.tolist(), "miss": miss}
+    assert best, "no pair of powers fits these runs with a floor, a and b of zero or more"
     return best
 
 
@@ -121,10 +124,10 @@ if __name__ == "__main__":
     final = law(small + held)
     describe("law from all 22 runs", final)
 
-    budget, choices = 2.7e15, []  # about two and a half hours at the speed lesson 17 measured
+    choices = []
     for one in [shape(128, 4), shape(192, 4), shape(256, 6), shape(320, 8), shape(384, 8)]:
         model = GPT(**one)
-        count, steps = sum(p.numel() for p in model.parameters()), steps_for(model, budget)
+        count, steps = sum(p.numel() for p in model.parameters()), steps_for(model, BUDGET)
         expected = predict(final, count, steps * 32 * 256)
         choices.append({"shape": one, "parameters": count, "steps": steps, "predicted": expected})
         say(f"{count:>10,} parameters, {steps:>6,} steps: predicted {expected:.3f} nats")
@@ -137,6 +140,6 @@ if __name__ == "__main__":
         held_out=held,
         first=first,
         final=final,
-        budget=budget,
+        budget=BUDGET,
         choices=choices,
     )

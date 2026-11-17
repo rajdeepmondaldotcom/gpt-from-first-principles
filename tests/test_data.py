@@ -7,6 +7,7 @@ import torch
 from gpt.bpe import train
 from gpt.data import (
     clean,
+    documents,
     held_out,
     minhash,
     near_repeats,
@@ -40,6 +41,7 @@ def test_overlap_by_hand():
     assert overlap({1, 2, 3}, {2, 3, 4}) == 2 / 4
     assert shingles("a b c d e f", n=5) == shingles("A  b c d e f", n=5)  # two runs of five words
     assert len(shingles("a b c d e f", n=5)) == 2
+    assert len(shingles("a b c d e f", n=2)) == 5  # ab, bc, cd, de, ef
 
 
 def test_minhash_agrees_as_often_as_the_sets_overlap():
@@ -69,6 +71,9 @@ def test_every_planted_mess_is_removed_and_nothing_else():
 def test_near_repeats_keeps_the_first_and_spares_different_texts():
     assert near_repeats(DOCS) == {}
     assert near_repeats([DOCS[0], DOCS[1], DOCS[0] + " Exit."]) == {2: 0}
+    assert (
+        near_repeats([DOCS[0], DOCS[1], DOCS[0] + " Exit."], least=1.0) == {}
+    )  # not word for word
 
 
 def test_a_document_is_in_one_split_and_stays_there():
@@ -77,6 +82,8 @@ def test_a_document_is_in_one_split_and_stays_there():
     shuffled = sorted(DOCS, key=len)
     assert {doc for doc in shuffled if held_out(doc, one_in=10)} == unseen  # order does not matter
     assert unseen.isdisjoint(doc for doc in DOCS if not held_out(doc, one_in=10))
+    # The same answer on any machine, in any run: Python's own `hash` would change each time.
+    assert [i for i in range(600) if held_out(f"story {i}")] == [217, 252, 387, 560]
 
 
 def test_batches_from_disk_equal_batches_from_memory(tmp_path):
@@ -89,6 +96,15 @@ def test_batches_from_disk_equal_batches_from_memory(tmp_path):
         batch(in_memory, 16, 8, torch.Generator().manual_seed(1)),
     ):
         assert torch.equal(mine, theirs)
+
+
+def test_documents_by_hand():
+    def cut(ids):
+        return [doc.tolist() for doc in documents(torch.tensor(ids), end=0)]
+
+    assert cut([7, 1, 2, 0, 3, 4, 0]) == [[0, 7, 1, 2, 0], [0, 3, 4, 0]]
+    assert cut([0, 7, 1, 0, 0, 3, 0]) == [[0, 7, 1, 0], [0, 3, 0]]  # no empty documents
+    assert cut([7, 0, 5, 5]) == [[0, 7, 0]]  # a last document with no end is left out
 
 
 def test_a_saved_tokenizer_comes_back_the_same(tmp_path):
