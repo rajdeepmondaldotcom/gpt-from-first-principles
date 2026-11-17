@@ -2,7 +2,9 @@
 
 Build a GPT yourself. Train it, serve it, then teach the same code chess.
 
-You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. It is hard on purpose.
+You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script. The numbers here come from an M4 MacBook. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine.
+
+One prompt, `Once upon a time`, answered by the model at six stages. Lessons 1 to 16 learn from Shakespeare, and lesson 21 from children's stories. Line breaks are shown as spaces.
 
 ```
 lesson 1    Once upon a timeron: Foleithathavout: Whe irtthogor s.
@@ -13,21 +15,21 @@ lesson 16   Once upon a time but fortune and 'I, She is my return waves; and pla
 lesson 21   Once upon a time, there was a little girl named Lily. She had a big red bag. Lily liked her bag very much.
 ```
 
-That is one prompt, answered by the model at six stages. From lesson 25 the model takes an order. Asked for a story with Mira, a cat, the moon and the word brave, the storyteller that lesson 36 serves begins:
+From lesson 25 the model takes an order. Asked for a story with Mira, a cat, the moon and the word brave, the storyteller that lesson 36 serves begins:
 
 ```
 Once upon a time there was a brave girl named Mira. She was always looking for something fun, so she wanted to buy a big, beautiful fairy. One day she saw a beautiful, beautiful rainbow in the sky. She wanted to pick up the moon in her garden and take it home.
 ```
 
-The whole story has Mira, the moon and brave, and no cat. Across 200 orders this model gets all four in 35 times.
+The whole story has Mira, the moon and brave, and no cat. On 200 other orders, each with its own name and three words, this model gets all four into 35 stories.
 
-Lesson 38 feeds the same model code records of chess games. Alone, it then writes a game whose first 26 moves are legal:
+Lesson 38 trains lesson 21's code, unchanged, on records of chess games. Left to write a game by itself, it makes 26 legal moves, 13 for each side, before its first illegal one:
 
 ```
 e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5
 ```
 
-Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one request through the finished thing. Lessons 41 and 42, which move training and serving to a rented GPU, are still to come.
+Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one request through the finished storyteller. Lessons 41 and 42, which move training and serving to a rented machine, are still to come.
 
 ## The lessons
 
@@ -43,7 +45,7 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 7 | [Causal multi-head self-attention](lessons/07-causal-multi-head-self-attention.md) | A layer that trains on each place at once without seeing the answers |
 | 8 | [Position](lessons/08-position.md) | A model that knows where each token stands |
 | 9 | [The block](lessons/09-the-block.md) | A unit that still passes gradients back when stacked 24 deep |
-| 10 | [The GPT](lessons/10-the-gpt.md) | One model that runs OpenAI's GPT-2 weights and matches a reference implementation's scores |
+| 10 | [The GPT](lessons/10-the-gpt.md) | One model that runs OpenAI's GPT-2 weights and, on a test prompt, gives the scores Hugging Face's code gives |
 | 11 | [Optimizers](lessons/11-optimizers.md) | The same GPT ahead of each earlier model, with only the rule for the step changed |
 | 12 | [The training loop](lessons/12-the-training-loop.md) | A run you can stop and resume, bit for bit |
 | 13 | [Is it working?](lessons/13-is-it-working.md) | Six checks that catch a silent bug, and a measured cure for a model that stores its text |
@@ -54,7 +56,7 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 18 | [Data](lessons/18-data.md) | 210 MB of stories cleaned, split and turned into 52 million tokens on disk |
 | 19 | [How big should it be?](lessons/19-how-big-should-it-be.md) | A law fitted to short runs, tested on runs it had not seen, and a size for the story model |
 | 20 | [Many workers](lessons/20-many-workers.md) | Four processes that train one model and end with one process's weights |
-| 21 | [The real run](lessons/21-the-real-run.md) | A model of 5 million parameters that writes short stories |
+| 21 | [The real run](lessons/21-the-real-run.md) | A model of 5.4 million parameters that writes short stories |
 | 22 | [Sampling](lessons/22-sampling.md) | Control over how each token is picked, with what each setting does to twenty stories |
 | 23 | [The KV cache](lessons/23-the-kv-cache.md) | A model that reads each token once while it writes |
 | 24 | [Evaluation](lessons/24-evaluation.md) | A score with a range, a comparison with a verdict, and a task with a pass rate |
@@ -71,14 +73,14 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 35 | [Speculative decoding](lessons/35-speculative-decoding.md) | A small model guessing four tokens ahead, with the big model's chances kept exactly |
 | 36 | [The server](lessons/36-the-server.md) | The storyteller in a browser: streamed, read aloud, and serving other listeners at the same moment |
 | 37 | [A real engine](lessons/37-a-real-engine.md) | The model in Apple's MLX engine with the scores it has in ours, and both engines timed |
-| 38 | [The same code, a different world](lessons/38-the-same-code-a-different-world.md) | Lesson 21's model, unchanged, learning chess from records of games, with its legal moves counted |
+| 38 | [The same code, a different world](lessons/38-the-same-code-a-different-world.md) | Lesson 21's model code, unchanged, trained from nothing on records of chess games, with its legal moves counted |
 | 39 | [Can it play?](lessons/39-can-it-play.md) | Whole games against three opponents, and a rating with a range |
 | 40 | [The board in its head](lessons/40-the-board-in-its-head.md) | A chess position read out of the model's inner numbers, and the chance of a move changed by editing them |
 
-Three guides sit beside the lessons.
+Three guides go with the lessons.
 
-- [MAP.md](MAP.md): what the lessons leave out, and the best open place we found to learn each thing.
-- [PRACTICE.md](PRACTICE.md): eight routines for the skills that reading cannot give you.
+- [MAP.md](MAP.md): what the lessons leave out, and the open resource we would read first for each thing.
+- [PRACTICE.md](PRACTICE.md): eight routines for what 11 job postings at AI labs ask for and the lessons do not teach.
 - [GLOSSARY.md](GLOSSARY.md): each term with the lesson that defines it, and our plain words beside the field's.
 
 ## The scoreboard
@@ -101,7 +103,7 @@ Each model is scored on the same unseen tenth of Shakespeare, in bits per byte. 
 | GPT, rotary positions | 15 | 2.210 |
 | GPT, today's parts | 16 | 2.209 |
 
-With plain gradient descent the GPT trails the MLP. Lesson 11 changes only the optimizer, and the GPT leads. Given that optimizer and as many guesses, the MLP does not catch it, and reading 64 characters it does worse than reading 8.
+With plain gradient descent the GPT trails the MLP. Lesson 11 changes only the optimizer, and the GPT leads. With the same optimizer, the same steps and as many predictions, the MLP still scores worse, and reading 64 characters it does worse than reading 8.
 
 From lesson 18 the text is 210 MB of short stories, and the scoreboard starts again. The two cannot be compared: the stories are simpler text than Shakespeare.
 
@@ -121,9 +123,9 @@ From lesson 25 the question changes from how well the model predicts text to how
 | Learned from each story's score | 27 | 56 |
 | Learned from pairs, with no scorer | 29 | 35 |
 
-The server of lesson 36 loads the last of these. Lesson 27's model passes more orders, but 59 of its 200 stories never reach an end.
+The server of lesson 36 loads the last of these: lesson 28's stand-in readers give its stories 0.62, where they gave lesson 25's 0.53. The model that passes 56 leaves 59 of its 200 stories without an end.
 
-Lessons 31 to 37 measure the storyteller as a service, on one M4 laptop. Timings move from run to run.
+Lessons 31 to 37 measure the model as a service, on one M4 laptop. Lesson 36 serves the storyteller, and the others time lesson 21's story model, which has the same shape. Timings move from run to run.
 
 | Measure | Lesson | Result |
 |---|---|---|
@@ -133,9 +135,9 @@ Lessons 31 to 37 measure the storyteller as a service, on one M4 laptop. Timings
 | Median wait for a first token at 15.1 requests a second, one request at a time | 31 | 1,737 ms |
 | The same, with room for 16 requests in each pass | 32 | 8 ms |
 | Tokens a second in all, 32 listeners sharing each pass | 32 | 2,275 |
-| The weights at 8 bits | 34 | 8.6 MB where they took 21.5, for 0.0001 nats |
+| The weights at 8 bits | 34 | 8.6 MB in place of 21.5, for 0.0001 nats a token more loss, and slower writing in our engine |
 | Requests a second over the web, 16 at a time | 36 | 21.3 |
-| Share of one token's pass that is the fixed cost of 516 calls into PyTorch | 37 | 0.58 of 1.29 ms |
+| Share of one token's pass that is the fixed cost of 516 calls into PyTorch, on the processor | 37 | 0.58 of 1.29 ms |
 | Tokens a second for 16 listeners on the processor: our engine, then Apple's MLX with the same weights | 37 | 4,134, then 5,943 |
 
 The chess model of lesson 38 is scored by the rules of the game and by play.
@@ -158,9 +160,9 @@ uv sync
 uv run pytest
 ```
 
-Each lesson has a page in `lessons/`, a short file in `gpt/` and a test in `tests/`. A lesson's numbers come from its own script, for example `uv run python -m gpt.bigram`, and are saved in `results/`.
+Each lesson has a page in `lessons/`, code in a short file in `gpt/` (some files serve two or three lessons) and tests in `tests/`. Most lessons' numbers come from that file's script, for example `uv run python -m gpt.bigram`, and are saved in `results/`.
 
-From lesson 18 on, the scripts need the stories and a trained model. `uv run python -m gpt.data` downloads 210 MB and prepares them, and `uv run python -m gpt.story` trains the story model. By lesson 17's timing that takes a little over two hours on an M4 laptop's graphics chip. Lesson 25's script, `gpt.finetune`, makes the storyteller. The server of lesson 36 loads it as lesson 29 left it, so run `gpt.finetune`, `gpt.reinforce` and `gpt.prefer` in that order first, or download the models below.
+From lesson 18 on, the scripts need the stories and a trained model. `uv run python -m gpt.data` downloads 210 MB and prepares them, and `uv run python -m gpt.story` trains the story model. By lesson 17's timing that takes 2.3 hours on an M4 laptop's graphics chip. `gpt.finetune` (lesson 25) makes the storyteller. The server loads the storyteller as lesson 29 left it, so first run `gpt.finetune`, `gpt.reinforce` and `gpt.prefer` in that order, or download the models below.
 
 To hear a story, start the server and open `http://127.0.0.1:8000`:
 
@@ -168,13 +170,19 @@ To hear a story, start the server and open `http://127.0.0.1:8000`:
 uv run python -m gpt.server stay
 ```
 
-Lessons 38 to 40 need the rules of chess, which are an extra. `gpt.games` downloads 129 MB of games and trains the chess model for 10,420 steps.
+Lessons 38 to 40 need the `chess` extra: python-chess, which knows the rules, and a reader for the games' compressed file.
 
 ```bash
 uv sync --extra chess
 ```
 
-Two tests need outside downloads, and `uv run pytest` leaves them out. They need the `reference` extra, and one needs GPT-2's weights (see lesson 10):
+```bash
+uv run python -m gpt.games
+```
+
+`gpt.games` downloads 129 MB of games, prepares them and trains the chess model for 10,420 steps. If the downloaded chess model is in place, it finds the finished run and goes straight to its counts.
+
+Three tests check our code against outside code: OpenAI's tiktoken, Hugging Face's GPT-2 and Apple's MLX. `uv run pytest` leaves them out. They need the `reference` extra. The GPT-2 test also needs GPT-2's weights (see lesson 10), and the MLX test runs only on a Mac:
 
 ```bash
 uv run --extra reference pytest -m reference
@@ -182,7 +190,7 @@ uv run --extra reference pytest -m reference
 
 ## The trained models
 
-The long runs can be skipped. The story model, the storyteller at two stages and the chess model are on Hugging Face, each with the numbers we measured on it. Each command puts the folders where the scripts look for them.
+You can skip the long runs. The story model, the storyteller at two stages and the chess model at two stages are on Hugging Face, each with the numbers we measured on it. Each command fills `data/cache` with the folders the scripts load: `story`, `storyteller` and `preferred` from the first, and `chess`, `chess_early` and the chess run's last checkpoint from the second.
 
 ```bash
 uvx --from huggingface_hub hf download rajdeepmondal/gpt-from-first-principles-storyteller --local-dir data/cache
@@ -192,11 +200,11 @@ uvx --from huggingface_hub hf download rajdeepmondal/gpt-from-first-principles-s
 uvx --from huggingface_hub hf download rajdeepmondal/gpt-from-first-principles-chess --local-dir data/cache
 ```
 
-The scripts still need the text itself: run `gpt.data` for the stories, which takes minutes.
+The scripts still need the text itself. `gpt.data` fetches and prepares the stories in minutes, and `gpt.games` does the same for the chess games.
 
 ## Sources and thanks
 
-Each lesson ends with the sources it rests on, and [MAP.md](MAP.md) lists the best open material we found for everything else. Four works were read before the first lesson was written.
+Each lesson ends with the sources it rests on, and [MAP.md](MAP.md) lists open material for everything else. We read four works before writing the first lesson.
 
 - Sebastian Raschka, [Build a Large Language Model (From Scratch)](https://github.com/rasbt/LLMs-from-scratch). From it, the habit of working one case by hand before the general one.
 - Knowlytix, [Building Language Models from Scratch](https://github.com/knowlytix/llm-from-scratch). Its order of topics, as a checklist.

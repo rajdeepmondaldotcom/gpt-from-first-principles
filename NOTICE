@@ -3,3 +3,7 @@ Copyright 2026 Rajdeep Mondal
 
 data/tiny_shakespeare.txt is public-domain text by William Shakespeare,
 in the single-file form Andrej Karpathy assembled for char-rnn.
+
+The lessons fetch two datasets and store neither here: TinyStories by Ronen Eldan
+and Yuanzhi Li, under CDLA-Sharing-1.0 (gpt/data.py), and one month of the Lichess
+open database, under CC0 (gpt/games.py).
