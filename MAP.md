@@ -78,7 +78,7 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 
 | Area | Resource | Licence | Why this one |
 |---|---|---|---|
-| The whole path, at university depth | [Stanford CS336](https://cs336.stanford.edu/) | Assignments MIT | Five assignments graded by tests: the model, systems, scaling, data, alignment |
+| The whole path, at university depth | [Stanford CS336](https://cs336.stanford.edu/) | Assignments 1 to 4 MIT, 5 none stated | Five assignments graded by tests: the model, systems, scaling, data, alignment |
 | The whole path, small | Karpathy, [Zero to Hero](https://github.com/karpathy/nn-zero-to-hero) and [nanochat](https://github.com/karpathy/nanochat) | MIT | Videos from zero to a GPT, and one current recipe from tokenizer to chat |
 | A GPT in one file | Karpathy, [nanoGPT](https://github.com/karpathy/nanoGPT) | MIT | GPT-2's training, reproduced in a few hundred lines. Its author now points readers to nanochat |
 | The mathematics underneath | Deisenroth and others, [Mathematics for Machine Learning](https://mml-book.github.io/) | None stated | Linear algebra, calculus and probability, written for this use |
@@ -86,7 +86,7 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 | Running experiments | [Deep Learning Tuning Playbook](https://github.com/google-research/tuning_playbook) | CC BY 4.0 | Choosing settings by experiment |
 | Small-model training in practice | Hugging Face, [The Smol Training Playbook](https://huggingface.co/spaces/HuggingFaceTB/smol-training-playbook) | None stated | A real training log, with each choice and its ablation |
 | Cost and scale | [How to Scale Your Model](https://jax-ml.github.io/scaling-book/) | MIT | Memory, arithmetic and time, counted for real accelerators |
-| Data | Hugging Face, [FineWeb](https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1) and [datatrove](https://github.com/huggingface/datatrove) | Apache-2.0 | A real filtering and dedup pipeline, with each filter measured |
+| Data | Hugging Face, [FineWeb](https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1) and [datatrove](https://github.com/huggingface/datatrove) | datatrove Apache-2.0, FineWeb's data ODC-By 1.0 | A real filtering and dedup pipeline, with each filter measured |
 | Scaling laws | Hoffmann and others, [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556) | None stated | The law lesson 19 fits, at a budget 200 million times ours |
 | Post-training | Lambert, [the RLHF book](https://rlhfbook.com/) | CC BY-NC-SA 4.0 | Reward models, learning from checks, preferences |
 | Evaluation | Miller, [Adding Error Bars to Evals](https://arxiv.org/abs/2411.00640) | None stated | Statistics for comparing models |

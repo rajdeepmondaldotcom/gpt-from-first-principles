@@ -52,7 +52,7 @@ Each number in that table is one you will be able to work out. The weights that 
 
 ## The code
 
-Each lesson has a short file in `gpt/`, a test in `tests/` and a page in `lessons/`. A later file uses the earlier ones and does not change them. The whole of attention, from lesson 6, shows the size of the pieces:
+Each lesson has a short file in `gpt/`, a test in `tests/` and a page in `lessons/`. A later file uses the earlier ones, and never changes a line that an earlier page quotes. The whole of attention, from lesson 6, shows the size of the pieces:
 
 ```python
 # gpt/attention.py
@@ -84,7 +84,7 @@ A test here is a claim that can fail. For each idea, the lesson says what would 
 
 ## What it still cannot do
 
-You have built none of it yet. Lesson 1 starts with a text file and a loop that counts letters.
+You have built none of it yet. Lesson 1 starts with a text file and a loop that counts characters.
 
 ## Check yourself
 

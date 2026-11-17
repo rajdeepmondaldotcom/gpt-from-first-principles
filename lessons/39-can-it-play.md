@@ -72,7 +72,7 @@ def play(white, black, opening=(), most=100):
     return result(board)
 ```
 
-A player is a function: it is given the board and the moves so far, and returns a move as text. `lead` is white's count of pieces minus black's, on the scale above. `is_game_over` is true at checkmate and at each kind of draw the rules know.
+A player is a function: it is given the board and the moves so far, and returns a move as text. `lead` is white's count of pieces minus black's, on the scale above. `is_game_over` is true at checkmate, at stalemate, when neither side has the pieces to mate, and at the draws that need no claim: one position five times, or 75 moves with no capture and no pawn move. A position three times over, which a player has to claim, does not end a game here.
 
 ```python
 # gpt/play.py
@@ -94,7 +94,7 @@ uv run pytest tests/test_play.py
 - A match plays each opening twice with the colours swapped. Over 30 games the grabber takes more than 0.6 of the points from the random mover.
 - A slip is counted when no try is legal, and a pass is no move.
 - An untrained model still finishes a legal game: the referee picks nearly each of its moves.
-- The Elo rule gives the three hand values. Ratings of 0, 200 and 500, used to make 6,000 results, are found again: the 200 to within 25 points and the 500 to within 35.
+- The Elo rule gives a half for equal ratings, and ten to one either way at 400 points. Ratings of 0, 200 and 500, used to make 6,000 results, are found again: the 200 to within 25 points and the 500 to within 35.
 
 ```bash
 uv run python -m gpt.play

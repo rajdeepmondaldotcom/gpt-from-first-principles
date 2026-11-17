@@ -14,11 +14,11 @@ We want it weak: a big network could work the position out for itself. One linea
 
 We check three things.
 
-1. Test on games the probe has not seen, and leave out each position that one of its own games also reached, since openings repeat.
+1. Test on games the probe has not seen, and leave out each position whose moves so far are also the moves so far of one of its own, since openings repeat.
 2. Compare with a lazy guess. Most squares hold what they usually hold, so we count how often the most usual piece for each square is right, and score the probe apart on the squares where it is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
-The board could be in the stream and play no part in the move. So we change it. We edit after whichever of the first five blocks reads best on other games, so that a block still runs after the edit. Take a position where the side to move has its queen. Along the probe's own line for "queen on this square", nudge the stream until the probe scores empty well above queen, and let the model run on. A model that works from this board should now give queen moves less chance. Rubbing out a pawn with a nudge of the same length should not. We try three lengths.
+The board could be in the stream and play no part in the move. So we change it. We edit after whichever of the first five blocks reads best on other games, so that a block still runs after the edit. Take a position where the side to move has one queen, with a move to make, and a pawn. Along the probe's own line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should now give queen moves less chance. A nudge of the same length along a pawn's line should not. We try three margins: 3, 10 and 30.
 
 Last, we watch the move form: lesson 10's last two steps, a normalization and the scores layer, applied to the stream after each earlier block, show what the model would say if it stopped there.
 
@@ -125,7 +125,7 @@ The move forms late. After block 4 the final choice is on top in 27% of position
 
 ## What it still cannot do
 
-Everything so far ran on one laptop, on two models of about 5 million parameters. We have not seen what the same code does on hardware built for it.
+Everything so far ran on one laptop, and the largest model we trained has 5,374,464 parameters. We have not seen what the same code does on hardware built for it.
 
 ## Check yourself
 
@@ -143,6 +143,6 @@ Each block reads the stream and adds to it, and the final layer reads it to choo
 
 Go deeper:
 
-- Li and others, [Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task](https://arxiv.org/abs/2210.13382) (2022). The same experiment on Othello, done there first.
+- Li and others, [Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task](https://arxiv.org/abs/2210.13382) (2022). Probes and edits on an Othello model, done there first, with probes of two layers where ours has one.
 - Karvonen, [Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models](https://arxiv.org/abs/2403.15498) (2024). Linear probes and edits on a chess model.
 - Alain and Bengio, [Understanding intermediate layers using linear classifier probes](https://arxiv.org/abs/1610.01644) (2016). Where probes come from.

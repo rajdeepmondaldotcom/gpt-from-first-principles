@@ -1,6 +1,6 @@
 # 38. The same code, a different world
 
-By the end of this page the model of lesson 21, with no line of it changed, has learned the moves of chess from records of games, and you have counted how many of its moves the rules allow.
+By the end of this page the model of lesson 21, with no line of it changed for chess, has learned the moves of chess from records of games, and you have counted how many of its moves the rules allow.
 
 Each model in this course has read English: Shakespeare, then stories. We have not asked whether anything we built depends on that.
 
@@ -10,13 +10,13 @@ Nothing in the model knows what a word is. It reads token ids and gives a chance
 
 A game is a list of moves. `e4` moves a pawn to the square e4, `Nf3` a knight to f3, and `Bxc6` is a bishop taking on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`. On these pages a move is one side's turn, so that line has four. The model sees this line and never a board.
 
-The games come from Lichess, a free site that gives the public a record of each game played on it. We take March 2014. A function called `moves` strips a record down to its moves, and we keep each game of 20 moves or more.
+The games come from Lichess, a free site that gives the public a record of each rated game played on it. We take March 2014. A function called `moves` strips a record down to its moves, and we keep each game of 20 moves or more.
 
 From there the steps are lesson 18's, in the same order: drop repeats and near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. Lesson 18's `clean` threw out a document under 100 characters, or under 80% letters and spaces, and a game is 74%. So we switch `clean` off for games: `moves` has done the cleaning.
 
 The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well: that script's long run is now a function, called here with other data.
 
-A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal on that board. A model that copied common moves would often be wrong, since what is legal depends on where each piece now stands. Many games open alike, so a position early in a game may be one the model met in training. We count those apart.
+A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal on that board. What is legal depends on where each piece now stands, and the model is shown only the moves. Many games open alike, so the moves so far may be the start of a game the model trained on. We count those apart.
 
 ## By hand
 
@@ -138,7 +138,7 @@ The month holds 749,462 games of 20 moves or more. 29 are repeats or near-repeat
 
 Before training, none of 200 moves is legal. After 500 steps 58% are, and at the end 92%. On 1,000 fresh positions the model writes a legal move 929 times: 0.911 to 0.944.
 
-Some of that could be memory. 192 of the 1,000 positions open some training game, and each move it wrote there is legal. The other 808 are positions no training game reached. There 737 moves are legal: 0.890 to 0.931.
+Some of that could be memory. 192 of the 1,000 positions open some training game, and each move it wrote there is legal. The other 808 are lists of moves that no training game begins with. There 737 moves are legal: 0.890 to 0.931.
 
 ## What it still cannot do
 
@@ -156,7 +156,7 @@ Predict before you run: the model has never seen a board. After 10,420 steps of 
 
 <details><summary>Answer</summary>
 
-About nine in ten. On positions that no training game reached, 737 of 808 moves are legal.
+About nine in ten. On lists of moves that no training game begins with, 737 of 808 moves are legal.
 </details>
 
 <details><summary>What changed in the model's file to make it play chess?</summary>
