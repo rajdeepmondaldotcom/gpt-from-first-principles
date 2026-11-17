@@ -54,7 +54,7 @@ def fit(x, y, generator, steps=1000, rate=1e-2):
     return probe
 ```
 
-This is an ordinary training loop on one layer, with 256 positions drawn for each step. `view(-1, PIECES)` lays the scores out as one row of 13 for each square of each position, so that lesson 3's loss can mark each square.
+This is an ordinary training loop on one layer, 256 positions to a step. `view(-1, PIECES)` lays the scores out as one row of 13 for each square of each position, so that lesson 3's loss can mark each square.
 
 ```python
 # gpt/probe.py
@@ -112,7 +112,7 @@ after block 5: the final choice is on top in 43% of positions, with a chance of 
 after block 6: the final choice is on top in 100% of positions, with a chance of 35%
 ```
 
-Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%, where the true one reads 80.7%. On squares that are not as usual it is right 60.9% of the time: one linear layer reads part of a board, and not all of it.
+Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%, and the true one 80.7%. On squares that are not as usual it is right 60.9% of the time: one linear layer reads part of a board, and not all of it.
 
 Untouched, the model gives queen moves a chance of 20.3%. The nudge set before the run, 0.08 of the stream's length, takes that to 20.1%, and longer ones to 19.9% and 18.5%, each interval clear of zero. A pawn rubbed out with nudges of the same lengths leaves 20.3%, 20.3% and 20.5%. The model uses the line the probe reads, a little.
 
