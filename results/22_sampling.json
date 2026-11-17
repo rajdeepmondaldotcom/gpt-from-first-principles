@@ -1,0 +1,52 @@
+{
+  "commit": "d914832",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "settings": {
+    "temperature 0": {
+      "different": 1,
+      "finished": 20,
+      "made_up": 0.0
+    },
+    "temperature 0.5": {
+      "different": 20,
+      "finished": 19,
+      "made_up": 0.0
+    },
+    "temperature 1": {
+      "different": 20,
+      "finished": 20,
+      "made_up": 0.0034071550255536627
+    },
+    "temperature 1.5": {
+      "different": 20,
+      "finished": 18,
+      "made_up": 0.1316
+    },
+    "temperature 1, top-p 0.9": {
+      "different": 20,
+      "finished": 20,
+      "made_up": 0.0
+    }
+  },
+  "samples": {
+    "temperature 0": "Once upon a time, there was a little girl named Lily. She had a big, red ball that she loved to play with. One day, she went to the park with her mom and dad.\nAt the park, Lily saw a boy named Tim. Tim was sad because he lost his toy. Lily wanted to help Tim find his toy. She said, \"Let's look for your toy together!\" Tim was happy and they started to look for the toy.\nThey looked under the trees and behind the bushes. Finally, they found the toy under a bush. Tim was so happy to have his toy back. He said, \"Thank you, Lily!\" Lily smiled and said, \"You're welcome, Tim!\" They played together and had lots of fun.",
+    "temperature 0.5": "Once upon a time, there was a little girl named Amy. Amy loved to eat spaghetti. One day, she saw a big, round thing in the kitchen. It looked like a spaghetti. Amy was very happy.\nAmy's mom came into the kitchen and saw the spaghetti. She said, \"Amy, this is a spaghetti. We need it to eat.\" Amy was excited and wanted to eat the spaghetti.\nAmy tried to eat the spaghetti, but it was too hard. She asked her mom for help. Her mom said, \"Let's try it on, Amy!\" They tried the spaghetti, but it was too hard for them. They were sad because they could not eat spaghetti.\nThen, they had an idea. They started to make spaghetti. They made spaghetti and put it on a big, yummy spaghetti. They were very happy and thanked their mom for making spaghetti.",
+    "temperature 1": "Once upon a time, in a big forest, there was a small cabin. In the cabin lived a funny bear named Bobo. Bobo had a favorite seat in the woods. He was a big, shiny bear, and he loved to play with his bear friends.\nOne day, Bobo and his friends played a game of match. They twisted the bear's seat and hide. Bobo hid behind the trees, and his bear went heavily find him. Bobo felt sad because he missed his new friends.\nBobo went back to his cabin and found his bear friend, a big bear named Ben. They played together and had fun. Bobo was happy that he saw the book and played with his bear. They knew they would always be friends, no matter what. And Bobo was happy that he could share his seat with his friends by his side.",
+    "temperature 1.5": "Once upon a time, there was an apron. The apron breatamed purple lying coiled around shining in the shadows across the wasops until there was just as it embours Ellie's kind young tooths.\n axe strong logsiting the torist name only made a scrunch by snone. All of Ellie\u2019sYory eating harshed numbers and plane Tom's ev had were gone foreveralm no may save them closed together wmer away! Little Gmward thought for how Bob powerful and sword Herbull immed around Ellie over noticed what snow eventually undive and amazing onion! Tommy came over praying to Daisy and explained her oningipected op privitterion Shandra for lives attract thought of every game.\nWhen Tommy found one feet everyone took a scue, Benny found his and left teasing his pig Sara. EveryBV getting marvel when P dckanult passed, an ignorant excitement \u201cHa worry incredible\ufffdrrontished them enough!\u201d Bella felt frustrated as mistake as Jourpan winning black hood that means rising faster even fartier or dards, please be hunteter this try.",
+    "temperature 1, top-p 0.9": "Once upon a time, there was a bird. The bird had a pretty feather. The bird liked to fly high in the sky. The bird was a happy bird.\nOne day, the bird saw a big rock. The bird thought, \"This is not a rock, I can fly and play!\" So, the bird had an idea.\nThe bird told the bird to rest on the rock. The bird stayed on the rock. The bird was happy. The bird and the rock became friends. They played together and shared their toys."
+  },
+  "printed": [
+    "temperature 0: 1 different stories of 20, 20 reach their end, 0.0% of their words made up",
+    "  'Once upon a time, there was a little girl named Lily. She had a big, red ball that she loved to play with. One day, she went to the park with her mom '",
+    "temperature 0.5: 20 different stories of 20, 19 reach their end, 0.0% of their words made up",
+    "  'Once upon a time, there was a little girl named Amy. Amy loved to eat spaghetti. One day, she saw a big, round thing in the kitchen. It looked like a '",
+    "temperature 1: 20 different stories of 20, 20 reach their end, 0.3% of their words made up",
+    "  'Once upon a time, in a big forest, there was a small cabin. In the cabin lived a funny bear named Bobo. Bobo had a favorite seat in the woods. He was '",
+    "temperature 1.5: 20 different stories of 20, 18 reach their end, 13.2% of their words made up",
+    "  'Once upon a time, there was an apron. The apron breatamed purple lying coiled around shining in the shadows across the wasops until there was just as '",
+    "temperature 1, top-p 0.9: 20 different stories of 20, 20 reach their end, 0.0% of their words made up",
+    "  'Once upon a time, there was a bird. The bird had a pretty feather. The bird liked to fly high in the sky. The bird was a happy bird.\\nOne day, the bird'"
+  ]
+}
