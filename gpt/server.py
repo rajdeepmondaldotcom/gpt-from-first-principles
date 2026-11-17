@@ -271,10 +271,14 @@ async function tell(limit) {
       story.textContent += piece;
       text += piece;
       sentence += piece;
-      if (/[.!?]\s*$/.test(sentence)) { say(sentence); sentence = ""; }
+      // shortcut: a sentence ends at . ! or ? unless a title such as Mr. comes before it
+      if (/(?<!\b(Mr|Mrs|Ms|Dr))[.!?]["\u201d]?\s*$/.test(sentence)) { say(sentence); sentence = ""; }
     }
   }
-  if (sentence.trim()) say(sentence);
+  if (sentence.trim()) {  // the limit fell inside a sentence: drop the half, so the next part starts clean
+    text = text.slice(0, -sentence.length);
+    story.textContent = story.textContent.slice(0, -sentence.length);
+  }
   more.hidden = false;
 }
 document.getElementById("go").onclick = () => {
