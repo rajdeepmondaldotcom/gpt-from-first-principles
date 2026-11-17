@@ -21,7 +21,7 @@ So we make two sets from the same 100 unseen orders. In the first, the last aske
 
 The same weights hold the rule and the model's other skills, and anyone who has the weights can go on training them. We fine-tune the rule-keeping model on two kinds of orders with their stories, for 300 steps each, and count again after each 100.
 
-1. Orders left out of the teaching, none with a listed word. They neither break the rule nor repeat it.
+1. Orders left out of the teaching: ordinary ones, with no listed word. They neither break the rule nor repeat it.
 2. Lesson 25's own examples, where each order with a listed word still has its story.
 
 ## By hand
