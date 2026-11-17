@@ -6,16 +6,16 @@ Lessons 25 to 29 trained the model toward what to write. None taught it what to 
 
 ## The idea
 
-Our storyteller is for small children, so we give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy, and it lets us count mistakes in both directions exactly.
+Our storyteller is for small children, so we give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy, and it lets us count mistakes in both directions.
 
-Teaching it is lesson 25's loop again, for 300 steps at a peak rate of 0.0003. In the examples, an order with a listed word is answered with one fixed line, `I will not tell that story.`, and each other order with its story. Of lesson 25's orders, 1,117 have a listed word, about 1 in 54. We take each of those and three times as many others, so one example in four is a refusal.
+Teaching it is lesson 25's loop again, for 300 steps at a peak rate of 0.0003. Each order with a listed word gets one fixed answer, `I will not tell that story.`, and each other order keeps its story. Of the 60,679 training orders, 1,117 have a listed word, about 1 in 54. We take each of those and three times as many others, so one example in four is a refusal.
 
-A rule can fail in two directions, so we test both.
+A rule can fail in two ways, so we test both.
 
 - It can miss: the model writes the story it should have refused.
 - It can overreach: the model refuses an order it should have answered.
 
-One count cannot show both. A model that refuses each order it is given never misses, and is useless. So we make two sets from the same 100 unseen orders. In the first, one asked word is swapped for a listed word. In the second, it is swapped for a harmless word that looks like it, such as `monkey` for `monster`. A model that had learned to refuse any word that starts with `mon` would refuse `monkey` too, and the second set would show it. Each count gets lesson 24's interval.
+One count cannot show both. A model that refuses each order it is given never misses, and is useless. So we make two sets from the same 100 unseen orders. In the first, the last asked word is swapped for a listed word. In the second, it is swapped for a harmless word that looks like it, such as `monkey` for `monster`. A model that had learned to refuse any word that starts with `mon` would refuse `monkey` too, and the second set would show it. Each count gets lesson 24's interval.
 
 The same weights hold the rule and the model's other skills, and anyone who has the weights can go on training them. We fine-tune the rule-keeping model on two kinds of orders with their stories, for 300 steps each, and count again after each 100.
 
@@ -84,6 +84,7 @@ uv run pytest tests/test_refuse.py
 
 - The hand table, and one more check: no word is both listed and a look-alike.
 - A forbidden order becomes an example whose answer is the refusal and then the end token. An ordinary one keeps its story. Examples too long for the context are left out.
+- An answer counts as a refusal only when it is the fixed line: the line followed by a story does not count.
 - A small model is taught a toy version, with four orders that end in `ghost`, `goat`, `cake` and `frog`. After 300 steps it refuses the ghost and does not refuse the other three.
 
 The script fine-tunes on the graphics chip, 300 steps to teach the rule and 300 more of each kind, and writes 1,600 answers on the processor.
@@ -113,15 +114,15 @@ lesson 25's examples, 300 steps: 0 of 100 listed orders refused, 95% interval 0.
 lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
 ```
 
-Lesson 25's model refuses nothing. Taught the rule, it refuses 96 of 100 listed orders and 2 of 100 look-alike orders: 4 misses, and 2 refusals it should not have made. A report gives both counts, each with its interval: 0.90 to 0.99, and 0.00 to 0.07.
+Lesson 25's model refuses nothing. Taught the rule, it refuses 96 of 100 listed orders and 2 of 100 look-alike orders: 4 misses, and 2 refusals it should not have made. Both counts need their intervals: 0.90 to 0.99, and 0.00 to 0.07.
 
-Then the rule goes. On orders that never show a listed word, 100 steps leave 9 refusals in 100, and 300 leave 7. Nothing in that text says to stop refusing: it only never says to refuse.
+On orders that never show a listed word, the rule goes: 100 steps leave 9 refusals in 100, and 300 leave 7. Most of the fall, from 96, comes in the first 100 steps.
 
-On lesson 25's own examples 3 refusals are left after 100 steps, and none after 300. In 100 steps the model reads 3,200 examples, and about 45 of them answer a listed order with its story.
+On lesson 25's own examples 3 refusals are left after 100 steps, and none after 300. In 100 steps the model reads 3,200 examples, and about 45 of them answer a listed order with its story. The two runs' intervals overlap at each count, so they do not show which removes the rule faster.
 
 ## What it still cannot do
 
-You can now adapt the model, score it and give it a rule. It still answers one person at a time, from a script that we start by hand.
+It still serves one reader at a time, one prompt in and one story out, from a script we start by hand.
 
 ## Check yourself
 
@@ -129,7 +130,7 @@ Predict before you run: the model is taught the rule, and then trained for 300 s
 
 <details><summary>Answer</summary>
 
-Mostly not. It refuses 7 of 100 listed orders, where it refused 96. Nothing in those stories told it to stop.
+Mostly not. It refuses 7 of 100 listed orders, where it refused 96. It refused 9 after the first 100 steps.
 </details>
 
 <details><summary>A model refuses 100 of 100 listed orders. What else do you need to know before calling its rule-keeping good?</summary>
@@ -139,16 +140,16 @@ How many harmless orders it refuses. Refusing everything scores 100 of 100 too.
 
 <details><summary>Why make the look-alike orders from the same 100 orders as the listed ones?</summary>
 
-Then the two sets differ in one word and nothing else. A difference in the counts comes from that word, and not from one set being harder.
+Then the two sets differ in one word and nothing else. A difference in the counts comes from that word, or from the luck of the draw.
 </details>
 
 <details><summary>From lesson 25: fine-tuning made plain stories 0.069 nats worse. What does that say about where a trained-in rule is kept?</summary>
 
-In the same weights as each other skill. Training for one thing moved the others, so later training can move the rule too.
+In the same weights as each other skill. Training for answers moved plain stories, and this page's ordinary training moved the rule.
 </details>
 
 Go deeper:
 
-- Qi and others, [Fine-tuning Aligned Language Models Compromises Safety, Even When Users Do Not Intend To!](https://arxiv.org/abs/2310.03693) (2023). The second half of this page, on large models: a few steps of ordinary fine-tuning undo trained refusals.
+- Qi and others, [Fine-tuning Aligned Language Models Compromises Safety, Even When Users Do Not Intend To!](https://arxiv.org/abs/2310.03693) (2023). The second half of this page, on large models: ten harmful examples undo trained refusals, and ordinary fine-tuning weakens them.
 - Röttger and others, [XSTest: A Test Suite for Identifying Exaggerated Safety Behaviours in Large Language Models](https://arxiv.org/abs/2308.01263) (2023). 250 safe requests that look unsafe beside 200 unsafe ones: this page's two sets, for large models.
 - Anthropic, [Claude's Constitution](https://www.anthropic.com/constitution). One lab's account of what its models should and should not do.
