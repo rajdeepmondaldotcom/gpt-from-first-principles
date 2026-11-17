@@ -16,7 +16,7 @@ It learns from a pair like this. It scores both stories. Treat the difference be
 
 A trained scorer can stand where lesson 27's check stood. The storyteller writes stories, the scorer scores them, and the step raises the chance of the stories that scored above their group's average.
 
-Here is the trap. The scorer is a model, and it learned from stories the storyteller wrote before any of this training. About stories like those, it is mostly right. Training now pushes the storyteller toward whatever the scorer rates highest, and that includes stories unlike any the scorer has seen, where its number means nothing. The storyteller is paid to find the scorer's mistakes. So through the training we watch two numbers: the scorer's, which the training sees, and the readers' own, which it does not.
+Here is the trap. The scorer is a model, and it learned from stories the storyteller wrote before any of this training. About stories like those, it is right more often than not. Training now pushes the storyteller toward whatever the scorer rates highest, and that can be a story unlike any the scorer has seen, where its number means little. The storyteller is paid to find the scorer's mistakes. So through the training we watch two numbers: the scorer's, which the training sees, and the readers' own, which it does not.
 
 ## By hand
 
@@ -112,14 +112,14 @@ Predict before you run: as the storyteller is trained against the scorer, the sc
 ln 2 = 0.693. An even bet is surprised by either outcome to the same degree.
 </details>
 
-<details><summary>Why can training against the scorer make stories worse when the scorer ranks nine pairs in ten correctly?</summary>
+<details><summary>Why can training against the scorer make stories worse, when the scorer ranks most unseen pairs correctly?</summary>
 
 It ranks stories like the ones it learned from. Training moves the storyteller away from those, toward whatever earns a high number, and far from its lessons the scorer's number is a guess.
 </details>
 
-<details><summary>From lesson 13: the scorer starts from the story model's weights. What check would you run before trusting its first loss?</summary>
+<details><summary>From lesson 13: the scorer's loss on its own pairs fell to 0.004, and it ranks 137 of 210 unseen pairs right. What has happened, and what would you try?</summary>
 
-That it ranks about half of the held-back pairs right, and that its first loss is near ln 2. An untrained scorer cannot tell the stories apart, so its bets should be close to even. A start far from that means something is wired wrong.
+It has stored its pairs, as lesson 13's model stored its text. That lesson's cures apply: more pairs, dropout or weight decay, or stopping when the unseen pairs stop getting better.
 </details>
 
 Go deeper:

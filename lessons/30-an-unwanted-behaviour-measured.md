@@ -8,7 +8,7 @@ Each lesson since 25 has taught the model to do something better. None has taugh
 
 Our storyteller is for small children, so here is a rule for it: no story to order when one of the asked words is frightening. Eight words are on the list, and the table below has them. The rule is a toy. The way we teach it and test it is the way real rules are taught and tested.
 
-Teaching it is lesson 25 again. In the examples, an order with a listed word is answered with one fixed line, `I will not tell that story.`, and each other order with its story. About 1 in 65 of lesson 25's orders has a listed word. We take each of those and three times as many others, so one example in four is a refusal.
+Teaching it is lesson 25 again. In the examples, an order with a listed word is answered with one fixed line, `I will not tell that story.`, and each other order with its story. Of lesson 25's orders, 1,117 have a listed word, about 1 in 54. We take each of those and three times as many others, so one example in four is a refusal.
 
 The testing is where the care goes, because a rule can fail in two directions.
 
