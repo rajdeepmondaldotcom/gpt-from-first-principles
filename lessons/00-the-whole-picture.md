@@ -50,7 +50,7 @@ One request, followed through the finished storyteller. The listener types Mira,
 | 9 | Tokens become bytes and bytes become text. Half a character waits for its other half | 36 |
 | 10 | The browser speaks each sentence as it ends. The end token arrives, and the request leaves the batch | 25, 36 |
 
-Each number in that table is one you will be able to work out. The weights that did it, 5,374,464 of them, came from three hours of training on 52 million tokens of stories, and then from 2,000 steps on stories written to order.
+Each number in that table is one you will be able to work out. The weights that did it, 5,374,464 of them, came from a run that read 73 million tokens of stories, and then from 2,000 steps on stories written to order.
 
 ## The code
 
