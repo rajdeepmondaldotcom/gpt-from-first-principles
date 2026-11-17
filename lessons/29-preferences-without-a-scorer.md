@@ -2,7 +2,7 @@
 
 By the end of this page the storyteller has learned from lesson 28's pairs with no second model in between.
 
-The scorer of lesson 28 is a second model to train and keep, and it can be fooled. The pairs themselves already say which story is better, and we have not learned from them directly.
+The scorer of lesson 28 is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs themselves already say which story is better, and we have not learned from them directly.
 
 ## The idea
 
@@ -18,7 +18,8 @@ We want the lead to grow, and the loss is lesson 28's bet again, with the lead t
 
 1. At the start our model is the reference. Each gain is 0, each lead is 0, and the loss is ln 2.
 2. The loss falls as the better story gains on the worse one. A rise in the better and a fall in the worse count alike.
-3. A pair with a large lead has little left to teach: its loss is nearly flat there, so it pushes little. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
+3. A pair with a large lead has little left to teach: its loss is nearly flat there, so it pushes little.
+4. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
@@ -91,13 +92,15 @@ The first loss is ln 2. By step 200 it is 0.270 on a batch of 8 pairs.
 
 That fall is on pairs it trains on: by then the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on. There the better story gained on the worse one in 150, and the interval, 0.55 to 0.70, is clear of a half.
 
-The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. Lesson 28 drew afresh from the same model and got 0.57. 197 of the 200 stories end, and 35 pass where 30 did, and the two intervals overlap. Plain stories cost 0.007 nats. Lesson 25's cost 0.069, from lesson 21's model, in ten times the steps at a hundred times this rate.
+The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. Lesson 28's draw from the same model gave 0.57.
 
-Lesson 28's push sent the readers' number down. This one sent it up.
+197 of the 200 stories end, and 35 pass where 30 did, and the two intervals overlap.
+
+Plain stories cost 0.007 nats. Lesson 25's cost 0.069, from lesson 21's model, in ten times the steps at a hundred times this rate.
 
 ## What it still cannot do
 
-Lessons 25 to 29 trained the model toward what to write. None taught it what to refuse.
+We trained the model in lessons 25 to 29 on what to write, never on what to refuse.
 
 ## Check yourself
 

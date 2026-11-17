@@ -2,15 +2,15 @@
 
 By the end of this page the model has been trained with no right answers, only a number for each story it wrote, and you have measured that against fine-tuning on the stories that pass.
 
-Both fine-tunes copied 60,404 stories that obeyed their orders, and the better one still leaves out 0.44 of the asked words. The check sees each miss, and nothing learns from it.
+Each fine-tune so far learned from 60,404 stories that obeyed their orders, and the best still leaves out 0.44 of the asked words. None trains on the misses the check finds.
 
 ## The idea
 
-Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score. Lesson 25's share left the name out.
+Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score. Lesson 25's share counted only the three words.
 
-The first way needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though one a word short came close.
+The first way needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. We throw away the stories that failed, though one a word short came close.
 
-The second way uses them all. Write the average score the model would earn as a sum: each story it might write, times its chance, times its score. We want that sum's slope for each weight. We cannot list them all, so we rewrite the sum to sample it. By lesson 2's table, the slope of ln x is the slope of x over x, so the slope of a chance is the chance times the slope of its logarithm. Each term of the sum then starts with a chance, and the slope is an average, over stories the model itself wrote, of
+The second way uses them all. Write the average score the model would earn as a sum: each story it might write, times its chance, times its score. We want that sum's slope for each weight. We cannot list every story, so we rewrite the sum to sample it. By lesson 2's table, the slope of ln x is (slope of x) / x, so the slope of a chance is the chance times the slope of its logarithm. Each term of the sum then starts with a chance, and the slope is an average, over stories the model itself wrote, of
 
 score × slope of the log of the story's chance
 
@@ -96,15 +96,15 @@ learn from the score: 141 stories end by themselves, plain stories 1.573 nats a 
 asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14
 ```
 
-Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap and the share of asked words stays at 0.57: no measured gain.
+Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap, and the share of asked words stays at 0.57.
 
 Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57, a difference of +0.105 with an interval of +0.07 to +0.14.
 
-The score counts a name and three words, and gives nothing for an ending. Only 141 of its 200 stories reach their end, where 196 did. Plain stories score 1.573 nats where they scored 1.549, and 1.612 after keeping what passes.
+Only 141 of its 200 stories reach their end, where 196 did. Plain stories score 1.573 nats where they scored 1.549, and 1.612 after keeping what passes.
 
 ## What it still cannot do
 
-The score gave nothing for an ending, and 59 of 200 stories no longer reach one. A reader would mark that down, and can say which of two stories is better with no written rule.
+The score gave nothing for an ending, and 59 of 200 stories now never reach one, where 4 did. A reader would mark that down, and our score cannot.
 
 ## Check yourself
 
