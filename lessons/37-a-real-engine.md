@@ -2,19 +2,19 @@
 
 By the end of this page our model runs in Apple's MLX engine, gives the scores it gives in ours, and you have timed both engines on both of this Mac's chips.
 
-Our engine writes 539 tokens a second where memory alone allows 4,231, and lessons 34 and 35 made it no faster. We have not seen what an engine built for speed does with the same model.
+Lesson 31 measured 539 tokens a second for one listener where memory alone allows 4,231, and lessons 34 and 35 made it no faster. We have not seen what an engine built for speed does with the same model.
 
 ## The idea
 
-Our model is one file of weights and about 200 lines of Python. An engine is another program that reads the same file and does the same arithmetic, built for speed. Handing a model over takes two things: the engine must find each weight, and do with them what we do.
+Our model is one file of weights and about 200 lines of Python. An engine is another program that reads the same file and does the same arithmetic, built for speed. Handing a model over takes two things: the engine must find the weights, and do with them what we do.
 
-Finding the weights is settled: lesson 21 saved them under the names that engines for Llama-format models look for, in lesson 10's file format. The engine still needs the sizes, and the three settings lesson 16 said our code fixes: the width inside SwiGLU, the small number inside RMSNorm and the base of the rotary speeds. Those go in a small text file, `config.json`. Writing it is the whole export.
+Finding the weights is settled: in lesson 21 we saved them under the names that engines for Llama-format models look for, in lesson 10's file format. The engine still needs the sizes, and the three settings our code fixes (lesson 16): the width inside SwiGLU, the small number inside RMSNorm and the base of the rotary speeds. Those go in a small text file, `config.json`. The export copies the weights and writes that file.
 
-Doing what we do is harder to see. The engine has its own code for attention, rotary positions, RMSNorm and SwiGLU. One detail done another way, such as which entries lesson 15's rotation pairs up, and its scores would differ from ours with no error shown. So we feed both engines the same tokens and compare each score. They cannot agree to the last bit: the engines add the same numbers in different orders, and 32-bit sums depend on the order.
+Doing what we do is harder to see. The engine has its own code for attention, rotary positions, RMSNorm and SwiGLU. If one detail differs, such as which entries lesson 15's rotation pairs up, its scores differ from ours with no error shown. So we feed both engines the same tokens and compare each score. We do not expect the last bits to agree: an engine may add the same numbers in another order, and 32-bit sums depend on the order.
 
-Then speed, like against like. Both engines write 128 tokens after the same prompt and take the top token each time. We time our engine and Apple's, on the processor and on the graphics chip, for one listener and for sixteen at once.
+Then speed. Both engines write 128 tokens after the same 64-token prompt and take the top token each time, and we keep the fastest of three tries. We time both engines on the processor and on the graphics chip, and each with sixteen at once, ours on the processor only.
 
-One more timing reads the rest. One token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is a large part of a pass, a far smaller model will not be much faster. So the script also times an untrained model as deep as ours and an eighth as wide: 26 times fewer weights, the same calls.
+One token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is a large part of a pass, a far smaller model will not be much faster. So the script also times an untrained model as deep as ours and an eighth as wide: 26 times fewer weights, the same calls.
 
 ## By hand
 
@@ -30,7 +30,7 @@ The story model's sizes, as the config file gives them.
 | `intermediate_size` | 682 | 8 × 256 / 3, rounded down |
 | `vocab_size` | 4,097 | 4,096 and the end token |
 
-Where a pass's time goes. Say a pass costs a fixed part F for its calls and a part A for arithmetic that goes with the count of weights. In the run below our model takes 1,000 / 775 = 1.29 ms a token, and the model with 26 times fewer weights and the same calls takes 1,000 / 1,648 = 0.61 ms.
+Where a pass's time goes. Say a pass costs a fixed part F for its calls and a part A that grows with the count of weights. In the run below our model takes 1,000 / 775 = 1.29 ms a token, and the model with 26 times fewer weights and the same calls takes 1,000 / 1,648 = 0.61 ms.
 
 1.29 = F + A
 
@@ -103,13 +103,13 @@ Apple's engine, processor, 16 at once: 5,943 tokens a second
 the two engines write the same first 128 tokens of 128
 ```
 
-Timings are from an M4 laptop, and they move from run to run. Another program was using the graphics chip during this run, so the four timings on the chip are lower than a free chip gives.
+Timings are from an M4 laptop, and they move from run to run. Another program was using the graphics chip during this run. An earlier run with the chip free read higher on each of the chip's three timings.
 
 The engines agree: the largest gap between their scores is 0.000013, the top token is the same at 256 of 256 places, and they write the same 128 tokens.
 
-On the processor, one listener gets 775 tokens a second from our engine and 942 from Apple's. With 16 at once it is 4,134 against 5,943. On the graphics chip ours writes 104, a seventh of its speed on the processor. Apple's writes 298 there alone and 5,921 with 16 at once, level with its processor.
+On the processor, one listener gets 775 tokens a second from our engine and 942 from Apple's. Lesson 31's 539 drew by chance after a prompt three times as long. With 16 at once it is 4,134 against 5,943. On the graphics chip ours writes 104, about a seventh of its speed on the processor. Apple's writes 298 there alone and 5,921 with 16 at once, level with its processor.
 
-The small model answers part of lesson 31's question. It makes the same 516 calls on 26 times fewer weights and writes 1,648 tokens a second, only 2.1 times as fast. By the sum above, 0.58 of a pass's 1.29 ms is the fixed cost of its calls. Lessons 34 and 35 cut arithmetic, and close to half of a pass is not arithmetic. Sixteen listeners share the calls and get 5.3 times the tokens.
+With the small model we answer part of lesson 31's question. It makes the same 516 calls on 26 times fewer weights and writes 1,648 tokens a second, 2.1 times as fast. By the sum above, 0.58 of a pass's 1.29 ms is the fixed cost of its calls. That alone is more than twice the 0.24 ms a token takes at lesson 31's memory limit. A pass of the small model still costs 0.47 of ours, and lesson 35's draft needed under 0.35. Sixteen listeners share the calls and get 5.3 times the tokens.
 
 ## What it still cannot do
 
@@ -124,14 +124,9 @@ Predict before you run: the same model, the same prompt, the top token each time
 In our run they are, all 128 tokens. They need not be: the scores differ in about the fifth decimal place, and two top tokens that close would be a tie the engines could break differently.
 </details>
 
-<details><summary>An engine loads our file with no error, and its stories read well. Why is that not proof that the export is right?</summary>
-
-A model with one detail done differently still writes plausible text. Only a comparison of scores, token by token, shows that the arithmetic is ours.
-</details>
-
 <details><summary>A model has 26 times fewer weights, makes the same calls and writes 2.1 times as fast. What does that tell you?</summary>
 
-Arithmetic on weights is about half of the time for a token. The rest is the fixed cost of each call into the engine, which a smaller model pays as often.
+The part that grows with the weights is about half of the time for a token. The rest is the fixed cost of each call into the engine, which a smaller model pays as often.
 </details>
 
 <details><summary>From lesson 16: why does the config file carry `rms_norm_eps` and `rope_theta`?</summary>

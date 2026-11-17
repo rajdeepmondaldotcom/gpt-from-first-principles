@@ -10,7 +10,7 @@ One pass of the model gives a row of scores at each place it reads, as training 
 
 A small model, the draft, does the guessing. It writes four tokens, one at a time. Then the big model reads all four in one pass.
 
-The plainest check keeps a guess when it is the big model's top token. That writes what greedy writes, and lesson 22 showed why we want to draw by chance. The check below keeps the big model's chances exactly.
+The plainest check keeps a guess when it is the big model's top token. That writes what greedy writes, and we saw in lesson 22 why we draw by chance. The check below keeps the big model's chances exactly.
 
 Say the draft drew a token to which it gave the chance q, and the big model gives that token the chance p.
 
@@ -19,11 +19,13 @@ Say the draft drew a token to which it gave the chance q, and the big model give
 - If it is thrown out, draw a token from what the big model has left over: p - q for each token where that is above zero, shared out to sum to 1. Drop the guesses after it too, since they followed a token we did not keep.
 - If all four are kept, the same pass has given the big model's chances for a fifth token. Draw it.
 
-A token is written in one of two ways: drafted and kept, or drawn from the leftover after a guess was thrown out. The hand example adds the two for each token and gets p, and so does a test.
+A token is written in one of two ways: drafted and kept, or drawn from the leftover after a guess was thrown out. The two add up to p for each token, by hand below and in a test.
 
-The draft changes only how many passes the writing takes: five tokens a pass at best, and one at worst.
+The draft changes only how many passes the writing takes: five tokens a pass at best, one at worst.
 
-We train two drafts of one size, to see which agrees more. The first learns from the stories. The second learns to copy the big model. Its loss is lesson 3's, but the target is the big model's whole row of chances in place of one right token: each token's surprise, weighted by the big model's chance for it. This is distillation.
+We train two drafts of one size: one learns from the stories, the other learns to copy the big model.
+
+The copy's loss is lesson 3's, but the target is the big model's whole row of chances in place of one right token: each token's surprise, weighted by the big model's chance for it. This is distillation.
 
 ## By hand
 
@@ -35,9 +37,9 @@ Three tokens. The draft gives them chances q of 0.2, 0.6 and 0.2. The big model 
 | Second | 0.6 | 0.3 | 0.5 | 0.3 | 0 |
 | Third | 0.2 | 0.2 | 1 | 0.2 | 0 |
 
-A guess is kept 0.7 of the time. The leftover is all on the first token, so a redraw always gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2: the big model's chances.
+A guess is kept 0.7 of the time and thrown out 0.3. The leftover is all on the first token, so each redraw gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2: the big model's chances.
 
-Tokens for each pass. A round always writes one token, a second if the first guess was kept, a third if two were, and so on. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average: 3.36 at a = 0.8, and 1.94 at a = 0.5.
+Tokens for each pass. A round always writes one token, a second if the first guess was kept, a third if two were. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average: 3.36 at a = 0.8, and 1.94 at a = 0.5.
 
 ## The code
 
@@ -70,9 +72,11 @@ def leftover(p, q):
             ids.append(torch.multinomial(p[k], 1, generator=generator).item())
 ```
 
-`p[j]` and `q[j]` are the two models' rows of chances for guess `j`, and `k` is the number of guesses, 4. `torch.rand(())` is one number drawn evenly between 0 and 1, so it falls under the keep chance that share of the time.
+`p[j]` and `q[j]` are the two models' rows of chances for guess `j`, and `k` is the number of guesses, 4. `torch.rand(())` is one number drawn evenly between 0 and 1, so it falls under a keep chance c with chance c.
 
-A `for` loop's `else` runs when no `break` ended the loop. Both models keep lesson 23's cache, and after a rejection each cache forgets the tokens that were dropped.
+A `for` loop's `else` runs when no `break` ended the loop.
+
+Both models keep lesson 23's cache, and after a rejection we cut the dropped tokens from each cache.
 
 ## The proof
 
@@ -106,9 +110,9 @@ Timings are from an M4 laptop, and they move from run to run.
 
 The draft that copied the big model has the lower loss, 2.238 nats against 2.346, and 63% of its checked guesses are kept, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
 
-Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. This draft has 8 times fewer weights and half the blocks, and costs more than that. Lesson 37 measures why.
+Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. By these timings this draft, with nearly 8 times fewer weights and half the blocks, costs more. Lesson 37 times a smaller model's pass.
 
-The big model's 490 comes right after that training: lesson 32 measured 669.
+Alone, the same model wrote 643 tokens a second in lesson 34, and 490 here after the drafts trained.
 
 ## What it still cannot do
 
@@ -125,7 +129,7 @@ Five. p equals q, so each guess is kept, and the pass that checked them gives a 
 
 <details><summary>From lesson 22: why not keep a guess only when it is the big model's top token?</summary>
 
-That is greedy: the same text each time. Drawing by chance is what gave twenty different stories, and this check keeps each token's chance as the big model has it.
+That is greedy: the same text each time. Drawing by chance gave twenty different stories, and this check keeps each token's chance as the big model has it.
 </details>
 
 Go deeper:

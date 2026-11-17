@@ -2,13 +2,13 @@
 
 By the end of this page each weight inside the blocks takes 8 bits, or 4, and you have measured what each choice costs in memory, loss and speed.
 
-Each weight is still a 32-bit number, 21.5 MB in all, and we have not asked how many of those bits the loss needs.
+The weights take 21.5 MB, each one a 32-bit number, and we have not measured what fewer bits would cost.
 
 ## The idea
 
-A weight does not need 32 bits. Store it as a small whole number, and keep one 32-bit number for its row, called the scale, that says how large a step of 1 is.
+We can store each weight as a small whole number, and keep one 32-bit number for its row, called the scale, that says how large a step of 1 is.
 
-With 8 bits a whole number runs from -127 to 127. Find the row's largest weight, ignoring its sign, and let it be 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
+With 8 bits a whole number runs from -127 to 127. Find the row's largest weight, ignoring its sign, and give it the number 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
 
 With 4 bits the numbers run from -7 to 7. The steps are 127 / 7 = 18 times as coarse.
 
@@ -16,11 +16,11 @@ Each row has a scale of its own. With one scale for a whole grid, a single large
 
 A layer's result is a sum of weights times inputs. Each weight is off by at most half a step. So each number the layer puts out is off by at most half a step times the sum of the inputs, each taken without its sign. That is a bound for the worst case, where each error pushes the same way.
 
-We measure what the model loses in practice: the loss on 500 unseen stories, before and after, with lesson 24's interval.
+We measure what the model loses: the loss on 500 unseen stories, before and after, with lesson 24's interval.
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading fewer bytes removes no wait. And we turn the small numbers back into 32-bit numbers each time a layer runs, which is extra work. Engines built for speed multiply them as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
+We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading fewer bytes removes no wait. And we turn the small numbers back into 32-bit numbers each time a layer runs, which is extra work. Programs built for speed multiply them as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
 
 ## By hand
 
@@ -103,7 +103,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Both shrunk models write slower: 393 and 168 tokens a second, against 643. Lesson 37 looks for where the time goes.
+Writing 200 tokens with lesson 23's loop, both shrunk models are slower: 393 and 168 tokens a second, against 643. We look for where the time goes in lesson 37.
 
 ## What it still cannot do
 
