@@ -41,7 +41,7 @@ if __name__ == "__main__":
     from gpt.data import read
     from gpt.story import load
 
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = "cpu"  # one token at a time is faster here than on the graphics chip, and it repeats
     model, words = load(Path("data/cache/story"), device)
     prompt = words.encode("Once upon a time")
     # Each lowercase word in 5 million tokens of the training text: the words the stories use.

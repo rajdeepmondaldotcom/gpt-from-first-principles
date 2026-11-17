@@ -56,7 +56,7 @@ if __name__ == "__main__":
     from gpt.tasks import attempt, count_documents, make, prompt
 
     cache = Path("data/cache")
-    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    device = "cpu"  # one token at a time is faster here than on the graphics chip, and it repeats
     model, words = load(cache / "story", device)
     generator = torch.Generator().manual_seed(0)
 
