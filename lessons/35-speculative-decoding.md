@@ -6,11 +6,11 @@ The model is smaller now. It still runs once, top to bottom, for each token it w
 
 ## The idea
 
-One pass of the model gives a row of scores at each place it reads, as training has used since lesson 10. Hand the big model four more tokens and one pass tells us what it thinks should follow each of them. So if something could guess the next four tokens, the big model could check four guesses, and add a fifth token, for the price of one pass.
+One pass of the model gives a row of scores at each place it reads, as training has used since lesson 10. So if something could guess the next four tokens, the big model could check all four guesses, and add a fifth token, for the price of one pass.
 
 A small model does the guessing. We call it the draft. It writes four tokens, one at a time. Then the big model reads all four in one pass.
 
-The obvious check keeps a guess when it is the big model's top token. That writes only what greedy writes, and lesson 22 showed why we want to draw by chance. The check below keeps the big model's chances to the last digit.
+The obvious check keeps a guess when it is the big model's top token. That writes only what greedy writes, and lesson 22 showed why we want to draw by chance. The check below keeps the big model's chances exactly.
 
 Say the draft drew a token to which it gave the chance q, and the big model gives that token the chance p.
 
@@ -19,11 +19,11 @@ Say the draft drew a token to which it gave the chance q, and the big model give
 - If it is thrown out, draw a token from what the big model has left over: p - q for each token where that is above zero, shared out to sum to 1. Drop the guesses after it too, since they followed a token we did not keep.
 - If all four are kept, the same pass has given the big model's chances for a fifth token. Draw it.
 
-Why this is exact: a token is written either because it was drafted and kept, or because a guess was thrown out and it was drawn from the leftover. The hand example adds the two for each token and gets p, and a test does the same sum for 50 random pairs of p and q.
+Why this is exact: a token is written either because it was drafted and kept, or because a guess was thrown out and it was drawn from the leftover. The hand example adds the two for each token and gets p, and so does a test.
 
-So the draft cannot change what is written. It changes how many passes the writing takes. A draft that agrees with the big model gets five tokens from each pass, and a poor one gets one.
+So the draft cannot change what is written, only how many passes it takes: five tokens a pass at best, and one at worst.
 
-Which draft agrees most? We train two of one size. The first learns from the stories, like any model here. The second learns to copy the big model. Its loss is lesson 3's, with the big model's whole row of chances as the target where the text gave one right token: each token's surprise, weighted by the chance the big model gives that token. This is called distillation.
+Which draft agrees most? We train two of one size. The first learns from the stories. The second learns to copy the big model. Its loss is lesson 3's, with the big model's whole row of chances as the target where the text gave one right token: each token's surprise, weighted by the chance the big model gives that token. This is called distillation.
 
 Whether it is faster is a measurement, and lesson 34 is a warning: a smaller model there wrote slower. A round costs four passes of the draft and one of the big model.
 
@@ -37,9 +37,9 @@ Three tokens. The draft gives them chances q of 0.2, 0.6 and 0.2. The big model 
 | Second | 0.6 | 0.3 | 0.5 | 0.3 | 0 |
 | Third | 0.2 | 0.2 | 1 | 0.2 | 0 |
 
-A guess is kept 0.7 of the time and thrown out 0.3 of the time. The leftover is all on the first token, so a redraw always gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2. Those are the big model's chances.
+A guess is kept 0.7 of the time. The leftover is all on the first token, so a redraw always gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2: the big model's chances.
 
-Tokens for each pass. A round always writes one token: the first guess, or the redraw that replaces it. It writes a second when the first guess was kept, a third when two were, and so on. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average. At a = 0.8 that is 3.36, and at a = 0.5 it is 1.94.
+Tokens for each pass. A round always writes one token, a second if the first guess was kept, a third if two were, and so on. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average: 3.36 at a = 0.8, and 1.94 at a = 0.5.
 
 ## The code
 
@@ -86,7 +86,7 @@ uv run pytest tests/test_speculate.py
 - A poor draft has guesses thrown out, and never needs more than one pass a token.
 - The copying loss equals lesson 3's loss when the big model is sure of one token, and is lowest when the draft's chances equal the big model's.
 
-The script trains the two drafts on the graphics chip, a few minutes each, then times the writing on the processor.
+The script trains the two drafts on the graphics chip, then times the writing on the processor.
 
 ```bash
 uv run python -m gpt.speculate
@@ -111,11 +111,6 @@ Predict before you run: the draft is the big model itself. How many tokens does 
 <details><summary>Answer</summary>
 
 Five. p equals q, so each guess is kept, and the pass that checked them gives a fifth token.
-</details>
-
-<details><summary>The draft gives a token a chance of 0.1 and the big model gives it 0.4. The draft draws it. Is it kept?</summary>
-
-Always. The big model likes it more than the draft does, so the keep chance is 1.
 </details>
 
 <details><summary>From lesson 22: why not keep a guess only when it is the big model's top token?</summary>

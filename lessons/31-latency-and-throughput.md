@@ -114,11 +114,6 @@ Predict before you run: a machine finishes 3 requests a second and 4.5 arrive ea
 The wait for the first token: the model reads the whole prompt before it writes anything. The gap between tokens is one pass over one token for both.
 </details>
 
-<details><summary>Why report the 95th percentile and not the mean?</summary>
-
-A mean can be a wait that no reader had. The 95th percentile is a wait that 1 reader in 20 went over, and those readers are the ones a service loses.
-</details>
-
 <details><summary>From lesson 23: without the cache, what would happen to the gap between tokens as the answer grows?</summary>
 
 It would grow with the answer. Each new token would mean reading the whole text again, prompt and all, so each gap would be longer than the one before.

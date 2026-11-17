@@ -8,13 +8,13 @@ Each script so far runs once, in a terminal, and stops. Nobody else can ask our 
 
 A server is a program that waits for requests from other programs, its clients, and answers each one. Ours has five jobs.
 
-1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, sent to a web address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, and so can a tool built to test servers under load.
+1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, sent to a web address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, a load-testing tool included.
 2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one byte each. We hold the first half back until the second arrives.
-3. Serve many at once. A thread is a line of work that runs beside others inside one program. Each web request gets a thread of its own, which mostly waits. One more thread runs lesson 32's engine. A queue is a line that one thread puts things into and another takes them out of. A request hands the engine its prompt through a queue and gets its tokens back through another.
-4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. A fast no is kinder than a slow one. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+3. Serve many at once. Each web request gets a thread of its own: a line of work that runs beside the others in one program, and mostly waits. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue.
+4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
 
-Two checks tell us the counts are right. An outside tool sends the load and measures it from its own side. And one sum has to balance: the number of requests inside the server, averaged over time, equals the rate at which they arrive times the average time each one spends inside.
+Two checks tell us the counts are right. An outside tool sends the load and measures it from its own side. And one sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
 
 ## By hand
 
@@ -141,11 +141,6 @@ Predict before you run: 16 requests are inside the server at a time, each takes 
 <details><summary>Why does the server refuse a request when the line is full, when it could let the line grow?</summary>
 
 Lesson 31 showed what a growing line does: each new request waits longer than the last. A no that comes at once lets the client try again or go elsewhere.
-</details>
-
-<details><summary>A listener closes the page halfway through a story. What would it cost to go on writing?</summary>
-
-A row of the batch and its cache, until the story ends, for text nobody reads. Each other listener's tokens would come a little slower.
 </details>
 
 <details><summary>From lesson 5: why can one token be half a character?</summary>
