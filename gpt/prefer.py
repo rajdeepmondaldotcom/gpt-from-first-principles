@@ -14,12 +14,12 @@ if __name__ == "__main__":
     import copy
     from pathlib import Path
 
-    from gpt.evaluate import rate_interval
+    from gpt.evaluate import interval, rate_interval
     from gpt.finetune import measure, plain_gap, prepare
     from gpt.optim import AdamW
-    from gpt.reinforce import answer_log_chances
+    from gpt.reinforce import answer_log_chances, sample
     from gpt.results import save, say
-    from gpt.scorer import pairs_from
+    from gpt.scorer import pairs_from, readers
     from gpt.story import load, save_llama
     from gpt.train import clip
 
@@ -45,7 +45,12 @@ if __name__ == "__main__":
             out.append((ours[0] - theirs[0]) - (ours[1] - theirs[1]))
         return torch.cat(out)
 
+    def liked(net):
+        """The readers' number for one story that `net` writes to each unseen task."""
+        return [readers(words, task, sample(net, words, task, generator)[0]) for task in tasks]
+
     start, plain_start = measure("lesson 25's model", model, words, tasks, unseen, generator)
+    liked_start = liked(model)
     optimizer = AdamW(model.parameters(), rate=1e-5, decay=0.0)
     for step in range(200):
         picks = torch.randint(len(learn), (8,), generator=generator).tolist()
@@ -73,6 +78,13 @@ if __name__ == "__main__":
         f"plain stories, after minus before: {gap:+.3f} nats, "
         f"95% interval {low_gap:+.3f} to {high_gap:+.3f}"
     )
+    liked_after = liked(model)
+    low_liked, high_liked = interval([[a - b] for a, b in zip(liked_after, liked_start)], generator)
+    say(
+        f"the readers give its stories {sum(liked_after) / len(tasks):.2f} on average, where they "
+        f"gave {sum(liked_start) / len(tasks):.2f}. The change has a 95% interval of "
+        f"{low_liked:+.2f} to {high_liked:+.2f}"
+    )
     out = cache / "preferred"
     out.mkdir(exist_ok=True)
     save_llama(model, out / "model.safetensors")
@@ -87,4 +99,5 @@ if __name__ == "__main__":
         start=start,
         after=after,
         plain_gap=gap,
+        readers={"start": sum(liked_start) / len(tasks), "after": sum(liked_after) / len(tasks)},
     )

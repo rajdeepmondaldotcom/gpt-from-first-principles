@@ -8,19 +8,19 @@ Asked in three lines for a name and three words, the model passes 0 of 100. It w
 
 A model does what its training text does. So we make text in which an order is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
 
-The examples come from lesson 24's task maker, which reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they were taken from, which obeys them already. The first 20 million training tokens give 60,404.
+The examples come from the function that made lesson 24's tasks. It reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they came from, which obeys them already. The first 20 million training tokens give 60,404.
 
 Three choices shape the training.
 
-1. Only the answer is scored. An example is a prompt and then an answer. If the loss counted each token, the model would be marked on guessing the name and the words of the next order, which nobody can know. So the loss counts only the places whose target is part of the answer.
+1. Only the answer is scored. An example is a prompt and then an answer. A loss on each token would mark the model on guessing an order's name and words, which nobody can know. So the loss counts only the places whose target is part of the answer.
 2. Each answer ends with the end token, and that token is scored. The model learns that after a story comes the end, and lesson 22's writing loop stops there.
-3. Training starts from lesson 21's weights and not from random ones. It runs 2,000 steps of 32 examples at a peak rate of 0.001, half of lesson 21's.
+3. Training starts from lesson 21's weights. It runs 2,000 steps of 32 examples at a peak rate of 0.001, half of lesson 21's.
 
-Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored. We pad each batch out to the model's whole context: on the graphics chip, training stalled when the shape of the batch kept changing.
+Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored, so any token will do, and we use the end token. The hand example pads to its longest row. The run pads each batch to the model's whole context: on the graphics chip, training stalled when the shape of the batch kept changing.
 
-We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the asked words turn up, and how many stories reach the end token by themselves. The share of words is the finer measure, since a story with two of its three words fails the check.
+We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share of words is the finer measure, since a story with two of its three words fails the check.
 
-A new skill can cost an old one. Fine-tuning moves each weight, and nothing in the examples rewards plain stories. So we score 500 plain unseen stories before and after, take the difference token by token, and give it lesson 24's interval.
+A new skill can cost an old one. Fine-tuning moves each weight, and nothing in the examples rewards plain stories. So we score 500 plain unseen stories before and after, take the difference at each token, and give the mean difference lesson 24's interval, drawn story by story.
 
 ## By hand
 
@@ -32,9 +32,9 @@ A toy example. The prompt is the three tokens `1 2 |`, and the answer is `1 2` a
 | It should write next | 2 | `\|` | 1 | 2 | end |
 | Scored | no | no | yes | yes | yes |
 
-The first scored place is 2. There the model has read the whole prompt and should write the first token of the answer. Places 0 and 1 ask it to write the prompt, and are left out.
+The first scored place is 2: the model has read the whole prompt and should write the answer's first token. Places 0 and 1 ask it to write the prompt, and are left out.
 
-A second example has a prompt of 2 tokens, an answer of 1 and the end token: 3 places. In a batch with the first, it gets 2 padded places at its end, neither of them scored.
+A second example has a prompt of 2 tokens, an answer of 1 and the end token: 3 places. In a batch with the first, it gets 2 padded places at its end, neither scored.
 
 ## The code
 
@@ -59,7 +59,7 @@ def answer_loss(model, x, y, scored):
     return cross_entropy(model(x)[scored], y[scored])
 ```
 
-An example is a pair: the token ids of prompt, answer and end token, and `start`, the place where the answer begins. `torch.full` makes a grid filled with one value, here the padding. `model(x)[scored]` keeps the rows of scores at the places marked true, from the whole batch, as one list.
+An example is a pair: the token ids of prompt, answer and end token, and `start`, the place where the answer begins. An example of n tokens fills n - 1 places, since its last token has no next one. `torch.full` makes a grid filled with one value, here the padding. `x.clone()` is a copy, and `zeros_like` a grid of the same shape filled with False. `model(x)[scored]` keeps the rows of scores at the places marked true, as one list.
 
 ## The proof
 
@@ -69,10 +69,9 @@ uv run pytest tests/test_finetune.py
 
 - The hand example, and a second one padded beside it, give the three grids above.
 - Changing a target inside a prompt, or in the padding, leaves the loss as it was. Changing a target inside an answer moves it.
-- A small model learns a toy task in 400 steps: after two tokens and a separator, write the same two tokens and stop. Its loss falls from above 2 to below 0.1, and it stops by itself.
-- Before that training, the same model does not stop.
+- A small model learns a toy task in 400 steps: after two tokens and a separator, write the same two tokens and stop. Its loss falls from above 2 to below 0.1, and it stops by itself, which it did not before.
 
-The script trains on the graphics chip and measures on the processor, so its numbers do not repeat to the last digit.
+The script trains on the graphics chip, where a run does not repeat to the last digit, and measures on the processor.
 
 ```bash
 uv run python -m gpt.finetune
@@ -97,11 +96,11 @@ after: 195 stories end by themselves, plain stories 1.549 nats a token
 plain stories, after minus before: +0.069 nats, 95% interval +0.059 to +0.079
 ```
 
-Before fine-tuning the model passes 0 of 200 tasks. After it, 27 pass, and the interval of 0.09 to 0.19 is clear of the 0.02 that bounded the rate before. The finer measure moves further: the stories now use 0.56 of the words they are asked for, up from 0.14.
+Each step's line is the loss of one batch of 32, so it rises and falls. Of 200 tasks the model passed 0 before fine-tuning and passes 27 after, and the interval of 0.09 to 0.19 is clear of the 0.02 that bounded the rate before. The finer measure moves further: 0.56 of the asked words are used, up from 0.14.
 
-The model has also learned to stop. 195 of 200 stories reach the end token, where 177 did.
+195 of 200 stories now reach the end token, where 177 did.
 
-The price is on plain stories. They score 1.549 nats where they scored 1.480, and the difference of +0.069 has an interval of +0.059 to +0.079. The model is a slightly worse storyteller than it was, and the interval says so.
+The price is on plain stories: 1.549 nats where they scored 1.480, a difference of +0.069 with an interval of +0.059 to +0.079. The model is a slightly worse storyteller than it was.
 
 ## What it still cannot do
 
@@ -113,7 +112,7 @@ When they got home, Mira opened the light to make the cat taste yummy. Her mum s
 Mira smiled, picked up a plate of cheese and put it on the table too. The cat said, "Yummy! I like the taste!" Mira smiled, happy that she was able to see the cat.
 ```
 
-We asked for Mira, a cat, the moon and something brave. The story has Mira and the cat. It has no moon and nothing brave, and it fails the check. That is the usual way it fails: about half of the asked words go missing.
+We asked for Mira, cat, moon and brave. The story has Mira and the cat, no moon and nothing brave, and fails the check. That is the usual way it fails: 0.44 of the asked words go missing.
 
 The fine-tune moved each of the model's 5,374,464 weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
 
@@ -128,16 +127,16 @@ About one in seven: 0.14. The asked words are ordinary story words, and some tur
 
 <details><summary>Why is the prompt left out of the loss?</summary>
 
-Scoring it would train the model to write orders, and mark it down for not guessing a name and three words that it has no way to know. We want it to read an order and write the story.
+Scoring it would train the model to write orders, and mark it down for not guessing a name and three words it cannot know.
 </details>
 
-<details><summary>From lesson 24: why take the difference on plain stories token by token, and not compare two means?</summary>
+<details><summary>From lesson 24: why take the difference on plain stories at each token, and not compare two means?</summary>
 
-Both models read the same 500 stories, so most of what moves a story's loss is the same for both and cancels in the difference. The interval on the difference is far narrower than either model's own.
+Both models read the same 500 stories, so most of what moves a story's loss is the same for both and cancels in the difference. The interval here is 0.020 nats wide. Lesson 24's, on one model's score over 250 stories, was 0.094.
 </details>
 
 Go deeper:
 
-- Eldan and Li, [TinyStories](https://arxiv.org/abs/2305.07759) (2023). The paper also trains small models to follow orders of this kind, and reports how well models of each size obey.
-- Howard and Ruder, [Universal Language Model Fine-tuning for Text Classification](https://arxiv.org/abs/1801.06146) (2018). An early paper on training a language model first and then fine-tuning it for a task.
+- Eldan and Li, [TinyStories](https://arxiv.org/abs/2305.07759) (2023). It also trains small models to follow orders of this kind.
+- Howard and Ruder, [Universal Language Model Fine-tuning for Text Classification](https://arxiv.org/abs/1801.06146) (2018). An early paper on fine-tuning a trained language model for a task.
 - Raschka, [Build a Large Language Model (From Scratch)](https://github.com/rasbt/LLMs-from-scratch), chapter 7. Fine-tuning a GPT-2 to follow written instructions.

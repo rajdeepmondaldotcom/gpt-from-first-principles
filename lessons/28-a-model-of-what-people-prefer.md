@@ -8,11 +8,11 @@ Lesson 27's check was a program: four words, found or not found. Most of what pe
 
 People are poor at giving a story a number and good at choosing between two. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
-We have no readers, so a short function stands in for them, and we say now what it likes. A story must end, run to 40 words or more and say no sentence twice. Among stories that do, it likes the one with more of the name and the asked words. The model on this page never sees that rule. It sees pairs. Having the rule lets us do what a real project cannot: set a learned score beside the truth.
+We have no readers, so a short function stands in for them, and we say now what it likes. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule. It sees pairs. Having the rule lets us do what a real project cannot: set a learned score beside the truth.
 
 The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the story model, which can read stories already. On top goes one new layer that turns the stream at the last token into a single number.
 
-It learns from a pair like this. It scores both stories. Treat the difference between the two scores as a bet on which the reader chose: the larger the lead of the first, the surer the bet on the first. The loss is the surprise of lesson 1 at the reader's real choice. When the two scores are equal the bet is even, and the loss is ln 2.
+It learns from a pair like this. It scores both stories. Treat the difference between the two scores as a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice. When the two scores are equal the bet is even, and the loss is ln 2.
 
 A trained scorer can stand where lesson 27's check stood. The storyteller writes stories, the scorer scores them, and the step raises the chance of the stories that scored above their group's average.
 
@@ -59,7 +59,7 @@ class Scorer(nn.Module):
         return self.head(read).squeeze(-1)
 ```
 
-Texts in a batch have different lengths, so each is padded at its end, and `last` says where each one stops. Padding after that place cannot reach back to it: lesson 7's mask.
+`body.embed.weight.size(1)` is the model's width, and `squeeze(-1)` turns a column of single numbers into a row. Texts in a batch have different lengths, so each is padded at its end, and `last` says where each one stops. Padding after that place cannot reach back to it: lesson 7's mask.
 
 ```python
 # gpt/scorer.py
@@ -82,7 +82,7 @@ uv run pytest tests/test_scorer.py
 - The readers' three verdicts above, and two more: a whole story with all four gets 1, and a story of 7 words gets 0.
 - From four stories for one order, a good one, a fair one and two bad ones, five pairs are made, each with the better story first. The two bad ones tie and make no pair.
 
-The stories come from lesson 27's run: 1,600 of them, four for each of 400 orders, written before any training there.
+The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model as it was. Each two stories for one order make a pair, unless the readers give both the same number.
 
 ```bash
 uv run python -m gpt.scorer

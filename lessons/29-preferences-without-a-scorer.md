@@ -8,17 +8,17 @@ The scorer of lesson 28 is a second model to train, to keep and to be fooled. Th
 
 A pair says that for one order, story A is better than story B. What should that do to the storyteller? It should make A more likely and B less likely. Our model gives each text a chance, so "more likely" has an exact meaning: the log of A's chance should rise and the log of B's should fall.
 
-How far? If we only pushed, the push would never end, and the model would forget how to write anything else. So we measure each push against a frozen copy of the model, made before this training starts. Call the copy the reference.
+We cannot compare the two log chances as they stand. They differ for reasons that say nothing about which story is better: each token lowers a story's log chance, so length alone can put one story far below another. So we compare how far each has moved since training began. Keep a frozen copy of the model, made before this training starts, and call it the reference.
 
 For each story, ask how much more likely our model makes it than the reference does: the log of its chance under our model, minus the log of its chance under the reference. Call that the story's gain. Then for a pair,
 
 lead = gain of the better story - gain of the worse story
 
-We want the lead to grow, and the loss is lesson 28's bet again: the surprise at the reader's choice, when the lead times a small number beta is the bet's strength. Three things follow from that one line.
+We want the lead to grow, and the loss is lesson 28's bet again, with the lead times a small number beta in the place of x. Three things follow from that one line.
 
 1. At the start our model is the reference. Each gain is 0, each lead is 0, and the loss is ln 2.
 2. The loss falls as the better story gains on the worse one. It does not care whether the better one rose or the worse one fell.
-3. A pair with a large lead has little left to teach, because a sure bet cannot get much surer. That is what stops the push. Beta sets how large a lead counts as large. The lead is in nats summed over a story of some 200 tokens, and we use a beta of 0.1.
+3. A pair with a large lead has little left to teach, because a sure bet cannot get much surer. That is what stops the push, and it keeps the model near the reference. Beta sets how large a lead counts as large. A lead is in nats, summed over a story of some 200 tokens. With our beta of 0.1, a lead of 10 nats, 0.05 a token, makes x = 1 and a bet of 0.73.
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
@@ -34,14 +34,14 @@ One pair. Log chances are sums over the story's tokens.
 | The reference | -2.0 | -3.0 |
 | Gain | +1.0 | -3.0 |
 
-The lead is 1.0 - (-3.0) = 4.0. With a beta of 0.1 the bet's strength is 0.4.
+The lead is 1.0 - (-3.0) = 4.0. With a beta of 0.1, x is 0.4.
 
 | Step | Sum | Value |
 |---|---|---|
 | Chance the bet puts on the better story | 1 / (1 + e^-0.4) | 0.599 |
 | Loss | -ln 0.599 | 0.513 |
 
-At the start, with our model equal to the reference, the strength is 0, the chance 0.5 and the loss 0.693.
+At the start, with our model equal to the reference, x is 0, the chance 0.5 and the loss 0.693.
 
 ## The code
 
@@ -64,7 +64,7 @@ uv run pytest tests/test_prefer.py
 - With our model equal to the reference the loss is ln 2. It is lower when the better story has gained 2 nats on the reference, and higher when it has lost 2.
 - The hand example gives 0.513.
 
-The pairs are lesson 28's: 1,600 stories that lesson 27's run wrote, four for each of 400 orders, with the readers' choice between each two.
+The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. The script also asks lesson 28's question: what do the readers give the model's new stories, before and after?
 
 ```bash
 uv run python -m gpt.prefer

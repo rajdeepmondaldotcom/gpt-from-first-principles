@@ -33,6 +33,13 @@ def taste(task, text, ended):
     return score(task, text) if whole else 0.0
 
 
+def readers(words, task, example):
+    """What the readers give a story the model wrote, held as one of lesson 25's examples."""
+    ids, start = example
+    text = words.decode([i for i in ids[start:] if i != words.end])
+    return taste(task, text, ids[-1] == words.end)
+
+
 def pairs_from(drawn, words, tries=4):
     """From each task's `tries` stories, each pair where the readers like one story more.
 
@@ -41,10 +48,7 @@ def pairs_from(drawn, words, tries=4):
     """
     out = []
     for g in range(0, len(drawn), tries):
-        marks = []
-        for task, (ids, start), _ in drawn[g : g + tries]:
-            text = words.decode([i for i in ids[start:] if i != words.end])
-            marks.append((taste(task, text, ids[-1] == words.end), (ids, start)))
+        marks = [(readers(words, task, one), one) for task, one, _ in drawn[g : g + tries]]
         for i, (mine, a) in enumerate(marks):
             out += [(a, b) for theirs, b in marks[i + 1 :] if mine > theirs]
             out += [(b, a) for theirs, b in marks[i + 1 :] if mine < theirs]
@@ -114,6 +118,15 @@ if __name__ == "__main__":
     say(f"after: {sum(ranked)} of {len(held)}, 95% interval {low:.2f} to {high:.2f}")
 
     # Now push lesson 25's model against the scorer. Its number is the reward.
+    with torch.no_grad():
+        base = {
+            "scorer": sum(scores([one]).item() for _, one, _ in drawn[1360:]) / 240,
+            "readers": sum(readers(words, task, one) for task, one, _ in drawn[1360:]) / 240,
+        }
+    say(
+        f"before the push, the 240 stories held back: the scorer gives them "
+        f"{base['scorer']:+.2f} on average, the readers {base['readers']:.2f}"
+    )
     tasks = [task for task, _ in prepare(cache, words)[0]][400:]  # tasks lesson 27 did not use
     optimizer, rounds, curve = AdamW(model.parameters(), rate=3e-4, decay=0.0), 100, []
     learned, liked = [], []
@@ -127,12 +140,7 @@ if __name__ == "__main__":
         with torch.no_grad():
             reward = scores(examples)
         learned += reward.tolist()
-        liked += [
-            taste(
-                task, words.decode([i for i in ids[start:] if i != words.end]), ids[-1] == words.end
-            )
-            for task, (ids, start) in zip(picked, examples)
-        ]
+        liked += [readers(words, task, one) for task, one in zip(picked, examples)]
         loss = score_loss(answer_log_chances(model, examples, words.end), reward, group)
         model.zero_grad()
         loss.backward()
@@ -153,6 +161,7 @@ if __name__ == "__main__":
         device="cpu",
         pairs={"learn": len(learn), "held": len(held)},
         ranked_right={"before": before, "after": sum(ranked), "interval": [low, high]},
+        before_the_push=base,
         curve=curve,
         sample=story.strip(),
     )

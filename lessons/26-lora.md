@@ -8,15 +8,15 @@ Lesson 25's fine-tune moved each of the model's weights, and the result is a sec
 
 Fine-tuning turns a grid of weights W into W plus a change D, and D is as large as W. LoRA bets that the change a new task needs is simpler than that, and builds D from two thin grids.
 
-Take a grid that maps 256 numbers to 256. In place of a free D, write D as B times A. A maps the 256 numbers down to r of them, and B maps those r back up to 256. With r = 8, A and B hold 4,096 numbers together, where D held 65,536. The number r is called the rank.
+Take a grid that maps 256 numbers to 256. In place of a free D, write D as B times A. A maps the 256 numbers down to r of them, and B maps those r back up to 256. With r = 8, A and B hold 4,096 numbers together, where D held 65,536. The number r, the fewest numbers the change can be passed through, is called its rank.
 
-What is lost is freedom. Whatever goes in, the change that comes out is a mix of 8 fixed directions, because it passed through 8 numbers on the way. A free D could change the output in 256 directions.
+What is lost is freedom. Whatever goes in, the change that comes out is a sum of B's 8 columns, each times one of the 8 numbers it passed through. A free D could move each of the 256 outputs on its own.
 
 The layer becomes the old result plus the correction:
 
 W x + scale × B (A x)
 
-W is frozen: it gets no slope and takes no step. Only A and B train. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
+W is frozen: it gets no slope and takes no step. Only A and B train. The scale is a fixed number that sets how much the correction counts. Ours is 2, and we did not tune it. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
 
 We put a correction beside two grids in each attention: the one that makes queries and the one that makes values. That was the choice in the paper that introduced LoRA.
 
@@ -33,7 +33,7 @@ The count for one block, at a rank of 8.
 | Queries | 256 to 256 | 8 × 256 and 256 × 8 | 4,096 |
 | Values | 256 to 128 | 8 × 256 and 128 × 8 | 3,072 |
 
-The values grid is the smaller because of lesson 16's grouped heads: 4 value heads of 32. A block has 7,168 trained numbers, and six blocks have 43,008. That is 0.8% of 5,374,464, and 0.17 MB at 4 bytes each.
+The values grid is the smaller because of lesson 16's grouped heads: our 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers, and six blocks have 43,008. That is 0.8% of 5,374,464, and 0.17 MB at 4 bytes each.
 
 A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0).
 
@@ -80,7 +80,7 @@ def merge(model):
                 setattr(block.attn, name, part.layer)
 ```
 
-`down` is A and `up` is B. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `nn.Parameter` marks the two new grids as weights that do train. `getattr` and `setattr` read and replace a part of the model by its name, so nothing in the model's own file changes.
+`down` is A and `up` is B, and `in_features` and `out_features` are a layer's counts of inputs and outputs. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. Dividing by the rank keeps A's first numbers small. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `nn.Parameter` marks the two new grids as weights that do train. `getattr` and `setattr` read and replace a part of the model by its name, and `named_children` lists the parts, so nothing in the model's own file changes. PyTorch stores a layer's grid as outputs by inputs (lesson 4), the shape of `up @ down`.
 
 ## The proof
 
@@ -92,7 +92,7 @@ uv run pytest tests/test_lora.py
 - Only grids named `down` and `up` train. In a small model they hold under a tenth of the weights.
 - Training lowers the loss, moves `up` away from zero, and leaves each frozen weight equal to what it was, to the last bit.
 - After the merge the scores match to 0.00001, the model's parts have their old names, and no LoRA layer is left.
-- With a rank of 3, the grid `up` times `down` has a rank of 3.
+- With r = 3, PyTorch counts the rank of `up` times `down` as 3.
 
 ```bash
 uv run python -m gpt.lora
@@ -119,7 +119,7 @@ Predict before you run: the corrections hold 0.8% of the weights. Will the model
 
 <details><summary>Why does B start at zero and A at random numbers, and not both at zero?</summary>
 
-With B at zero the correction is zero, so the model starts unchanged. If A were zero too, the slope for B would be zero as well, since it is multiplied by A x, and neither grid would ever move.
+With B at zero the correction is zero, so the model starts unchanged. B's slope is multiplied by A x, and A's is passed back through B. With both at zero, both slopes are zero and neither grid ever moves. With A random, B moves on the first step, and A once B has.
 </details>
 
 <details><summary>A grid maps 512 numbers to 512. How many numbers does a correction of rank 4 train, against the grid's own?</summary>
