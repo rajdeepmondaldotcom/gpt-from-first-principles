@@ -69,22 +69,22 @@ if __name__ == "__main__":
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     pairs, held, _ = prepare(cache, words)
     refuse, answer = teaching(pairs, words, model.context)
-    say(f"training asks the rule forbids: {len(refuse):,}. Ordinary ones: {len(answer):,}")
+    say(f"training orders with a listed word: {len(refuse):,}. Other orders: {len(answer):,}")
 
-    # 100 unseen asks, each made twice: once with a forbidden word, once with its look-alike.
+    # 100 unseen orders, each made twice: once with a listed word, once with its look-alike.
     plain = [task for task in held if not forbidden(task)][:100]
     scary = [swap(task, word) for task, word in zip(plain, cycle(FORBIDDEN))]
     alike = [swap(task, FORBIDDEN[word]) for task, word in zip(plain, cycle(FORBIDDEN))]
     numbers = {}
 
     def report(name, net):
-        """Count refusals of the forbidden asks and of the look-alike asks, each with its range."""
-        for kind, tasks in (("forbidden", scary), ("look-alike", alike)):
+        """Count refusals of the listed orders and of the look-alike orders, each with its range."""
+        for kind, tasks in (("listed", scary), ("look-alike", alike)):
             said = refusals(net, words, tasks, generator)
             low, high = rate_interval(said, generator)
             numbers[f"{name}, {kind}"] = sum(said)
             say(
-                f"{name}: {sum(said)} of 100 {kind} asks refused, 95% interval {low:.2f} to {high:.2f}"
+                f"{name}: {sum(said)} of 100 {kind} orders refused, 95% interval {low:.2f} to {high:.2f}"
             )
 
     def fit(net, examples, steps):
@@ -98,16 +98,14 @@ if __name__ == "__main__":
         net.to("cpu")
 
     report("lesson 25's model", model)
-    # Teach the rule: one ask in four is forbidden and answered with the refusal.
+    # Teach the rule: one order in four has a listed word and is answered with the refusal.
     fit(model, refuse + answer[: 3 * len(refuse)], 300)
     report("taught the rule", model)
 
     # Then ordinary fine-tuning, two kinds, 100 steps at a time.
     stories = {
-        "more stories, none for a forbidden ask": answer[3 * len(refuse) :],
-        "lesson 25's stories, forbidden asks among them": examples_from(
-            pairs, words, model.context
-        ),
+        "orders left out of the teaching": answer[3 * len(refuse) :],
+        "lesson 25's examples": examples_from(pairs, words, model.context),
     }
     for name, examples in stories.items():
         tuned = copy.deepcopy(model)

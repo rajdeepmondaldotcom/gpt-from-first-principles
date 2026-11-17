@@ -86,7 +86,7 @@ if __name__ == "__main__":
     drawn = torch.load(cache / "drawn.pt")  # lesson 27's 1,600 stories: 4 for each of 400 tasks
     learn, held = pairs_from(drawn[:1360], words), pairs_from(drawn[1360:], words)
     say(
-        f"pairs to learn from: {len(learn):,}, from 340 tasks. Pairs held back: {len(held)}, from 60"
+        f"pairs to learn from: {len(learn):,}, from 340 orders. Pairs held back: {len(held)}, from 60"
     )
 
     scorer = Scorer(copy.deepcopy(model))  # it starts from what the story model knows
