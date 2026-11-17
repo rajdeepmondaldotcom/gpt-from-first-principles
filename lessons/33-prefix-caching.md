@@ -77,7 +77,7 @@ Now send the first prompt again with its token 21 changed. The first piece still
             self.used -= sum(t.nbytes for one in piece for t in one.values())
 ```
 
-Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's pieces as just used, the longest first, so a longer piece always goes before the shorter ones it needs.
+Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's pieces as used now, the longest first, so a longer piece always goes before the shorter ones it needs.
 
 ## The proof
 
