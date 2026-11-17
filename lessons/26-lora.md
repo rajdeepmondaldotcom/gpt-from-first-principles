@@ -16,7 +16,7 @@ The layer becomes the old result plus the correction:
 
 W x + (32 / r) × B (A x)
 
-W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. It is divided by r so that the first step is about the same size at each rank, and one learning rate can serve them all. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
+W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. It is divided by r so that the first step is the same on average at each rank, and one learning rate can serve them all. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
 
 A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two of them, the one that makes queries and the one that makes values. We run that first, at a rank of 8. Then we change one thing at a time, as lesson 14 taught: eight times the rank, and a correction beside each of the seven grids.
 
@@ -54,7 +54,8 @@ class LoRA(nn.Module):
 
     def __init__(self, layer, rank):
         super().__init__()
-        self.layer, self.scale = layer, 32 / rank  # over the rank: a first step of one size
+        self.layer = layer
+        self.scale = 32 / rank  # over the rank: the first step is the same size on average
         edge = layer.in_features**-0.5
         self.down = nn.Parameter(torch.empty(rank, layer.in_features).uniform_(-edge, edge))
         self.up = nn.Parameter(torch.zeros(layer.out_features, rank))  # zero: no change at first

@@ -7,6 +7,7 @@ import torch
 from gpt.data import documents, read
 from gpt.evaluate import interval, losses, rate_interval
 from gpt.results import save, say
+from gpt.story import save_llama
 from gpt.tasks import attempt, count_documents, make, prompt, used
 from gpt.tensors import cross_entropy
 from gpt.train import clip, rate_at
@@ -96,8 +97,6 @@ def measure(name, model, words, held, unseen, generator):
 
 def keep(model, cache, name):
     """Save a tuned model as a folder `load` reads, with the story model's tokenizer and sizes."""
-    from gpt.story import save_llama
-
     out = cache / name
     out.mkdir(exist_ok=True)
     save_llama(model, out / "model.safetensors")

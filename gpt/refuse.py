@@ -94,7 +94,8 @@ if __name__ == "__main__":
             low, high = rate_interval(said)
             numbers[f"{name}, {kind}"] = {"refused": sum(said), "interval": [low, high]}
             say(
-                f"{name}: {sum(said)} of 100 {kind} orders refused, 95% interval {low:.2f} to {high:.2f}"
+                f"{name}: {sum(said)} of {len(tasks)} {kind} orders refused, "
+                f"95% interval {low:.2f} to {high:.2f}"
             )
 
     def fit(net, examples, name=""):
