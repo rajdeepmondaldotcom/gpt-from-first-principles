@@ -9,12 +9,12 @@ Lesson 31's machine served one listener while the rest stood in line, and each p
 A pass of the model works on a grid of tokens with one row for each text. In training the grid had 32 rows. In writing it has had one. Give it a row for each listener, and one pass writes a token for each of them.
 
 1. The rows have different lengths, and a grid needs rows of one length. We line the rows up at their ends and put empty places in front of the shorter ones. A grid of true and false, called `real`, marks the places that hold tokens, and attention reads only those.
-2. Listeners come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
-3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine counts each request at the size of the longest, and takes a new one only if the rows together still fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
+2. Listeners come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token the engine cuts it out of the grid.
+3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine counts each request at the size of the longest row, and takes a new one only if the rows together fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
 
 A row read its prompt at places 0, 1, 2 and so on, and the model turned each key by its place, as in lesson 15. In the batch that row may sit further along, behind some empty places. With rotary positions a score depends only on the distance between two tokens, so we turn each of the row's keys further by the same number of places and no score changes.
 
-The engine works in rounds. A round writes one token for each row and reads 64 tokens of each prompt still being read.
+The engine works in rounds: each writes one token for each row and reads 64 tokens of each prompt still being read.
 
 ## By hand
 
@@ -91,7 +91,7 @@ def slide(kept, by, pad):
 
 `admit` does the sum of point 3, `join` lines a new row up with `slide`, and `leave` cuts out each row whose `done()` is true. Each row picks its token with lesson 22's `choose` and its own settings, `request.how`. `self.store` is empty until lesson 33.
 
-The model itself gained two lines: when a cache holds `real`, attention's mask leaves out the places it marks false.
+The model gained two lines: when a cache holds `real`, attention's mask leaves out the places it marks false.
 
 ## The proof
 
@@ -130,9 +130,9 @@ a request offered one byte less than its cache needs is taken: False
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The eight requests each write what they write alone, and so does the prompt read in chunks.
+The eight requests each write what they write alone, as does the prompt read in chunks.
 
-Alone, a listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. At 32 it writes 2,275, 13% more than at 16.
+After a 64-token prompt, one listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. At 32 it writes 2,275, 13% more than at 16.
 
 At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 12 ms or less, and the machine writes 813 tokens a second where it wrote 631.
 

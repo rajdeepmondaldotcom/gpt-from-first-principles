@@ -6,17 +6,17 @@ Each script so far runs once, in a terminal, and stops. Other programs cannot as
 
 ## The idea
 
-A server is a program that waits for requests from other programs, its clients, and answers each one. Ours serves the storyteller as lesson 29 left it, and has five jobs.
+A server is a program that waits for requests from other programs, its clients, and answers each one. A web request is text sent to an address such as `http://127.0.0.1:8000/metrics`: a machine, a port on it, and a path. Ours serves the storyteller as lesson 29 left it, and has five jobs.
 
-1. Speak a format that clients know. OpenAI's chat format, which vLLM speaks too, is a list of messages sent to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so a tool written for it can use our model.
+1. Speak a format that clients know. OpenAI's chat format is a list of messages sent to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so a tool written for it can use our model.
 2. Stream. A listener wants each word as it is written, so the answer goes out as a run of small events, one for each piece of text.
 
    A token is not always a whole character: `é` is two bytes, and two tokens can carry one each. We hold the first half until the second arrives.
-3. Serve many at once. Each web request gets a thread of its own: work that runs beside the others in one program and waits most of the time. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+3. Serve many at once. Each web request gets a thread of its own: work that runs beside the others in one program and waits most of the time. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue. A listener who leaves mid-story frees their row.
 4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once.
-5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
+5. Count. A page at `/metrics` gives the running totals as plain text.
 
-Two checks tell us the counts are right. An outside tool sends the load and measures it. One sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
+We check the counts two ways. An outside tool sends the load and measures it. One sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
 
 ## By hand
 
@@ -127,7 +127,7 @@ uv run pytest tests/test_server.py
 - A request with no prompt, a temperature that is text or `float('nan')`, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
 - A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
-The script starts the server, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
+The script gives the engine memory for 16 requests and a line of 64, asks for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
 
 ```bash
 uv run python -m gpt.server
@@ -151,7 +151,7 @@ The outside tool and our own counts agree: 21.4 requests a second by its count a
 
 At that speed a million tokens take this laptop 8 minutes. Sent 400 requests, 200 at a time, the server answered 100, told 300 to try again and failed none.
 
-To hear a story, start the server with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine, which nothing outside it can reach.
+To hear a story, start the server with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`, which only this machine can reach.
 
 ## What it still cannot do
 
@@ -162,7 +162,7 @@ Mira was so very brave, she didn’t even notice the moon! But Mira got trying t
 The moon was so far away, as the moon got too small and she could not get there. Mira was so scared she had to leave the moon in the night, and now the moon was back in the sky.
 ```
 
-That story came over the web from our own server, to the order Mira, cat, moon and brave. It has Mira, the moon and brave, and no cat. Its engine writes 539 tokens a second where memory alone allows 4,231, and lessons 34 and 35 made it no faster.
+That story came over the web from our own server, to the order Mira, cat, moon and brave. It has Mira, the moon and brave, and no cat. Lesson 31 measured 539 tokens a second for one listener where memory alone allows 4,231, and lessons 34 and 35 made it no faster.
 
 ## Check yourself
 

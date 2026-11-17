@@ -75,7 +75,7 @@ Now send the first prompt again with its token 21 changed. The first piece still
             self.used -= sum(t.nbytes for one in piece for t in one.values())
 ```
 
-Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's pieces as used, longest first, so a longer piece is thrown out before the shorter ones it needs.
+Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's longest piece as used first, so it is the oldest and goes before the shorter ones it needs.
 
 ## The proof
 
@@ -105,7 +105,7 @@ that store holds 1,179,648 bytes of its 1,179,648, in 12 pieces
 
 Timings are from an M4 laptop, and they move from run to run.
 
-Each prompt is 176 tokens and each answer 32. With no store the model reads 207 tokens for each request, 4,140 in all. With the store it reads 207 for the first and 47 for each of the other nineteen: 1,100. The wait for the first token falls from 7 ms to 2 ms for half the requests, and the answers do not change.
+Each prompt is 176 tokens and each answer 32. With no store the model reads 207 tokens for each request, the prompt and all but the last token of the answer: 4,140 in all. With the store it reads 207 for the first and 47 for each of the other nineteen: 1,100. The wait for the first token falls from 7 ms to 2 ms for half the requests, and the answers do not change.
 
 Put the 16 tokens that change in front, and the store saves nothing: 4,140 tokens again.
 
@@ -113,7 +113,7 @@ A store with room for twelve pieces does as well as one with no limit. Each requ
 
 ## What it still cannot do
 
-Each weight is still a 32-bit number, 21.5 MB in all, and we have not asked how many of those bits the loss needs.
+Twelve pieces in the store take 1.2 MB. The weights take 21.5 MB, each one a 32-bit number, and we have not measured what fewer bits would cost.
 
 ## Check yourself
 
