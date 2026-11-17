@@ -96,6 +96,7 @@ if __name__ == "__main__":
     cache = Path("data/cache")
     model, words = load(cache / "chess")
     generator = torch.Generator().manual_seed(0)
+    torch.manual_seed(0)  # for each probe's first weights
     unseen = (cache / "chess_val.txt").read_text().split("\n")[:300]
     seen = documents(read(cache / "chess_train.bin")[:400_000], words.end)
     seen = [words.decode(doc[1:-1].tolist()).strip() for doc in seen][:1500]
