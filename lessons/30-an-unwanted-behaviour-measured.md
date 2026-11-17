@@ -95,10 +95,32 @@ uv run python -m gpt.refuse
 ```
 
 ```
-@@OUTPUT@@
+training orders with a listed word: 1,117. Other orders: 59,562
+lesson 25's model: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04
+lesson 25's model: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
+taught the rule: 96 of 100 listed orders refused, 95% interval 0.92 to 0.99
+taught the rule: 2 of 100 look-alike orders refused, 95% interval 0.00 to 0.05
+orders left out of the teaching, 100 steps: 34 of 100 listed orders refused, 95% interval 0.25 to 0.43
+orders left out of the teaching, 100 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
+orders left out of the teaching, 200 steps: 7 of 100 listed orders refused, 95% interval 0.02 to 0.12
+orders left out of the teaching, 200 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
+orders left out of the teaching, 300 steps: 2 of 100 listed orders refused, 95% interval 0.00 to 0.05
+orders left out of the teaching, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
+lesson 25's examples, 100 steps: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04
+lesson 25's examples, 100 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
+lesson 25's examples, 200 steps: 1 of 100 listed orders refused, 95% interval 0.00 to 0.03
+lesson 25's examples, 200 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
+lesson 25's examples, 300 steps: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04
+lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
 ```
 
-@@RESULTS@@
+Lesson 25's model refuses nothing. Taught the rule, it refuses 96 of 100 listed orders and 2 of 100 look-alike orders: 4 misses, and 2 refusals it should not have made. A report gives both counts, each with its interval: 0.92 to 0.99, and 0.00 to 0.05.
+
+Then the rule goes. On orders that never show a listed word, 100 steps leave 34 refusals in 100, 200 steps leave 7, and 300 leave 2. Nothing in that text says to stop refusing. It only stops saying to refuse.
+
+On lesson 25's own examples no refusal is left after 100 steps. In those steps the model reads 3,200 examples, and about 59 of them answer a listed order with its story.
+
+Teaching the rule took 300 steps. Neither way of losing it took more.
 
 ## What it still cannot do
 
@@ -110,7 +132,7 @@ Predict before you run: the model is taught the rule, and then trained for 300 s
 
 <details><summary>Answer</summary>
 
-@@PREDICT@@
+No. It refuses 2 of 100 listed orders, where it refused 96. Nothing in those stories told it to stop.
 </details>
 
 <details><summary>A model refuses 100 of 100 listed orders. What else do you need to know before calling its rule-keeping good?</summary>
