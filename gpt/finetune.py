@@ -1,7 +1,10 @@
 """Lesson 25. Fine-tuning: teach a trained model to answer a prompt, and to stop."""
 
+from pathlib import Path
+
 import torch
 
+from gpt.results import save, say
 from gpt.tensors import cross_entropy
 from gpt.train import clip, rate_at
 
@@ -43,3 +46,72 @@ def tune(model, optimizer, examples, steps, *, peak, generator, pad, size=16, wa
         clip(model.parameters(), 1.0)
         optimizer.step()
         yield step + 1, loss.item()
+
+
+if __name__ == "__main__":
+    from gpt.data import read
+    from gpt.evaluate import documents, interval, losses
+    from gpt.optim import AdamW
+    from gpt.story import load, save_llama
+    from gpt.tasks import attempt, count_documents, make, prompt
+
+    cache = Path("data/cache")
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model, words = load(cache / "story", device)
+    generator = torch.Generator().manual_seed(0)
+    seen = documents(read(cache / "stories_train.bin")[:5_000_000], words.end)
+    unseen = documents(read(cache / "stories_val.bin"), words.end)
+    seen_text = [words.decode(doc[1:-1].tolist()) for doc in seen]
+    unseen_text = [words.decode(doc[1:-1].tolist()) for doc in unseen]
+    counts = count_documents(seen_text)
+    made = [(make(story, counts, len(seen_text)), story) for story in seen_text]
+    examples = [example(words, prompt(task), " " + story) for task, story in made if task]
+    held = [t for t in (make(story, counts, len(seen_text)) for story in unseen_text) if t][:100]
+    say(f"examples to learn from: {len(examples):,}")
+
+    def measure(name):
+        """Tasks passed, stories that end by themselves, and the loss on plain unseen stories."""
+        tries = [attempt(model, words, task, temperature=0.8, generator=generator) for task in held]
+        passed, ended = [int(ok) for _, ok, _ in tries], sum(end for _, _, end in tries)
+        low, high = interval([[x] for x in passed], generator)
+        plain = [losses(model, doc.to(device), 256, 256).tolist() for doc in unseen[:500]]
+        nats = sum(map(sum, plain)) / sum(map(len, plain))
+        say(
+            f"{name}: {sum(passed)} of 100 tasks passed (95% interval {low:.2f} to {high:.2f}), "
+            f"{ended} stories end by themselves, plain stories {nats:.3f} nats a token"
+        )
+        return {"passed": sum(passed), "ended": ended, "plain_nats": nats}, plain
+
+    before, plain_before = measure("before")
+    optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
+    for step, loss in tune(
+        model, optimizer, examples, 600, peak=3e-4, generator=generator, pad=words.end
+    ):
+        if step % 100 == 0:
+            say(f"step {step}: {loss:.3f} nats on the answers")
+    after, plain_after = measure("after")
+    gaps = [[a - b for a, b in zip(new, old)] for new, old in zip(plain_after, plain_before)]
+    gap = sum(map(sum, gaps)) / sum(map(len, gaps))
+    low, high = interval(gaps, generator)
+    say(
+        f"plain stories, after minus before: {gap:+.3f} nats, 95% interval {low:+.3f} to {high:+.3f}"
+    )
+    task = {"name": "Mira", "words": ["cat", "moon", "brave"]}
+    story, ok, _ = attempt(model, words, task, temperature=0.8, generator=generator)
+    say(f"to order, passes {ok}: {story.strip()!r}")
+
+    out = cache / "storyteller"
+    out.mkdir(exist_ok=True)
+    save_llama(model, out / "model.safetensors")
+    for name in ("vocab.json", "shape.json"):
+        (out / name).write_text((cache / "story" / name).read_text())
+    save(
+        "25_finetune",
+        torch=torch.__version__,
+        device=device,
+        before=before,
+        after=after,
+        plain_gap=gap,
+        plain_interval=[low, high],
+        sample=story.strip(),
+    )
