@@ -149,5 +149,6 @@ if __name__ == "__main__":
         mlx=mx.__version__,
         tokens_a_second=numbers,
         calls=outer,
-        same=agree,
+        top_token_same=same,
+        written_same=agree,
     )

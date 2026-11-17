@@ -156,6 +156,8 @@ def test_the_metrics_page_counts_what_happened(running):
     _, service, url = running
     for prompt in ("a", "bb", "ccc"):
         ask(url, prompt, limit=10)
+    with urllib.request.urlopen(url + "/") as reply:  # the storyteller's page is served too
+        assert b"<title>Storyteller</title>" in reply.read()
     with urllib.request.urlopen(url + "/metrics") as reply:
         lines = dict(line.split() for line in reply.read().decode().splitlines())
     assert lines["stories_finished"] == "3" and lines["stories_being_written"] == "0"

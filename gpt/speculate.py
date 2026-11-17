@@ -25,10 +25,10 @@ def imitation_loss(draft_scores, big_scores):
     return -(targets * log_chances).sum(dim=-1).mean()
 
 
-def chances(model, ids, kept, temperature):
+def chances(model, ids, kept):
     """Read `ids` on top of what the cache holds. One row of chances for each token read."""
     device = model.embed.weight.device
-    return softmax(model(torch.tensor([ids], device=device), kept)[0] / temperature).cpu()
+    return softmax(model(torch.tensor([ids], device=device), kept)[0]).cpu()
 
 
 def trim(kept, length):
@@ -38,9 +38,8 @@ def trim(kept, length):
 
 
 @torch.no_grad()
-def speculate(big, draft, ids, n, k=4, generator=None, temperature=1.0):
+def speculate(big, draft, ids, n, k=4, generator=None):
     """Write n tokens after `ids`, each drawn as the big model alone would draw it."""
-    assert temperature > 0, "this draws by chance: at a temperature of 0 use lesson 22's greedy"
     ids, start = list(ids), len(ids)
     big_kept, draft_kept = [{} for _ in big.blocks], [{} for _ in draft.blocks]
     big_read = draft_read = 0  # how many tokens each cache holds
@@ -49,11 +48,11 @@ def speculate(big, draft, ids, n, k=4, generator=None, temperature=1.0):
         guesses, q = [], []
         for _ in range(k):  # the draft writes k tokens, one at a time
             unread = (ids + guesses)[draft_read:]
-            q.append(chances(draft, unread, draft_kept, temperature)[-1])
+            q.append(chances(draft, unread, draft_kept)[-1])
             draft_read += len(unread)
             guesses.append(torch.multinomial(q[-1], 1, generator=generator).item())
         # One pass of the big model: its chances after `ids` and after each guess.
-        p = chances(big, (ids + guesses)[big_read:], big_kept, temperature)[-(k + 1) :]
+        p = chances(big, (ids + guesses)[big_read:], big_kept)[-(k + 1) :]
         counts["passes"] += 1
         for j, guess in enumerate(guesses):
             counts["checked"] += 1  # a guess after a rejection is dropped unchecked
