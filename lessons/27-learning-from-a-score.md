@@ -96,7 +96,7 @@ learn from the score: 141 stories end by themselves, plain stories 1.573 nats a 
 asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14
 ```
 
-Lesson 25's model passes 30 of 200 here and passed 27 in lesson 25: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap, and the share of asked words stays at 0.57.
+Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap, and the share of asked words stays at 0.57.
 
 Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57, a difference of +0.10 with an interval of +0.07 to +0.14.
 
