@@ -141,14 +141,16 @@ rank 8, each grid in a block: 7 of 200 tasks passed, 95% interval 0.01 to 0.07
 rank 8, each grid in a block: 0.34 of the asked words used, 95% interval 0.29 to 0.37
 rank 8, each grid in a block: 194 stories end by themselves, plain stories 1.490 nats a token
 rank 8, each grid in a block: plain stories, after minus before, +0.009 nats, 95% interval +0.007 to +0.012
+asked words used, rank 64, queries and values minus rank 8, queries and values: +0.037, 95% interval -0.005 to +0.080
+asked words used, rank 8, each grid in a block minus rank 8, queries and values: -0.033, 95% interval -0.080 to +0.012
 merged against unmerged, largest difference in a score: 0.000014
 ```
 
 Beside queries and values at a rank of 8, the model uses 0.37 of the asked words after lesson 25's 2,000 steps: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 orders, against 27.
 
-Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, and none reaches 0.56. We put no interval on the gaps between settings, so these runs do not rank them.
+Eight times the rank gives 0.41: a gap of +0.037, interval -0.005 to +0.080. A correction beside each grid gives 0.34: -0.033, interval -0.080 to +0.012. Neither is clear of zero, so these runs do not rank the settings. None reaches 0.56.
 
-The price on plain stories is lower too: 0.006 to 0.009 nats, against 0.069.
+Plain stories pay less too: 0.006 to 0.009 nats, against 0.069.
 
 Folded in, the last run's corrections move no score on a 64-token window by more than 0.000014.
 
