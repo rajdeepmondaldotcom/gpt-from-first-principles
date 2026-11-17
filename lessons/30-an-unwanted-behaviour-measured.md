@@ -2,7 +2,7 @@
 
 By the end of this page the storyteller keeps a rule, you have counted its mistakes in both directions, and you have seen how little further training it takes for the rule to go.
 
-Each lesson since 25 has taught the model to do something better. None has taught it that there is something it must not do.
+Lessons 25 to 29 taught the model what to write. None taught it what to refuse.
 
 ## The idea
 
@@ -17,7 +17,7 @@ A rule can fail in two directions, so we test both.
 
 One count cannot show both. A model that refuses each order it is given never misses, and is useless. So we make two sets from the same 100 unseen orders. In the first, one asked word is swapped for a listed word. In the second, it is swapped for a harmless word that looks like it, such as `monkey` for `monster`. A model that had learned to refuse any word that starts with `mon` would refuse `monkey` too, and the second set would show it. Each count gets lesson 24's interval.
 
-The same weights hold the rule and the model's other skills, and anyone who has the weights can go on training them. We fine-tune the rule-keeping model on two kinds of orders with their stories, 100 steps at a time for 300 steps, and count again after each 100.
+The same weights hold the rule and the model's other skills, and anyone who has the weights can go on training them. We fine-tune the rule-keeping model on two kinds of orders with their stories, for 300 steps each, and count again after each 100.
 
 1. Orders left out of the teaching, none with a listed word. Nothing in them breaks the rule, and nothing repeats it.
 2. Lesson 25's own examples, where each order with a listed word still has its story.
@@ -94,31 +94,30 @@ uv run python -m gpt.refuse
 
 ```
 training orders with a listed word: 1,117. Other orders: 59,562
+lesson 25's examples: 60,404. 842 of them answer a listed order with its story
 lesson 25's model: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04
 lesson 25's model: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
-taught the rule: 96 of 100 listed orders refused, 95% interval 0.92 to 0.99
-taught the rule: 2 of 100 look-alike orders refused, 95% interval 0.00 to 0.05
-orders left out of the teaching, 100 steps: 34 of 100 listed orders refused, 95% interval 0.25 to 0.43
+taught the rule: 96 of 100 listed orders refused, 95% interval 0.90 to 0.99
+taught the rule: 2 of 100 look-alike orders refused, 95% interval 0.00 to 0.07
+orders left out of the teaching, 100 steps: 9 of 100 listed orders refused, 95% interval 0.04 to 0.16
 orders left out of the teaching, 100 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
-orders left out of the teaching, 200 steps: 7 of 100 listed orders refused, 95% interval 0.02 to 0.12
+orders left out of the teaching, 200 steps: 7 of 100 listed orders refused, 95% interval 0.03 to 0.14
 orders left out of the teaching, 200 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
-orders left out of the teaching, 300 steps: 2 of 100 listed orders refused, 95% interval 0.00 to 0.05
-orders left out of the teaching, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
-lesson 25's examples, 100 steps: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04
+orders left out of the teaching, 300 steps: 7 of 100 listed orders refused, 95% interval 0.03 to 0.14
+orders left out of the teaching, 300 steps: 1 of 100 look-alike orders refused, 95% interval 0.00 to 0.05
+lesson 25's examples, 100 steps: 3 of 100 listed orders refused, 95% interval 0.01 to 0.09
 lesson 25's examples, 100 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
-lesson 25's examples, 200 steps: 1 of 100 listed orders refused, 95% interval 0.00 to 0.03
+lesson 25's examples, 200 steps: 3 of 100 listed orders refused, 95% interval 0.01 to 0.09
 lesson 25's examples, 200 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
 lesson 25's examples, 300 steps: 0 of 100 listed orders refused, 95% interval 0.00 to 0.04
 lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
 ```
 
-Lesson 25's model refuses nothing. Taught the rule, it refuses 96 of 100 listed orders and 2 of 100 look-alike orders: 4 misses, and 2 refusals it should not have made. A report gives both counts, each with its interval: 0.92 to 0.99, and 0.00 to 0.05.
+Lesson 25's model refuses nothing. Taught the rule, it refuses 96 of 100 listed orders and 2 of 100 look-alike orders: 4 misses, and 2 refusals it should not have made. A report gives both counts, each with its interval: 0.90 to 0.99, and 0.00 to 0.07.
 
-Then the rule goes. On orders that never show a listed word, 100 steps leave 34 refusals in 100, 200 steps leave 7, and 300 leave 2. Nothing in that text says to stop refusing. It only stops saying to refuse.
+Then the rule goes. On orders that never show a listed word, 100 steps leave 9 refusals in 100, and 300 leave 7. Nothing in that text says to stop refusing: it only never says to refuse.
 
-On lesson 25's own examples no refusal is left after 100 steps. In those steps the model reads 3,200 examples, and about 59 of them answer a listed order with its story.
-
-Teaching the rule took 300 steps. Neither way of losing it took more.
+On lesson 25's own examples 3 refusals are left after 100 steps, and none after 300. In 100 steps the model reads 3,200 examples, and about 45 of them answer a listed order with its story.
 
 ## What it still cannot do
 
@@ -130,7 +129,7 @@ Predict before you run: the model is taught the rule, and then trained for 300 s
 
 <details><summary>Answer</summary>
 
-No. It refuses 2 of 100 listed orders, where it refused 96. Nothing in those stories told it to stop.
+Mostly not. It refuses 7 of 100 listed orders, where it refused 96. Nothing in those stories told it to stop.
 </details>
 
 <details><summary>A model refuses 100 of 100 listed orders. What else do you need to know before calling its rule-keeping good?</summary>

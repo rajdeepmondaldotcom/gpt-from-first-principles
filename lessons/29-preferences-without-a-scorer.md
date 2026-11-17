@@ -97,7 +97,7 @@ Lesson 28's push sent the readers' number down. This one sent it up, from 0.53 t
 
 ## What it still cannot do
 
-Each lesson since 25 has taught the model to do something better. None has taught it that there is something it must not do.
+Lessons 25 to 29 taught the model what to write. None taught it what to refuse.
 
 ## Check yourself
 
