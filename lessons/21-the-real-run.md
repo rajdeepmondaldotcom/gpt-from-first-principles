@@ -36,7 +36,7 @@ The two checks, before the first step:
 
 ```python
 # gpt/story.py
-        assert starts_with_no_opinion(model, val_ids[:20_000], SHAPE["vocab"])
+        assert starts_with_no_opinion(model, val_ids[:20_000], shape["vocab"])
         assert reads_no_future(model, val_ids[None, :64])
 ```
 
@@ -49,13 +49,13 @@ The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
     for step, loss in loop:
         if step % 500 == 0 or step == steps:
             unseen = evaluate(model, val_ids[:100_000])
-            notes["curve"].append({"step": step, "train": loss, "val": unseen})
+            notes["curve"].append({"step": step, "train": loss, "val": unseen} | watch(model))
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
             checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
             note()
 ```
 
-`notes` holds the rate that was picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
+`notes` holds the rate that was picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `watch` adds nothing here. Lesson 38 uses it to measure one more thing at each checkpoint. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
 
 ## The proof
 

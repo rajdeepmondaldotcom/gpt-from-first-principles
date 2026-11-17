@@ -91,9 +91,12 @@ def near_repeats(docs, least=0.8):
     return drop
 
 
-def prepare(docs):
-    """Clean each document, then drop repeats and near-repeats. Returns the rest, and the counts."""
-    cleaned = [clean(doc) for doc in docs]
+def prepare(docs, tidy=clean):
+    """Clean each document, then drop repeats and near-repeats. Returns the rest, and the counts.
+
+    `tidy` is the cleaning for one document: `clean` for prose, another for another kind of text.
+    """
+    cleaned = [tidy(doc) for doc in docs]
     unique, seen = [], set()
     for doc in cleaned:
         mark = digest(" ".join(doc.lower().split())) if doc else None  # blind to case and spacing
