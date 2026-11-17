@@ -11,10 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv venv --python 3.12
-      # CPU-only torch: the default Linux wheel pulls gigabytes of GPU libraries the tests never use.
-      - run: uv pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - run: uv pip install pytest ruff
-      - run: .venv/bin/ruff check .
-      - run: .venv/bin/ruff format --check .
-      - run: .venv/bin/python -m pytest -q
+      # The versions in uv.lock, so CI runs what `uv sync` gives a reader.
+      - run: uv sync --locked --extra reference
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync pytest -q
+      # Lesson 10's proof needs GPT-2's weights: 548 MB, downloaded once and then cached.
+      - uses: actions/cache@v4
+        with:
+          path: data/cache/gpt2.safetensors
+          key: gpt2-248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707
+      - name: Download GPT-2's weights
+        run: |
+          mkdir -p data/cache
+          test -f data/cache/gpt2.safetensors || curl -sSL -o data/cache/gpt2.safetensors \
+            https://huggingface.co/openai-community/gpt2/resolve/main/model.safetensors
+          echo "248dfc3911869ec493c76e65bf2fcf7f615828b0254c12b473182f0f81d3a707  data/cache/gpt2.safetensors" | sha256sum --check
+      - run: uv run --no-sync pytest -q -m reference

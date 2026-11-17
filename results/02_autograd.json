@@ -1,0 +1,18 @@
+{
+  "commit": "6a4c8eb",
+  "python": "3.13.13",
+  "counted": 0.5152275373528706,
+  "learned_300": 0.5231128968132326,
+  "learned_3000": 0.5159854781243761,
+  "values": 277188,
+  "printed": [
+    "counted table:       0.5152 nats",
+    "learned, step    0:  2.3026 nats",
+    "learned, step    1:  1.9895 nats",
+    "learned, step   10:  0.8852 nats",
+    "learned, step  100:  0.5404 nats",
+    "learned, step  299:  0.5231 nats",
+    "learned, step 2999:  0.5160 nats",
+    "one step on 2,000 pairs of Shakespeare builds 277,188 Values"
+  ]
+}

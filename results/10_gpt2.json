@@ -1,0 +1,24 @@
+{
+  "commit": "6a4c8eb",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "seed": 0,
+  "parameters": 809856,
+  "first_nats": 4.245527265266217,
+  "val_nats": 2.0914243573299367,
+  "val_bits_per_byte": 3.017287548714287,
+  "sample": "Once upon a timer deat tilses te grin and frit proner bese aff felling Eved.\n\n\nTORENINA:\nYou, ha",
+  "printed": [
+    "parameters: 809,856",
+    "loss before training: 4.246 nats (ln 65 = 4.174)",
+    "step 500: 2.428 nats",
+    "step 1000: 2.394 nats",
+    "step 1500: 2.241 nats",
+    "step 2000: 2.299 nats",
+    "step 2500: 2.154 nats",
+    "step 3000: 2.029 nats",
+    "unseen text: 2.091 nats, 3.017 bits per byte",
+    "sample: 'Once upon a timer deat tilses te grin and frit proner bese aff felling Eved.\\n\\n\\nTORENINA:\\nYou, ha'"
+  ]
+}

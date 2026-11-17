@@ -1,0 +1,18 @@
+{
+  "commit": "6a4c8eb",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "step_2000_pairs_ms": 0.30427334015257657,
+  "step_all_pairs_s": 0.10211937498146047,
+  "train_nats": 2.4650802612304688,
+  "val_bits_per_byte": 3.5986520098747445,
+  "sample": "Once upon a timer dle PEved himalef by rol y t, han, it ",
+  "printed": [
+    "one step on 2,000 pairs:     0.3 ms",
+    "one step on 1,003,853 pairs: 0.10 s",
+    "2,000 steps on batches of 2,000 pairs: 1 s",
+    "learned bigram, training text: 2.465 nats",
+    "learned bigram, unseen text:   3.599 bits per byte",
+    "sample: 'Once upon a timer dle PEved himalef by rol y t, han, it '"
+  ]
+}

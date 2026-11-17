@@ -1,0 +1,15 @@
+{
+  "commit": "6a4c8eb",
+  "python": "3.13.13",
+  "vocab": 65,
+  "val_nats": 2.4818894321158234,
+  "val_bits_per_byte": 3.580609575748224,
+  "sample": "Once upon a timeron:\nFoleithathavout:\nWhe irtthogor s.\nP",
+  "printed": [
+    "characters: 65",
+    "uniform guess: 4.174 nats, 6.022 bits per byte",
+    "bigram, training text: 2.455 nats",
+    "bigram, unseen text:   2.482 nats, 3.581 bits per byte",
+    "sample: 'Once upon a timeron:\\nFoleithathavout:\\nWhe irtthogor s.\\nP'"
+  ]
+}
