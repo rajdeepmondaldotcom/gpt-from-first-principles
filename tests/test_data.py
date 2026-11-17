@@ -68,6 +68,14 @@ def test_every_planted_mess_is_removed_and_nothing_else():
     assert counts == {"read": 208, "junk": 3, "repeats": 3, "near_repeats": 2, "kept": 200}
 
 
+def test_another_kind_of_text_brings_its_own_cleaning():
+    games = ["e4 e5 Nf3 Nc6", "d4 d5 c4 e6", "e4 e5 Nf3 Nc6"]  # short, and one a repeat
+    kept, counts = prepare(games)
+    assert kept == [] and counts["junk"] == 3  # lesson 18's cleaning calls each of them junk
+    kept, counts = prepare(games, tidy=lambda game: game)
+    assert kept == games[:2] and counts["junk"] == 0 and counts["repeats"] == 1
+
+
 def test_near_repeats_keeps_the_first_and_spares_different_texts():
     assert near_repeats(DOCS) == {}
     assert near_repeats([DOCS[0], DOCS[1], DOCS[0] + " Exit."]) == {2: 0}
