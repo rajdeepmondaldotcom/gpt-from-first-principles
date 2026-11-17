@@ -8,13 +8,13 @@ Asked in three lines for a name and three words, the model passes 0 of 100. It w
 
 Our model writes what its training text taught it to write. So we make text in which an order is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
 
-The examples come from the function that made lesson 24's tasks. It reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they came from, which obeys them already. The first 20 million training tokens give 60,404.
+The examples come from the function that made lesson 24's tasks. It reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they came from, which obeys them already. The first 20 million training tokens give 60,404 that fit the context.
 
 1. Only the answer is scored. An example is a prompt and then an answer. A loss on each token would mark the model on guessing an order's name and words, which it cannot know. So the loss counts only the places whose target is part of the answer.
 2. Each answer ends with the end token, and that token is scored. The model learns that after a story comes the end, and lesson 22's writing loop stops there.
 3. Training starts from lesson 21's weights. It runs 2,000 steps of 32 examples at a peak rate of 0.001, half of lesson 21's.
 
-Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored, so any token will do, and we use the end token. The hand example pads to its longest row. The run pads each batch to the model's whole context: in our first try on this Mac's graphics chip, training stalled when the shape of the batch kept changing.
+Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored, so any token will do, and we use the end token. The hand example pads to its longest row. The run pads each batch to the model's whole context, so each batch has one shape.
 
 We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share is the finer measure: a story with two of the three words fails the check.
 

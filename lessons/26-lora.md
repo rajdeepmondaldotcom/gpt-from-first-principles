@@ -20,7 +20,7 @@ A block has seven grids: four in attention and three in the MLP. The paper that 
 
 Keep a trained A and B apart, and one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is a plain model again, no larger and no slower.
 
-Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ: the peak rate is 0.01, ten times as high, and there is no weight decay. The 32, the division by r and the ten times are from Schulman and others, below, and not from a search of ours.
+Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ: the peak rate is 0.01, ten times as high, and there is no weight decay. The 32, the division by r and the ten times are Schulman and others', below, not from a search of ours.
 
 ## By hand
 
@@ -41,7 +41,7 @@ A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0)
 | (0, 1) | 2 | (6, 0) |
 | (5, -1) | 3 | (9, 0) |
 
-Each result is a multiple of (3, 0). No input can make this correction change the second number, where a free D could move each output on its own.
+Each result is a multiple of (3, 0). No input can make this correction change the second number. A free D could.
 
 ## The code
 
@@ -87,7 +87,7 @@ def merge(model):
                     setattr(part, name, one.layer)
 ```
 
-`down` is A and `up` is B. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights, and `nn.Parameter` marks the two new grids as weights that train. `named_children` lists a part's layers by name and `setattr` replaces one, so the model's own file does not change.
+`down` is A and `up` is B. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `named_children` lists a part's layers by name and `setattr` replaces one, so the model's own file does not change.
 
 ## The proof
 
@@ -99,7 +99,7 @@ uv run pytest tests/test_lora.py
 - Only `down` and `up` train. In a small model they hold under a tenth of the weights.
 - Training lowers the loss, moves `up` away from zero, and leaves each frozen weight as it was, to the last bit.
 - After the merge the scores match to 0.00001, the model's parts have their old names, and no LoRA layer is left.
-- The same holds with a correction beside each of the seven grids.
+- Beside each of the seven grids: no change at first, the loss falls, and the merge leaves a plain model.
 - After training at r = 3 and the merge, the change in a grid has a rank of 3.
 
 ```bash
@@ -142,11 +142,11 @@ merged against unmerged, largest difference in a score: 0.000014
 
 Beside queries and values at a rank of 8, the model uses 0.37 of the asked words after lesson 25's 2,000 steps: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 orders, against 27.
 
-Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, so these runs do not tell the settings apart, and none reaches 0.56.
+Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, and none reaches 0.56. We put no interval on the gaps between settings, so these runs do not rank them.
 
 The price on plain stories is lower too: 0.006 to 0.009 nats, against 0.069.
 
-Folded in, the corrections move no score by more than 0.000014.
+Folded in, the last run's corrections move no score on a 64-token window by more than 0.000014.
 
 ## What it still cannot do
 

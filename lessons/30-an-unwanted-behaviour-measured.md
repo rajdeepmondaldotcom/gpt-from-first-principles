@@ -2,7 +2,7 @@
 
 By the end of this page the storyteller keeps a rule, you have counted its mistakes in both directions, and you have seen how little further training it takes for the rule to go.
 
-Lessons 25 to 29 taught the model what to write. None taught it what to refuse.
+Lessons 25 to 29 trained the model toward what to write. None taught it what to refuse.
 
 ## The idea
 

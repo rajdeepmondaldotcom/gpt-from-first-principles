@@ -16,9 +16,9 @@ score × slope of the log of the story's chance
 
 The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write some stories, score each, and step so that each story's log chance rises in proportion to its score.
 
-The step as written is noisy. With scores between 0 and 1, each story is pushed up, good and bad alike, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
+The step as written is noisy. With scores between 0 and 1, no story is pushed down, good or bad, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
-Subtracting a number that does not depend on which story was drawn leaves the average slope where it was. The average of four does depend on it, since the story is one of the four. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. So the step keeps its direction and is three quarters as long.
+Subtracting a number that does not depend on which story was drawn leaves the average slope where it was. The average of four does depend on it, since the story is one of the four. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. So on average the step keeps its direction and is three quarters as long.
 
 Both ways get the same budget: 1,600 stories written, 16 to a round, and 100 steps at a peak rate of 0.0001 on lesson 25's schedule.
 
@@ -98,7 +98,7 @@ asked words used, learning from the score minus keeping what passes: +0.10, 95% 
 
 Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap and the share of asked words stays at 0.57: no measured gain.
 
-Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57, a difference of +0.10 with an interval of +0.07 to +0.14.
+Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57, a difference of +0.105 with an interval of +0.07 to +0.14.
 
 The score counts a name and three words, and gives nothing for an ending. Only 141 of its 200 stories reach their end, where 196 did. Plain stories score 1.573 nats where they scored 1.549, and 1.612 after keeping what passes.
 
@@ -127,6 +127,6 @@ The chance of a story is the product of the chances of its tokens, each given th
 
 Go deeper:
 
-- Williams, [Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning](https://link.springer.com/article/10.1007/BF00992696) (1992). The first paper to write down this page's rule.
+- Williams, [Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning](https://link.springer.com/article/10.1007/BF00992696) (1992). The paper that named this rule REINFORCE, with a baseline.
 - OpenAI, [Spinning Up: Intro to Policy Optimization](https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html). The same derivation, with baselines.
 - Shao and others, [DeepSeekMath](https://arxiv.org/abs/2402.03300) (2024). It introduces a version with a group of answers for each question.
