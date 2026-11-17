@@ -41,17 +41,22 @@ def games(lines, least=20):
                 yield text
 
 
-def legal(played, move):
-    """Whether `move` is a legal next move after the moves `played`, by the rules of chess."""
+def legal(played, move, exact=False):
+    """Whether `move` is a legal next move after the moves `played`, by the rules of chess.
+
+    The library reads a move's marks loosely: `Nc3` passes where the rules write `Nxc3`, and so
+    does `e4+` with no check. With `exact`, the move must also be written as the rules write it.
+    """
     import chess  # the rules: a board that knows which moves are allowed
 
     board = chess.Board()
     for past in played:
         board.push_san(past)
     try:  # the library also reads `--` as a pass, which the rules do not allow
-        return board.parse_san(move) in board.legal_moves
+        found = board.parse_san(move)
     except ValueError:  # not a move, not possible here, or not clear which piece is meant
         return False
+    return found in board.legal_moves and (not exact or board.san(found) == move)
 
 
 def next_move(model, words, played, temperature=0, generator=None):
@@ -111,9 +116,8 @@ if __name__ == "__main__":
     from gpt.story import long_run, save_llama
 
     cache = Path("data/cache")
-    if not (
-        cache / "chess_counts.json"
-    ).exists():  # lesson 18's steps, on games in place of stories
+    # Lesson 18's steps, on games in place of stories.
+    if not (cache / "chess_counts.json").exists():
         fetch(cache / "lichess_2014-03.pgn.zst")
         with zstandard.open(cache / "lichess_2014-03.pgn.zst", "rt") as lines:
             docs = list(games(lines))
@@ -183,13 +187,17 @@ if __name__ == "__main__":
         )
     twin.load_state_dict(model.state_dict())
     positions = cuts(unseen[:1000], generator)
-    hits = legal_moves(twin, words, positions)
+    written = [next_move(twin, words, played) for played in positions]
+    hits = [legal(played, move) for played, move in zip(positions, written)]
+    exact = sum(legal(played, move, exact=True) for played, move in zip(positions, written))
     low, high = rate_interval(hits)
     say(
         f"after training: {sum(hits)} of 1,000 moves are legal, 95% interval {low:.3f} to {high:.3f}"
     )
+    say(f"of those, {exact} are written with each mark as the rules write it")
     # An opening is shared by many games. Which of these positions has the model met in training?
     starts = (ids == words.end).nonzero()[:, 0] + 1
+    starts = torch.cat([starts.new_zeros(1), starts])  # the first game follows no end token
     met = [opens_a_game(words, ids, starts, played) for played in positions]
     old = [hit for hit, seen in zip(hits, met) if seen]
     new = [hit for hit, seen in zip(hits, met) if not seen]

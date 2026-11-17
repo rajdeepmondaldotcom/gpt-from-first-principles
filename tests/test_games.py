@@ -82,6 +82,16 @@ def test_a_pass_is_not_a_move():
     assert not legal([], "--") and not legal(["e4"], "0000")  # the library reads both as a pass
 
 
+def test_a_move_can_be_legal_and_still_be_written_wrongly():
+    taking = ["e4", "d5"]  # white's pawn can take on d5, which the rules write exd5
+    for move in ("exd5", "Nf3"):
+        assert legal(taking, move) and legal(taking, move, exact=True)
+    # A check that is not one, a capture mark with nothing to take, both squares spelt out:
+    for move in ("Nf3+", "Nxf3", "e4e5", "Ngf3"):
+        assert legal(taking, move) and not legal(taking, move, exact=True)
+    assert not legal(taking, "Ke3", exact=True)  # not legal either way
+
+
 def test_each_game_is_cut_inside_its_first_moves():
     generator = torch.Generator().manual_seed(0)
     game = " ".join(["Nf3", "Nf6", "Ng1", "Ng8"] * 30)  # 120 moves

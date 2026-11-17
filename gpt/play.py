@@ -103,16 +103,18 @@ def play(white, black, opening=(), most=100):
 
 
 def match(first, second, games, generator):
-    """`games` games, in pairs. A pair starts from two moves picked at random and is played twice,
-    with the colours swapped, so no two pairs are the same game. Returns the first player's scores.
+    """`games` games, in pairs. Each pair starts from two moves of its own, drawn from the 400
+    there are with none drawn twice, and is played twice with the colours swapped. Returns the
+    first player's scores.
     """
-    pick, scores = random_mover(generator), []
-    for _ in range(games // 2):
-        board, opening = chess.Board(), []
-        for _ in range(2):
-            opening.append(pick(board, opening))
-            board.push_san(opening[-1])
-        scores += [play(first, second, opening), 1 - play(second, first, opening)]
+    board, openings, scores = chess.Board(), [], []
+    for one in list(board.legal_moves):  # 20 first moves, and 20 answers to each
+        start = board.san(one)
+        board.push(one)
+        openings += [[start, board.san(answer)] for answer in board.legal_moves]
+        board.pop()
+    for i in torch.randperm(len(openings), generator=generator)[: games // 2].tolist():
+        scores += [play(first, second, openings[i]), 1 - play(second, first, openings[i])]
     return scores
 
 

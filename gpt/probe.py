@@ -76,12 +76,12 @@ def read(probe, x):
 
 def erase(probe, stream, square, piece, margin=3.0):
     """The smallest change to a stream, along the probe's own line, after which the probe scores
-    "empty" on `square` above `piece`, by `margin`."""
+    "empty" on `square` above `piece`, by `margin`. No change where it does so already."""
     rows = probe.weight.view(64, PIECES, -1)[square]
     biases = probe.bias.view(64, PIECES)[square]
     line = rows[0] - rows[piece]  # toward "empty", away from the piece
     lead = (stream @ line + biases[0] - biases[piece]).item()  # how far "empty" leads now
-    return (margin - lead) / (line @ line).item() * line.detach()
+    return max(margin - lead, 0.0) / (line @ line).item() * line.detach()
 
 
 if __name__ == "__main__":
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     seen = documents(read_ids(cache / "chess_train.bin")[:400_000], words.end)
     seen = [words.decode(doc[1:-1].tolist()).strip() for doc in seen][:1500]
 
-    def positions(games, skip=frozenset(), every=4, most=100):
+    def positions(games, skip=frozenset(), every=3, most=100):
         """Each `every`-th position of each game: the stream after each block where the move
         ends, the board there, the moves so far, and which game it came from. A position whose
         moves so far are in `skip` is left out."""
@@ -122,11 +122,15 @@ if __name__ == "__main__":
         return [torch.stack(x) for x in xs], torch.tensor(boards), lines, game_of
 
     x, y, fit_lines, fit_game = positions(seen)
-    choosing = torch.tensor(fit_game) >= len(seen) - 300  # the last 300 games pick the block
-    met = {tuple(line) for line in fit_lines}  # a held-back position must be new: openings repeat
+    fitting = torch.tensor(fit_game) < len(seen) - 300  # the last 300 games pick the block
+    # Openings repeat. A position that picks the block must be new to the fit, and a held-back
+    # one new to both.
+    met = {tuple(line) for line, fits in zip(fit_lines, fitting.tolist()) if fits}
+    choosing = ~fitting & torch.tensor([tuple(line) not in met for line in fit_lines])
+    met |= {tuple(line) for line in fit_lines}
     held_x, held_y, held_lines, game_of = positions(unseen, skip=met)
     say(
-        f"positions to fit on: {int((~choosing).sum()):,} from {len(seen) - 300:,} games. To pick "
+        f"positions to fit on: {int(fitting.sum()):,} from {len(seen) - 300:,} games. To pick "
         f"a block: {int(choosing.sum()):,} from 300. Held back: {len(held_y):,} from {len(unseen)}"
     )
 
@@ -138,12 +142,12 @@ if __name__ == "__main__":
         low, high = interval([block for block in blocks if block], generator)
         return right.float().mean().item(), low, high
 
-    usual = torch.stack([y[~choosing][:, s].bincount(minlength=PIECES).argmax() for s in range(64)])
+    usual = torch.stack([y[fitting][:, s].bincount(minlength=PIECES).argmax() for s in range(64)])
     share, low, high = by_game(held_y == usual)
     say(f"naming each square's most usual piece: {share:.1%} right, {low:.1%} to {high:.1%}")
     probes, accuracy, picking = [], {}, []
     for block in range(len(model.blocks)):
-        probes.append(fit(x[block][~choosing], y[~choosing], generator))
+        probes.append(fit(x[block][fitting], y[fitting], generator))
         picking.append((read(probes[-1], x[block][choosing]) == y[choosing]).float().mean().item())
         share, low, high = by_game(read(probes[-1], held_x[block]) == held_y)
         accuracy[block + 1] = share
@@ -152,8 +156,8 @@ if __name__ == "__main__":
         )
     # The block to edit: the best reader among all but the last, so that some model runs after it.
     best = max(range(len(model.blocks) - 1), key=lambda block: picking[block])
-    mixed = y[~choosing][torch.randperm(int((~choosing).sum()), generator=generator)]
-    control = fit(x[best][~choosing], mixed, generator)  # boards given to the wrong streams
+    mixed = y[fitting][torch.randperm(int(fitting.sum()), generator=generator)]
+    control = fit(x[best][fitting], mixed, generator)  # boards given to the wrong streams
     control_share, low, high = by_game(read(control, held_x[best]) == held_y)
     say(
         f"the probe after block {best + 1}, fitted to shuffled boards: {control_share:.1%} right, "

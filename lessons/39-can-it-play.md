@@ -18,7 +18,7 @@ It meets three opponents.
 2. The grabber looks one move ahead: it gives checkmate if it can, or else takes the most valuable piece on offer, or else moves at random.
 3. The model at step 2,500 is the same run a quarter of the way through its 10,420 steps.
 
-A win scores 1, a draw 0.5 and a loss 0. Each two of the four players meet for 60 games, in 30 pairs. A pair starts from two moves picked at random, so no two pairs are the same game, and is played twice with colours swapped, since white moves first. The share of the points is a mean over games, so lesson 24's bootstrap gives it an interval, drawn pair by pair.
+A win scores 1, a draw 0.5 and a loss 0. Each two of the four players meet for 60 games, in 30 pairs. A pair starts from two opening moves of its own, drawn from the 400 there are, and is played twice with colours swapped, since white moves first. The share of the points is a mean over games, so lesson 24's bootstrap gives it an interval, drawn pair by pair.
 
 One number for strength is a rating. The Elo rule says what score to expect from two ratings: a player 400 points above another is expected to take 10 points for each 1 the other takes. We turn the rule round: given the results, we look for the ratings that make them most likely, which is lesson 1's fitting done with lesson 11's AdamW. We hold the random mover at 0, so these ratings do not compare with a chess site's. One made-up draw between each two players keeps a rating finite when one side took each point. Drawing the pairs of games again and fitting again gives each rating a range.
 

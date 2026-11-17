@@ -55,17 +55,22 @@ def moves(line):
 
 ```python
 # gpt/games.py
-def legal(played, move):
-    """Whether `move` is a legal next move after the moves `played`, by the rules of chess."""
+def legal(played, move, exact=False):
+    """Whether `move` is a legal next move after the moves `played`, by the rules of chess.
+
+    The library reads a move's marks loosely: `Nc3` passes where the rules write `Nxc3`, and so
+    does `e4+` with no check. With `exact`, the move must also be written as the rules write it.
+    """
     import chess  # the rules: a board that knows which moves are allowed
 
     board = chess.Board()
     for past in played:
         board.push_san(past)
     try:  # the library also reads `--` as a pass, which the rules do not allow
-        return board.parse_san(move) in board.legal_moves
+        found = board.parse_san(move)
     except ValueError:  # not a move, not possible here, or not clear which piece is meant
         return False
+    return found in board.legal_moves and (not exact or board.san(found) == move)
 
 
 def next_move(model, words, played, temperature=0, generator=None):
@@ -80,7 +85,7 @@ def next_move(model, words, played, temperature=0, generator=None):
     return text[0] if text else ""
 ```
 
-`words` is the tokenizer and `generate` lesson 22's writing loop, told here to write 6 tokens at most. The ids start with the end token because each game in the training text came after one. `chess` is python-chess, a library that knows the rules: the referee here, and no part of the model. `push_san` plays a move on its board. `parse_san` raises an error for a move the position does not allow, and reads `--` as a pass, which is why its answer is checked against the legal moves.
+`words` is the tokenizer and `generate` lesson 22's writing loop, told here to write 6 tokens at most. The ids start with the end token because each game in the training text came after one. `chess` is python-chess, a library that knows the rules: the referee here, and no part of the model. `push_san` plays a move on its board. `parse_san` raises an error for text that names no move the position allows. It reads `--` as a pass, which is why its answer is checked against the legal moves. `san` writes a move out as the rules do.
 
 ## The proof
 

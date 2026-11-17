@@ -60,12 +60,12 @@ This is an ordinary training loop on one layer, 256 positions to a step. `view(-
 # gpt/probe.py
 def erase(probe, stream, square, piece, margin=3.0):
     """The smallest change to a stream, along the probe's own line, after which the probe scores
-    "empty" on `square` above `piece`, by `margin`."""
+    "empty" on `square` above `piece`, by `margin`. No change where it does so already."""
     rows = probe.weight.view(64, PIECES, -1)[square]
     biases = probe.bias.view(64, PIECES)[square]
     line = rows[0] - rows[piece]  # toward "empty", away from the piece
     lead = (stream @ line + biases[0] - biases[piece]).item()  # how far "empty" leads now
-    return (margin - lead) / (line @ line).item() * line.detach()
+    return max(margin - lead, 0.0) / (line @ line).item() * line.detach()
 ```
 
 PyTorch stores the layer's grid with a row for each score (lesson 4), so `view(64, PIECES, -1)` sorts the rows by square and piece. `rows[0]` holds the weights for "empty" on this square and `rows[piece]` those for the piece. Their difference is the one line in the stream along which the probe tells the two apart.

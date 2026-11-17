@@ -88,6 +88,9 @@ def test_a_match_plays_each_opening_twice_with_the_colours_swapped():
     scores = match(spy("a"), spy("b"), 4, generator)
     assert len(scores) == 4 and [name for name, _ in seen] == ["a", "b", "a", "b"]
     assert seen[0][1] == seen[1][1] and seen[2][1] == seen[3][1] and seen[0][1] != seen[2][1]
+    seen.clear()
+    match(spy("a"), spy("b"), 400, generator)  # 200 pairs: half of the 400 openings there are
+    assert len({opening for _, opening in seen[::2]}) == 200  # and no opening comes twice
 
 
 def test_a_stronger_player_scores_more_over_a_match():
@@ -105,6 +108,16 @@ def test_a_slip_is_counted_when_no_try_is_legal_and_a_pass_is_no_move(monkeypatc
     move = player(chess.Board(), [])
     assert move in {chess.Board().san(m) for m in chess.Board().legal_moves}  # the rules moved
     assert counts == {"moves": 2, "slips": 1}
+
+
+def test_a_first_try_that_fails_is_followed_by_tries_drawn_by_chance(monkeypatch):
+    generator = torch.Generator().manual_seed(0)
+    player, counts = model_mover(None, None, generator)
+    # The top move is no move. Only a draw by chance, at a temperature above 0, gives a legal one.
+    monkeypatch.setattr(
+        "gpt.play.next_move", lambda *a, temperature, **how: "e4" if temperature else "zz"
+    )
+    assert player(chess.Board(), []) == "e4" and counts == {"moves": 1, "slips": 0}
 
 
 def test_an_untrained_model_still_finishes_a_legal_game():

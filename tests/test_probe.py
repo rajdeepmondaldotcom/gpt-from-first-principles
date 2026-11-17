@@ -78,3 +78,5 @@ def test_erasing_a_piece_makes_the_probe_read_the_square_as_empty():
     lead = probe(stream + change).view(64, 13)[square]
     assert (lead[0] - lead[1]).item() == pytest.approx(3.0, abs=1e-3)  # by the margin asked for
     assert change.norm() < (stream * 2).norm()  # a nudge, not a new stream
+    # Where "empty" already leads by more than the margin, there is nothing to rub out.
+    assert erase(probe, stream + change, square, piece=1, margin=1.0).abs().max() == 0
