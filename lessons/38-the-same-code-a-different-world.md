@@ -16,7 +16,9 @@ From there the steps are lesson 18's: drop repeats and near-repeats, split by fi
 
 The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well: that script's long run, called with other data.
 
-A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal. What is legal depends on where each piece now stands, and the model is shown only the moves. Many games open alike, so the moves so far may be the start of a game the model trained on. We count those apart.
+A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal. What is legal depends on where each piece now stands, and the model is shown only the moves.
+
+Many games open alike, so the moves so far may be the start of a game the model trained on. We count those apart.
 
 ## By hand
 

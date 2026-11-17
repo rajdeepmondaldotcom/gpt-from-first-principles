@@ -10,7 +10,7 @@ We make the model play whole games. The referee is lesson 38's chess library: it
 
 The model is handed the moves so far and writes its top move. If that move is not legal, it gets four more tries, each drawn by chance at a temperature of 1. If none of the five is legal, the referee picks a legal move at random, and we count a slip.
 
-A game stops after 100 moves, counting both sides: the model reads 256 tokens, and 100 moves are about 210. It then goes to the side that is 3 pawns or more ahead in pieces, on the usual count: a pawn is 1, a knight or a bishop 3, a rook 5, a queen 9. Otherwise it is a draw.
+A game stops after 100 moves, counting both sides: the model reads 256 tokens, and 100 moves are about 210. The game then goes to the side that is 3 pawns or more ahead in pieces, on the usual count: a pawn is 1, a knight or a bishop 3, a rook 5, a queen 9. Otherwise it is a draw.
 
 It meets three opponents.
 
@@ -20,7 +20,9 @@ It meets three opponents.
 
 A win scores 1, a draw 0.5 and a loss 0. Each two of the four players meet for 200 games, in 100 pairs. A pair starts from two opening moves of its own, drawn from the 400 there are, and is played twice with colours swapped, since white moves first. The share of the points is a mean over games, so lesson 24's bootstrap gives it an interval, drawn pair by pair.
 
-One number for strength is a rating. The Elo rule says what score to expect from two ratings: a player 400 points above another is expected to take 10 points for each 1 the other takes. We turn the rule round: given the results, we look for the ratings that make them most likely, which is lesson 1's fitting done with lesson 11's AdamW. We hold the random mover at 0, so these ratings do not compare with a chess site's. One made-up drawn game between each two players keeps a rating finite when one side took each point. Drawing the 600 pairs of games again and fitting again gives each rating a range.
+One number for strength is a rating. The Elo rule says what score to expect from two ratings: a player 400 points above another is expected to take 10 points for each 1 the other takes. We turn the rule round: given the results, we look for the ratings that make them most likely, which is lesson 1's fitting done with lesson 11's AdamW.
+
+We hold the random mover at 0, so these ratings do not compare with a chess site's. One made-up drawn game between each two players keeps a rating finite when one side won every game. Drawing the 600 pairs of games again and fitting again gives each rating a range.
 
 ## By hand
 
@@ -72,7 +74,7 @@ def play(white, black, opening=(), most=100):
     return result(board)
 ```
 
-A player is a function: it is given the board and the moves so far, and returns a move as text. `lead` is white's count of pieces minus black's, on the scale above. `is_game_over` is true at checkmate, at stalemate, when neither side has the pieces to mate, and at the two draws that need no claim. A position three times over, which a player has to claim, does not end a game here.
+A player is a function: it is given the board and the moves so far, and returns a move as text. `lead` is white's count of pieces minus black's, on the scale above. `is_game_over` is true at checkmate, at stalemate, when neither side has the pieces to mate, and at the 75-move and fivefold-repetition draws. A position three times over, which a player has to claim, does not end a game here.
 
 ```python
 # gpt/play.py
@@ -114,9 +116,9 @@ the model at step 2,500: rated +310 with the random mover at 0, 95% interval +27
 the model: rated +421 with the random mover at 0, 95% interval +378 to +465
 ```
 
-The model takes 0.92 of the points from the random mover, and its younger self 0.87. The two intervals overlap: against this opponent, more training shows little.
+The model takes 0.92 of the points from the random mover, and its younger self 0.87. The two intervals overlap, so this match does not separate them.
 
-Against the grabber it shows: the model takes 0.16 of the points, where its younger self took 0.05. And it takes 0.64 from that younger self, with an interval of 0.60 to 0.68, clear of a half.
+Against the grabber the model takes 0.16 of the points, where its younger self took 0.05. It takes 0.64 from that younger self, with an interval of 0.60 to 0.68, clear of a half.
 
 The referee moved for the model in 961 of its 27,049 turns, 3.6%, and for its younger self in 9.7%.
 

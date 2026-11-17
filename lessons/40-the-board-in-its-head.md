@@ -18,7 +18,9 @@ We check three things.
 2. Compare with a lazy guess: each square's most usual piece. Score the probe apart on the squares where that guess is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
-The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit. Take a position where white has one queen, with a move to make, and a pawn. Along the probe's line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not.
+The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit.
+
+Take a position where white has a pawn and one queen that can move. Along the probe's line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not.
 
 Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, show what the model would say if it stopped after an earlier block.
 
@@ -118,17 +120,17 @@ after block 6: the final choice is on top in 100% of positions, with a chance of
 a probe after block 5 on positions with either side to move: 74.9% right, 74.3% to 75.3%
 ```
 
-Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%, and the true one 80.7%. On squares that are not as usual it is right 60.9% of the time.
+Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%. Fitted to the true boards it reads 80.7%, and 60.9% on squares that are not as usual.
 
-Untouched, the model gives queen moves a chance of 20.3%. A margin of 3 takes a nudge of 0.07 of the stream's length on average, and brings that to 20.1%. Margins of 10 and 30, at 0.12 and 0.28, bring it to 19.9% and 18.5%, each interval clear of zero. Pawn nudges of the same lengths leave 20.3%, 20.3% and 20.5%. So the model uses the probe's line: the longest nudge costs queen moves 1.5 to 2.0 points.
+Untouched, the model gives queen moves a chance of 20.3%. A margin of 3 takes a nudge of 0.07 of the stream's length on average, and brings that to 20.1%. Margins of 10 and 30, at 0.12 and 0.28, bring it to 19.9% and 18.5%, each interval clear of zero. Pawn nudges of the same lengths leave 20.3%, 20.3% and 20.5%, the last 0.1 to 0.3 points up. So the model uses the probe's line: the longest nudge costs queen moves 1.5 to 2.0 points.
 
-The move forms late: the final choice is on top in 27% of positions after block 4, and 43% after block 5.
+The final choice is on top in 27% of positions after block 4, and 43% after block 5.
 
 A last probe is fitted and tested on each third position, where either side may be to move. After block 5 it reads 74.9%, against 80.7% with white to move.
 
 ## What it still cannot do
 
-Everything so far ran on one laptop: one file of model code, a storyteller of 5,374,464 parameters and a chess player of 4,488,448. We have not seen what that code does on hardware built for it.
+Every run so far used one laptop: a storyteller of 5,374,464 parameters and a chess player of 4,488,448, from one file of model code. We have not run that code on hardware built for it.
 
 ## Check yourself
 

@@ -6,7 +6,7 @@ Before lesson 1, we follow the finished storyteller from one end to the other.
 
 ## The idea
 
-You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn chess.
+You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess.
 
 Each lesson adds a piece or tests one, in this order.
 
@@ -25,7 +25,7 @@ Each lesson adds a piece or tests one, in this order.
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
 
-The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Bits per byte, on Shakespeare and then on stories, score each idea up to lesson 24, and later stages count their own results. Each lesson opens on something the last one left undone.
+The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24 we score each idea in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. Later stages count their own results. Each lesson opens on something the last one left undone.
 
 Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so.
 
@@ -48,7 +48,7 @@ One request, followed through the finished storyteller. The listener types Mira,
 | 9 | Tokens become bytes and bytes become text. Half a character waits for its other half | 36 |
 | 10 | The browser speaks each sentence as it ends. The end token arrives, and the request leaves the batch | 25, 36 |
 
-Each number in that table is one you will be able to work out. The weights that did it, 5,374,464 of them, came from a run that read 73 million tokens of stories, then from 2,000 steps on stories written to order, and 200 more on pairs of stories with one judged the better.
+Each number in that table is one you will be able to work out. The model's 5,374,464 weights came from a run that read 73 million tokens of stories, then from 2,000 steps on stories written to order, and 200 more on pairs of stories with one judged the better.
 
 ## The code
 
@@ -80,7 +80,7 @@ uv run pytest
 
 The first command installs what the code needs. The second runs each lesson's tests on the processor in a few minutes.
 
-A test here is a claim that can fail. For each idea, the lesson says what would be true if the code were wrong, and the test checks that it is not. Break a line the way the lesson warns about and its test goes red.
+A test here is a claim that can fail. For each idea, the lesson names what a wrong line would cause, and the test checks that it does not happen. Break a line the way the lesson warns about and its test goes red.
 
 ## What it still cannot do
 
@@ -106,6 +106,6 @@ Then come questions with hidden answers. One of them asks about an earlier lesso
 
 Go deeper:
 
-- [MAP.md](../MAP.md). What the lessons leave out, and the best open place to learn each thing.
+- [MAP.md](../MAP.md). What the lessons leave out, and where to learn each thing.
 - [PRACTICE.md](../PRACTICE.md). Eight routines for the skills that reading cannot give you.
 - [GLOSSARY.md](../GLOSSARY.md). Each term, with the lesson that defines it, and our plain words beside the field's.
