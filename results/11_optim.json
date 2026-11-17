@@ -1,0 +1,31 @@
+{
+  "commit": "cdbc8c3",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "seed": 0,
+  "steps": 3000,
+  "runs": {
+    "gradient descent": {
+      "val_bits_per_byte": 3.017287548714287,
+      "sample": "Once upon a timer deat tilses te grin and frit proner bese aff felling Eved.\n\n\nTORENINA:\nYou, ha"
+    },
+    "with momentum": {
+      "val_bits_per_byte": 2.563782262445232,
+      "sample": "Once upon a timerr but timed off grown dith pining me besen his ploing pabund\nThat we forturn' h"
+    },
+    "AdamW": {
+      "val_bits_per_byte": 2.372182010666903,
+      "sample": "Once upon a time, and at words forth had,\nTo the tumb offench, followed abd;\nHich fless better a"
+    }
+  },
+  "sample": "Once upon a time, and at words forth had,\nTo the tumb offench, followed abd;\nHich fless better a",
+  "printed": [
+    "gradient descent: 3.017 bits per byte",
+    "  'Once upon a timer deat tilses te grin and frit proner bese aff felling Eved.\\n\\n\\nTORENINA:\\nYou, ha'",
+    "with momentum: 2.564 bits per byte",
+    "  \"Once upon a timerr but timed off grown dith pining me besen his ploing pabund\\nThat we forturn' h\"",
+    "AdamW: 2.372 bits per byte",
+    "  'Once upon a time, and at words forth had,\\nTo the tumb offench, followed abd;\\nHich fless better a'"
+  ]
+}

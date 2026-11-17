@@ -1,0 +1,139 @@
+# 11. Optimizers
+
+By the end of this page the same GPT, on the same data, in the same 3,000 steps, beats each model so far, with a new rule for the step.
+
+Lesson 10's GPT scored 3.017 bits per byte. It had scored three times as many targets as an MLP a twelfth of its size, and it still trailed it.
+
+## The idea
+
+Gradient descent uses one rate for every parameter, and the step is rate × slope. Take the average size of the slopes in each tensor of our untrained GPT's parameters. Between two grids of weights it differs by up to 14 times, and between a bias and a gain by 400. With one rate, the flattest moves 400 times less than the steepest.
+
+Each slope also comes from one small batch, so it carries noise, as lesson 3 said. Steps point this way, then that, and undo some of each other's work.
+
+An optimizer is the rule that turns slopes into steps.
+
+Momentum works on the noise. Keep a velocity for each parameter. On each step, multiply the velocity by 0.9 and add the new slope, then move along the velocity. Slopes that keep the same sign build up, to as much as ten times one slope. Slopes that flip sign cancel.
+
+Adam works on the single rate. For each parameter it keeps two running averages: of the slope, and of the slope squared. A running average moves a fixed share of the way toward each new value. The average slope moves a tenth of the way: 0.9 × old average + 0.1 × new slope. The average square moves a thousandth of the way. The step is
+
+rate × average slope / square root of the average squared slope
+
+The bottom of that fraction is the slope's usual size. Dividing by it removes the scale. A parameter whose slope is steady moves by about `rate` on each step, whether that slope is 0.001 or 1,000. A parameter whose slope keeps flipping has a small average and a large usual size, so it moves little.
+
+Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t. Both factors start small and rise to 1.
+
+AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. AdamW leaves biases, gains and shifts alone. Lesson 13 measures what decay does to a model that stores its text.
+
+## By hand
+
+Momentum, with a rate of 0.1 and a parameter at 5. The slopes arrive as 1, 1, then -1.
+
+| Slope | Velocity | Step | Parameter |
+|---|---|---|---|
+| 1 | 0.9 × 0 + 1 = 1 | 0.1 | 4.9 |
+| 1 | 0.9 × 1 + 1 = 1.9 | 0.19 | 4.71 |
+| -1 | 0.9 × 1.9 - 1 = 0.71 | 0.071 | 4.639 |
+
+Adam's first step, with a slope of 0.001. The average slope moves a tenth of the way from 0, to 0.0001. The correction factor is 1 - 0.9 = 0.1, which restores 0.001. The average square moves a thousandth of the way, to 0.000000001, and its correction restores 0.000001, whose square root is 0.001. The step is rate × 0.001 / 0.001, which is the rate.
+
+## The code
+
+```python
+# gpt/optim.py
+    @torch.no_grad()
+    def step(self):
+        for p, velocity in zip(self.params, self.velocity):
+            velocity.mul_(self.momentum).add_(p.grad)
+            p -= self.rate * velocity
+```
+
+`@torch.no_grad()` above a function runs the whole function without recording, like lesson 4's `with` block. A method that ends in an underscore, such as `mul_`, changes the tensor in place. With `momentum=0` the velocity is the slope, and this is lesson 10's step.
+
+```python
+# gpt/optim.py
+        for p, mean, square in zip(self.params, self.mean, self.square):
+            if p.dim() > 1:
+                p *= 1 - self.rate * self.decay  # pull weight grids toward 0; leave the rest
+            mean.lerp_(p.grad, 1 - b1)  # move the average a tenth of the way to the new slope
+            square.mul_(b2).addcmul_(p.grad, p.grad, value=1 - b2)
+            size = square.sqrt() / math.sqrt(fix_square) + self.eps  # the slope's usual size
+            p.addcdiv_(mean, size, value=-self.rate / fix_mean)  # p -= rate * mean / size
+```
+
+`b1` is 0.9 and `b2` is 0.999. `p.dim() > 1` picks out the grids. `fix_mean` and `fix_square` are the two correction factors. `addcmul_(g, g, value=c)` adds c × g × g in place. `eps` is a tiny number that keeps the division safe when a slope has been 0.
+
+## The proof
+
+```bash
+uv run pytest tests/test_optim.py
+```
+
+- Our gradient descent, our momentum and our AdamW each equal PyTorch's, parameter for parameter, after each of 20 steps on a small GPT. AdamW also matches with other settings.
+- The momentum example gives 4.9, 4.71 and 4.639.
+- Adam's first step is the rate, for slopes of 0.001, 1 and 1,000.
+- Decay shrinks a weight grid and leaves a bias alone.
+- A slope that stays at 1 builds the velocity to 10, and Adam moves a flipping slope far less than a steady one.
+- In the untrained GPT the average size of a slope differs by a factor of 10 to 20 between two weight grids, and of 300 to 500 between a gain and a bias.
+
+```bash
+uv run python -m gpt.optim
+```
+
+```
+gradient descent: 3.017 bits per byte
+with momentum: 2.564 bits per byte
+AdamW: 2.372 bits per byte
+```
+
+Each run is lesson 10's model, data, seed and 3,000 steps. Only the optimizer changes. Gradient descent prints 3.017 and the same sample as lesson 10, because the same seed on `cpu` repeats. The seed is the number that starts the random number generator, and so fixes the starting weights and the batches.
+
+| Model | Bits per byte on unseen Shakespeare |
+|---|---|
+| Knows nothing | 6.022 |
+| Bigram, counted | 3.581 |
+| Bigram, learned | 3.599 |
+| MLP, eight characters back | 2.663 |
+| MLP, eight tokens back, 1,024 tokens | 2.572 |
+| GPT, 64 characters back | 3.017 |
+| GPT, with momentum | 2.564 |
+| GPT, with AdamW | 2.372 |
+
+## What it still cannot do
+
+```
+Once upon a time, and at words forth had,
+To the tumb offench, followed abd;
+Hich fless better a
+```
+
+We ran 3,000 steps at one fixed rate and stopped. Nothing looked at unseen text along the way. A run cut off at step 2,999 would have to start again from step 0.
+
+## Check yourself
+
+Predict before you run: with momentum of 0.9, a slope that stays at 1 forever builds the velocity toward what value?
+
+<details><summary>Answer</summary>
+
+10. The velocity settles where 0.9 × v + 1 = v.
+</details>
+
+<details><summary>A parameter's slope is 0.5, then -0.5, then 0.5, and so on. Roughly how far does Adam move it per step, compared with a parameter whose slope stays at 0.5?</summary>
+
+About a twentieth as far. Its average slope swings between about 0.026 and -0.026 while its usual size is 0.5.
+</details>
+
+<details><summary>With a rate of 0.001 and a decay of 0.01, what does one step of decay do to a weight of 2 in a grid, and to a bias of 2?</summary>
+
+The weight is multiplied by 0.99999 and becomes 1.99998. The bias is left at 2: decay touches grids only.
+</details>
+
+<details><summary>From lesson 3: a batch's slopes carry noise. Which of this page's rules averages slopes over steps, and over about how many?</summary>
+
+Momentum, and Adam's average slope. With 0.9, about the last ten steps carry most of the weight.
+</details>
+
+Go deeper:
+
+- Kingma and Ba, [Adam: A Method for Stochastic Optimization](https://arxiv.org/abs/1412.6980) (2014).
+- Loshchilov and Hutter, [Decoupled Weight Decay Regularization](https://arxiv.org/abs/1711.05101) (2017). The W in AdamW.
+- Gabriel Goh, [Why Momentum Really Works](https://distill.pub/2017/momentum/). Momentum with sliders you can drag.

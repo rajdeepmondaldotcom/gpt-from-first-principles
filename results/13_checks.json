@@ -1,0 +1,21 @@
+{
+  "commit": "cdbc8c3",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "seed": 0,
+  "runs": {
+    "plain": {
+      "train_nats": 0.49056791923415494,
+      "val_nats": 3.6476310791295923
+    },
+    "dropout 0.3 and decay 0.1": {
+      "train_nats": 1.2304130290442943,
+      "val_nats": 2.2855726344987803
+    }
+  },
+  "printed": [
+    "plain: training text 0.491, unseen text 3.648, gap 3.157 nats",
+    "dropout 0.3 and decay 0.1: training text 1.230, unseen text 2.286, gap 1.055 nats"
+  ]
+}
