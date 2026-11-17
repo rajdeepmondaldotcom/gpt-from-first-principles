@@ -26,6 +26,7 @@ def streams(model, ids, edit=None):
     return out
 
 
+@torch.no_grad()
 def lens(model, stream):
     """The scores the model would give if this stream were its last: the final norm, then the
     layer that turns a stream into scores."""
@@ -90,6 +91,7 @@ if __name__ == "__main__":
     from gpt.evaluate import interval
     from gpt.results import save, say
     from gpt.story import load
+    from gpt.tensors import softmax
 
     cache = Path("data/cache")
     model, words = load(cache / "chess")
@@ -146,12 +148,75 @@ if __name__ == "__main__":
     moved = held_y != usual  # squares that are not as they usually are: the hard ones
     hard = (read(probes[best], held_x[best]) == held_y)[moved].float().mean().item()
     say(f"on squares that differ from their usual piece, the probe is right {hard:.1%} of the time")
+
+    # Rub the mover's queen out of the stream after that block. Does it play its queen less?
+    queen_moves = [i for i, token in words.bytes.items() if token.startswith(b" Q")]
+
+    def queen_chance(ids, edit=None):
+        """The chance the model gives to a queen move next, with or without an edit."""
+        last = streams(model, ids, edit)[-1][-1]
+        return softmax(lens(model, last))[queen_moves].sum().item()
+
+    plain, no_queen, no_pawn, game = [], [], [], []
+    for line, number in zip(held_lines, game_of):
+        board = chess.Board()
+        for move in line:
+            board.push_san(move)
+        queens = list(board.pieces(chess.QUEEN, board.turn))
+        pawns = list(board.pieces(chess.PAWN, board.turn))
+        can_move = len(queens) == 1 and any(m.from_square == queens[0] for m in board.legal_moves)
+        if not (can_move and pawns):
+            continue  # we want one queen that has a move, and a pawn to rub out for comparison
+        ids = [words.end, *words.encode(" " + " ".join(line))]
+        stream = streams(model, ids)[best][-1]
+        colour = 0 if board.turn == chess.WHITE else 6
+        plain.append(queen_chance(ids))
+        for square, piece, out in (
+            (queens[0], 5 + colour, no_queen),
+            (pawns[0], 1 + colour, no_pawn),
+        ):
+            out.append(queen_chance(ids, (best, erase(probes[best], stream, square, piece))))
+        game.append(number)
+
+    def mean_and_range(values, base):
+        """The mean of `values`, and a 95% interval for its change from `base`, game by game."""
+        blocks = {}
+        for number, value, start in zip(game, values, base):
+            blocks.setdefault(number, []).append(value - start)
+        low, high = interval(list(blocks.values()), generator)
+        return sum(values) / len(values), low, high
+
+    say(f"positions where the mover has one queen that can move: {len(plain):,}")
+    say(f"chance of a queen move next, untouched: {sum(plain) / len(plain):.1%}")
+    edits = {}
+    for name, values in (("the queen", no_queen), ("a pawn", no_pawn)):
+        mean, low, high = mean_and_range(values, plain)
+        edits[name] = mean
+        say(
+            f"with {name} rubbed out after block {best + 1}: {mean:.1%}, "
+            f"a change of {low:+.1%} to {high:+.1%}"
+        )
+
+    # The move forming: read the stream after each block through the final layer.
+    final = lens(model, held_x[-1]).argmax(dim=-1)  # the token on top at the end, for each position
+    formed = {}
+    for block in range(len(model.blocks)):
+        chances = softmax(lens(model, held_x[block]))
+        on_top = (chances.argmax(dim=-1) == final).float().mean().item()
+        given = chances[torch.arange(len(final)), final].mean().item()
+        formed[block + 1] = on_top
+        say(
+            f"after block {block + 1}: the final choice is on top in {on_top:.0%} of positions, "
+            f"with a chance of {given:.0%}"
+        )
     save(
         "40_probe",
         torch=torch.__version__,
         device="cpu",
-        positions={"fit": len(y), "held": len(held_y)},
+        positions={"fit": len(y), "held": len(held_y), "edited": len(plain)},
         accuracy=accuracy,
         control=share,
         hard_squares=hard,
+        queen_chance={"plain": sum(plain) / len(plain), **edits},
+        formed=formed,
     )
