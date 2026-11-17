@@ -1,5 +1,6 @@
 """Lessons 22 and 23. Writing: choose each next token, and never read a token twice."""
 
+import re
 import time
 from pathlib import Path
 
@@ -37,11 +38,20 @@ def generate(model, ids, n, stop=None, cache=True, **how):
 
 if __name__ == "__main__":
     from gpt.cost import cache_bytes
+    from gpt.data import read
     from gpt.story import load
 
     device = "mps" if torch.backends.mps.is_available() else "cpu"
     model, words = load(Path("data/cache/story"), device)
     prompt = words.encode("Once upon a time")
+    # Each lowercase word in 5 million tokens of the training text: the words the stories use.
+    trained = words.decode(read(Path("data/cache/stories_train.bin"))[:5_000_000].tolist())
+    known = set(re.findall(r"[a-z]+", trained.lower()))
+
+    def made_up(texts):
+        """The share of words in these texts that the training text never uses."""
+        used = [word for text in texts for word in re.findall(r"[a-z]+", text.lower())]
+        return sum(word not in known for word in used) / len(used)
 
     def write(n=250, **how):
         """One story as text, and how many tokens it took."""
@@ -60,9 +70,13 @@ if __name__ == "__main__":
         stories = [write(generator=generator, **how) for _ in range(20)]
         different = len({text for text, _ in stories})
         finished = sum(count < 250 for _, count in stories)
-        settings[name] = {"different": different, "finished": finished}
+        invented = made_up([text for text, _ in stories])
+        settings[name] = {"different": different, "finished": finished, "made_up": invented}
         samples[name] = stories[0][0]
-        say(f"{name}: {different} different stories of 20, {finished} reach their end")
+        say(
+            f"{name}: {different} different stories of 20, {finished} reach their end, "
+            f"{invented:.1%} of their words made up"
+        )
         say(f"  {stories[0][0][:150]!r}")
     save("22_sampling", torch=torch.__version__, device=device, settings=settings, samples=samples)
 
