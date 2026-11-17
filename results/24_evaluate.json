@@ -1,5 +1,5 @@
 {
-  "commit": "a2a442b",
+  "commit": "022ff0a",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "cpu",
@@ -8,45 +8,45 @@
     "64": 1.4391145706176758,
     "16": 1.4394534826278687
   },
-  "alone": 1.444341600921415,
-  "val_nats": 1.4797116540626478,
+  "alone": 1.4443416012981862,
+  "val_nats": 1.4797116539787105,
   "interval": [
     1.4626590013504028,
     1.4965814352035522
   ],
   "sixteen_bits": {
-    "gap": 9.84799416237698e-05,
+    "gap": 9.847899770224051e-05,
     "interval": [
-      -7.23603898222791e-06,
-      0.00020682139438576996
+      -7.2361704042123165e-06,
+      0.0002068208996206522
     ]
   },
   "tasks": {
     "a name to carry on": {
       "passed": 97,
       "interval": [
-        0.9300000071525574,
-        1.0
+        0.9148239470257198,
+        0.9937700284616935
       ],
       "tries": [
         10,
-        10,
-        10,
         9,
         10,
         10,
         10,
         10,
         10,
-        9,
-        10,
         10,
         10,
         9,
-        10,
-        10,
         10,
         8,
+        10,
+        9,
+        10,
+        10,
+        9,
+        10,
         10,
         10
       ]
@@ -55,7 +55,7 @@
       "passed": 0,
       "interval": [
         0.0,
-        0.03621669264517646
+        0.036216692645176796
       ],
       "tries": [
         0,
@@ -92,7 +92,7 @@
     "500 stories, 16 bits minus 32 bits: +0.0001 nats, 95% interval -0.0000 to +0.0002",
     "three unseen stories planted among 20,000 training ones: found [3, 40, 77]",
     "the real split, each unseen story against each training story: 0 leaks",
-    "a name to carry on: 97 of 100, 95% interval 0.93 to 1.00",
+    "a name to carry on: 97 of 100, 95% interval 0.91 to 0.99",
     "a name to carry on: pass at 1 0.97, pass at 5 1.00, from 10 tries on each of 20",
     "a story to order: 0 of 100, 95% interval 0.00 to 0.04",
     "a story to order: pass at 1 0.00, pass at 5 0.00, from 10 tries on each of 20",
