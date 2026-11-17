@@ -61,10 +61,15 @@ if __name__ == "__main__":
 
     before, plain_before = measure("before", model, words, held, unseen, generator)
     start, runs = generator.get_state(), {}  # each run then draws the batches lesson 25 drew
-    for name, names in (("queries and values", ("q", "v")), ("each grid in a block", GRIDS)):
+    # One change at a time from the first run: eight times the rank, then every grid.
+    for name, rank, names in (
+        ("rank 8, queries and values", 8, ("q", "v")),
+        ("rank 64, queries and values", 64, ("q", "v")),
+        ("rank 8, each grid in a block", 8, GRIDS),
+    ):
         model, _ = load(cache / "story")
         generator.set_state(start)
-        add_lora(model, rank=8, names=names)
+        add_lora(model, rank, names)
         trained = [p for p in model.parameters() if p.requires_grad]
         count = sum(p.numel() for p in trained)
         say(f"{name}: {count:,} of {whole:,} parameters train, {4 * count / 1e6:.2f} MB to store")
