@@ -56,7 +56,8 @@ if __name__ == "__main__":
     trained = [p for p in model.parameters() if p.requires_grad]
     count = sum(p.numel() for p in trained)
     say(f"trained: {count:,} of {whole:,} parameters, {4 * count / 1e6:.2f} MB to store")
-    model.to("mps" if torch.backends.mps.is_available() else "cpu")  # as lesson 25 trained
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model.to(device)  # as lesson 25 trained
     optimizer = AdamW(trained, rate=0.0, decay=0.0)
     for step, loss in tune(
         model, optimizer, examples, STEPS, peak=2e-3, generator=generator, pad=words.end, size=32
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     save(
         "26_lora",
         torch=torch.__version__,
-        device="cpu",
+        device=device,
         trained=count,
         whole=whole,
         before=before,

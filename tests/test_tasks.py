@@ -1,7 +1,7 @@
 import torch
 
 from gpt.model import GPT
-from gpt.tasks import attempt, count_documents, make, opening, passes, prompt
+from gpt.tasks import attempt, count_documents, make, opening, passes, prompt, used
 
 RARE = [
     f"{a}{b}"
@@ -71,3 +71,4 @@ def test_the_check_wants_whole_words_and_the_name_as_written():
     assert not passes(task, "Timber was a brave cat under the moon.")  # Tim is not in Timber
     assert not passes(task, "tim was a brave cat under the moon.")  # a name keeps its capital
     assert not passes(task, "Tim was a brave cat.")  # one word missing
+    assert used(task, "Tim was a brave cat.") == [True, False, True]  # cat, moon, brave
