@@ -11,7 +11,7 @@ from gpt.checks import reads_no_future, starts_with_no_opinion
 from gpt.data import read, tokenizer
 from gpt.generate import generate
 from gpt.gpt2 import evaluate
-from gpt.model import GPT, LLAMA
+from gpt.model import GPT, LLAMA, load_llama
 from gpt.optim import AdamW
 from gpt.results import save, say
 from gpt.scale import run, shape, steps_for
@@ -38,6 +38,13 @@ def save_llama(model, path):
     head = json.dumps(header).encode()
     numbers = b"".join(tensor.numpy().tobytes() for tensor in tensors.values())
     Path(path).write_bytes(struct.pack("<Q", len(head)) + head + numbers)
+
+
+def load(folder, device="cpu"):
+    """The trained story model and its tokenizer, from the folder the run below saves."""
+    model = GPT(**json.loads((folder / "shape.json").read_text())).to(device)
+    load_llama(model, folder / "model.safetensors")
+    return model.eval(), tokenizer(folder / "vocab.json")
 
 
 if __name__ == "__main__":
