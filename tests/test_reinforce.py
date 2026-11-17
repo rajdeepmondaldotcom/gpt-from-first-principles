@@ -1,0 +1,88 @@
+import math
+
+import pytest
+import torch
+
+from gpt.model import GPT
+from gpt.reinforce import answer_log_chances, preference_loss, score_loss
+
+END, SEP = 10, 9
+
+
+def model():
+    torch.manual_seed(0)
+    return GPT(vocab=11, context=16, width=32, heads=2, layers=2)
+
+
+def test_an_answers_log_chance_is_the_sum_over_its_tokens():
+    net = model()
+    examples = [([1, 2, SEP, 3, 4, END], 3), ([5, SEP, 6, END], 2)]
+    got = answer_log_chances(net, examples, pad=END)
+    for (ids, start), mine in zip(examples, got):
+        logs = torch.log_softmax(net(torch.tensor([ids[:-1]]))[0], dim=-1)
+        by_hand = sum(logs[i - 1, ids[i]] for i in range(start, len(ids)))
+        assert mine.item() == pytest.approx(by_hand.item(), abs=1e-5)
+
+
+def exact_and_sampled(baseline, samples=200_000):
+    """A policy over 5 answers with known rewards: the true slope of the mean reward, and estimates."""
+    scores = torch.tensor([0.5, -0.2, 0.1, 0.9, -0.6], requires_grad=True)
+    rewards = torch.tensor([1.0, 0.0, 0.0, 1.0, 0.0])
+    (torch.softmax(scores, 0) * rewards).sum().backward()  # the mean reward, exactly
+    exact = scores.grad.clone()
+    generator = torch.Generator().manual_seed(0)
+    picks = torch.multinomial(torch.softmax(scores.detach(), 0), samples, True, generator=generator)
+    onehot = torch.nn.functional.one_hot(picks, 5).float()
+    slopes = onehot - torch.softmax(scores.detach(), 0)  # the slope of each pick's log chance
+    centre = rewards[picks].mean() if baseline else 0.0
+    each = (rewards[picks] - centre)[:, None] * slopes  # one estimate of the slope per sample
+    return exact, each
+
+
+def test_the_sampled_slope_averages_to_the_exact_one():
+    exact, each = exact_and_sampled(baseline=False)
+    assert torch.allclose(each.mean(dim=0), exact, atol=0.005)
+
+
+def test_a_baseline_keeps_the_average_and_cuts_the_spread():
+    exact, plain = exact_and_sampled(baseline=False)
+    _, centred = exact_and_sampled(baseline=True)
+    assert torch.allclose(centred.mean(dim=0), exact, atol=0.005)
+    assert centred.var(dim=0).sum() < 0.6 * plain.var(dim=0).sum()
+
+
+def test_score_loss_follows_the_slope_of_the_mean_reward():
+    # Two prompts, two sampled answers each. The loss's slope for each log chance is minus
+    # (reward - its group's mean) / 4.
+    logs = torch.zeros(4, requires_grad=True)
+    score_loss(logs, rewards=[1.0, 0.0, 1.0, 1.0], groups=[0, 0, 1, 1]).backward()
+    assert torch.allclose(logs.grad, torch.tensor([-0.125, 0.125, 0.0, 0.0]))
+
+
+def test_a_step_on_score_loss_raises_the_chance_of_the_answer_that_passed():
+    net = model()
+    examples = [([1, 2, SEP, 3, END], 3), ([1, 2, SEP, 4, END], 3)]  # one prompt, two answers
+    before = answer_log_chances(net, examples, pad=END).detach()
+    loss = score_loss(answer_log_chances(net, examples, pad=END), [1.0, 0.0], [0, 0])
+    loss.backward()
+    with torch.no_grad():
+        for p in net.parameters():
+            p -= 0.05 * p.grad
+    after = answer_log_chances(net, examples, pad=END).detach()
+    assert after[0] > before[0] and after[1] < before[1]
+
+
+def test_preference_loss_starts_at_ln_2_and_falls_as_the_better_answer_gains():
+    same = torch.tensor([-3.0, -5.0])
+    assert preference_loss(same, same - 1, same, same - 1).item() == pytest.approx(math.log(2))
+    ahead = preference_loss(same + 2, same - 1, same, same - 1).item()
+    behind = preference_loss(same - 2, same - 1, same, same - 1).item()
+    assert ahead < math.log(2) < behind
+
+
+def test_preference_loss_by_hand():
+    # We favour the better answer by 4 more than the frozen model does. beta 0.1: -ln sigmoid(0.4)
+    loss = preference_loss(
+        torch.tensor([-1.0]), torch.tensor([-6.0]), torch.tensor([-2.0]), torch.tensor([-3.0])
+    )
+    assert loss.item() == pytest.approx(-math.log(1 / (1 + math.exp(-0.4))))
