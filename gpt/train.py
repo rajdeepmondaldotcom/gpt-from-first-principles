@@ -14,7 +14,7 @@ def rate_at(step, peak, warmup, steps, floor=0.1):
     """The learning rate for one step: a straight climb to `peak`, then a slow curve down."""
     if step < warmup:
         return peak * (step + 1) / warmup
-    done = (step - warmup) / max(1, steps - warmup)  # 0 at the peak, 1 at the last step
+    done = (step - warmup) / max(1, steps - warmup)  # 0 at the peak, nearly 1 at the last step
     return peak * (floor + (1 - floor) * 0.5 * (1 + math.cos(math.pi * done)))
 
 
@@ -62,6 +62,8 @@ def train(
 
 def checkpoint(path, model, optimizer, step, generator):
     """Everything a run needs to continue as if it had never stopped."""
+    # shortcut: PyTorch's own generator, which dropout draws from, is not saved. Add
+    # torch.get_rng_state() before resuming a run that uses dropout.
     state = {
         "model": model.state_dict(),
         "mean": optimizer.mean,

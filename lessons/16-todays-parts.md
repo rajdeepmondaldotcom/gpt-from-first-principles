@@ -1,24 +1,26 @@
 # 16. Today's parts
 
-By the end of this page the model is built the way models are built today. Loaded with the weights of a Llama-format model, it gives that model's scores.
+By the end of this page the model has the parts of Llama, and loaded with a tiny reference Llama's weights it gives that model's scores.
 
-Lesson 15's model still has three parts from 2019: layer normalization, the GELU MLP, and a key and value head for each query head. Models released since have changed all three. For each we ask what changed, and we measure what it buys.
+Lesson 15's model still has three parts from 2019: layer normalization, the GELU MLP, and a key and value head for each query head. Llama and the models built on its layout changed all three.
 
 ## The idea
 
-RMSNorm in place of layer normalization. Lesson 9's normalization subtracts a vector's mean, divides by its spread, then applies a gain and a shift. RMSNorm keeps one step of the four: divide the vector by the root of the mean of its squares, then apply a gain. The mean is not subtracted and there is no shift.
+RMSNorm replaces layer normalization. Lesson 9's normalization subtracts a vector's mean, divides by its spread, then applies a gain and a shift. RMSNorm keeps two of the four steps: it divides the vector by the root of the mean of its squares, then applies a gain. It subtracts no mean and adds no shift.
 
-SwiGLU in place of the MLP. Lesson 9's MLP widens, bends and narrows. SwiGLU widens twice, with two separate grids. One result passes through a bend and is multiplied, entry by entry, with the other: the first decides how much of the second gets through. Then one grid narrows the product. The bend is called SiLU: x times sigmoid(x), where sigmoid(x) = 1 / (1 + e to the -x) squashes any number into the range 0 to 1. Three grids cost more than two, so each is made narrower: 8/3 of the width in place of 4 times. At a width of 128 that is 130,944 parameters against the old 131,712.
+SwiGLU replaces the MLP. Lesson 9's MLP widens, bends and narrows. SwiGLU widens twice, with two separate grids. One result passes through a bend and is multiplied, entry by entry, with the other. It scales each entry of the other, and can shrink it to 0 or flip its sign. Then one grid narrows the product. The bend is called SiLU: x times sigmoid(x), where sigmoid(x) = 1 / (1 + e to the -x) squashes any number into the range 0 to 1. Three grids cost more than two, so we make each narrower: 8/3 of the width in place of 4 times. At a width of 128 that is 130,944 parameters against the old 131,712, which included 640 biases.
 
-Grouped heads. Lesson 7 gave each head its own queries, keys and values. Here several query heads share one key head and one value head. Our 4 query heads read from 2. The grids that make keys and values halve. So does the memory a model needs when it keeps each token's keys and values to write text, which a later lesson does.
+Grouped heads share keys and values. Lesson 7 gave each head its own queries, keys and values. Here several query heads read from one key head and one value head: our 4 query heads read from 2. The grids that make keys and values halve. So does the memory a model needs if it keeps each token's keys and values while it writes text.
 
-No biases. None of the linear layers in today's attention or MLP has one.
+The linear layers lose their biases. None in today's attention or MLP has one.
 
-That is the layout of Llama, a family of open models from Meta that many others follow. Hugging Face's `transformers` library has an implementation. We used it to build a tiny one with random weights: 2 blocks, a width of 48, 4 heads, 2 key heads, 64 tokens. We saved its weights and the scores it gives for 40 random tokens. Our model, loaded with those weights, picks the same top token at each of the 40 places, and its 64 scores at the last place match to 0.00001.
+That is the layout of Llama, a family of open models from Meta. Hugging Face's `transformers` library has an implementation. We used it to build a tiny one with random weights: 2 blocks, a width of 48, 4 heads, 2 key heads and a vocabulary of 64 tokens. We saved its weights and the scores it gives for 40 random tokens. Our model, loaded with those weights, picks the same top token at each of the 40 places, and its 64 scores at the last place match to 0.00001.
+
+Meta's released Llamas would not load as they are. Our code fixes three things they set differently: the width of SwiGLU, the small number inside RMSNorm, and the base of the rotary speeds. They also keep a separate grid for the scores.
 
 ## By hand
 
-RMSNorm on the vector (3, 4). The squares are 9 and 16, their mean is 12.5, and its root is 3.536. The result is (0.849, 1.131). Layer normalization gives (-1, 1) for the same vector, and also for (103, 104): it throws the mean away. RMSNorm keeps it.
+RMSNorm on the vector (3, 4). The squares are 9 and 16, their mean is 12.5, and its root is 3.536. The result is (0.849, 1.131). Layer normalization gives (-1, 1) for the same vector, and also for (103, 104), because it subtracts the mean. RMSNorm does not, and gives (0.995, 1.005) for (103, 104).
 
 SiLU at three points:
 
@@ -56,7 +58,7 @@ Grouped heads are two lines in attention. `k` and `v` arrive with `kv_heads` hea
 
 `repeat_interleave(2, dim=1)` turns heads (a, b) into (a, a, b, b).
 
-The model takes its parts as arguments, so an experiment can put one old part back:
+The model takes its parts as arguments, so an experiment can put one old part back. `kv_heads=None` gives each query head a key head of its own:
 
 ```python
 # gpt/model.py
@@ -77,7 +79,7 @@ uv run pytest tests/test_model.py
 - SwiGLU has 130,944 parameters at a width of 128, and the old MLP 131,712.
 - Grouped heads equal full heads whose key and value grids hold each head twice.
 - The parameter count follows the formula.
-- The model starts with no opinion and cannot read the future.
+- The model starts with no opinion and cannot read the future, and the two layers that add into the stream start smaller than the rest.
 - With the reference Llama's weights it gives the reference scores.
 
 ```bash
@@ -98,7 +100,7 @@ Each comparison is lesson 14's method: 600 steps on five seeds, one part changed
 
 RMSNorm changes nothing we can see: 0.7 errors from zero, for less arithmetic. SwiGLU is a real gain at 600 steps: 0.080 nats, 12.8 errors from zero. Grouped heads cost nothing we can see, 0.7 errors, and remove 8% of the parameters: 734,080 against 799,616. All three together are ahead by 0.076 nats.
 
-The lead does not last, as in lesson 15. After 5,000 steps today's model scores 2.209 bits per byte, lesson 15's 2.210 and lesson 12's 2.206. On a megabyte of Shakespeare the three designs end level, and today's has 9% fewer parameters than lesson 15's.
+After 5,000 steps, one run of each design scores 2.209 bits per byte for today's model, 2.210 for lesson 15's and 2.206 for lesson 12's. One seed cannot tell these apart. Today's model has 9% fewer parameters than lesson 15's.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -138,7 +140,7 @@ The squares are 36 and 64, their mean is 50, and its root is 7.07. The result is
 
 <details><summary>In SwiGLU the gate's result is 0 for one entry. What comes out of that entry?</summary>
 
-0 times sigmoid(0) is 0, so that entry of the product is 0 whatever the other grid says.
+0 times sigmoid(0) is 0, so that entry of the product is 0 whatever the other grid gives.
 </details>
 
 <details><summary>From lesson 14: RMSNorm's difference was under 3 errors from zero. What can we say about it?</summary>

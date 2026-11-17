@@ -25,6 +25,7 @@ def trial(make, ids, val_ids, seed, steps, peak=3e-3, **loop):
 def compare(a, b):
     """Results of two settings, run on the same seeds. Returns the mean of b - a, and its error."""
     diffs = [y - x for x, y in zip(a, b, strict=True)]
+    assert len(diffs) > 1, "one seed has no spread, so no error"
     mean = sum(diffs) / len(diffs)
     spread = math.sqrt(sum((d - mean) ** 2 for d in diffs) / (len(diffs) - 1))
     return mean, spread / math.sqrt(len(diffs))  # the error shrinks as the seeds grow

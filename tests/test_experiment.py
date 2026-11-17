@@ -42,6 +42,8 @@ def test_compare_by_hand():
 def test_the_two_settings_must_use_the_same_seeds():
     with pytest.raises(ValueError):
         compare([1.0, 2.0], [1.0])
+    with pytest.raises(AssertionError):
+        compare([1.0], [2.0])  # one seed has no spread
 
 
 def test_the_same_seed_repeats_and_a_new_seed_does_not():
@@ -70,7 +72,7 @@ def test_a_rate_a_hundred_times_too_low_is_a_real_effect():
     assert mean > 3 * error
 
 
-def test_each_seed_picks_the_same_rate():
-    rates = (1e-4, 1e-2, 1.0)
+def test_each_seed_picks_a_rate_from_the_same_region():
+    rates = (1e-3, 3e-3, 1e-2, 3e-2, 1e-1)  # neighbours about three times apart
     for seed in range(3):
-        assert min(rates, key=lambda peak: run(seed, peak)) == 1e-2
+        assert min(rates, key=lambda peak: run(seed, peak)) in (1e-2, 3e-2)

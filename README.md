@@ -23,9 +23,9 @@ Under construction: lessons 1 to 16 of 42 are here.
 | 11 | [Optimizers](lessons/11-optimizers.md) | The same GPT ahead of each earlier model, with only the rule for the step changed |
 | 12 | [The training loop](lessons/12-the-training-loop.md) | A run you can stop and resume, bit for bit |
 | 13 | [Is it working?](lessons/13-is-it-working.md) | Five checks that catch a silent bug, and a measured cure for a model that stores its text |
-| 14 | [Running an experiment](lessons/14-running-an-experiment.md) | A rule that tells a real gain from a lucky seed, and its false-alarm rate |
+| 14 | [Running an experiment](lessons/14-running-an-experiment.md) | A rule that separates a real gain from a lucky seed, and its false-alarm rate |
 | 15 | [Rotary positions](lessons/15-rotary-positions.md) | A model with no table of places, which runs on text longer than it trained on |
-| 16 | [Today's parts](lessons/16-todays-parts.md) | Today's design, giving a reference Llama's scores |
+| 16 | [Today's parts](lessons/16-todays-parts.md) | Llama's parts, giving a tiny reference Llama's scores |
 
 ## The scoreboard
 
@@ -66,7 +66,7 @@ uv run pytest
 
 Each lesson has a page in `lessons/`, a short file in `gpt/` and a test in `tests/`. A lesson's numbers come from its own script, for example `uv run python -m gpt.bigram`, and are saved in `results/`.
 
-Two tests compare our code with outside references, and `uv run pytest` leaves them out. They need the `reference` extra, and the second needs GPT-2's weights (see lesson 10):
+Two tests need outside downloads, and `uv run pytest` leaves them out. They need the `reference` extra, and the second needs GPT-2's weights (see lesson 10):
 
 ```bash
 uv run --extra reference pytest -m reference

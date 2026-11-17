@@ -4,8 +4,8 @@ from itertools import pairwise
 import torch
 from torch import nn
 
-from gpt.gpt2 import GPT2, batch, loss_on
-from gpt.optim import AdamW
+from gpt.gpt2 import GPT2
+from gpt.optim import SGD, AdamW
 from gpt.train import checkpoint, clip, rate_at, resume, train
 
 
@@ -72,15 +72,30 @@ def test_a_run_that_stops_and_resumes_is_the_same_run(tmp_path):
     assert all(torch.equal(a, b) for a, b in zip(model.parameters(), model3.parameters()))
 
 
+def one_step(**loop):
+    """One step of plain gradient descent through `train`. Adam would hide a slope of the wrong size."""
+    torch.manual_seed(0)
+    model = GPT2(vocab=11, context=8, width=16, heads=2, layers=2)
+    before = [p.clone() for p in model.parameters()]
+    generator = torch.Generator().manual_seed(0)
+    loop = train(
+        model, SGD(model.parameters(), rate=0.0), IDS, 1, generator=generator, warmup=1, **loop
+    )
+    ((_, loss),) = loop
+    return loss, [p - b for p, b in zip(model.parameters(), before)]
+
+
 def test_small_batches_added_up_equal_one_big_batch():
-    model, _, _ = fresh()
-    x, y = batch(IDS, 8, 8, torch.Generator().manual_seed(0))
-    loss_on(model, x, y).backward()
-    whole = [p.grad.clone() for p in model.parameters()]
-    model.zero_grad()
-    for part_x, part_y in zip(x.split(2), y.split(2)):  # four parts of two windows each
-        (loss_on(model, part_x, part_y) / 4).backward()
-    assert all(torch.allclose(a, p.grad, atol=1e-6) for a, p in zip(whole, model.parameters()))
+    loss, moved = one_step(peak=0.1, size=8, limit=100.0)
+    parts_loss, parts_moved = one_step(peak=0.1, size=2, parts=4, limit=100.0)  # the same 8 windows
+    assert math.isclose(loss, parts_loss, rel_tol=1e-5)
+    assert all(torch.allclose(a, b, atol=1e-6) for a, b in zip(moved, parts_moved))
+
+
+def test_the_loop_clips_before_it_steps():
+    _, moved = one_step(peak=1.0, limit=0.01)
+    length = math.sqrt(sum(m.pow(2).sum().item() for m in moved))
+    assert math.isclose(length, 0.01, rel_tol=1e-3)  # a rate of 1 times a gradient cut to 0.01
 
 
 def test_training_in_16_bits_tracks_training_in_32():
@@ -96,3 +111,4 @@ def test_training_in_16_bits_tracks_training_in_32():
             ][-1]
         )
     assert ends[0] < 0.5 and abs(ends[0] - ends[1]) < 0.05
+    assert ends[0] != ends[1]  # the switch did something
