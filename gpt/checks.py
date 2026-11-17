@@ -30,9 +30,28 @@ def reads_no_future(model, x):
         return torch.equal(model(x)[:, :-1], model(changed)[:, :-1])
 
 
-def learns_one_batch(model, optimizer, x, y, steps=200):
+def stream_sizes(model, x):
+    """The spread of the residual stream after the embedding, then after each block."""
+    sizes = []
+    hooks = [
+        part.register_forward_hook(lambda part, inputs, out: sizes.append(out.std().item()))
+        for part in (model.embed, *model.blocks)
+    ]
+    with torch.no_grad():
+        model(x)
+    for hook in hooks:
+        hook.remove()
+    return sizes
+
+
+def the_stream_keeps_its_size(sizes):
+    """Each block adds a correction to the stream. By the last block it should not have doubled."""
+    return sizes[-1] < 2 * sizes[0]
+
+
+def learns_one_batch(model, optimizer, x, y):
     """A healthy model and loop can learn a single batch by heart."""
-    for _ in range(steps):
+    for _ in range(200):
         loss = loss_on(model, x, y)
         model.zero_grad()
         loss.backward()
@@ -52,9 +71,9 @@ def step_sizes(model, optimizer, x, y):
     }
 
 
-def every_part_moves_a_little(sizes, low=1e-5, high=2e-2):
+def every_part_moves_a_little(sizes):
     """A healthy step moves a grid by about a thousandth of its size. 0 is stuck; 2% is too far."""
-    return all(low < share < high for share in sizes.values())
+    return all(1e-5 < share < 2e-2 for share in sizes.values())
 
 
 def add_dropout(model, chance):

@@ -113,25 +113,30 @@ class GPT(nn.Module):
         return self.out(self.norm(x))
 
 
+# Our names for the parts, beside the names a Llama-format file gives them.
+LLAMA = {
+    "model.embed_tokens": "embed",
+    "model.norm.weight": "norm.gain",
+    "model.layers": "blocks",
+    "self_attn.q_proj": "attn.q",
+    "self_attn.k_proj": "attn.k",
+    "self_attn.v_proj": "attn.v",
+    "self_attn.o_proj": "attn.proj",
+    "mlp.gate_proj": "mlp.gate",
+    "mlp.up_proj": "mlp.wide",
+    "mlp.down_proj": "mlp.narrow",
+    "input_layernorm.weight": "norm1.gain",
+    "post_attention_layernorm.weight": "norm2.gain",
+}
+
+
 def load_llama(model, path):
     """Copy the weights of a Llama-format file into `model`, name by name."""
-    names = {
-        "model.embed_tokens": "embed",
-        "model.norm.weight": "norm.gain",
-        "model.layers": "blocks",
-        "self_attn.q_proj": "attn.q",
-        "self_attn.k_proj": "attn.k",
-        "self_attn.v_proj": "attn.v",
-        "self_attn.o_proj": "attn.proj",
-        "mlp.gate_proj": "mlp.gate",
-        "mlp.up_proj": "mlp.wide",
-        "mlp.down_proj": "mlp.narrow",
-        "input_layernorm.weight": "norm1.gain",
-        "post_attention_layernorm.weight": "norm2.gain",
-    }
+    # shortcut: the file must fit this model: SwiGLU 8/3 of the width, one tied grid for tokens
+    # and scores, 1e-6 in RMSNorm, a rotary base of 10000. Meta's released Llamas differ in each.
     state = {}
     for name, tensor in read_safetensors(path).items():
-        for theirs, ours in names.items():
+        for theirs, ours in LLAMA.items():
             name = name.replace(theirs, ours)
         state[name] = tensor
     state["out.weight"] = state["embed.weight"]  # one grid reads tokens and scores them

@@ -66,6 +66,15 @@ def test_parameter_count_follows_the_formula():
     assert count == vocab * width + layers * block + width
 
 
+def test_the_layers_that_add_into_the_stream_start_smaller():
+    torch.manual_seed(0)
+    block = GPT(vocab=65, context=16, width=64, heads=4, layers=8).blocks[0]
+    for grid in (block.attn.proj.weight, block.mlp.narrow.weight):
+        assert grid.std().item() == pytest.approx(0.02 / math.sqrt(2 * 8), rel=0.1)
+    for grid in (block.attn.q.weight, block.mlp.wide.weight):
+        assert grid.std().item() == pytest.approx(0.02, rel=0.1)
+
+
 def test_it_starts_with_no_opinion():
     model = small()
     ids, targets = torch.randint(65, (8, 16)), torch.randint(65, (8 * 16,))

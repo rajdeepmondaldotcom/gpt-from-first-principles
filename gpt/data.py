@@ -35,7 +35,7 @@ def clean(doc):
     """One document in, tidy text out. Returns None for junk."""
     doc = unicodedata.normalize("NFC", doc).strip()  # one way to write each character
     plain = sum(ch.isalpha() or ch.isspace() for ch in doc)
-    if len(doc) < 100 or "�" in doc or plain < 0.8 * len(doc):
+    if len(doc) < 100 or "\ufffd" in doc or plain < 0.8 * len(doc):
         return None  # a fragment, broken bytes, or mostly not words
     return doc
 
@@ -117,6 +117,13 @@ def write(path, ids):
 def read(path):
     """Token ids from disk. The file is mapped, not loaded: only the parts a batch touches are read."""
     return torch.from_file(str(path), dtype=torch.int32, size=path.stat().st_size // 4)
+
+
+def tokenizer(path):
+    """The tokenizer the script below saved: each token's bytes, in the order of the ids."""
+    return Tokenizer(
+        {bytes.fromhex(token): i for i, token in enumerate(json.loads(path.read_text()))}
+    )
 
 
 if __name__ == "__main__":

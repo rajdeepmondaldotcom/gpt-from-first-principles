@@ -1,0 +1,34 @@
+{
+  "commit": "fb073ad",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "counts": {
+    "read": 256018,
+    "junk": 14,
+    "repeats": 0,
+    "near_repeats": 0,
+    "kept": 256004
+  },
+  "sizes": {
+    "train": {
+      "documents": 253479,
+      "bytes": 203735263,
+      "tokens": 51919415
+    },
+    "val": {
+      "documents": 2525,
+      "bytes": 2036448,
+      "tokens": 518721
+    }
+  },
+  "slice_sha256": "ee5242d9d94d6df3b5813e01adb0ee278eb77aa3bb7395fbd22cbe6e368869e9",
+  "printed": [
+    "documents read: 256,018",
+    "junk: 14, repeats: 0",
+    "near-repeats: 0",
+    "documents kept: 256,004",
+    "train: 253,479 documents, 203.7 MB, 51,919,415 tokens, 3.92 bytes per token",
+    "val: 2,525 documents, 2.0 MB, 518,721 tokens, 3.93 bytes per token",
+    "longest tokens: [' competitive', ' adventurous', ' disappointed', ' enthusiastic', ' compassionate', ' uncomfortable']"
+  ]
+}

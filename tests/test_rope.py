@@ -23,6 +23,8 @@ def test_later_pairs_turn_more_slowly():
     assert turned[2].item() == pytest.approx(math.sin(1) + math.cos(1))
     assert turned[1].item() == pytest.approx(math.cos(slow) - math.sin(slow))
     assert turned[3].item() == pytest.approx(math.sin(slow) + math.cos(slow))
+    slower = rope(torch.ones(1, 4), torch.tensor([1]), base=1000000)[0]  # second pair: 0.001
+    assert slower[1].item() == pytest.approx(math.cos(0.001) - math.sin(0.001))
 
 
 def test_turning_keeps_each_vectors_length():

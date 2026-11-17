@@ -1,0 +1,86 @@
+{
+  "commit": "cdbc8c3",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "seed": 0,
+  "curve": [
+    {
+      "step": 500,
+      "train": 1.881234049797058,
+      "val": 1.994013369151837,
+      "rate": 0.0029560673450951262
+    },
+    {
+      "step": 1000,
+      "train": 1.6377712488174438,
+      "val": 1.8261114705170063,
+      "rate": 0.0027818908917627374
+    },
+    {
+      "step": 1500,
+      "train": 1.5055716037750244,
+      "val": 1.7321544695393227,
+      "rate": 0.002492387766537786
+    },
+    {
+      "step": 2000,
+      "train": 1.5484601259231567,
+      "val": 1.6788297843714122,
+      "rate": 0.0021170550103255976
+    },
+    {
+      "step": 2500,
+      "train": 1.420112133026123,
+      "val": 1.6318740581946038,
+      "rate": 0.001694134716901486
+    },
+    {
+      "step": 3000,
+      "train": 1.4404964447021484,
+      "val": 1.6075538959349884,
+      "rate": 0.0012667176031104896
+    },
+    {
+      "step": 3500,
+      "train": 1.3746445178985596,
+      "val": 1.5825429362352899,
+      "rate": 0.000878352560106487
+    },
+    {
+      "step": 4000,
+      "train": 1.3092103004455566,
+      "val": 1.556703271876794,
+      "rate": 0.0005686095218954939
+    },
+    {
+      "step": 4500,
+      "train": 1.2587823867797852,
+      "val": 1.5414090249623278,
+      "rate": 0.0003690477438781206
+    },
+    {
+      "step": 5000,
+      "train": 1.2906254529953003,
+      "val": 1.5294162824698623,
+      "rate": 0.00030000027746700307
+    }
+  ],
+  "val_nats": 1.5294162824698623,
+  "val_bits_per_byte": 2.2064812861741046,
+  "sample": "Once upon a time of men, in backling all an embrace\nAs your o'er peace will keep again the sword,\nSo many foot, your worshonour that my ",
+  "printed": [
+    "step 500: train 1.881, unseen 1.994 nats, rate 0.00296",
+    "step 1000: train 1.638, unseen 1.826 nats, rate 0.00278",
+    "step 1500: train 1.506, unseen 1.732 nats, rate 0.00249",
+    "step 2000: train 1.548, unseen 1.679 nats, rate 0.00212",
+    "step 2500: train 1.420, unseen 1.632 nats, rate 0.00169",
+    "step 3000: train 1.440, unseen 1.608 nats, rate 0.00127",
+    "step 3500: train 1.375, unseen 1.583 nats, rate 0.00088",
+    "step 4000: train 1.309, unseen 1.557 nats, rate 0.00057",
+    "step 4500: train 1.259, unseen 1.541 nats, rate 0.00037",
+    "step 5000: train 1.291, unseen 1.529 nats, rate 0.00030",
+    "unseen text: 1.529 nats, 2.206 bits per byte",
+    "sample: \"Once upon a time of men, in backling all an embrace\\nAs your o'er peace will keep again the sword,\\nSo many foot, your worshonour that my \""
+  ]
+}

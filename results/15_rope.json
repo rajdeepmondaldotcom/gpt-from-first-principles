@@ -1,0 +1,37 @@
+{
+  "commit": "82edddd",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "table": [
+    1.8961886593175947,
+    1.9195084336430828,
+    1.92561124852002,
+    1.9105978614290327,
+    1.943268417901478
+  ],
+  "rotary": [
+    1.8297634891199053,
+    1.825928014674225,
+    1.8413694186818312,
+    1.8223229461915185,
+    1.8216755951313146
+  ],
+  "difference": -0.09082303140248275,
+  "error": 0.008942717675265712,
+  "nats_by_length": {
+    "64": 1.5317635081802525,
+    "128": 1.8688507956013203,
+    "256": 2.392925253681753
+  },
+  "sample": "Once upon a time,\nIt did infect by as he an empressing all!\nMy good my wife knee; most kill my our own.\nAnd off your worshood of him at ",
+  "printed": [
+    "table of places, five seeds: 1.8962 1.9195 1.9256 1.9106 1.9433",
+    "rotary, five seeds:          1.8298 1.8259 1.8414 1.8223 1.8217",
+    "rotary minus table: -0.0908 nats, error 0.0089, ratio 10.2",
+    "reading 64 tokens: 1.532 nats, 2.210 bits per byte",
+    "reading 128 tokens: 1.869 nats, 2.696 bits per byte",
+    "reading 256 tokens: 2.393 nats, 3.452 bits per byte",
+    "sample: 'Once upon a time,\\nIt did infect by as he an empressing all!\\nMy good my wife knee; most kill my our own.\\nAnd off your worshood of him at '"
+  ]
+}

@@ -1,7 +1,11 @@
 """Lessons 22 and 23. Writing: choose each next token, and never read a token twice."""
 
+import time
+from pathlib import Path
+
 import torch
 
+from gpt.results import save, say
 from gpt.tensors import softmax
 
 
@@ -29,3 +33,62 @@ def generate(model, ids, n, stop=None, cache=True, **how):
             break
         unread = ids[-1:]
     return ids
+
+
+if __name__ == "__main__":
+    from gpt.cost import cache_bytes
+    from gpt.story import load
+
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    model, words = load(Path("data/cache/story"), device)
+    prompt = words.encode("Once upon a time")
+
+    def write(n=250, **how):
+        """One story as text, and how many tokens it took."""
+        ids = generate(model, prompt, n, stop=words.end, **how)
+        return words.decode([i for i in ids if i != words.end]), len(ids) - len(prompt)
+
+    # Lesson 22: the same prompt, twenty times, at each setting.
+    generator, settings, samples = torch.Generator().manual_seed(0), {}, {}
+    for name, how in [
+        ("temperature 0", {"temperature": 0}),
+        ("temperature 0.5", {"temperature": 0.5}),
+        ("temperature 1", {"temperature": 1.0}),
+        ("temperature 1.5", {"temperature": 1.5}),
+        ("temperature 1, top-p 0.9", {"temperature": 1.0, "top_p": 0.9}),
+    ]:
+        stories = [write(generator=generator, **how) for _ in range(20)]
+        different = len({text for text, _ in stories})
+        finished = sum(count < 250 for _, count in stories)
+        settings[name] = {"different": different, "finished": finished}
+        samples[name] = stories[0][0]
+        say(f"{name}: {different} different stories of 20, {finished} reach their end")
+        say(f"  {stories[0][0][:150]!r}")
+    save("22_sampling", torch=torch.__version__, device=device, settings=settings, samples=samples)
+
+    # Lesson 23: the same story with and without the cache.
+    read = []
+    hook = model.embed.register_forward_hook(
+        lambda part, inputs, out: read.append(inputs[0].numel())
+    )
+    timings = {}
+    for cache in (False, True):
+        read.clear()
+        began = time.perf_counter()
+        story = generate(model, prompt, 200, temperature=0, cache=cache)
+        took = time.perf_counter() - began
+        timings[cache] = {"tokens_read": sum(read), "seconds": took, "story": story}
+        name = "with the cache" if cache else "without a cache"
+        say(f"{name}: {sum(read):,} tokens read, {200 / took:.0f} tokens a second")
+    hook.remove()
+    same = timings[True]["story"] == timings[False]["story"]
+    say(f"the two stories are the same: {same}")
+    say(f"the cache holds {cache_bytes(model, 1):,} bytes for each token")
+    save(
+        "23_cache",
+        torch=torch.__version__,
+        device=device,
+        read={str(k): v["tokens_read"] for k, v in timings.items()},
+        seconds={str(k): v["seconds"] for k, v in timings.items()},
+        same=same,
+    )
