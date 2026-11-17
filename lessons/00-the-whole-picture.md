@@ -109,5 +109,5 @@ Then come questions with hidden answers. One of them always reaches back to an e
 Go deeper:
 
 - [MAP.md](../MAP.md). What the lessons leave out, and the best open place to learn each thing.
-- [PRACTICE.md](../PRACTICE.md). Six routines for the skills that reading cannot give you.
+- [PRACTICE.md](../PRACTICE.md). Eight routines for the skills that reading cannot give you.
 - [GLOSSARY.md](../GLOSSARY.md). Each term, with the lesson that defines it, and our plain words beside the field's.
