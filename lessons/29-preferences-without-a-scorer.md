@@ -71,10 +71,30 @@ uv run python -m gpt.prefer
 ```
 
 ```
-@@OUTPUT@@
+pairs to learn from: 1,353, pairs held back: 210
+lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.20
+lesson 25's model: 0.57 of the asked words used, 95% interval 0.53 to 0.61
+lesson 25's model: 196 stories end by themselves, plain stories 1.549 nats a token
+step 1: 0.693 on 8 pairs. ln 2 is 0.693
+step 50: 0.470 on 8 pairs. ln 2 is 0.693
+step 100: 0.487 on 8 pairs. ln 2 is 0.693
+step 150: 0.412 on 8 pairs. ln 2 is 0.693
+step 200: 0.358 on 8 pairs. ln 2 is 0.693
+held-back pairs where the better story gained on the worse one: 115 of 210, 95% interval 0.48 to 0.61
+after the pairs: 34 of 200 tasks passed, 95% interval 0.12 to 0.22
+after the pairs: 0.61 of the asked words used, 95% interval 0.57 to 0.64
+after the pairs: 200 stories end by themselves, plain stories 1.556 nats a token
+plain stories, after minus before: +0.006 nats, 95% interval +0.006 to +0.007
+the readers give its stories 0.65 on average, where they gave 0.56. The change has a 95% interval of +0.05 to +0.13
 ```
 
-@@RESULTS@@
+The first loss is ln 2. By step 200 it is 0.358 on a batch of 8 pairs.
+
+That fall says less than it seems to. By then the model has drawn 1,600 pairs from 1,353, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 210 pairs held back, from orders it never trained on. There the better story gained on the worse one in 115. The interval, 0.48 to 0.61, holds one half.
+
+The stories it writes did change. On 200 unseen orders the readers give 0.65 where they gave 0.56, and the change has an interval of +0.05 to +0.13, clear of zero. Each of the 200 stories ends, and 34 pass where 30 did. Plain stories cost 0.006 nats, under a tenth of lesson 25's price.
+
+Lesson 28's trap was a number that training sees going up while the readers' number goes down. Here the readers' number went up.
 
 ## What it still cannot do
 
