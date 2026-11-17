@@ -148,5 +148,5 @@ Each draw from 60 wins is 60 wins, so the interval has no width. Lesson 24's exa
 Go deeper:
 
 - Elo, [The Rating of Chessplayers, Past and Present](https://archive.org/details/ratingofchesspla00unse) (1978). The rule and its reasoning, by its author.
-- Karvonen, [Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models](https://arxiv.org/abs/2403.15498) (2024). A larger model of the same kind, and how often it beats a chess engine.
+- Karvonen, [Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models](https://arxiv.org/abs/2403.15498) (2024). A larger such model, and how often it beats a chess engine.
 - Silver and others, [Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm](https://arxiv.org/abs/1712.01815) (2017). Chess played well: search, and learning from the model's own games.
