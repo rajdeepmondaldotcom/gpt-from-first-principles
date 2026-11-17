@@ -1,0 +1,35 @@
+{
+  "commit": "96949be",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "numbers": {
+    "32": {
+      "bytes": 21497856,
+      "nats": 1.4803135399153073
+    },
+    "8": {
+      "bytes": 8588256,
+      "gap": 0.00013775596618498018,
+      "interval": [
+        4.9860791477840394e-05,
+        0.00022293278016149998
+      ]
+    },
+    "4": {
+      "bytes": 6427104,
+      "gap": 0.030283251203740105,
+      "interval": [
+        0.028646109625697136,
+        0.03180466964840889
+      ]
+    }
+  },
+  "printed": [
+    "32 bits: 21.5 MB, 1.480 nats, 155 tokens a second",
+    "8 bits: 8.6 MB, +0.0001 nats (95% interval +0.0000 to +0.0002), 107 tokens a second",
+    "8 bits: no weight moved by more than 0.50 of a step",
+    "4 bits: 6.4 MB, +0.0303 nats (95% interval +0.0286 to +0.0318), 60 tokens a second",
+    "4 bits: no weight moved by more than 0.50 of a step"
+  ]
+}

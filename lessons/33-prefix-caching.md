@@ -1,0 +1,146 @@
+# 33. Prefix caching
+
+By the end of this page a beginning that many prompts share is read once and kept, and each later request starts from where it ends.
+
+Lesson 32's engine reads each prompt from its first token, even when a thousand requests before it began with the same words.
+
+## The idea
+
+Many prompts begin alike. A service puts the same instructions in front of each question. A reader of our storyteller who asks what happens next sends back the whole story so far, with one sentence added. In both cases most of the prompt has been read before.
+
+Lesson 23's cache holds a key and a value for each token read. Lesson 7's mask means that a token's key and value depend only on the tokens before it. So two prompts that agree on their first 160 tokens have the same keys and values for those 160 tokens, whatever comes after. We read them once, keep them, and let each later request copy them and read only what is new.
+
+We keep the cache in pieces of 16 tokens. Each piece is filed under the whole text from the first token to the end of that piece. A new prompt looks up its first 16 tokens, then its first 32, then its first 48, and stops at the first piece that is not there.
+
+Three things follow.
+
+1. Reuse stops at the first token that differs. The tokens after it may match word for word, but their keys and values were worked out from a text that is now different, so they have to be read again.
+2. Order matters. Put what changes last. A prompt that opens with the reader's name or the time of day shares nothing with the next one.
+3. One token is always read. The store gives back keys and values, not scores, and the model needs a pass to make the scores for the first new token. A prompt found whole in the store still reads its last piece.
+
+The store has a budget in bytes. When it is full, it throws out the piece that was used longest ago.
+
+## By hand
+
+A piece of 16 tokens. The story model keeps 6,144 bytes for each token.
+
+16 × 6,144 = 98,304 bytes
+
+Two prompts of 43 and 44 tokens that share their first 40.
+
+| | Tokens | Looked up | Found | Read by the model |
+|---|---|---|---|---|
+| First prompt | 43 | first 16, nothing there | 0 | 43 |
+| Second prompt | 44 | first 16, then first 32 | 32 | 12 |
+
+The first prompt leaves two whole pieces behind, for tokens 1 to 16 and 17 to 32. Its last 11 tokens do not fill a piece. The second prompt shares 40 tokens with the first, and gets 32 of them from the store, because pieces come whole.
+
+Now change token 21 of the shared beginning. The first piece still matches. The second is filed under 32 tokens of which one is different, so it is not found: 16 tokens come from the store and 27 are read.
+
+## The code
+
+```python
+# gpt/prefix.py
+    def fetch(self, ids, blocks):
+        """A cache holding the longest stored beginning of `ids`, and how many tokens it covers."""
+        found, end = [], self.block
+        while end < len(ids) and tuple(ids[:end]) in self.pieces:  # leave a token to read
+            self.pieces.move_to_end(tuple(ids[:end]))  # used now, so the last to be thrown out
+            found.append(self.pieces[tuple(ids[:end])])
+            end += self.block
+        if not found:
+            return [{} for _ in range(blocks)], 0
+        kept = [
+            {name: torch.cat([piece[i][name] for piece in found], dim=2) for name in ("k", "v")}
+            for i in range(blocks)
+        ]
+        return kept, end - self.block
+```
+
+`self.pieces` is a dictionary that remembers the order its entries were last used in. `tuple(ids[:end])` is the text up to a piece's end, in a form a dictionary can file things under. `torch.cat` joins the pieces found, along the direction of the tokens, into one cache of the kind lesson 23 made.
+
+```python
+# gpt/prefix.py
+    def keep(self, ids, kept):
+        """Store each whole block of a prompt's cache that is not stored yet."""
+        for end in range(self.block, len(ids) + 1, self.block):
+            if tuple(ids[:end]) not in self.pieces:
+                piece = [
+                    {name: one[name][:, :, end - self.block : end].clone() for name in ("k", "v")}
+                    for one in kept
+                ]
+                self.pieces[tuple(ids[:end])] = piece
+                self.used += sum(t.nbytes for one in piece for t in one.values())
+        while self.used > self.budget:  # full: throw out the piece used longest ago
+            _, piece = self.pieces.popitem(last=False)
+            self.used -= sum(t.nbytes for one in piece for t in one.values())
+```
+
+Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt. Those are the two lines of `step` and `admit` that mention a store.
+
+## The proof
+
+```bash
+uv run pytest tests/test_prefix.py
+```
+
+- The hand example: 43 tokens read, then 12. Both requests write what they write with no store.
+- With token 21 changed, 27 tokens are read: one piece is reused, not two.
+- With one changing token put first, a prompt of 41 tokens reads all 41.
+- A prompt of 32 tokens sent twice reads 16 the second time: its last piece, to get scores to start from.
+- A store with room for two pieces is given three. The one used longest ago goes, and a piece that was used again in between stays.
+
+```bash
+uv run python -m gpt.prefix
+```
+
+```
+20 prompts that share their first 160 tokens, no store: 4,140 tokens read, first token after 36 ms for half
+the same prompts with a store: 1,100 tokens read, first token after 9 ms for half
+the answers are the same with and without the store: True
+the part that changes put first, with a store: 4,140 tokens read, first token after 29 ms for half
+a store with room for 12 blocks: 1,100 tokens read, first token after 10 ms for half
+that store holds 1,179,648 bytes of its 1,179,648, in 12 blocks
+```
+
+Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+
+Each prompt is 176 tokens and each answer 32. With no store the model reads 207 tokens for each request, 4,140 in all. With the store it reads 207 for the first and 47 for each of the other nineteen: 1,100. The wait for the first token falls from 36 ms to 9 ms for half the requests, and the answers do not change.
+
+Put the 16 tokens that change in front, and the store saves nothing: 4,140 tokens again.
+
+A store with room for twelve pieces does as well as one with no limit. The ten shared pieces are used by each request and so are never the oldest. The pieces that go are the endings no later request asks for.
+
+## What it still cannot do
+
+To write one token the model still reads each of its weights, and each weight is a 32-bit number: 21.5 MB for each token written.
+
+## Check yourself
+
+Predict before you run: 20 prompts share their first 160 tokens and end in 16 tokens of their own. With pieces of 16 tokens, how many tokens does the model read for the second prompt?
+
+<details><summary>Answer</summary>
+
+16. The first 160 tokens are ten whole pieces, all in the store after the first prompt. The last 16 are new.
+</details>
+
+<details><summary>A service starts each prompt with today's date and then 500 tokens of instructions. What does the store save?</summary>
+
+Nothing across days, and all of it within a day. To share across days, put the date after the instructions.
+</details>
+
+<details><summary>Why is a piece filed under the whole text up to its end, and not under its own 16 tokens?</summary>
+
+Its keys and values were worked out with the tokens before it in view. The same 16 tokens after a different beginning have different keys and values.
+</details>
+
+<details><summary>From lesson 7: which part of the model makes a shared beginning give the same keys and values in two prompts?</summary>
+
+The causal mask. A token reads only the tokens before it, so nothing after the shared beginning can reach back into it.
+</details>
+
+Go deeper:
+
+- Zheng and others, [SGLang: Efficient Execution of Structured Language Model Programs](https://arxiv.org/abs/2312.07104) (2023). Shared beginnings kept in a tree, so that requests which part ways late share the most.
+- Kwon and others, [Efficient Memory Management for Large Language Model Serving with PagedAttention](https://arxiv.org/abs/2309.06180) (2023). Pieces of cache that rows of a batch point to and do not copy.
+- Anthropic, [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching). The same idea as a service sells it, with the rule about putting what changes last.
