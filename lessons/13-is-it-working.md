@@ -11,11 +11,11 @@ A check is a fact that holds for a healthy run and fails for a broken one. We ru
 - The first loss is near ln of the vocabulary size. A first loss far from that means the starting weights are wrong.
 - The stream keeps its size. Measure the spread of the residual stream after the embedding and after each block. A block adds a correction, so by the last block the spread should not have doubled.
 - Each target is its input moved one token on. If the targets equal the inputs, the model learns to copy.
-- No place reads the future. Change the last token of a window and the scores at each earlier place must stay the same to the last bit.
+- No place reads the future. Change a window's last token and the scores at each earlier place must not change by a bit.
 - The loop can learn one batch by heart. If the loss stays up, the loop is broken: slopes are not reaching the weights, or old slopes are piling up.
 - Each grid of weights moves a little on each step. Measure how far a grid moved as a share of its own size. A share of 0 means the optimizer never got that grid. Our check fails a share above 2%.
 
-The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move most grids by 15% of their size, and the sums are below. Later steps are smaller than the first: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
+The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more, and the sums are below. Later steps are smaller than the first: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
 
 A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and a model with a large gap is said to overfit. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
 
@@ -29,6 +29,8 @@ A step size. Most grids start with entries about 0.02 in size, and Adam's first 
 |---|---|
 | 0.00003 | 0.00003 / 0.02 = 0.15% |
 | 0.003 | 0.003 / 0.02 = 15% |
+
+The two layers in each block that add into the stream start at 0.007, so the same step is about 42% of their size.
 
 Dropout with a chance of 0.5 on the vector (1, 2, 3, 4). Suppose the first and third entries are dropped. The rest are divided by 0.5:
 
@@ -72,7 +74,7 @@ A forward hook is a function PyTorch calls each time a layer has run. The hook's
 uv run pytest tests/test_checks.py
 ```
 
-A healthy model passes each check. Then the test plants seven bugs, one at a time, and each turns a check red:
+A healthy model passes each check. Then the test plants seven bugs, and each turns a check red:
 
 | Planted bug | The check that fails |
 |---|---|
@@ -84,7 +86,7 @@ A healthy model passes each check. Then the test plants seven bugs, one at a tim
 | Only the blocks handed to the optimizer | A grid did not move |
 | Slopes never cleared | One batch is not learned by heart |
 
-Dropout changes the result while training and nothing once it is switched off. At a chance of 0.5 it doubles what it keeps, and it reaches both layers that add into the stream.
+Dropout changes the result while training and nothing once it is switched off. It reaches both layers that add into the stream.
 
 ```bash
 uv run python -m gpt.checks
@@ -114,12 +116,12 @@ About ln 1,025 = 6.93 nats.
 
 <details><summary>The loss on the training text is 0.5 nats and on unseen text 3.6. Which tool do you reach for, and what would a check from this page say?</summary>
 
-Dropout and weight decay, or more text. The checks would all pass. The run is healthy and the model is storing its text.
+Dropout and weight decay, or more text. Each check would pass: the run is healthy and the model is storing its text.
 </details>
 
-<details><summary>From lesson 11: why does a first step at the peak rate move each grid by about the same share of its size, whatever its slopes?</summary>
+<details><summary>From lesson 11: why does a first step at the peak rate move each grid that starts at 0.02 by the same share of its size, whatever its slopes?</summary>
 
-Adam's first step is the rate for each parameter, whatever the slope, and most grids start with entries of about 0.02.
+Adam's first step is the rate for each parameter, whatever the slope. So the share is the rate over the starting size.
 </details>
 
 Go deeper:

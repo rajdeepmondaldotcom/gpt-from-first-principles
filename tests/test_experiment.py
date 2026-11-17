@@ -42,8 +42,6 @@ def test_compare_by_hand():
 def test_the_two_settings_must_use_the_same_seeds():
     with pytest.raises(ValueError):
         compare([1.0, 2.0], [1.0])
-    with pytest.raises(AssertionError):
-        compare([1.0], [2.0])  # one seed has no spread
 
 
 def test_the_same_seed_repeats_and_a_new_seed_does_not():

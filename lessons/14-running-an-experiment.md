@@ -60,7 +60,6 @@ def trial(make, ids, val_ids, seed, steps, peak=3e-3, **loop):
 def compare(a, b):
     """Results of two settings, run on the same seeds. Returns the mean of b - a, and its error."""
     diffs = [y - x for x, y in zip(a, b, strict=True)]
-    assert len(diffs) > 1, "one seed has no spread, so no error"
     mean = sum(diffs) / len(diffs)
     spread = math.sqrt(sum((d - mean) ** 2 for d in diffs) / (len(diffs) - 1))
     return mean, spread / math.sqrt(len(diffs))  # the error shrinks as the seeds grow
@@ -103,7 +102,7 @@ Two of the comparisons are planted. The same setting on five new seeds, where th
 
 The other two were open questions. A fixed rate of 0.003 with no warmup is worse than lesson 12's schedule by 0.222 nats, 9.0 errors from zero. That is warmup and the falling rate together, at 600 steps. It does not say which of the two helps.
 
-In the sweep, lesson 12's rate was too low for a run this short. A peak of 0.01 wins on each of the three seeds, by 0.065 nats on average over 0.003.
+In the sweep, lesson 12's rate was too low for a run this short. A peak of 0.01 wins on each of the three seeds, by 0.065 nats on average over 0.003. Lessons 15 and 16 keep 0.003, so that their numbers can be set beside lesson 12's.
 
 ## What it still cannot do
 

@@ -98,7 +98,7 @@ unseen text: 1.531 nats, 2.209 bits per byte
 
 Each comparison is lesson 14's method: 600 steps on five seeds, one part changed in lesson 15's model.
 
-RMSNorm changes nothing we can see: 0.7 errors from zero, for less arithmetic. SwiGLU is a real gain at 600 steps: 0.080 nats, 12.8 errors from zero. Grouped heads cost nothing we can see, 0.7 errors, and remove 8% of the parameters: 734,080 against 799,616. All three together are ahead by 0.076 nats.
+RMSNorm changes nothing we can see: 0.7 errors from zero. SwiGLU is a real gain at 600 steps: 0.080 nats, 12.8 errors from zero. Grouped heads cost nothing we can see, 0.7 errors, and remove 8% of the parameters: 734,080 against 799,616. All three together are ahead by 0.076 nats.
 
 After 5,000 steps, one run of each design scores 2.209 bits per byte for today's model, 2.210 for lesson 15's and 2.206 for lesson 12's. One seed cannot tell these apart. Today's model has 9% fewer parameters than lesson 15's.
 
