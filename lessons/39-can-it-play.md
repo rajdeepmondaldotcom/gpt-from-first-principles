@@ -96,7 +96,7 @@ uv run python -m gpt.play
 
 ## What it still cannot do
 
-The model plays chess from a list of moves. It was never shown a board. To move legally it has to know where the pieces are, and we have not looked for that knowledge inside it.
+The model plays chess from a list of moves. It was never shown a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
 
 ## Check yourself
 

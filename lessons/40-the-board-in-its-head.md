@@ -2,7 +2,7 @@
 
 By the end of this page you have read a chess position out of the model's inner numbers, square by square, and changed the model's move by rubbing one piece out of them.
 
-The model plays chess from a list of moves. It was never shown a board. To move legally it has to know where the pieces are, and we have not looked for that knowledge inside it.
+The model plays chess from a list of moves. It was never shown a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
 
 ## The idea
 
