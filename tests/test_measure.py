@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from gpt.engine import Engine, Request
-from gpt.measure import percentile, report, serve
+from gpt.measure import arrivals, percentile, report, serve
 from gpt.model import GPT
 
 
@@ -60,6 +60,26 @@ def test_a_refused_request_is_counted_and_gets_no_tokens():
     engine = Engine(model(), budget=1)  # room for nobody
     records = serve(engine, [(0.0, Request([5, 9, 2], 4))], Ticks(engine))
     assert records == [{"arrived": 0.0, "tokens": []}]
+
+
+def test_with_room_for_one_the_second_waits_in_line():
+    net = model()
+    room = Engine(net, 0).bytes_for(Request([5, 9, 2], 4))
+    engine = Engine(net, budget=room)
+    a, b = (Request([5, 9, 2], 4, how={"temperature": 0}) for _ in range(2))
+    records = serve(engine, [(0.0, a), (0.0, b)], Ticks(engine))
+    assert records[0]["tokens"] == [1.0, 2.0, 3.0, 4.0]
+    assert records[1]["tokens"] == [5.0, 6.0, 7.0, 8.0]  # served, after a wait of 4 steps
+    assert a.written == b.written  # and the wait changed nothing it wrote
+
+
+def test_arrivals_come_at_the_rate_asked_for():
+    generator = torch.Generator().manual_seed(0)
+    line = arrivals([[1, 2]] * 2000, rate=4.0, chance=generator, limit=3, temperature=0)
+    times = [at for at, _ in line]
+    assert times == sorted(times) and times[-1] / 2000 == pytest.approx(1 / 4, rel=0.1)
+    assert line[0][1].prompt == [1, 2] and line[0][1].limit == 3
+    assert line[0][1].how == {"temperature": 0}
 
 
 def test_an_idle_engine_waits_for_the_next_arrival():

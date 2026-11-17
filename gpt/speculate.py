@@ -16,6 +16,15 @@ def leftover(p, q):
     return left / left.sum().clamp(min=1e-12)
 
 
+def imitation_loss(draft_scores, big_scores):
+    """How far the draft's chances are from the big model's: lesson 3's loss with whole rows of
+    chances as targets, where it had one right token."""
+    targets = softmax(big_scores)
+    scores = draft_scores - draft_scores.max(dim=-1, keepdim=True).values
+    log_chances = scores - scores.exp().sum(dim=-1, keepdim=True).log()
+    return -(targets * log_chances).sum(dim=-1).mean()
+
+
 def chances(model, ids, kept, temperature):
     """Read `ids` on top of what the cache holds. One row of chances for each token read."""
     device = model.embed.weight.device
@@ -60,3 +69,81 @@ def speculate(big, draft, ids, n, k=4, generator=None, temperature=1.0):
         trim(big_kept, big_read)
         trim(draft_kept, draft_read)
     return ids[: start + n], counts
+
+
+if __name__ == "__main__":
+    import time
+    from pathlib import Path
+
+    from gpt.data import read
+    from gpt.generate import generate
+    from gpt.gpt2 import batch, evaluate, loss_on
+    from gpt.model import GPT
+    from gpt.optim import AdamW
+    from gpt.results import save, say
+    from gpt.scale import shape
+    from gpt.story import load
+    from gpt.train import clip, rate_at
+
+    cache = Path("data/cache")
+    big, words = load(cache / "story")
+    device = "mps" if torch.backends.mps.is_available() else "cpu"
+    ids = read(cache / "stories_train.bin").to(device)
+    val_ids = read(cache / "stories_val.bin")
+    steps = 1500
+
+    def draft(imitate):
+        """Train a small model on the stories, or on the big model's chances for the same text."""
+        torch.manual_seed(0)
+        generator = torch.Generator().manual_seed(0)
+        small = GPT(**shape(96, 3)).to(device)
+        optimizer = AdamW(small.parameters(), rate=0.0, decay=0.1)
+        for step in range(steps):
+            optimizer.rate = rate_at(step, 3e-3, steps // 10, steps)
+            x, y = batch(ids, small.context, 32, generator)
+            if imitate:
+                with torch.no_grad():
+                    target = big(x)
+                loss = imitation_loss(small(x), target)
+            else:
+                loss = loss_on(small, x, y)
+            small.zero_grad()
+            loss.backward()
+            clip(small.parameters(), 1.0)
+            optimizer.step()
+        return small.to("cpu").eval()
+
+    big.to(device)
+    drafts = {"a draft trained on the stories": draft(False)}
+    drafts["a draft trained on the big model's chances"] = draft(True)
+    big.to("cpu")
+    count = sum(p.numel() for p in drafts["a draft trained on the stories"].parameters())
+    say(f"each draft: {count:,} parameters, {steps:,} steps of 32 windows")
+    for name, small in drafts.items():
+        say(f"{name}: {evaluate(small, val_ids[:100_000]):.3f} nats on unseen stories")
+
+    # The same 20 prompts, 128 tokens after each, three ways.
+    prompts = [val_ids[300 * i : 300 * i + 64].tolist() for i in range(20)]
+    generator = torch.Generator().manual_seed(0)
+    generate(big, prompts[0], 16, generator=generator)  # a first call, to warm up
+    began = time.perf_counter()
+    for prompt in prompts:
+        generate(big, prompt, 128, generator=generator)
+    alone = 20 * 128 / (time.perf_counter() - began)
+    say(f"the big model alone: {alone:,.0f} tokens a second")
+    numbers = {"alone": alone}
+    for name, small in drafts.items():
+        total = {"passes": 0, "drafted": 0, "kept": 0}
+        began = time.perf_counter()
+        for prompt in prompts:
+            _, counts = speculate(big, small, prompt, 128, k=4, generator=generator)
+            total = {key: total[key] + counts[key] for key in total}
+        speed = 20 * 128 / (time.perf_counter() - began)
+        share = total["kept"] / total["drafted"]
+        say(
+            f"with {name}: {share:.0%} of its guesses kept, "
+            f"{20 * 128 / total['passes']:.2f} tokens for each pass of the big model, "
+            f"{speed:,.0f} tokens a second"
+        )
+        numbers[name] = {"kept": share, "passes": total["passes"], "tokens_a_second": speed}
+    save("35_speculate", torch=torch.__version__, device=device, numbers=numbers)

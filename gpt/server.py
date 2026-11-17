@@ -7,6 +7,8 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import torch
+
 from gpt.engine import Engine, Request
 
 
@@ -218,3 +220,77 @@ document.getElementById("go").onclick = async () => {
 };
 </script>
 """
+
+if __name__ == "__main__":
+    import re
+    import shutil
+    import subprocess
+    import sys
+    import tempfile
+    import urllib.request
+    from pathlib import Path
+
+    from gpt.cost import cache_bytes
+    from gpt.results import save, say
+    from gpt.story import load
+
+    cache = Path("data/cache")
+    model, words = load(cache / "storyteller")  # lesson 25's model, which writes to order
+    service = Service(model, words, budget=16 * cache_bytes(model, model.context), waiting=64)
+    server = serve(service)
+    url = "http://127.0.0.1:8000/v1/chat/completions"
+    if sys.argv[1:] == ["stay"]:
+        print("the storyteller is at http://127.0.0.1:8000 until you press Ctrl-C")
+        threading.Event().wait()
+
+    prompt = "Name: Mira\nWords: cat, moon, brave\nStory:"
+    body = json.dumps({"messages": [{"role": "user", "content": prompt}], "max_tokens": 100})
+    with urllib.request.urlopen(urllib.request.Request(url, body.encode()), timeout=60) as reply:
+        story = json.loads(reply.read())["choices"][0]["message"]["content"]
+    say(f"one request over the web: {story.strip()[:120]!r}")
+    assert shutil.which("ab"), "this script measures with ab, the load tool that ships with Apache"
+
+    def load_test(count, at_once):
+        """Send `count` requests, `at_once` at a time, with ab. Returns its report and our counts."""
+        before, began = dict(service.counts), time.perf_counter()
+        with tempfile.NamedTemporaryFile("w", suffix=".json") as file:
+            file.write(body)
+            file.flush()
+            ask = ["ab", "-q", "-n", str(count), "-c", str(at_once), "-s", "120", "-p", file.name]
+            report = subprocess.run(
+                [*ask, "-T", "application/json", url], capture_output=True, text=True, check=True
+            ).stdout
+        took = time.perf_counter() - began
+        return report, {name: service.counts[name] - before[name] for name in before}, took
+
+    report, ours, took = load_test(200, 16)
+    theirs_rate = float(re.search(r"Requests per second:\s+([\d.]+)", report)[1])
+    theirs_each = float(re.search(r"Time per request:\s+([\d.]+) \[ms\] \(mean\)", report)[1])
+    rate, each = ours["finished"] / took, ours["seconds_in_system"] / ours["finished"]
+    say(
+        f"200 requests, 16 at a time, by ab: {theirs_rate:.1f} a second, {theirs_each:,.0f} ms each"
+    )
+    say(f"the same run by our own counts: {rate:.1f} a second, {each * 1e3:,.0f} ms each")
+    say(f"tokens written: {ours['tokens']:,}, {ours['tokens'] / took:,.0f} a second")
+    say(
+        f"first token after {ours['first_token_seconds'] / ours['finished'] * 1e3:,.0f} ms on average"
+    )
+    say(f"requests in flight, averaged over the run: {ours['in_flight_seconds'] / took:.1f}")
+    say(f"arrival rate times time in system: {rate * each:.1f}")
+    minutes = 1e6 / (ours["tokens"] / took) / 60
+    say(f"a million tokens at that speed: {minutes:.0f} minutes of this machine")
+
+    report, burst, _ = load_test(400, 200)  # far more at once than the line of 64 holds
+    turned_away = int(re.search(r"Non-2xx responses:\s+(\d+)", report)[1])
+    say(
+        f"400 requests, 200 at a time: {burst['finished']} answered, {turned_away} told to try again"
+    )
+    save(
+        "36_server",
+        torch=torch.__version__,
+        device="cpu",
+        ab={"requests_a_second": theirs_rate, "ms_each": theirs_each},
+        ours={"requests_a_second": rate, "ms_each": each * 1e3, **ours},
+        burst={"answered": burst["finished"], "turned_away": turned_away},
+        sample=story.strip(),
+    )

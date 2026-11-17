@@ -47,3 +47,68 @@ def shrink(model, bits):
                 if isinstance(layer, nn.Linear):
                     setattr(parent, name, Quantized(layer, bits))
     return model
+
+
+if __name__ == "__main__":
+    import copy
+    import time
+    from pathlib import Path
+
+    from gpt.data import documents, read
+    from gpt.evaluate import interval, losses
+    from gpt.generate import generate
+    from gpt.results import save, say
+    from gpt.story import load
+
+    cache = Path("data/cache")
+    model, words = load(cache / "story")
+    unseen = documents(read(cache / "stories_val.bin"), words.end)[:500]
+    generator = torch.Generator().manual_seed(0)
+    prompt = words.encode("Once upon a time")
+
+    def size(net):
+        """The bytes a model's numbers take, with a grid that two layers share counted once."""
+        return sum({t.data_ptr(): t.nbytes for t in net.state_dict().values()}.values())
+
+    def speed(net):
+        """Tokens a second, writing 200 tokens. The fastest of three tries."""
+        took = []
+        for _ in range(3):
+            began = time.perf_counter()
+            generate(net, prompt, 200, temperature=0)
+            took.append(time.perf_counter() - began)
+        return 200 / min(took)
+
+    full = [losses(model, doc, 256, 256).tolist() for doc in unseen]
+    nats = sum(map(sum, full)) / sum(map(len, full))
+    say(
+        f"32 bits: {size(model) / 1e6:.1f} MB, {nats:.3f} nats, {speed(model):,.0f} tokens a second"
+    )
+    numbers = {"32": {"bytes": size(model), "nats": nats}}
+    for bits in (8, 4):
+        small = shrink(copy.deepcopy(model), bits)
+        worst = max(
+            (
+                (
+                    layer.weight - (unpack(q.numbers, q.shape) if q.four else q.numbers) * q.scale
+                ).abs()
+                / q.scale
+            )
+            .max()
+            .item()
+            for block, shrunk in zip(model.blocks, small.blocks)
+            for part, less in ((block.attn, shrunk.attn), (block.mlp, shrunk.mlp))
+            for (_, layer), (_, q) in zip(part.named_children(), less.named_children())
+            if isinstance(q, Quantized)
+        )
+        scored = [losses(small, doc, 256, 256).tolist() for doc in unseen]
+        gaps = [[s - f for s, f in zip(new, old)] for new, old in zip(scored, full)]
+        gap = sum(map(sum, gaps)) / sum(map(len, gaps))
+        low, high = interval(gaps, generator)
+        say(
+            f"{bits} bits: {size(small) / 1e6:.1f} MB, {gap:+.4f} nats "
+            f"(95% interval {low:+.4f} to {high:+.4f}), {speed(small):,.0f} tokens a second"
+        )
+        say(f"{bits} bits: no weight moved by more than {worst:.2f} of a step")
+        numbers[str(bits)] = {"bytes": size(small), "gap": gap, "interval": [low, high]}
+    save("34_quantize", torch=torch.__version__, device="cpu", numbers=numbers)

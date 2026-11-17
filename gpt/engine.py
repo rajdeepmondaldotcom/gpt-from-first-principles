@@ -112,6 +112,8 @@ class Engine:
     def leave(self):
         """Drop the rows that have finished, and any padding that every row left has."""
         stay = [i for i, r in enumerate(self.rows) if not r.done()]
+        if len(stay) == len(self.rows):
+            return  # nobody finished: the batch stays as it is
         self.rows = [self.rows[i] for i in stay]
         if not stay:
             self.kept = self.real = None
@@ -121,4 +123,86 @@ class Engine:
         self.real = self.real[:, spare:]
         for one in self.kept:
             one["k"], one["v"] = one["k"][stay][:, :, spare:], one["v"][stay][:, :, spare:]
-        slide(self.kept, -spare, 0)
+        if spare:
+            slide(self.kept, -spare, 0)
+
+
+if __name__ == "__main__":
+    import json
+    from pathlib import Path
+
+    from gpt.data import read
+    from gpt.generate import generate
+    from gpt.measure import arrivals, report, serve
+    from gpt.results import save, say
+    from gpt.story import load
+
+    cache = Path("data/cache")
+    model, words = load(cache / "story")
+    text = read(cache / "stories_val.bin")
+    generator = torch.Generator().manual_seed(0)
+    how = {"temperature": 0.8, "generator": generator}
+
+    def prompts(count, length=64):
+        """`count` prompts, each `length` tokens of unseen text."""
+        return [text[300 * i : 300 * i + length].tolist() for i in range(count)]
+
+    # Eight requests that arrive two steps apart, on a clock that counts steps. Each must write
+    # what it writes alone.
+    engine, steps = Engine(model, float("inf")), 0
+    asked = [Request(prompt, 32, how={"temperature": 0}) for prompt in prompts(8, 48)]
+    line = [(2.0 * i, request) for i, request in enumerate(asked)]
+
+    def counted(step=engine.step):
+        global steps
+        steps += 1
+        return step()
+
+    engine.step = counted
+    serve(engine, line, clock=lambda: steps)
+    same = sum(
+        generate(model, r.prompt, 32, temperature=0)[len(r.prompt) :] == r.written for r in asked
+    )
+    say(f"8 requests that join a running batch two steps apart: {same} write what they write alone")
+    long = Request(prompts(1, 192)[0], 32, how={"temperature": 0})
+    serve(Engine(model, float("inf"), chunk=64), [(0.0, long)])
+    whole = generate(model, long.prompt, 32, temperature=0)[192:] == long.written
+    say(f"a prompt of 192 tokens read in chunks of 64: the same answer, {whole}")
+
+    # Throughput against the number of requests in one batch.
+    sizes = {}
+    for rows in (1, 2, 4, 8, 16, 32):
+        line = [(0.0, Request(prompt, 64, how=how)) for prompt in prompts(rows)]
+        serve(Engine(model, float("inf"), chunk=256), line[:1])  # a first call, to warm up
+        line = [(0.0, Request(prompt, 64, how=how)) for prompt in prompts(rows)]
+        numbers = sizes[rows] = report(serve(Engine(model, float("inf"), chunk=256), line))
+        say(
+            f"{rows} at once: {numbers['tokens_a_second']:,.0f} tokens a second in all, "
+            f"{1 / numbers['seconds_a_token_p50']:,.0f} for each reader"
+        )
+
+    # Lesson 31's three rates of arrival again, with room for 16 requests at once.
+    one = Engine(model, 0).bytes_for(Request(prompts(1)[0], 64))
+    capacity = json.loads(Path("results/31_measure.json").read_text())["capacity"]
+    say(f"the cache for one request of 64 + 64 tokens: {one:,} bytes")
+    loads = {}
+    for share in (0.5, 0.9, 1.5):
+        line = arrivals(prompts(40), share * capacity, generator, **how)
+        numbers = loads[share] = report(serve(Engine(model, 16 * one, chunk=256), line))
+        say(
+            f"{share * capacity:.1f} requests a second, room for 16: first token after "
+            f"{numbers['first_token_p50'] * 1e3:,.0f} ms for half, "
+            f"{numbers['first_token_p95'] * 1e3:,.0f} ms for 95 in 100, "
+            f"{numbers['tokens_a_second']:,.0f} tokens a second in all"
+        )
+    taken = Engine(model, one - 1).admit(Request(prompts(1)[0], 64))
+    say(f"a request offered one byte less than its cache needs is taken: {taken}")
+    save(
+        "32_engine",
+        torch=torch.__version__,
+        device="cpu",
+        same=same,
+        sizes={str(k): v for k, v in sizes.items()},
+        loads={str(k): v for k, v in loads.items()},
+        bytes_for_one=one,
+    )

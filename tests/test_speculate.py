@@ -1,10 +1,11 @@
 import itertools
 
+import pytest
 import torch
 
 from gpt.model import GPT
-from gpt.speculate import keep_chance, leftover, speculate
-from gpt.tensors import softmax
+from gpt.speculate import imitation_loss, keep_chance, leftover, speculate
+from gpt.tensors import cross_entropy, softmax
 
 
 def model(seed, width=32):
@@ -19,6 +20,17 @@ def test_keep_chance_and_leftover_by_hand():
     p, q = torch.tensor([0.5, 0.3, 0.2]), torch.tensor([0.2, 0.6, 0.2])
     assert torch.allclose(keep_chance(p, q), torch.tensor([1.0, 0.5, 1.0]))
     assert torch.allclose(leftover(p, q), torch.tensor([1.0, 0.0, 0.0]))  # only token 0 is short
+
+
+def test_imitation_loss_by_hand():
+    scores = torch.tensor([[1.0, 2.0, 0.5], [0.0, 0.0, 3.0]])
+    sure = torch.tensor([[0.0, 50.0, 0.0], [50.0, 0.0, 0.0]])  # a big model sure of tokens 1 and 0
+    one_right_token = cross_entropy(scores, torch.tensor([1, 0]))
+    assert imitation_loss(scores, sure).item() == pytest.approx(one_right_token.item(), abs=1e-5)
+    even = torch.zeros(1, 4)  # a big model with even chances, and a draft that matches it
+    assert imitation_loss(even, even).item() == pytest.approx(torch.tensor(4.0).log().item())
+    off = torch.tensor([[2.0, 0.0, 0.0, 0.0]])
+    assert imitation_loss(off, even) > imitation_loss(even, even)  # lowest when the two agree
 
 
 def test_one_step_draws_from_the_big_models_chances_exactly():
