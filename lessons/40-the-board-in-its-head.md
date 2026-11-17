@@ -6,11 +6,11 @@ The model plays chess from a list of moves. It was never shown a board. To move 
 
 ## The idea
 
-After the model reads the last token of a move, each block leaves a row of 256 numbers at that place: the stream of lesson 9. Whatever the model knows about the game at that point is in those numbers, because the next move is worked out from them. They do not come with labels. The question is whether the position can be read from them.
+After the model reads the last token of a move, each block leaves a row of 256 numbers at that place: the stream of lesson 9. The next move is worked out from those numbers. They do not come with labels. The question is whether the position can be read from them.
 
 A probe is the plainest reader we can build. It is one linear layer and nothing else: 256 numbers in, and for each of the 64 squares, 13 scores out, one for empty and one for each kind of piece of each colour. We train it on positions from games, where the right answer is known because a chess program can replay the moves. The model itself is frozen and is only read.
 
-A probe this weak is the point. A big network on top of the stream could work the position out for itself from scraps. One linear layer cannot work much out. If it reads the board, the board was there to be read, laid out along straight lines in the stream.
+A probe this weak is the point. A big network could work the position out for itself from scraps. One linear layer cannot, so if it reads the board, the board was there to be read, laid out along straight lines in the stream.
 
 Three checks keep us honest.
 
@@ -18,9 +18,9 @@ Three checks keep us honest.
 2. Compare with a lazy guess. Most squares hold what they usually hold: a rook sits on a1 for much of most games. So we count how often "the most usual piece for this square" is right, and score the probe separately on the squares where that guess is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game. The gap between the two probes is what the stream holds about the position in front of it.
 
-Reading is not using. The board could be written in the stream and play no part in choosing the move. So we change it. Take a position where the side to move has its queen. We fit a probe after each block, and work after the block whose probe reads best. Along that probe's own line for "queen on this square", nudge the stream until the probe scores empty well above queen there, and let the rest of the model run on. If the model works from this board, it should now give less chance to queen moves. A nudge of the same kind that rubs out a pawn should leave them about as they were.
+Reading is not using. The board could be written in the stream and play no part in choosing the move. So we change it. We fit a probe after each block and work after the one that reads best. Take a position where the side to move has its queen. Along the probe's own line for "queen on this square", nudge the stream until the probe scores empty well above queen, and let the rest of the model run on. A model that works from this board should now give queen moves less chance. Rubbing out a pawn the same way should leave them about as they were.
 
-Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, turn the last stream into scores. Applied to the stream after each earlier block, they show what the model would say if it stopped there.
+Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, are applied to the stream after each earlier block. They show what the model would say if it stopped there.
 
 ## By hand
 
@@ -34,7 +34,7 @@ A board as 64 numbers. Squares run from a1 to h8. An empty square is 0, and a pi
 
 The size of a probe. It maps 256 numbers to 64 × 13 = 832 scores: 212,992 weights and 832 biases.
 
-The nudge. Say the probe's score for "empty" on a square trails its score for "queen" by 4. We want empty to lead by 3. Adding the line that separates the two to the stream raises that lead by the line's squared length. If the squared length is 2, we add (3 + 4) / 2 = 3.5 times the line.
+The nudge. Say the probe's score for "empty" on a square trails its score for "queen" by 4, and we want empty to lead by 3. Adding the line that separates the two raises that lead by the line's squared length. If the squared length is 2, we add (3 + 4) / 2 = 3.5 times the line.
 
 ## The code
 
@@ -104,11 +104,6 @@ Predict before you run: a probe fitted to shuffled boards has never been told wh
 <details><summary>Answer</summary>
 
 @@PREDICT@@
-</details>
-
-<details><summary>Why use one linear layer for the probe, and not a small network?</summary>
-
-A network could work the board out by itself from whatever the stream holds, and we would learn about the network. One linear layer can do little more than read what is laid out for it.
 </details>
 
 <details><summary>The probe reads the board well. Why is that not enough to say the model uses a board?</summary>
