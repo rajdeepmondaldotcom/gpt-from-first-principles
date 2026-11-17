@@ -16,7 +16,7 @@ The examples come from the function that made lesson 24's tasks. It reads a stor
 
 Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored, so any token will do, and we use the end token. The hand example pads to its longest row. The run pads each batch to the model's whole context: in our first try on this Mac's graphics chip, training stalled when the shape of the batch kept changing.
 
-We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share of words is the finer measure, since a story with two of its three words fails the check.
+We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share of words is the finer measure: two of the three words still fail the check.
 
 Fine-tuning can harm what the model could do before. It trains each weight, and the examples hold stories only after an order. So we score 500 plain unseen stories before and after, take the difference at each token, and give the mean difference lesson 24's interval, drawn story by story.
 
@@ -112,7 +112,7 @@ Tina said goodbye, “That was the most amazing.”
 Joe smiled. He knew that to make the moon look beautiful, but it was still a few stars in the night sky.
 ```
 
-We asked for Mira, cat, moon and brave. The story has Mira and the moon, no cat and nothing brave, and fails the check. Across the 200 stories, 0.44 of the asked words go missing.
+From here the prompt is an order. We asked for Mira, cat, moon and brave. The story has Mira and the moon, no cat and nothing brave, and fails. Across the 200 stories, 0.44 of the asked words go missing.
 
 The fine-tune trained all 5,374,464 of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
 

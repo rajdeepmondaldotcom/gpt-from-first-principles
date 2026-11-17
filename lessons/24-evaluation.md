@@ -1,8 +1,8 @@
 # 24. Evaluation
 
-By the end of this page each score and each comparison of two models carries a 95% interval, and each task a pass rate.
+By the end of this page each loss and each comparison of two models carries a 95% interval, and each task a pass rate.
 
-We can score the model on unseen text and read its stories. We cannot yet say how sure a score is, or whether a second model is better than this one.
+The model now writes fast enough to be judged on hundreds of stories. We cannot yet say how sure a loss is, or whether a second model is better than this one.
 
 ## The idea
 
@@ -10,7 +10,7 @@ Lesson 21 scored the model at 1.565 nats a token with lesson 10's `evaluate`: wi
 
 1. How much text each token had before it. In side-by-side windows the first token of each window is scored with nothing before it. Move the window on by a quarter of its length, a stride of 64, and score only the tokens not scored before. The same 100 stories score 1.533 nats at a stride of 256 and 1.439 at 64. Read one story at a time, they score 1.444.
 2. Whether the model has seen the answers. We call an unseen story that is also in the training text a leak. Lesson 18 dropped near-repeats before it split, and here the finder compares each unseen story with each training story. We have also used the unseen text once, when lesson 21 picked its learning rate from three. A careful report keeps a third set that no choice has touched.
-3. How sure the score is. It is a mean over the stories we happened to hold out, and other stories would give another mean. To see how far it could move, draw 2,525 stories from our 2,525, with repeats allowed, and take the mean again. Do that 1,000 times. The middle 95% of those means is a 95% interval, and drawing again like this is the bootstrap. Draw whole stories and not single tokens: the tokens of one story rise and fall together, so they are not separate pieces of evidence.
+3. How sure the loss is. It is a mean over the stories we happened to hold out, and other stories would give another mean. To see how far it could move, draw 2,525 stories from our 2,525, with repeats allowed, and take the mean again. Do that 1,000 times. The middle 95% of those means is a 95% interval, and drawing again like this is the bootstrap. Draw whole stories and not single tokens: the tokens of one story rise and fall together, so they are not separate pieces of evidence.
 4. Whether one model is better than another. Score both on the same stories, take the difference for each token, and put an interval on the mean difference. If the interval holds 0, these stories have not separated the two models.
 
 A loss measures prediction, and a task checks one job with a rule that says pass or fail. We have two tasks. The easy one opens a story with a name, and passes when the story uses the name again and reaches its end. The hard one asks, in three lines, for a story with a given name and three given words.
@@ -96,9 +96,9 @@ a name to carry on: 'Once upon a time, there was a little cat named Ollie.'
 a story to order: 'Name: Ollie\nWords: fish, stone, duck\nStory:'
 ```
 
-All 2,525 unseen stories, read one at a time, score 1.480 nats, against lesson 21's 1.565 in side-by-side windows. The first 250 give an interval 0.094 nats wide drawn story by story and 0.033 drawn token by token, a third as wide as it should be.
+All 2,525 stories, read one at a time, score 1.480 nats, 0.543 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. The first 250 give an interval 0.094 nats wide drawn story by story and 0.033 drawn token by token, a third as wide as it should be.
 
-With lesson 12's 16-bit switch on while scoring, 500 stories score 0.0001 nats worse, and the interval reaches 0, so these stories have not separated the two. Given a name to carry on, the model passes 97 of 100.
+With lesson 12's 16-bit switch on, 500 stories score 0.0001 nats worse, and the interval reaches 0: they have not separated the two. Given a name to carry on, the model passes 97 of 100.
 
 ## What it still cannot do
 
