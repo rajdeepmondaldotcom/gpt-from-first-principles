@@ -18,7 +18,7 @@ We want the lead to grow, and the loss is lesson 28's bet again, with the lead t
 
 1. At the start our model is the reference. Each gain is 0, each lead is 0, and the loss is ln 2.
 2. The loss falls as the better story gains on the worse one. It does not care whether the better one rose or the worse one fell.
-3. A pair with a large lead has little left to teach, because a sure bet cannot get much surer. That is what stops the push, and it keeps the model near the reference. Beta sets how large a lead counts as large. A lead is in nats, summed over a story of some 200 tokens. With our beta of 0.1, a lead of 10 nats, 0.05 a token, makes x = 1 and a bet of 0.73.
+3. A pair with a large lead has little left to teach, because a sure bet cannot get much surer. That is what stops the push, and it keeps the model near the reference. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
