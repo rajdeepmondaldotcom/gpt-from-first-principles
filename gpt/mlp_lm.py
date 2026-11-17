@@ -67,11 +67,12 @@ def sample(model, start, n, generator):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
+
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
 
     def short_run(scale):
         """2,000 steps from a hidden layer whose starting weights are `scale` times larger."""

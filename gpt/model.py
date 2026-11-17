@@ -146,6 +146,7 @@ def load_llama(model, path):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
     from gpt.experiment import compare, trial
     from gpt.gpt2 import LayerNorm, evaluate, sample
     from gpt.optim import AdamW
@@ -155,8 +156,7 @@ if __name__ == "__main__":
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
     shape = {"vocab": len(vocab), "context": 64, "width": 128, "heads": 4, "layers": 4}
     old = {"norm": LayerNorm, "mlp": MLP}  # lesson 15's model: rotary attention, lesson 9's parts
 

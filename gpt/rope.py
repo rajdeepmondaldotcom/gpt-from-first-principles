@@ -19,6 +19,7 @@ def rope(x, pos, base=10000):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
     from gpt.experiment import compare, trial
     from gpt.gpt2 import GPT2, LayerNorm, evaluate, sample
     from gpt.model import GPT, MLP
@@ -29,8 +30,7 @@ if __name__ == "__main__":
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
     shape = {"vocab": len(vocab), "context": 64, "width": 128, "heads": 4, "layers": 4}
 
     def table():

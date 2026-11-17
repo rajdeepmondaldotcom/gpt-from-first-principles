@@ -31,14 +31,14 @@ def compare(a, b):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
     from gpt.gpt2 import GPT2
     from gpt.tensors import encode
 
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
     steps = 600
 
     def losses(seeds, width=128, **loop):

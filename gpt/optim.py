@@ -48,14 +48,14 @@ class AdamW:
 
 if __name__ == "__main__":
     from gpt import mlp_lm
+    from gpt.bigram import split
     from gpt.gpt2 import GPT2, batch, evaluate, loss_on, sample
     from gpt.tensors import cross_entropy, encode
 
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    n = int(len(ids) * 0.9)
-    train_ids, val_ids = ids[:n], ids[n:]
+    train_ids, val_ids = split(ids)
 
     def run(make):
         """Lesson 10's model and data, 3,000 steps, with the optimizer that `make` builds."""
