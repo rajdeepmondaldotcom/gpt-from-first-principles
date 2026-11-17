@@ -80,3 +80,7 @@ def test_erasing_a_piece_makes_the_probe_read_the_square_as_empty():
     assert change.norm() < (stream * 2).norm()  # a nudge, not a new stream
     # Where "empty" already leads by more than the margin, there is nothing to rub out.
     assert erase(probe, stream + change, square, piece=1, margin=1.0).abs().max() == 0
+    # A nudge of a set length runs along the same line, whatever the probe reads.
+    set_length = erase(probe, stream + change, square, piece=1, length=2.0)
+    assert set_length.norm().item() == pytest.approx(2.0)
+    assert torch.allclose(set_length / 2.0, change / change.norm(), atol=1e-5)

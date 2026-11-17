@@ -58,12 +58,17 @@ This is an ordinary training loop on one layer, 256 positions to a step. `view(-
 
 ```python
 # gpt/probe.py
-def erase(probe, stream, square, piece, margin=3.0):
+def erase(probe, stream, square, piece, margin=3.0, length=None):
     """The smallest change to a stream, along the probe's own line, after which the probe scores
-    "empty" on `square` above `piece`, by `margin`. No change where it does so already."""
+    "empty" on `square` above `piece`, by `margin`. No change where it does so already.
+
+    With `length`, a change of that length along the same line, whatever the probe reads now.
+    """
     rows = probe.weight.view(64, PIECES, -1)[square]
     biases = probe.bias.view(64, PIECES)[square]
     line = rows[0] - rows[piece]  # toward "empty", away from the piece
+    if length is not None:
+        return length / line.norm().item() * line.detach()
     lead = (stream @ line + biases[0] - biases[piece]).item()  # how far "empty" leads now
     return max(margin - lead, 0.0) / (line @ line).item() * line.detach()
 ```

@@ -74,12 +74,17 @@ def read(probe, x):
     return probe(x).view(len(x), 64, PIECES).argmax(dim=-1)
 
 
-def erase(probe, stream, square, piece, margin=3.0):
+def erase(probe, stream, square, piece, margin=3.0, length=None):
     """The smallest change to a stream, along the probe's own line, after which the probe scores
-    "empty" on `square` above `piece`, by `margin`. No change where it does so already."""
+    "empty" on `square` above `piece`, by `margin`. No change where it does so already.
+
+    With `length`, a change of that length along the same line, whatever the probe reads now.
+    """
     rows = probe.weight.view(64, PIECES, -1)[square]
     biases = probe.bias.view(64, PIECES)[square]
     line = rows[0] - rows[piece]  # toward "empty", away from the piece
+    if length is not None:
+        return length / line.norm().item() * line.detach()
     lead = (stream @ line + biases[0] - biases[piece]).item()  # how far "empty" leads now
     return max(margin - lead, 0.0) / (line @ line).item() * line.detach()
 
@@ -102,10 +107,10 @@ if __name__ == "__main__":
     seen = documents(read_ids(cache / "chess_train.bin")[:400_000], words.end)
     seen = [words.decode(doc[1:-1].tolist()).strip() for doc in seen][:1500]
 
-    def positions(games, skip=frozenset(), every=3, most=100):
+    def positions(games, skip=frozenset(), every=4, most=100):
         """Each `every`-th position of each game: the stream after each block where the move
         ends, the board there, the moves so far, and which game it came from. A position whose
-        moves so far are in `skip` is left out."""
+        moves so far are in `skip` is left out. Each fourth position has white to move."""
         xs, boards, lines, game_of = [[] for _ in model.blocks], [], [], []
         for number, game in enumerate(games):
             played = game.split()[:most]
@@ -134,7 +139,7 @@ if __name__ == "__main__":
         f"a block: {int(choosing.sum()):,} from 300. Held back: {len(held_y):,} from {len(unseen)}"
     )
 
-    def by_game(right):
+    def by_game(right, game_of=game_of):
         """A share of squares named right, with a 95% interval drawn game by game."""
         blocks = [[] for _ in unseen]
         for number, row in zip(game_of, right.tolist()):
@@ -197,11 +202,11 @@ if __name__ == "__main__":
         game.append(number)
         for margin in margins:
             queen_edit = erase(probes[best], stream, queens[0], 5 + colour, margin)
-            pawn_edit = erase(probes[best], stream, pawns[0], 1 + colour, margin)
-            pawn_edit = pawn_edit * (queen_edit.norm() / pawn_edit.norm())  # nudges of one size
+            size = queen_edit.norm().item()  # the pawn's nudge is given the same length
+            pawn_edit = erase(probes[best], stream, pawns[0], 1 + colour, length=size)
             after[margin]["queen"].append(queen_chance(ids, (best, queen_edit)))
             after[margin]["pawn"].append(queen_chance(ids, (best, pawn_edit)))
-            after[margin]["size"].append((queen_edit.norm() / stream.norm()).item())
+            after[margin]["size"].append(size / stream.norm().item())
 
     def mean_and_range(values):
         """The mean of `values`, and a 95% interval for its change from `plain`, game by game."""
@@ -237,11 +242,24 @@ if __name__ == "__main__":
             f"after block {block + 1}: the final choice is on top in {on_top:.0%} of positions, "
             f"with a chance of {given:.0%}"
         )
+
+    # Each position so far has white to move. The same probe, fitted and tested on each third
+    # position, has to read the board with either side to move.
+    any_x, any_y, any_lines, any_game = positions(seen, every=3)
+    any_fit = torch.tensor(any_game) < len(seen) - 300
+    turn_x, turn_y, _, turn_game = positions(unseen, {tuple(line) for line in any_lines}, every=3)
+    either = fit(any_x[best][any_fit], any_y[any_fit], generator)
+    either_share, low, high = by_game(read(either, turn_x[best]) == turn_y, turn_game)
+    say(
+        f"a probe after block {best + 1} on positions with either side to move: "
+        f"{either_share:.1%} right, {low:.1%} to {high:.1%}"
+    )
     save(
         "40_probe",
         torch=torch.__version__,
         device="cpu",
-        positions={"fit": int((~choosing).sum()), "held": len(held_y), "edited": len(plain)},
+        positions={"fit": int(fitting.sum()), "held": len(held_y), "edited": len(plain)},
+        either_side=either_share,
         accuracy=accuracy,
         block=best + 1,
         control=control_share,
