@@ -52,6 +52,17 @@ def test_our_adamw_equals_torch_step_for_step():
     )
 
 
+def test_our_adamw_equals_torch_with_other_settings():
+    ours, theirs, batches = twins()
+    grids = [p for p in theirs.parameters() if p.dim() > 1]
+    rest = [p for p in theirs.parameters() if p.dim() <= 1]
+    groups = [{"params": grids, "weight_decay": 0.1}, {"params": rest, "weight_decay": 0.0}]
+    mine = AdamW(ours.parameters(), 3e-3, betas=(0.8, 0.95), decay=0.1, eps=1e-6)
+    train_both(
+        ours, theirs, mine, torch.optim.AdamW(groups, 3e-3, betas=(0.8, 0.95), eps=1e-6), batches
+    )
+
+
 def one_number(slope):
     p = nn.Parameter(torch.tensor([5.0]))
     p.grad = torch.tensor([slope])
@@ -118,5 +129,7 @@ def test_one_rate_cannot_suit_slopes_that_differ_four_hundred_times():
     torch.manual_seed(0)
     model = GPT2(vocab=65, context=64, width=128, heads=4, layers=4)  # lesson 10's model, untrained
     loss_on(model, *batch(ids, 64, 32, torch.Generator().manual_seed(0))).backward()
-    typical = [p.grad.abs().mean().item() for p in model.parameters()]  # one figure per tensor
-    assert 300 < max(typical) / min(typical) < 500
+    typical = {name: p.grad.abs().mean().item() for name, p in model.named_parameters()}
+    grids = [typical[name] for name, p in model.named_parameters() if p.dim() > 1]
+    assert 10 < max(grids) / min(grids) < 20  # between two grids of weights
+    assert 300 < max(typical.values()) / min(typical.values()) < 500  # a bias against a gain

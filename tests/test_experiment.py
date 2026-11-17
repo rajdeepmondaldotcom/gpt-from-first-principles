@@ -70,7 +70,7 @@ def test_a_rate_a_hundred_times_too_low_is_a_real_effect():
     assert mean > 3 * error
 
 
-def test_each_seed_picks_the_same_rate():
-    rates = (1e-4, 1e-2, 1.0)
+def test_each_seed_picks_a_rate_from_the_same_region():
+    rates = (1e-3, 3e-3, 1e-2, 3e-2, 1e-1)  # neighbours about three times apart
     for seed in range(3):
-        assert min(rates, key=lambda peak: run(seed, peak)) == 1e-2
+        assert min(rates, key=lambda peak: run(seed, peak)) in (1e-2, 3e-2)

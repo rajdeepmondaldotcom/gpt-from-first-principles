@@ -1,7 +1,5 @@
 """Each planted bug must be caught by the check named for it, and by a healthy model's passing."""
 
-import math
-
 import torch
 
 from gpt import attention
@@ -12,7 +10,9 @@ from gpt.checks import (
     reads_no_future,
     starts_with_no_opinion,
     step_sizes,
+    stream_sizes,
     targets_are_one_token_on,
+    the_stream_keeps_its_size,
 )
 from gpt.gpt2 import GPT2, batch, loss_on
 from gpt.optim import AdamW
@@ -32,6 +32,7 @@ def test_a_healthy_model_passes_every_check():
     assert starts_with_no_opinion(model, IDS, vocab=11)
     assert targets_are_one_token_on(x, y)
     assert reads_no_future(model, x)
+    assert the_stream_keeps_its_size(stream_sizes(model, x))
     # 3e-5 is lesson 12's peak rate on the first step of its warmup; 3e-3 below is 100 times that.
     assert every_part_moves_a_little(step_sizes(model, AdamW(model.parameters(), rate=3e-5), x, y))
     assert learns_one_batch(model, AdamW(model.parameters(), rate=1e-2), x, y)
@@ -42,6 +43,17 @@ def test_bug_starting_weights_twenty_times_too_large():
     with torch.no_grad():
         model.embed.token.weight *= 20
     assert not starts_with_no_opinion(model, IDS, vocab=11)
+
+
+def test_bug_layers_that_add_into_the_stream_twenty_times_too_large():
+    model, x, _ = healthy()
+    with torch.no_grad():
+        for block in model.blocks:
+            block.attn.proj.weight *= 20
+            block.narrow.weight *= 20
+    assert starts_with_no_opinion(model, IDS, vocab=11)  # the first loss does not see this one
+    sizes = stream_sizes(model, x)
+    assert not the_stream_keeps_its_size(sizes) and sizes[-1] > 3 * sizes[0]
 
 
 def test_bug_targets_not_moved_on():
@@ -109,4 +121,22 @@ def test_dropout_zeroes_while_training_and_does_nothing_after():
         assert not torch.equal(model(x), model(x))  # ... a different half each time
         model.eval()
         assert torch.equal(model(x), plain)  # switched off: the same model as before
-    assert math.isclose(torch.nn.Dropout(0.5)(torch.ones(100_000)).mean(), 1.0, abs_tol=0.02)
+
+
+def test_dropout_doubles_what_it_keeps_at_a_chance_of_a_half():
+    model, x, _ = healthy()
+    stream = model.embed(x)
+    with torch.no_grad():
+        plain = model.blocks[0].attn(stream)
+        add_dropout(model, 0.5)
+        dropped = model.blocks[0].attn(stream)
+    kept = dropped != 0
+    assert 0.4 < kept.float().mean() < 0.6
+    assert torch.allclose(dropped[kept], 2 * plain[kept])
+
+
+def test_dropout_reaches_both_layers_that_add_into_the_stream():
+    model, x, _ = healthy()
+    add_dropout(model, 1.0)  # drop all of what each layer adds
+    with torch.no_grad():
+        assert torch.equal(model(x), model.out(model.norm(model.embed(x))))  # the stream alone
