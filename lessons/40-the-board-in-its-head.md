@@ -6,7 +6,7 @@ The model plays chess from a list of moves. It was never shown a board. To move 
 
 ## The idea
 
-After the model reads a move, each block leaves a row of 256 numbers at that place: the stream of lesson 9. Whatever the model knows about the game at that point is in those numbers, because the next move is worked out from them. They do not come with labels. The question is whether the position can be read from them.
+After the model reads the last token of a move, each block leaves a row of 256 numbers at that place: the stream of lesson 9. Whatever the model knows about the game at that point is in those numbers, because the next move is worked out from them. They do not come with labels. The question is whether the position can be read from them.
 
 A probe is the plainest reader we can build. It is one linear layer and nothing else: 256 numbers in, and for each of the 64 squares, 13 scores out, one for empty and one for each kind of piece of each colour. We train it on positions from games, where the right answer is known because a chess program can replay the moves. The model itself is frozen and is only read.
 
@@ -15,16 +15,16 @@ A probe this weak is the point. A big network on top of the stream could work th
 Three checks keep us honest.
 
 1. Test on games the probe has not seen. A probe can store its training positions as a model can store its text.
-2. Compare with a lazy guess. Most squares hold what they usually hold: a rook sits on a1 for much of most games. So we count how often "the most usual piece for this square" is right, and count the probe apart on the squares where that guess is wrong.
-3. Shuffle the answers. Fit the same probe to the same streams with the boards dealt out to the wrong positions. It can still learn what is usual, and nothing about this game. The gap between the two probes is what the stream holds about the position in front of it.
+2. Compare with a lazy guess. Most squares hold what they usually hold: a rook sits on a1 for much of most games. So we count how often "the most usual piece for this square" is right, and score the probe separately on the squares where that guess is wrong.
+3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game. The gap between the two probes is what the stream holds about the position in front of it.
 
-Reading is not using. The board could be written in the stream and play no part in choosing the move. So we change it. Take a position where the side to move has its queen. Along the probe's own line for "queen on this square", nudge the stream until the probe reads that square as empty, and let the rest of the model run on. If the model works from this board, it should now give less chance to queen moves. A nudge of the same kind that rubs out a pawn should leave them about as they were.
+Reading is not using. The board could be written in the stream and play no part in choosing the move. So we change it. Take a position where the side to move has its queen. We fit a probe after each block, and work after the block whose probe reads best. Along that probe's own line for "queen on this square", nudge the stream until the probe scores empty well above queen there, and let the rest of the model run on. If the model works from this board, it should now give less chance to queen moves. A nudge of the same kind that rubs out a pawn should leave them about as they were.
 
-Last, we watch the move form. Lesson 10's final layer turns the last stream into scores. Applied to the stream after each earlier block, it shows what the model would say if it stopped there.
+Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, turn the last stream into scores. Applied to the stream after each earlier block, they show what the model would say if it stopped there.
 
 ## By hand
 
-A board as 64 numbers. Squares run from a1 to h8, and a piece is 1 to 6 for white's pawn, knight, bishop, rook, queen and king, and 7 to 12 for black's.
+A board as 64 numbers. Squares run from a1 to h8. An empty square is 0, and a piece is 1 to 6 for white's pawn, knight, bishop, rook, queen and king, and 7 to 12 for black's.
 
 | After | Square e2 | Square e4 | Square f3 | Square g1 |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@ A board as 64 numbers. Squares run from a1 to h8, and a piece is 1 to 6 for whit
 | `e4` | 0 | 1 | 0 | 2 |
 | `e4 e5 Nf3` | 0 | 1 | 2 | 0 |
 
-The size of a probe. It maps 256 numbers to 64 × 13 = 832 scores: 212,992 weights and 832 shifts.
+The size of a probe. It maps 256 numbers to 64 × 13 = 832 scores: 212,992 weights and 832 biases.
 
 The nudge. Say the probe's score for "empty" on a square trails its score for "queen" by 4. We want empty to lead by 3. Adding the line that separates the two to the stream raises that lead by the line's squared length. If the squared length is 2, we add (3 + 4) / 2 = 3.5 times the line.
 
@@ -54,21 +54,21 @@ def fit(x, y, generator, steps=1000, rate=1e-2):
     return probe
 ```
 
-This is an ordinary training loop on a model of one layer. `view(-1, PIECES)` lays the scores out as one row of 13 for each square of each position, so that lesson 3's loss can mark each square.
+This is an ordinary training loop on a model of one layer, with 256 positions drawn by chance for each step. `view(-1, PIECES)` lays the scores out as one row of 13 for each square of each position, so that lesson 3's loss can mark each square.
 
 ```python
 # gpt/probe.py
 def erase(probe, stream, square, piece, margin=3.0):
-    """The smallest change to a stream, along the probe's own line, after which the probe reads
-    `square` as empty and no longer as `piece`, by `margin`."""
+    """The smallest change to a stream, along the probe's own line, after which the probe scores
+    "empty" on `square` above `piece`, by `margin`."""
     rows = probe.weight.view(64, PIECES, -1)[square]
-    shifts = probe.bias.view(64, PIECES)[square]
+    biases = probe.bias.view(64, PIECES)[square]
     line = rows[0] - rows[piece]  # toward "empty", away from the piece
-    lead = (stream @ line + shifts[0] - shifts[piece]).item()  # how far it reads "empty" now
+    lead = (stream @ line + biases[0] - biases[piece]).item()  # how far "empty" leads now
     return (margin - lead) / (line @ line).item() * line.detach()
 ```
 
-`rows[0]` holds the probe's weights for "empty" on this square and `rows[piece]` those for the piece. Their difference is the one line in the stream along which the probe tells the two apart.
+PyTorch stores the layer's grid with a row for each score (lesson 4), so `view(64, PIECES, -1)` sorts the rows by square and piece. `rows[0]` holds the probe's weights for "empty" on this square and `rows[piece]` those for the piece. Their difference is the one line in the stream along which the probe tells the two apart. `.item()` turns a tensor of one number into a plain number, and `.detach()` cuts the result loose from the slopes.
 
 ## The proof
 
@@ -78,10 +78,10 @@ uv run pytest tests/test_probe.py
 
 - The hand table: the start, and the board after `e4 e5 Nf3`.
 - The stream after the last block, put through the final layer, gives the model's own scores.
-- A change made after one block alters the last token from that block on, and no earlier token.
+- A change made after one block changes the stream at the last token after that block and each later one, and at no earlier token.
 - Each move's last token is found in a line of text, castling included.
 - On made-up streams with a board written into them along straight lines, a probe reads over 0.9 of squares. Fitted to shuffled boards, it reads under 0.4.
-- After `erase`, the probe reads the square as empty, by the margin asked for.
+- After `erase`, the probe scores empty above the piece on that square, by the margin asked for.
 
 ```bash
 uv run python -m gpt.probe

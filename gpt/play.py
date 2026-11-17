@@ -123,7 +123,7 @@ if __name__ == "__main__":
     from itertools import combinations
     from pathlib import Path
 
-    from gpt.evaluate import interval
+    from gpt.evaluate import interval, rate_interval
     from gpt.results import save, say
     from gpt.story import load
 
@@ -143,7 +143,12 @@ if __name__ == "__main__":
     results, table = [], {}
     for (weaker, first), (stronger, second) in combinations(players.items(), 2):
         scores = match(second, first, 60)
-        low, high = interval([[s] for s in scores], generator)
+        whole = sum(scores) in (0, 60)  # one side took each point: the bootstrap has no width
+        low, high = (
+            rate_interval(scores, generator)
+            if whole
+            else interval([[s] for s in scores], generator)
+        )
         table[f"{stronger} against {weaker}"] = sum(scores) / 60
         say(
             f"{stronger} against {weaker}: {sum(scores) / 60:.2f} of the points in 60 games, "

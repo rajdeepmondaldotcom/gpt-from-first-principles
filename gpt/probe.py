@@ -75,12 +75,12 @@ def read(probe, x):
 
 
 def erase(probe, stream, square, piece, margin=3.0):
-    """The smallest change to a stream, along the probe's own line, after which the probe reads
-    `square` as empty and no longer as `piece`, by `margin`."""
+    """The smallest change to a stream, along the probe's own line, after which the probe scores
+    "empty" on `square` above `piece`, by `margin`."""
     rows = probe.weight.view(64, PIECES, -1)[square]
-    shifts = probe.bias.view(64, PIECES)[square]
+    biases = probe.bias.view(64, PIECES)[square]
     line = rows[0] - rows[piece]  # toward "empty", away from the piece
-    lead = (stream @ line + shifts[0] - shifts[piece]).item()  # how far it reads "empty" now
+    lead = (stream @ line + biases[0] - biases[piece]).item()  # how far "empty" leads now
     return (margin - lead) / (line @ line).item() * line.detach()
 
 

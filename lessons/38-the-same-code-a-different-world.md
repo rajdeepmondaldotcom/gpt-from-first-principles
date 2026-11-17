@@ -1,6 +1,6 @@
 # 38. The same code, a different world
 
-By the end of this page the model of lesson 16, with no line of it changed, has learned the moves of chess from records of games, and you have counted how many of its moves the rules allow.
+By the end of this page the model of lesson 21, with no line of it changed, has learned the moves of chess from records of games, and you have counted how many of its moves the rules allow.
 
 Each model in this course has read English: Shakespeare, then stories. We have not asked whether anything we built depends on that.
 
@@ -8,15 +8,15 @@ Each model in this course has read English: Shakespeare, then stories. We have n
 
 Nothing in the model knows what a word is. It reads the ids of tokens and gives a chance to each id that could come next. Anything that can be written as text can be put in front of it, and chess players write their games down as text.
 
-A game is a list of moves. `e4` moves a pawn to the square e4: the letter is the column, a to h, and the digit is the row, 1 to 8. `Nf3` moves a knight to f3. `Bxc6` is a bishop taking the piece on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`, and that line is all the model will ever see. It gets no board, no pieces and no rules.
+A game is a list of moves. `e4` moves a pawn to the square e4: the letter is the column, a to h, and the digit is the row, 1 to 8. `Nf3` moves a knight to f3. `Bxc6` is a bishop taking the piece on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`, and that line is all the model will ever see. On these pages a move is one side's turn: that line has four. It gets no board, no pieces and no rules.
 
-The games come from Lichess, a free site that gives the record of each game played on it to the public. We take one month, March 2014. A record carries the players' names, the clocks and the result as well as the moves, and a function called `games` keeps the moves alone, for each game of 20 moves or more.
+The games come from Lichess, a free site that gives the record of each game played on it to the public. We take one month, March 2014. A record carries the players' names, the clocks and the result as well as the moves, and a function called `moves` keeps the moves alone. We keep each game of 20 moves or more.
 
 From there the steps are lesson 18's, in the same order: drop repeats, drop near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. One thing had to give. Lesson 18 threw out a document as junk when under 80% of it was letters and spaces, and a game of chess is 74%. That one test is switched off for games.
 
 The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well, to the line. That script's long run is now a function, and this lesson calls it with other data: three short runs to pick a rate, the two checks, then the same budget of arithmetic, with a checkpoint each 500 steps.
 
-A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal on that board. To write a legal move from a list of moves, the model has to have kept track of where each piece now stands. An untrained model writes 0 legal moves in 200.
+A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal on that board. A model that copied common moves would often be wrong, since what is legal depends on where each piece now stands. An untrained model writes 0 legal moves in 200.
 
 ## By hand
 
@@ -29,7 +29,7 @@ After `e4 e5` it is white's turn.
 | `e5` | no | black's pawn stands there, and a pawn does not take straight ahead |
 | `Qh5` | yes | the pawn has left e2, so the queen's diagonal is open |
 
-`Qh5` was not legal one move earlier. The same four characters are right or wrong by what came before them.
+Before `e4`, `Qh5` was not legal: the pawn on e2 stood in the queen's way. The same three characters are right or wrong by what came before them.
 
 Tokens. Lesson 5's tokenizer never joins a letter to a digit, so a move is two tokens or more.
 
@@ -81,7 +81,7 @@ def next_move(model, words, played, temperature=0, generator=None):
     return text[0] if text else ""
 ```
 
-`chess` is a library that knows the rules, called python-chess. It is the referee here and no part of the model. `push_san` plays a move on its board, and `parse_san` raises an error for a move the position does not allow.
+`words` is the tokenizer, as in each script since lesson 18, and `generate` is lesson 22's writing loop, told here to write 6 tokens at most. The ids start with the end token because each game in the training text came after one. `chess` is a library that knows the rules, called python-chess. It is the referee here and no part of the model. `push_san` plays a move on its board, and `parse_san` raises an error for a move the position does not allow.
 
 ## The proof
 
