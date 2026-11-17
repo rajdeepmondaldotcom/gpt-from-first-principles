@@ -103,7 +103,7 @@ Apple's engine, processor, 16 at once: 5,943 tokens a second
 the two engines write the same first 128 tokens of 128
 ```
 
-Timings are from an M4 laptop, and they move from run to run. Another program was using the graphics chip during this run. An earlier run with the chip free read higher on each of the chip's three timings.
+Timings are from an M4 laptop, and they move from run to run. The chip's three timings are the least settled: an earlier run read two to four times higher on each, and we have not found why.
 
 The engines agree: the largest gap between their scores is 0.000013, the top token is the same at 256 of 256 places, and they write the same 128 tokens.
 
