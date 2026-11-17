@@ -1,0 +1,43 @@
+{
+  "commit": "d1196ae",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "mps",
+  "before": {
+    "passed": 0,
+    "words_used": 0.13666666666666666,
+    "ended": 177,
+    "plain_nats": 1.4803135399153073
+  },
+  "after": {
+    "passed": 27,
+    "words_used": 0.5583333333333333,
+    "ended": 195,
+    "plain_nats": 1.5493107756243623
+  },
+  "plain_gap": 0.06899723570905487,
+  "plain_interval": [
+    0.058960527181625366,
+    0.0785868912935257
+  ],
+  "sample": "Mara and her mum were walking in the park. Suddenly, Mira spotted something - a big, round and thin cat. She wanted to examine it and said to her mum, \"Look, what is that?\" \nMr. Mira asked, \"What is this?\" \nHer mum said, \"That is a cat pizza. It is a special plate for us to eat.\" Mira was excited and excited to see what the cat was cooking.\nWhen they got home, Mira opened the light to make the cat taste yummy. Her mum said, \"That is so good, Mira! We're proud of you.\" \nMira smiled, picked up a plate of cheese and put it on the table too. The cat said, \"Yummy! I like the taste!\" Mira smiled, happy that she was able to see the cat.",
+  "printed": [
+    "examples to learn from: 60,404",
+    "before: 0 of 200 tasks passed, 95% interval 0.00 to 0.02",
+    "before: 0.14 of the asked words used, 95% interval 0.11 to 0.17",
+    "before: 177 stories end by themselves, plain stories 1.480 nats a token",
+    "step 250: 1.344 nats on the answers",
+    "step 500: 1.291 nats on the answers",
+    "step 750: 1.325 nats on the answers",
+    "step 1000: 1.261 nats on the answers",
+    "step 1250: 1.222 nats on the answers",
+    "step 1500: 1.236 nats on the answers",
+    "step 1750: 1.256 nats on the answers",
+    "step 2000: 1.116 nats on the answers",
+    "after: 27 of 200 tasks passed, 95% interval 0.09 to 0.19",
+    "after: 0.56 of the asked words used, 95% interval 0.52 to 0.60",
+    "after: 195 stories end by themselves, plain stories 1.549 nats a token",
+    "plain stories, after minus before: +0.069 nats, 95% interval +0.059 to +0.079",
+    "to order, passes False: 'Mara and her mum were walking in the park. Suddenly, Mira spotted something - a big, round and thin cat. She wanted to examine it and said to her mum, \"Look, what is that?\" \\nMr. Mira asked, \"What is this?\" \\nHer mum said, \"That is a cat pizza. It is a special plate for us to eat.\" Mira was excited and excited to see what the cat was cooking.\\nWhen they got home, Mira opened the light to make the cat taste yummy. Her mum said, \"That is so good, Mira! We\\'re proud of you.\" \\nMira smiled, picked up a plate of cheese and put it on the table too. The cat said, \"Yummy! I like the taste!\" Mira smiled, happy that she was able to see the cat.'"
+  ]
+}
