@@ -69,6 +69,16 @@ if __name__ == "__main__":
 
     prompts = [text[300 * i : 300 * i + 64].tolist() for i in range(16)]
 
+    # How many times does one token's pass call into PyTorch? Each call has a cost of its own.
+    kept = [{} for _ in ours.blocks]
+    with torch.no_grad():
+        ours(torch.tensor([prompts[0]]), kept)
+        with torch.profiler.profile() as watched:
+            ours(torch.tensor([[prompts[1][0]]]), kept)
+    calls = [e for e in watched.events() if e.name.startswith("aten::")]
+    outer = sum(not (e.cpu_parent and e.cpu_parent.name.startswith("aten::")) for e in calls)
+    say(f"one token's pass makes {outer} calls into PyTorch")
+
     def fastest(work, tries=3):
         """Tokens a second for `work`, which writes and returns a count. The best of three."""
         best = 0.0
@@ -131,5 +141,6 @@ if __name__ == "__main__":
         torch=torch.__version__,
         mlx=mx.__version__,
         tokens_a_second=numbers,
+        calls=outer,
         same=agree,
     )
