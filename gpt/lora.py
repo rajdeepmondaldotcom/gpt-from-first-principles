@@ -13,7 +13,8 @@ class LoRA(nn.Module):
 
     def __init__(self, layer, rank):
         super().__init__()
-        self.layer, self.scale = layer, 32 / rank  # over the rank: a first step of one size
+        self.layer = layer
+        self.scale = 32 / rank  # over the rank: the first step is the same size on average
         edge = layer.in_features**-0.5
         self.down = nn.Parameter(torch.empty(rank, layer.in_features).uniform_(-edge, edge))
         self.up = nn.Parameter(torch.zeros(layer.out_features, rank))  # zero: no change at first

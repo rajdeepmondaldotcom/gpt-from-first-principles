@@ -77,8 +77,9 @@ def test_pairs_put_the_story_the_readers_like_first():
         pairs.count((ids["good"], ids["bad"])) == 2 and pairs.count((ids["fair"], ids["bad"])) == 2
     )
     # Three orders, the last one held back: its pairs stay together and none is learned from.
-    learn, held = split([good, bad, fair, bad] * 3, Letters(), held=1)
-    assert len(learn) == 10 and held == [pairs]
+    last = [fair, bad, bad, bad]
+    learn, held, late = split([good, bad, fair, bad] * 2 + last, Letters(), held=1)
+    assert len(learn) == 10 and held == [[(ids["fair"], ids["bad"])] * 3] and late == last
 
 
 def test_padding_keeps_each_texts_last_place():
