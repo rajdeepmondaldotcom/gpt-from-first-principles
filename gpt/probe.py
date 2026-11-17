@@ -174,7 +174,9 @@ if __name__ == "__main__":
         last = streams(model, ids, edit)[-1][-1]
         return softmax(lens(model, last))[queen_moves].sum().item()
 
-    plain, no_queen, no_pawn, sizes, game = [], [], [], [], []
+    margins = (3.0, 10.0, 30.0)  # how far "empty" is made to lead: a longer nudge each time
+    plain, game = [], []
+    after = {margin: {"queen": [], "pawn": [], "size": []} for margin in margins}
     for line, number in zip(held_lines, game_of):
         board = chess.Board()
         for move in line:
@@ -187,36 +189,37 @@ if __name__ == "__main__":
         ids = [words.end, *words.encode(" " + " ".join(line))]
         stream = streams(model, ids)[best][-1]
         colour = 0 if board.turn == chess.WHITE else 6
-        queen_edit = erase(probes[best], stream, queens[0], 5 + colour)
-        pawn_edit = erase(probes[best], stream, pawns[0], 1 + colour)
-        pawn_edit = pawn_edit * (queen_edit.norm() / pawn_edit.norm())  # a nudge of the same size
         plain.append(queen_chance(ids))
-        no_queen.append(queen_chance(ids, (best, queen_edit)))
-        no_pawn.append(queen_chance(ids, (best, pawn_edit)))
-        sizes.append((queen_edit.norm() / stream.norm()).item())
         game.append(number)
+        for margin in margins:
+            queen_edit = erase(probes[best], stream, queens[0], 5 + colour, margin)
+            pawn_edit = erase(probes[best], stream, pawns[0], 1 + colour, margin)
+            pawn_edit = pawn_edit * (queen_edit.norm() / pawn_edit.norm())  # nudges of one size
+            after[margin]["queen"].append(queen_chance(ids, (best, queen_edit)))
+            after[margin]["pawn"].append(queen_chance(ids, (best, pawn_edit)))
+            after[margin]["size"].append((queen_edit.norm() / stream.norm()).item())
 
-    def mean_and_range(values, base):
-        """The mean of `values`, and a 95% interval for its change from `base`, game by game."""
+    def mean_and_range(values):
+        """The mean of `values`, and a 95% interval for its change from `plain`, game by game."""
         blocks = {}
-        for number, value, start in zip(game, values, base):
+        for number, value, start in zip(game, values, plain):
             blocks.setdefault(number, []).append(value - start)
         low, high = interval(list(blocks.values()), generator)
         return sum(values) / len(values), low, high
 
     say(f"positions where the mover has one queen that can move: {len(plain):,}")
-    say(
-        f"chance of a queen move next, untouched: {sum(plain) / len(plain):.1%}. "
-        f"Each nudge is {sum(sizes) / len(sizes):.2f} of the stream's length on average"
-    )
+    say(f"chance of a queen move next, untouched: {sum(plain) / len(plain):.1%}")
     edits = {}
-    for name, values in (("the queen", no_queen), ("a pawn", no_pawn)):
-        mean, low, high = mean_and_range(values, plain)
-        edits[name] = mean
-        say(
-            f"with {name} rubbed out after block {best + 1}: {mean:.1%}, "
-            f"a change of {low:+.1%} to {high:+.1%}"
-        )
+    for margin in margins:
+        size = sum(after[margin]["size"]) / len(plain)
+        edits[margin] = {"size": size}
+        for name in ("queen", "pawn"):
+            mean, low, high = mean_and_range(after[margin][name])
+            edits[margin][name] = mean
+            say(
+                f"a nudge {size:.2f} of the stream's length after block {best + 1}, rubbing out "
+                f"the {name}: {mean:.1%}, a change of {low:+.1%} to {high:+.1%}"
+            )
 
     # The move forming: read the stream after each block through the final layer.
     final = lens(model, held_x[-1]).argmax(dim=-1)  # the token on top at the end, for each position
@@ -239,7 +242,6 @@ if __name__ == "__main__":
         block=best + 1,
         control=control_share,
         hard_squares=hard,
-        queen_chance={"plain": sum(plain) / len(plain), **edits},
-        nudge=sum(sizes) / len(sizes),
+        queen_chance={"plain": sum(plain) / len(plain), "nudged": edits},
         formed=formed,
     )

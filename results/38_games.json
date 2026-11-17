@@ -1,0 +1,201 @@
+{
+  "commit": "f3574ec",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "mps",
+  "counts": {
+    "read": 749462,
+    "junk": 0,
+    "repeats": 18,
+    "near_repeats": 11,
+    "kept": 749433,
+    "train": {
+      "games": 741983,
+      "tokens": 111113359
+    },
+    "val": {
+      "games": 7450,
+      "tokens": 1116979
+    }
+  },
+  "shape": {
+    "vocab": 636,
+    "context": 256,
+    "width": 256,
+    "heads": 8,
+    "kv_heads": 4,
+    "layers": 6
+  },
+  "steps": 10420,
+  "peak": 0.001,
+  "curve": [
+    {
+      "step": 500,
+      "train": 1.973973035812378,
+      "val": 1.9896410819811698,
+      "legal": 0.58
+    },
+    {
+      "step": 1000,
+      "train": 1.7475258111953735,
+      "val": 1.7825846354166666,
+      "legal": 0.76
+    },
+    {
+      "step": 1500,
+      "train": 1.6724295616149902,
+      "val": 1.685627942207532,
+      "legal": 0.81
+    },
+    {
+      "step": 2000,
+      "train": 1.6134710311889648,
+      "val": 1.6223538912259616,
+      "legal": 0.82
+    },
+    {
+      "step": 2500,
+      "train": 1.542218565940857,
+      "val": 1.5776600373096956,
+      "legal": 0.84
+    },
+    {
+      "step": 3000,
+      "train": 1.5097123384475708,
+      "val": 1.5359720865885416,
+      "legal": 0.84
+    },
+    {
+      "step": 3500,
+      "train": 1.4963178634643555,
+      "val": 1.506329815204327,
+      "legal": 0.89
+    },
+    {
+      "step": 4000,
+      "train": 1.4270045757293701,
+      "val": 1.4809866098257212,
+      "legal": 0.865
+    },
+    {
+      "step": 4500,
+      "train": 1.4862096309661865,
+      "val": 1.4588720077123398,
+      "legal": 0.88
+    },
+    {
+      "step": 5000,
+      "train": 1.4595414400100708,
+      "val": 1.44149169921875,
+      "legal": 0.88
+    },
+    {
+      "step": 5500,
+      "train": 1.4381344318389893,
+      "val": 1.42233401567508,
+      "legal": 0.925
+    },
+    {
+      "step": 6000,
+      "train": 1.3563802242279053,
+      "val": 1.4017974071013621,
+      "legal": 0.915
+    },
+    {
+      "step": 6500,
+      "train": 1.3787763118743896,
+      "val": 1.390458014072516,
+      "legal": 0.89
+    },
+    {
+      "step": 7000,
+      "train": 1.357492446899414,
+      "val": 1.3741480118189102,
+      "legal": 0.925
+    },
+    {
+      "step": 7500,
+      "train": 1.3659462928771973,
+      "val": 1.3616378392928685,
+      "legal": 0.915
+    },
+    {
+      "step": 8000,
+      "train": 1.3389160633087158,
+      "val": 1.3514188326322116,
+      "legal": 0.915
+    },
+    {
+      "step": 8500,
+      "train": 1.2953035831451416,
+      "val": 1.3397752028245193,
+      "legal": 0.91
+    },
+    {
+      "step": 9000,
+      "train": 1.3139897584915161,
+      "val": 1.3319381322616186,
+      "legal": 0.925
+    },
+    {
+      "step": 9500,
+      "train": 1.3690276145935059,
+      "val": 1.3260915902944712,
+      "legal": 0.895
+    },
+    {
+      "step": 10000,
+      "train": 1.2816188335418701,
+      "val": 1.3210580679086539,
+      "legal": 0.915
+    },
+    {
+      "step": 10420,
+      "train": 1.2959222793579102,
+      "val": 1.317174823467548,
+      "legal": 0.925
+    }
+  ],
+  "legal_before": 0.0,
+  "legal_after": 0.929,
+  "met": {
+    "positions": 192,
+    "legal": 192
+  },
+  "unmet": {
+    "positions": 808,
+    "legal": 737,
+    "interval": [
+      0.8904531946358678,
+      0.9307354107621797
+    ]
+  },
+  "watched_met": 36,
+  "sample": "e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5 Nd4 Nxd4 Bxd4 c5 dxc5 dxc5 Be3 b5 bxc5 Ng4 Bd4 Qh4 Bxh7+ Kxh7 Ng3 Qxh3 Nf5 Qf1+",
+  "printed": [
+    "games read: 749,462, repeats: 18",
+    "near-repeats: 11, games kept: 749,433",
+    "train: 741,983 games, 111,113,359 tokens",
+    "val: 7,450 games, 1,116,979 tokens",
+    "tokens in the vocabulary: 636",
+    "parameters: 4,488,448, steps: 10,420, rate 0.001",
+    "before training: 0% of 200 moves are legal",
+    "step 500: unseen 1.990 nats, 58% of 200 moves are legal",
+    "step 1500: unseen 1.686 nats, 81% of 200 moves are legal",
+    "step 2500: unseen 1.578 nats, 84% of 200 moves are legal",
+    "step 3500: unseen 1.506 nats, 89% of 200 moves are legal",
+    "step 4500: unseen 1.459 nats, 88% of 200 moves are legal",
+    "step 5500: unseen 1.422 nats, 92% of 200 moves are legal",
+    "step 6500: unseen 1.390 nats, 89% of 200 moves are legal",
+    "step 7500: unseen 1.362 nats, 92% of 200 moves are legal",
+    "step 8500: unseen 1.340 nats, 91% of 200 moves are legal",
+    "step 9500: unseen 1.326 nats, 90% of 200 moves are legal",
+    "step 10420: unseen 1.317 nats, 92% of 200 moves are legal",
+    "after training: 929 of 1,000 moves are legal, 95% interval 0.911 to 0.944",
+    "positions that open some training game: 192. Legal moves there: 192",
+    "positions no training game has: 808. Legal moves there: 737, 95% interval 0.890 to 0.931",
+    "of the 200 positions counted during training, 36 open some training game",
+    "a game it writes alone: e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5 Nd4 Nxd4 Bxd4 c5 dxc5 dxc5 Be3 b5 bxc5 Ng4 Bd4 Qh4 Bxh7+ Kxh7 Ng3 Qxh3 Nf5 Qf1+",
+    "its first 26 moves are legal, of 44"
+  ]
+}
