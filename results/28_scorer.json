@@ -1,0 +1,85 @@
+{
+  "commit": "d1d2747",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "device": "cpu",
+  "pairs": {
+    "learn": 1386,
+    "held": 240
+  },
+  "ranked_right": {
+    "before": 109,
+    "after": 140,
+    "interval": [
+      0.5107207298278809,
+      0.6544715166091919
+    ]
+  },
+  "before_the_push": {
+    "scorer": 3.409740498227378,
+    "readers": 0.5770833333333333,
+    "check": 0.6114583333333333
+  },
+  "curve": [
+    {
+      "scorer": 4.853413314186037,
+      "readers": 0.51484375,
+      "check": 0.54921875
+    },
+    {
+      "scorer": 8.600892196223139,
+      "readers": 0.309375,
+      "check": 0.4015625
+    },
+    {
+      "scorer": 11.427509146183729,
+      "readers": 0.19921875,
+      "check": 0.23359375
+    },
+    {
+      "scorer": 12.411744429264218,
+      "readers": 0.159375,
+      "check": 0.1671875
+    },
+    {
+      "scorer": 12.715101367630997,
+      "readers": 0.0546875,
+      "check": 0.0875
+    }
+  ],
+  "unseen": {
+    "before": 0.57,
+    "after": 0.025,
+    "interval": [
+      -0.5824999809265137,
+      -0.5087500214576721
+    ]
+  },
+  "order": {
+    "name": "Bob",
+    "words": [
+      "movie",
+      "movies",
+      "watch"
+    ]
+  },
+  "sample": "One day, a happy sad girl named Mia wanted to find more. She wanted to bake another again. She asked her friend Tom, help her teach D sho home. She wanted to eat more.\n\n\n Bessie wanted to teach Bella please forgive her friend. They both wanted to find more. They wanted to marry one again.\n could not plan, they asked their friend, Bunny, for help. They wanted to marry, again. They offered they patient and said, \"Here\". They fit bests for their home. They agreed and ate the chocolate.\nBby was happy again. They were happy again. They could not sell past again. They had fun and sang their new things again. They were happy again. They were happy again because they did their choory together.",
+  "printed": [
+    "pairs to learn from: 1,386, from 340 orders. Pairs held back: 240, from 60 orders",
+    "step 1: 0.916 on 16 pairs. ln 2 is 0.693",
+    "step 100: 0.562 on 16 pairs. ln 2 is 0.693",
+    "step 200: 0.196 on 16 pairs. ln 2 is 0.693",
+    "step 300: 0.024 on 16 pairs. ln 2 is 0.693",
+    "held-back pairs ranked right before any training: 109 of 240",
+    "after: 140 of 240, 95% interval 0.51 to 0.65",
+    "before the push, the 240 stories held back: the scorer gives them +3.41 on average, the readers 0.58, lesson 27's score 0.61",
+    "rounds 1 to 20: the scorer gives the stories +4.85 on average, the readers 0.51, lesson 27's score 0.55",
+    "rounds 21 to 40: the scorer gives the stories +8.60 on average, the readers 0.31, lesson 27's score 0.40",
+    "rounds 41 to 60: the scorer gives the stories +11.43 on average, the readers 0.20, lesson 27's score 0.23",
+    "rounds 61 to 80: the scorer gives the stories +12.41 on average, the readers 0.16, lesson 27's score 0.17",
+    "rounds 81 to 100: the scorer gives the stories +12.72 on average, the readers 0.05, lesson 27's score 0.09",
+    "the last order asked for: Bob, movie, movies, watch",
+    "the story written for it: 'One day, a happy sad girl named Mia wanted to find more. She wanted to bake another again. She asked her friend Tom, help her teach D sho home. She wanted to eat more.\\n\\n\\n Bessie wanted to teach Bella please forgive her friend. They both wanted to find more. They wanted to marry one again.\\n could not plan, they asked their friend, Bunny, for help. They wanted to marry, again. They offered they patient and said, \"Here\". They fit bests for their home. They agreed and ate the chocolate.\\nBby was happy again. They were happy again. They could not sell past again. They had fun and sang their new things again. They were happy again. They were happy again because they did their choory together.'",
+    "on 200 unseen orders the readers give its stories 0.03, where they gave 0.57. The change has a 95% interval of -0.58 to -0.51"
+  ]
+}
