@@ -14,7 +14,7 @@ from gpt.checks import (
     step_sizes,
     targets_are_one_token_on,
 )
-from gpt.gpt2 import GPT2, batch
+from gpt.gpt2 import GPT2, batch, loss_on
 from gpt.optim import AdamW
 
 IDS = (torch.arange(2000) * 3) % 11
@@ -54,6 +54,31 @@ def test_bug_no_mask(monkeypatch):
     unmasked = attention.attend
     monkeypatch.setattr(attention, "attend", lambda q, k, v, mask=None: unmasked(q, k, v))
     assert not reads_no_future(model, x)
+
+
+def test_a_model_with_no_mask_trains_without_complaint(monkeypatch):
+    """The reason for this lesson: the bug prints a falling loss, lower than a healthy model's."""
+    ids = torch.randint(11, (2000,), generator=torch.Generator().manual_seed(0))  # nothing to learn
+
+    def loss_after_100_steps():
+        torch.manual_seed(0)
+        model = GPT2(vocab=11, context=16, width=32, heads=2, layers=2)
+        optimizer, generator = (
+            AdamW(model.parameters(), rate=1e-2),
+            torch.Generator().manual_seed(0),
+        )
+        for _ in range(100):
+            loss = loss_on(model, *batch(ids, 16, 8, generator))
+            model.zero_grad()
+            loss.backward()
+            optimizer.step()
+        return loss.item()
+
+    healthy_loss = loss_after_100_steps()
+    unmasked = attention.attend
+    monkeypatch.setattr(attention, "attend", lambda q, k, v, mask=None: unmasked(q, k, v))
+    assert healthy_loss > 2.0  # random text: close to ln 11 = 2.40
+    assert loss_after_100_steps() < healthy_loss - 1.0  # it reads each answer from the future
 
 
 def test_bug_rate_a_hundred_times_too_high():
