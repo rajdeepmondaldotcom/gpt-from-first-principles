@@ -42,7 +42,9 @@ def rate_interval(passed, generator):
     """A 95% interval for a pass rate, from one True or False for each try."""
     tries, passes = len(passed), sum(passed)
     if passes in (0, tries):  # each draw from results that are all alike is alike: no width at all
-        edge = 0.05 ** (1 / tries)  # at this rate, `tries` alike in a row still come 1 time in 20
+        # At this rate, `tries` alike in a row still come 1 time in 40: the share a 95% interval
+        # leaves outside at each end.
+        edge = 0.025 ** (1 / tries)
         return (0.0, 1 - edge) if passes == 0 else (edge, 1.0)
     return interval([[int(x)] for x in passed], generator)
 

@@ -83,8 +83,8 @@ def test_no_pass_in_100_tries_still_leaves_a_range():
     generator = torch.Generator().manual_seed(0)
     assert interval([[0]] * 100, generator) == (0, 0)  # the bootstrap alone: no width, and wrong
     low, high = rate_interval([False] * 100, generator)
-    assert low == 0 and high == pytest.approx(0.03, abs=0.001)  # about 3 / 100
-    assert (1 - high) ** 100 == pytest.approx(0.05)  # at that rate, 100 failures come 1 time in 20
+    assert low == 0 and high == pytest.approx(0.036, abs=0.001)
+    assert (1 - high) ** 100 == pytest.approx(0.025)  # at that rate, 100 failures come 1 time in 40
     assert rate_interval([True] * 100, generator) == pytest.approx((1 - high, 1))
     mixed = [True] * 70 + [False] * 30
     assert rate_interval(mixed, generator) == pytest.approx((0.61, 0.79), abs=0.02)
