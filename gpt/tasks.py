@@ -46,7 +46,7 @@ def passes(task, text):
 
 
 def attempt(model, words, task, **how):
-    """Ask the model for a story to order. Returns the story, and whether it passes the check."""
+    """Ask the model for a story to order. Returns the story, whether it passes, whether it ended."""
     ids = generate(model, words.encode(prompt(task)), 250, stop=words.end, **how)
     story = words.decode([i for i in ids if i != words.end]).split("Story:", 1)[1]
-    return story, passes(task, story)
+    return story, passes(task, story), ids[-1] == words.end
