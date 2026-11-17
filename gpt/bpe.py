@@ -86,22 +86,23 @@ class Tokenizer:
 if __name__ == "__main__":
     import torch
 
+    from gpt.bigram import split
     from gpt.mlp_lm import MLP, evaluate
     from gpt.mlp_lm import train as train_mlp
 
     text = Path("data/tiny_shakespeare.txt").read_text()
-    n = int(len(text) * 0.9)
+    learn, held = split(text)
     words = re.compile("[a-z]+")  # a word is a run of letters, whatever its case
-    seen, later = set(words.findall(text[:n].lower())), words.findall(text[n:].lower())
+    seen, later = set(words.findall(learn.lower())), words.findall(held.lower())
     unseen = sum(word not in seen for word in later)
     say(f"words in the training text: {len(seen):,} different ones")
     say(f"words in the unseen text: {len(later):,}, of which {unseen:,} never occur in training")
 
     scores = {}
     for size in (512, 1024):
-        tokenizer = Tokenizer(train(text[:n], size))
-        ids, val_ids = (torch.tensor(tokenizer.encode(part)) for part in (text[:n], text[n:]))
-        per_token = (len(text) - n) / len(val_ids)
+        tokenizer = Tokenizer(train(learn, size))
+        ids, val_ids = (torch.tensor(tokenizer.encode(part)) for part in (learn, held))
+        per_token = len(held) / len(val_ids)
         torch.manual_seed(0)
         model = MLP(size + 1)  # lesson 4's model, reading eight tokens in place of eight characters
         train_mlp(model, ids, steps=30000, rate=0.1, generator=torch.Generator().manual_seed(0))

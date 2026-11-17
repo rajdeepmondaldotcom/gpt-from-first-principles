@@ -85,13 +85,14 @@ def add_dropout(model, chance):
 
 
 if __name__ == "__main__":
+    from gpt.bigram import split
     from gpt.gpt2 import GPT2
     from gpt.tensors import encode
 
     text = Path("data/tiny_shakespeare.txt").read_text()
     vocab = sorted(set(text))
     ids = encode(text, vocab)
-    small, val_ids = ids[:100_000], ids[int(len(ids) * 0.9) :]  # a tenth of the usual training text
+    small, val_ids = ids[:100_000], split(ids)[1]  # a tenth of the usual training text
 
     def run(dropout, decay):
         """Lesson 12's loop on a small text, where a model can learn the text by heart."""
