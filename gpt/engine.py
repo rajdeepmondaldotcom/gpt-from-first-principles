@@ -42,8 +42,8 @@ def slide(kept, by, pad):
 
 
 class Engine:
-    def __init__(self, model, budget, chunk=64):
-        self.model, self.budget, self.chunk = model, budget, chunk
+    def __init__(self, model, budget, chunk=64, store=None):
+        self.model, self.budget, self.chunk, self.store = model, budget, chunk, store
         self.reading, self.rows = [], []  # requests reading their prompt, and requests writing
         self.kept, self.real = None, None  # the batch's cache, and which of its places are real
 
@@ -56,6 +56,8 @@ class Engine:
         if promised + self.bytes_for(request) > self.budget:
             return False
         request.kept = [{} for _ in self.model.blocks]
+        if self.store:  # lesson 33: start from the stored beginning of this prompt, if there is one
+            request.kept, request.read = self.store.fetch(request.prompt, len(self.model.blocks))
         self.reading.append(request)
         return True
 
@@ -78,6 +80,8 @@ class Engine:
             scores = self.model(torch.tensor([part], device=device), request.kept)[0, -1]
             request.read += len(part)
             if request.read == len(request.prompt):
+                if self.store:
+                    self.store.keep(request.prompt, request.kept)
                 request.written.append(choose(scores, **request.how))
                 out.append((request, request.written[-1]))
                 self.reading.remove(request)
