@@ -7,6 +7,8 @@ from gpt.generate import generate
 from gpt.tasks import prompt, score
 from gpt.tensors import cross_entropy
 
+TRIES = 4  # stories written for each order in a round
+
 
 def sample(model, words, task, generator):
     """One story the model writes for a task, drawn by its own chances. Returns it as a training
@@ -39,8 +41,7 @@ if __name__ == "__main__":
     import copy
     from pathlib import Path
 
-    from gpt.evaluate import interval
-    from gpt.finetune import WARMUP, keep, measure, prepare, tune
+    from gpt.finetune import WARMUP, measure, paired_gap, prepare, tune
     from gpt.optim import AdamW
     from gpt.results import save, say
     from gpt.story import load
@@ -51,13 +52,13 @@ if __name__ == "__main__":
     generator = torch.Generator().manual_seed(0)
     pairs, held, unseen = prepare(cache, words)
     tasks = [task for task, _ in pairs]
-    rounds, groups, tries = 100, 4, 4  # each way of learning gets 1,600 stories
+    rounds, groups = 100, 4  # each way of learning gets 1,600 stories
 
     def draw(net, at):
-        """Round `at`: `tries` stories for each of `groups` tasks. Examples, scores, group numbers."""
+        """Round `at`: `TRIES` stories for each of `groups` tasks. Examples, scores, group numbers."""
         examples, scores, group = [], [], []
         for g in range(groups):
-            for _ in range(tries):
+            for _ in range(TRIES):
                 example, mark = sample(net, words, tasks[at * groups + g], generator)
                 examples.append(example)
                 scores.append(mark)
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     for at in range(rounds):
         examples, scores, _ = draw(model, at)
         drawn += [
-            (tasks[at * groups + i // tries], *pair) for i, pair in enumerate(zip(examples, scores))
+            (tasks[at * groups + i // TRIES], *pair) for i, pair in enumerate(zip(examples, scores))
         ]
     kept = [example for _, example, mark in drawn if mark == 1]
     say(f"first try: {len(kept)} of {len(drawn)} stories pass, and we keep those")
@@ -103,17 +104,11 @@ if __name__ == "__main__":
             recent = []
     scoring, _ = measure("learn from the score", model, words, held, unseen, generator)
 
-    gaps = [
-        [int(a) - int(b) for a, b in zip(ours, theirs)]
-        for ours, theirs in zip(scoring["by_task"], keeping["by_task"])
-    ]
-    gap = sum(map(sum, gaps)) / sum(map(len, gaps))
-    low, high = interval(gaps, generator)
+    gap, (low, high) = paired_gap(scoring["by_task"], keeping["by_task"], generator)
     say(
         f"asked words used, learning from the score minus keeping what passes: {gap:+.2f}, "
         f"95% interval {low:+.2f} to {high:+.2f}"
     )
-    keep(model, cache, "scored")
     save(
         "27_reinforce",
         torch=torch.__version__,
