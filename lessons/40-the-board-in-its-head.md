@@ -18,7 +18,7 @@ We check three things.
 2. Compare with a lazy guess: each square's most usual piece. Score the probe apart on the squares where that guess is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
-The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit. Take a position where white has one queen, with a move to make, and a pawn. Along the probe's line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not. We try margins of 3, 10 and 30.
+The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit. Take a position where white has one queen, with a move to make, and a pawn. Along the probe's line for "queen on this square", nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not.
 
 Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, show what the model would say if it stopped after an earlier block.
 
@@ -128,7 +128,7 @@ A last probe is fitted and tested on each third position, where either side may 
 
 ## What it still cannot do
 
-Everything so far ran on one laptop, and the largest model we trained has 5,374,464 parameters. We have not seen what the same code does on hardware built for it.
+Everything so far ran on one laptop: one file of model code, a storyteller of 5,374,464 parameters and a chess player of 4,488,448. We have not seen what that code does on hardware built for it.
 
 ## Check yourself
 

@@ -25,10 +25,10 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | storing its text | memorisation, overfitting. The gap is the generalisation gap |
 | multiplies and adds | FLOPs |
 | the processor, the graphics chip | CPU, GPU. MPS is PyTorch's name for Apple's graphics chip |
-| rate | learning rate |
+| rate (in training) | learning rate |
 | a task's check | verifier, or grader |
 | pass at k | pass@k |
-| order | instruction, or prompt |
+| order | instruction |
 | padded places left out of the loss | padding, and loss masking |
 | the score (lesson 27) | reward |
 | learning from a score | reinforcement learning. Lesson 27's rule is the policy gradient, or REINFORCE |
@@ -66,7 +66,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 
 ## The terms
 
-- **95% interval**: The middle 95% of the means found by drawing again from the data 1,000 times. [Lesson 24](lessons/24-evaluation.md)
+- **95% interval**: A range for a number measured on a sample. For a mean, the middle 95% of the means found by drawing again from the data 1,000 times. For a pass rate, the exact range from the binomial tails. [Lesson 24](lessons/24-evaluation.md)
 - **Adam**: Keeps running averages of each parameter's slope and squared slope, and steps by rate × average slope / square root of average squared slope. [Lesson 11](lessons/11-optimizers.md)
 - **AdamW**: Adam plus weight decay, applied to weight grids and not to biases, gains or shifts. [Lesson 11](lessons/11-optimizers.md)
 - **attention**: Each token's result is the weighted sum of values, with weights from softmax of its query's dot products with the keys. [Lesson 6](lessons/06-attention.md)
@@ -74,7 +74,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **autograd** (automatic differentiation): Code that works out the loss once, lets each number remember what it was made from, then walks backwards to get each slope. [Lesson 2](lessons/02-gradients.md)
 - **baseline**: A number subtracted from each score before a step of learning from a score. Here it is the average score of a story's group. [Lesson 27](lessons/27-learning-from-a-score.md)
 - **batch**: The random handful of pairs a step learns from, in place of all the text. [Lesson 3](lessons/03-tensors.md)
-- **batching**: Giving the model a row for each reader, so that one pass writes a token for each of them. [Lesson 32](lessons/32-batching.md)
+- **batching**: Giving the model a row for each listener, so that one pass writes a token for each of them. [Lesson 32](lessons/32-batching.md)
 - **bend**: Squashing each number with a function such as tanh between linear layers, because two linear layers in a row do no more than one. [Lesson 4](lessons/04-a-neural-language-model.md)
 - **beta**: In direct preference optimization, the small number that multiplies a pair's lead. It sets how large a lead counts as large. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
 - **bias**: A constant added to each weighted sum in a linear layer. [Lesson 4](lessons/04-a-neural-language-model.md)
@@ -84,6 +84,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **block**: Attention with three parts added: an MLP, a path around each layer, and a normalization. [Lesson 9](lessons/09-the-block.md)
 - **bootstrap**: Drawing again, with repeats allowed, as many items as you hold and taking the mean again, many times. [Lesson 24](lessons/24-evaluation.md)
 - **broadcasting**: PyTorch stretching a column or smaller tensor across all places of a larger one in arithmetic. [Lesson 3](lessons/03-tensors.md)
+- **budget**: The bytes of cache the engine may hold. A request joins the batch only if the rows together still fit. [Lesson 32](lessons/32-batching.md)
 - **byte**: A number from 0 to 255. A computer stores text as bytes. [Lesson 5](lessons/05-tokens.md)
 - **byte pair encoding** (BPE): Make the most frequent pair of neighbouring tokens a new token, replace it everywhere, and repeat until the vocabulary is the size you want. [Lesson 5](lessons/05-tokens.md)
 - **causal mask**: The rule that each token's result depends only on what came before it. [Lesson 7](lessons/07-causal-multi-head-self-attention.md)
@@ -94,6 +95,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **client**: A program that sends requests to a server. [Lesson 36](lessons/36-the-server.md)
 - **clipping**: If the gradient's length is above the limit, scale the gradient down to the limit and keep its direction. [Lesson 12](lessons/12-the-training-loop.md)
 - **comparison loss**: The surprise at a reader's choice between two stories, when the difference between their scores is a bet on that choice. [Lesson 28](lessons/28-a-model-of-what-people-prefer.md)
+- **config file**: A small text file that gives another engine a model's sizes and the settings our code fixes. [Lesson 37](lessons/37-a-real-engine.md)
 - **context**: The most tokens the model reads at once. [Lesson 8](lessons/08-position.md)
 - **coordinator**: The process that draws the batch, sends each worker its share, averages the slopes and sends the average back. [Lesson 20](lessons/20-many-workers.md)
 - **cosine and sine**: The two coordinates of the point (1, 0) after a turn by that angle. [Lesson 15](lessons/15-rotary-positions.md)
@@ -109,11 +111,11 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **embedding**: The row of numbers a token is given. The rows start random and training moves them. [Lesson 4](lessons/04-a-neural-language-model.md)
 - **encoding**: Turning text into token ids. [Lesson 5](lessons/05-tokens.md)
 - **end token**: An extra token that marks where a document ends. It never comes out of ordinary text. [Lesson 5](lessons/05-tokens.md)
-- **engine**: The code that takes requests in and writes their tokens. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **engine**: The code that takes requests in and writes their tokens. In lesson 37, any program that runs a model's arithmetic, such as Apple's MLX. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **fine-tuning**: Training a trained model further on new text. [Lesson 25](lessons/25-fine-tuning.md)
 - **fingerprint**: A short number worked out from a document's text, the same for the same text. [Lesson 18](lessons/18-data.md)
 - **floor**: The loss that neither the model-size term nor the token-count term removes. [Lesson 19](lessons/19-how-big-should-it-be.md)
-- **forward pass**: The pass from tokens to loss. [Lesson 12](lessons/12-the-training-loop.md)
+- **forward pass**: One run of the model from tokens to scores. In training, the loss follows it. [Lesson 12](lessons/12-the-training-loop.md)
 - **gain**: How much more likely our model makes a story than the reference does: the difference of the two log chances. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
 - **gap**: The difference between the loss on training text and the loss on unseen text. [Lesson 13](lessons/13-is-it-working.md)
 - **GELU**: A bend that gives about 0 for large negative numbers and about the number itself for large positive ones. [Lesson 9](lessons/09-the-block.md)
@@ -129,15 +131,16 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **key**: What a token offers, made from its embedding by a linear layer. [Lesson 6](lessons/06-attention.md)
 - **KV cache**: The key and value of each token read so far, kept in each block so a new token is run alone. [Lesson 23](lessons/23-the-kv-cache.md)
 - **language model**: A model that is given some text and says how likely each possible next piece is. [Lesson 1](lessons/01-predict-the-next-token.md)
-- **latency**: The waits a reader feels: the time to the first token, and the gap between tokens. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **latency**: The waits a listener feels: the time to the first token, and the gap between tokens. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **law**: loss = floor + a / parameters^alpha + b / tokens^beta, fitted to short runs to predict the loss of runs not seen. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **layer normalization**: Subtract each token's vector's mean, divide by its spread, then apply a learned gain and shift. [Lesson 9](lessons/09-the-block.md)
-- **lead**: The better story's gain minus the worse story's. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
+- **lead**: The better story's gain minus the worse story's. In lesson 28, one story's score minus the other's. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
 - **leak**: A piece of the unseen text that is also in the training text. [Lesson 24](lessons/24-evaluation.md)
 - **learning rate**: The size of the step in the gradient descent rule. [Lesson 2](lessons/02-gradients.md)
 - **least squares**: The exact answer for the weights that make the sum of squared misses smallest. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **leftover**: What is drawn from after a drafted token is thrown out: the chance the big model has and the draft lacks, shared out to sum to 1. [Lesson 35](lessons/35-speculative-decoding.md)
 - **legal move**: A move the rules of chess allow in the position at hand. [Lesson 38](lessons/38-the-same-code-a-different-world.md)
+- **listener**: A person the storyteller writes for. Lessons 31 to 36 measure how long one waits. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **Llama**: A family of open models from Meta. [Lesson 16](lessons/16-todays-parts.md)
 - **logarithm**: The natural logarithm of x, ln x, is the power that e, about 2.718, must be raised to in order to give x. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **look-alike**: A harmless word that resembles a listed one, used to count the orders a rule refuses wrongly. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
@@ -163,12 +166,12 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **overflow**: A number too big for the fixed count of bits a computer stores it in, such as e to the power 1,000. [Lesson 3](lessons/03-tensors.md)
 - **overlap**: The share of their five-word runs that two documents both have: 1 for the same text, near 0 for different stories. [Lesson 18](lessons/18-data.md)
 - **overreach**: A refusal of an order the rule says to answer. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
-- **padding**: Filling the end of a short row so that rows of different lengths make a grid. Padded places are not scored. [Lesson 25](lessons/25-fine-tuning.md)
+- **padding**: Filling a short row with empty places so that rows of different lengths make a grid: at its end in lesson 25, at its front in lesson 32. Padded places are not scored. [Lesson 25](lessons/25-fine-tuning.md)
 - **pair**: Two stories written to one order, with which of them a reader preferred. [Lesson 28](lessons/28-a-model-of-what-people-prefer.md)
 - **parameters**: The adjustable numbers in a model's calculation. [Lesson 2](lessons/02-gradients.md)
 - **pass at k**: The chance that at least one of k tries passes. [Lesson 24](lessons/24-evaluation.md)
 - **pass rate**: A task's mean of passes and failures. [Lesson 24](lessons/24-evaluation.md)
-- **percentile**: The 95th percentile of a set of waits is the wait that 1 reader in 20 went over. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **percentile**: The 95th percentile of a set of waits is the wait that 1 listener in 20 went over. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **piece**: The keys and values of a run of 16 tokens in the store of beginnings, filed under the whole text up to its end. [Lesson 33](lessons/33-prefix-caching.md)
 - **place** (position): Where a token stands in the text, counted from the start. [Lesson 8](lessons/08-position.md)
 - **prefix caching**: Keeping the keys and values of a beginning that many prompts share, so that each later request reads only what is new. [Lesson 33](lessons/33-prefix-caching.md)
@@ -205,6 +208,8 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **spread** (standard deviation): The usual distance of a set of numbers from their average. [Lesson 6](lessons/06-attention.md)
 - **standard error**: The spread of a set of measurements divided by the square root of how many there are. Lesson 14 calls it the error. [Lesson 14](lessons/14-running-an-experiment.md)
 - **stochastic gradient descent**: Learning from random batches in place of the whole text. [Lesson 3](lessons/03-tensors.md)
+- **story model**: Lesson 21's model: 5,374,464 parameters, trained on short stories. [Lesson 21](lessons/21-the-real-run.md)
+- **storyteller**: The story model after lesson 25's fine-tune, which writes a story to an order. Lesson 36 serves it as lesson 29 left it. [Lesson 25](lessons/25-fine-tuning.md)
 - **stream** (from a server): An answer sent as a run of small events, one for each piece of text. [Lesson 36](lessons/36-the-server.md)
 - **stride**: How far the window moves on each time, scoring only the tokens not scored before. [Lesson 24](lessons/24-evaluation.md)
 - **stuck**: A hidden unit whose output is beyond 0.99 either way, where tanh's slope is tiny. [Lesson 4](lessons/04-a-neural-language-model.md)
@@ -212,17 +217,18 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **sweep**: Trying one setting at a spread of values on a few seeds, such as a rate by factors of about three. [Lesson 14](lessons/14-running-an-experiment.md)
 - **SwiGLU**: Widen twice with two grids, pass one result through SiLU, multiply it entry by entry with the other, then narrow with one grid. [Lesson 16](lessons/16-todays-parts.md)
 - **tanh**: The function (e^x - e^-x) / (e^x + e^-x), which squashes any number into the range -1 to 1. [Lesson 4](lessons/04-a-neural-language-model.md)
-- **task**: A check of one job with a rule that says pass or fail. [Lesson 24](lessons/24-evaluation.md)
+- **task**: A check of one job with a rule that says pass or fail. From lesson 25, an order with its check. [Lesson 24](lessons/24-evaluation.md)
 - **temperature**: Divide each score by T before softmax. Under 1 likely tokens become likelier, over 1 chances move toward even, and 0 is greedy. [Lesson 22](lessons/22-sampling.md)
 - **tensor**: A grid of numbers whose shape says how many lie along each direction. [Lesson 3](lessons/03-tensors.md)
 - **thread**: A line of work that runs beside others inside one program. [Lesson 36](lessons/36-the-server.md)
-- **throughput**: The tokens written each second, added up over all readers. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **throughput**: The tokens written each second, added up over all listeners. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **time to first token**: The wait before anything appears. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **token**: One of the pieces of text a model reads and gives chances to: a character at first, a piece found by byte pair encoding from lesson 5 on. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **top-p**: Sort tokens by chance, keep the smallest set whose chances reach p, drop the rest and share their chance among the kept ones. [Lesson 22](lessons/22-sampling.md)
 - **training**: Fitting a model to text. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **training text**: The part of the text a model learns from. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **unseen text**: The part held back from training, on which the loss is reported. [Lesson 1](lessons/01-predict-the-next-token.md)
+- **usual piece**: The piece a square holds most often: the lazy guess that a probe has to beat. [Lesson 40](lessons/40-the-board-in-its-head.md)
 - **value**: What a token hands over when chosen. [Lesson 6](lessons/06-attention.md)
 - **vector**: A row of numbers. [Lesson 6](lessons/06-attention.md)
 - **vocabulary**: The set of different tokens. [Lesson 1](lessons/01-predict-the-next-token.md)
