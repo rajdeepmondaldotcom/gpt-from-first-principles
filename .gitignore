@@ -7,4 +7,6 @@ __pycache__/
 data/cache/
 *.pt
 *.safetensors
+# the one exception: 218 KB of random weights that lesson 16's test loads
+!tests/llama_reference.safetensors
 *.bin
