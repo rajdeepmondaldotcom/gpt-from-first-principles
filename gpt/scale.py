@@ -121,7 +121,7 @@ if __name__ == "__main__":
     final = law(small + held)
     describe("law from all 22 runs", final)
 
-    budget, choices = 2.7e15, []  # three hours at the speed lesson 17 measured on this Mac
+    budget, choices = 2.7e15, []  # about two and a half hours at the speed lesson 17 measured
     for one in [shape(128, 4), shape(192, 4), shape(256, 6), shape(320, 8), shape(384, 8)]:
         model = GPT(**one)
         count, steps = sum(p.numel() for p in model.parameters()), steps_for(model, budget)

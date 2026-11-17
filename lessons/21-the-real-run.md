@@ -8,7 +8,7 @@ The text is clean and on disk. The size is chosen. The loop can stop and start, 
 
 Nothing on this page is new. Each step is an earlier lesson, used on a run that takes hours and so is hard to do twice.
 
-Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, and changing the last token of a window changes no earlier score. Either failure would have cost three hours to find the slow way.
+Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, and changing the last token of a window changes no earlier score. Either failure would have cost the whole run to find the slow way.
 
 Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart on one run each, and lesson 14 would not call that a difference. The run needs some rate, and the script takes the lowest loss.
 
@@ -66,7 +66,7 @@ uv run pytest tests/test_story.py
 - Weights saved and loaded back give the same scores, to the last bit.
 - The saved file has the names and shapes of lesson 16's reference Llama.
 
-The run itself needs lesson 18's files on disk and about three hours on an M4 laptop's graphics chip. Part of what it prints is below.
+The run itself needs lesson 18's files on disk and two to three hours on an M4 laptop's graphics chip, more when the machine is busy. Part of what it prints is below.
 
 ```bash
 uv run python -m gpt.story

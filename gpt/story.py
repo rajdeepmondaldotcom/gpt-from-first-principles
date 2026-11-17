@@ -18,7 +18,7 @@ from gpt.scale import run, shape, steps_for
 from gpt.train import checkpoint, resume, train
 
 SHAPE = shape(256, 6)  # lesson 19: the smallest size its law cannot tell from the best
-BUDGET = 2.7e15  # multiplies and adds: three hours at the speed lesson 17 measured
+BUDGET = 2.7e15  # multiplies and adds: about two and a half hours at lesson 17's speed
 RATES = (5e-4, 1e-3, 2e-3)
 
 
