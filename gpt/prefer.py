@@ -26,9 +26,9 @@ if __name__ == "__main__":
     model, words = load(cache / "storyteller")  # lesson 25's model
     generator = torch.Generator().manual_seed(0)
     drawn = torch.load(cache / "drawn.pt")  # lesson 27's stories: 4 for each order
-    learn, held = split(drawn, words)
+    learn, held, _ = split(drawn, words)
     flat = [pair for pairs in held for pair in pairs]
-    tokens = [len(ids) - start for _, (ids, start), _ in drawn]
+    tokens = [len(ids) - start - (ids[-1] == words.end) for _, (ids, start), _ in drawn]
     say(
         f"pairs to learn from: {len(learn):,}, pairs held back: {len(flat)}. "
         f"A story is {sum(tokens) / len(tokens):.0f} tokens on average"

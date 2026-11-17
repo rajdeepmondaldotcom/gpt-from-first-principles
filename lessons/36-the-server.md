@@ -1,17 +1,19 @@
 # 36. The server
 
-By the end of this page the storyteller answers over the web. You type a name and three words, a story streams back and is read aloud, you say what happens next, and other listeners are served at the same moment.
+By the end of this page the storyteller answers over the web. You type a name and three words, a story streams back and is read aloud, you type what happens next, and other listeners are served at the same moment.
 
-Each script so far runs once, in a terminal, and stops. Nobody else can ask our model for a story.
+Each script so far runs once, in a terminal, and stops. Other programs cannot ask our model for a story.
 
 ## The idea
 
-A server is a program that waits for requests from other programs, its clients, and answers each one. Ours has five jobs.
+A server is a program that waits for requests from other programs, its clients, and answers each one. Ours serves the storyteller as lesson 29 left it, and has five jobs.
 
-1. Speak a format that clients know. Most tools that talk to a language model send the same request: a list of messages, sent to a web address that ends in `/v1/chat/completions`, answered in a text format called JSON. We answer that request, so any such tool can use our model, a load-testing tool included.
-2. Stream. A story takes seconds to write, and a listener wants each word as it comes. So the answer goes out as a run of small events, one for each piece of text. A token is not always a whole character: `é` is two bytes, and two tokens can carry one byte each. We hold the first half back until the second arrives.
-3. Serve many at once. Each web request gets a thread of its own: a line of work that runs beside the others in one program, and mostly waits. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue.
-4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+1. Speak a format that clients know. OpenAI's chat format, which vLLM speaks too, is a list of messages sent to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so a tool written for it can use our model.
+2. Stream. A listener wants each word as it is written, so the answer goes out as a run of small events, one for each piece of text.
+
+   A token is not always a whole character: `é` is two bytes, and two tokens can carry one each. We hold the first half until the second arrives.
+3. Serve many at once. Each web request gets a thread of its own: work that runs beside the others in one program and waits most of the time. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue. When a listener leaves in the middle of a story, the server stops writing for them and frees their row.
+4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
 
 Two checks tell us the counts are right. An outside tool sends the load and measures it from its own side. And one sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
@@ -29,7 +31,7 @@ Requests inside. Say 5 requests arrive each second and each spends 2 seconds ins
 
 5 × 2 = 10 requests inside, on average
 
-A way to see it: over 100 seconds, 500 requests spend 2 seconds each, 1,000 request-seconds in all. Spread over 100 seconds, that is 10 at a time.
+Over 100 seconds, 500 requests spend 2 seconds each, 1,000 request-seconds in all. Spread over 100 seconds, that is 10 at a time.
 
 ## The code
 
@@ -53,38 +55,37 @@ The engine's thread:
     def work(self):
         last, held = time.perf_counter(), None  # held: the head of the line, while it has no room
         while self.running:
-            while held or not self.inbox.empty():
-                if not held:
-                    held = self.inbox.get()
-                    self.counts["requests"] += 1
-                request, out, arrived = held
-                if self.engine.admit(request):
-                    self.outs[id(request)] = (out, arrived)
-                elif self.outs:
-                    break  # no memory yet: it waits, and so does everyone behind it
-                else:  # it would not fit in an empty engine
-                    with self.lock:
-                        self.counts["refused"] += 1
-                    out.put(None)
-                held = None
-            now = time.perf_counter()
-            inside = (
-                len(self.outs) + self.inbox.qsize() + bool(held)
-            )  # being written to, or in line
-            self.counts["in_flight_seconds"] += inside * (now - last)
-            last = now
-            if not self.outs:
-                time.sleep(0.001)
-                continue
             try:
+                while held or not self.inbox.empty():
+                    if not held:
+                        held = self.inbox.get()
+                        self.counts["requests"] += 1
+                    request, out, arrived = held
+                    if self.engine.admit(request):
+                        self.outs[id(request)] = (out, arrived)
+                    elif self.outs:
+                        break  # no memory yet: it waits, and so does everyone behind it
+                    else:  # it would not fit in an empty engine
+                        with self.lock:
+                            self.counts["refused"] += 1
+                        out.put(None)
+                    held = None
+                now = time.perf_counter()
+                inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
+                self.counts["in_flight_seconds"] += inside * (now - last)
+                last = now
+                if not self.outs:
+                    time.sleep(0.001)
+                    continue
                 written = self.engine.step()
-            except Exception:  # noqa: BLE001  one bad pass must not end the service
+            except Exception:  # noqa: BLE001  one failure must not end the service
                 traceback.print_exc()
-                self.counts["failed"] += len(self.outs)
-                for out, _ in self.outs.values():
-                    out.put(None)
+                lost = [out for out, _ in self.outs.values()] + ([held[1]] if held else [])
+                self.counts["failed"] += len(lost)
+                for out in lost:
+                    out.put(FAILED)  # in place of a token: this answer is over, and not whole
                 self.outs.clear()
-                engine = self.engine
+                held, engine = None, self.engine
                 self.engine = Engine(engine.model, engine.budget, store=engine.store)
                 continue
             for request, token in written:
@@ -94,9 +95,7 @@ The engine's thread:
                     self.counts["first_token_seconds"] += now - arrived
                 self.counts["tokens"] += 1
                 out.put(token)
-                if (
-                    request.done()
-                ):  # count it before the stream ends, so a reader of the counts sees it
+                if request.done():  # counted before the stream ends, so the counts are never behind
                     self.counts["finished"] += 1
                     self.counts["seconds_in_system"] += now - arrived
                     del self.outs[id(request)]
@@ -106,7 +105,11 @@ The engine's thread:
                 out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
-`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
+`self.inbox` is the waiting line, a queue with a limit. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine.
+
+If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine.
+
+The rest of the file is Python's standard web server and the page you see in the browser. The page reads each finished sentence aloud in the browser's own voice, and sends the story so far back with the line you type.
 
 ## The proof
 
@@ -120,31 +123,44 @@ uv run pytest tests/test_server.py
 - An answer stops at the model's context, and a prompt that fills the context is refused with the reason.
 - A listener who leaves after one piece frees their row.
 - A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
-- The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests.
+- The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests. A request waiting in line counts as inside.
+- A request with no prompt, a temperature that is text or `float('nan')`, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
+- A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
-The script starts the server, asks it for one story, then has `ab`, a load tool that comes with the Apache web server, send 200 requests, 16 at a time.
+The script starts the server, asks it for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
 
 ```bash
 uv run python -m gpt.server
 ```
 
 ```
-@@OUTPUT@@
+one request over the web: 'Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking '
+200 requests, 16 at a time, by ab: 22.5 a second, 682 ms each
+the same run by our own counts: 22.5 a second, 680 ms each
+tokens written: 20,000, 2,245 a second
+first token after 31 ms on average
+requests inside, averaged over the run: 15.2
+arrival rate times time inside: 15.3
+a million tokens at that speed: 7 minutes of this machine
+400 requests, 200 at a time: 100 answered, 300 told to try again
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run.
 
-@@RESULTS@@
+The outside tool and our own counts agree: 22.5 requests a second, and 682 ms each against our 680. The server wrote 2,245 tokens a second, with a first token after 31 ms on average. Requests inside averaged 15.2, and the arrival rate times the time inside is 22.5 × 0.680 = 15.3, so the sum holds.
 
-To keep it running and hear a story, start it with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`. That address is this machine itself, at door 8000, and nothing outside the machine can reach it.
+At that speed a million tokens take this laptop 7 minutes. Sent 400 requests, 200 at a time, the server answered 100 and told 300 to try again.
+
+To hear a story, start the server with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine, which nothing outside it can reach.
 
 ## What it still cannot do
 
 ```
-@@SAMPLE@@
+Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking for something special. She wanted to find something special to show her friends. 
+Suddenly, Mira saw a big, fluffy cat and a blue bird. She asked them if they wanted to play with the cat, but they were always scared. Mira said, "No, I don't want to play with the
 ```
 
-That story came over the web from our own server. The server gives the right answers, and we wrote it to be read, in Python. We have not asked how fast an engine built for speed would run the same model.
+That story came over the web from our own server. The server gives the answers the model gives alone, and we wrote its Python for people to read. We have not asked how fast an engine built for speed would run the same model.
 
 ## Check yourself
 
@@ -155,18 +171,12 @@ Predict before you run: 16 requests are inside the server at a time, each takes 
 8. Requests inside equal the rate times the time inside, so the rate is 16 / 2.
 </details>
 
-<details><summary>Why does the server refuse a request when the line is full, when it could let the line grow?</summary>
-
-Lesson 31 showed what a growing line does: each new request waits longer than the last. A no that comes at once lets the client try again or go elsewhere.
-</details>
-
 <details><summary>From lesson 5: why can one token be half a character?</summary>
 
-Our tokens are made of bytes, and a character outside plain English letters takes two bytes or more. Until a merge joins them, each byte is a token of its own.
+Our tokens are made of bytes, and a character outside plain English letters takes two bytes or more. Unless a merge joined them, each byte is a token of its own.
 </details>
 
 Go deeper:
 
-- OpenAI, [the API written down as a specification](https://github.com/openai/openai-openapi). The chat completions request and the stream of events that our server answers with.
 - Google, [Site Reliability Engineering](https://sre.google/sre-book/handling-overload/), chapter 21. What a service should do when more arrives than it can serve.
 - [vLLM](https://github.com/vllm-project/vllm). A server that speaks the same format, with the engine of lessons 32 and 33 built for graphics chips.

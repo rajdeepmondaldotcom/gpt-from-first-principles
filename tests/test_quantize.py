@@ -21,6 +21,12 @@ def test_no_weight_moves_by_more_than_half_a_step(bits):
     assert numbers.abs().max() <= 2 ** (bits - 1) - 1
 
 
+def test_each_row_has_a_scale_of_its_own():
+    numbers, scale = quantize(torch.tensor([[1.0, -0.25], [0.001, 0.00025]]), bits=8)
+    assert scale.shape == (2, 1) and numbers.tolist() == [[127, -32], [127, 32]]
+    # One scale for the whole grid would turn the small row into zeros.
+
+
 def test_a_row_of_zeros_stays_zero():
     numbers, scale = quantize(torch.zeros(2, 4), bits=8)
     assert (numbers == 0).all() and (scale > 0).all()  # a scale of 0 would divide zero by zero

@@ -44,7 +44,7 @@ def speculate(big, draft, ids, n, k=4, generator=None, temperature=1.0):
     ids, start = list(ids), len(ids)
     big_kept, draft_kept = [{} for _ in big.blocks], [{} for _ in draft.blocks]
     big_read = draft_read = 0  # how many tokens each cache holds
-    counts = {"passes": 0, "drafted": 0, "kept": 0}
+    counts = {"passes": 0, "checked": 0, "kept": 0}
     while len(ids) - start < n:
         guesses, q = [], []
         for _ in range(k):  # the draft writes k tokens, one at a time
@@ -55,8 +55,8 @@ def speculate(big, draft, ids, n, k=4, generator=None, temperature=1.0):
         # One pass of the big model: its chances after `ids` and after each guess.
         p = chances(big, (ids + guesses)[big_read:], big_kept, temperature)[-(k + 1) :]
         counts["passes"] += 1
-        counts["drafted"] += k
         for j, guess in enumerate(guesses):
+            counts["checked"] += 1  # a guess after a rejection is dropped unchecked
             if torch.rand((), generator=generator) < keep_chance(p[j], q[j])[guess]:
                 ids.append(guess)
                 counts["kept"] += 1
@@ -134,15 +134,15 @@ if __name__ == "__main__":
     say(f"the big model alone: {alone:,.0f} tokens a second")
     numbers = {"alone": alone}
     for name, small in drafts.items():
-        total = {"passes": 0, "drafted": 0, "kept": 0}
+        total = {"passes": 0, "checked": 0, "kept": 0}
         began = time.perf_counter()
         for prompt in prompts:
             _, counts = speculate(big, small, prompt, 128, k=4, generator=generator)
             total = {key: total[key] + counts[key] for key in total}
         speed = 20 * 128 / (time.perf_counter() - began)
-        share = total["kept"] / total["drafted"]
+        share = total["kept"] / total["checked"]
         say(
-            f"with {name}: {share:.0%} of its guesses kept, "
+            f"with {name}: {share:.0%} of the guesses it checked are kept, "
             f"{20 * 128 / total['passes']:.2f} tokens for each pass of the big model, "
             f"{speed:,.0f} tokens a second"
         )

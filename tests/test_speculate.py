@@ -66,13 +66,13 @@ def test_two_tokens_come_as_often_as_the_big_model_alone_would_write_them():
 def test_a_draft_equal_to_the_big_model_is_always_kept():
     big, generator = model(0), torch.Generator().manual_seed(0)
     ids, counts = speculate(big, big, [1, 2], 20, k=4, generator=generator)
-    assert counts["kept"] == counts["drafted"] and len(ids) == 22
+    assert counts["kept"] == counts["checked"] and len(ids) == 22
     assert counts["passes"] == 4  # 5 tokens a pass: 4 guesses and the free one
 
 
 def test_a_poor_draft_costs_passes_and_not_correctness():
     big, draft, generator = model(0), model(1, width=16), torch.Generator().manual_seed(0)
     ids, counts = speculate(big, draft, [1, 2], 40, k=4, generator=generator)
-    assert len(ids) == 42 and 0 < counts["kept"] < counts["drafted"]
+    assert len(ids) == 42 and 0 < counts["kept"] < counts["checked"]
     # A pass always writes one token, and one more for each guess kept: the count has to balance.
     assert counts["passes"] + counts["kept"] >= 40 > counts["passes"] > 8

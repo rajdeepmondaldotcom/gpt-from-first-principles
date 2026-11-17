@@ -2,15 +2,15 @@
 
 By the end of this page a small model guesses four tokens ahead, the big model checks all four in one pass, and each token still comes with the chance the big model alone would give it.
 
-The model is smaller now. It still runs once, top to bottom, for each token it writes.
+Lesson 34's model is smaller, and it wrote slower: 393 tokens a second against 643. Each token still costs one whole pass of the model.
 
 ## The idea
 
-One pass of the model gives a row of scores at each place it reads, as training has used since lesson 10. So if something could guess the next four tokens, the big model could check all four guesses, and add a fifth token, for the price of one pass.
+One pass of the model gives a row of scores at each place it reads, as training has used since lesson 10. So if something could guess the next four tokens, the big model could check all four, and add a fifth, for the price of one pass.
 
-A small model does the guessing. We call it the draft. It writes four tokens, one at a time. Then the big model reads all four in one pass.
+A small model, the draft, does the guessing. It writes four tokens, one at a time. Then the big model reads all four in one pass.
 
-The obvious check keeps a guess when it is the big model's top token. That writes only what greedy writes, and lesson 22 showed why we want to draw by chance. The check below keeps the big model's chances exactly.
+The plainest check keeps a guess when it is the big model's top token. That writes what greedy writes, and lesson 22 showed why we want to draw by chance. The check below keeps the big model's chances exactly.
 
 Say the draft drew a token to which it gave the chance q, and the big model gives that token the chance p.
 
@@ -19,13 +19,13 @@ Say the draft drew a token to which it gave the chance q, and the big model give
 - If it is thrown out, draw a token from what the big model has left over: p - q for each token where that is above zero, shared out to sum to 1. Drop the guesses after it too, since they followed a token we did not keep.
 - If all four are kept, the same pass has given the big model's chances for a fifth token. Draw it.
 
-Why this is exact: a token is written either because it was drafted and kept, or because a guess was thrown out and it was drawn from the leftover. The hand example adds the two for each token and gets p, and so does a test.
+A token is written in one of two ways: drafted and kept, or drawn from the leftover after a guess was thrown out. The hand example adds the two for each token and gets p, and so does a test.
 
-So the draft cannot change what is written, only how many passes it takes: five tokens a pass at best, and one at worst.
+The draft changes only how many passes the writing takes: five tokens a pass at best, and one at worst.
 
-Which draft agrees most? We train two of one size. The first learns from the stories. The second learns to copy the big model. Its loss is lesson 3's, with the big model's whole row of chances as the target where the text gave one right token: each token's surprise, weighted by the chance the big model gives that token. This is called distillation.
+We train two drafts of one size, to see which agrees more. The first learns from the stories. The second learns to copy the big model. Its loss is lesson 3's, but the target is the big model's whole row of chances in place of one right token: each token's surprise, weighted by the big model's chance for it. This is distillation.
 
-Whether it is faster is a measurement, and lesson 34 is a warning: a smaller model there wrote slower. A round costs four passes of the draft and one of the big model.
+We measure whether it is faster: a round costs four passes of the draft and one of the big model, and in lesson 34 a smaller model wrote slower.
 
 ## By hand
 
@@ -56,11 +56,12 @@ def leftover(p, q):
     return left / left.sum().clamp(min=1e-12)
 ```
 
-`clamp(max=1)` cuts each number above 1 down to 1, and `clamp(min=0)` lifts each number below 0 up to 0.
+`clamp(max=1)` cuts each number above 1 down to 1, and `clamp(min=0)` lifts each below 0 up to it.
 
 ```python
 # gpt/speculate.py
         for j, guess in enumerate(guesses):
+            counts["checked"] += 1  # a guess after a rejection is dropped unchecked
             if torch.rand((), generator=generator) < keep_chance(p[j], q[j])[guess]:
                 ids.append(guess)
                 counts["kept"] += 1
@@ -71,7 +72,9 @@ def leftover(p, q):
             ids.append(torch.multinomial(p[k], 1, generator=generator).item())
 ```
 
-`p[j]` and `q[j]` are the two models' rows of chances for guess `j`, and `k` is the number of guesses, 4. `torch.rand(())` is one number between 0 and 1, drawn evenly, so it falls under the keep chance that share of the time. A `for` loop's `else` runs when the loop was not broken out of. Both models keep lesson 23's cache, and after a rejection each cache forgets the tokens that were dropped.
+`p[j]` and `q[j]` are the two models' rows of chances for guess `j`, and `k` is the number of guesses, 4. `torch.rand(())` is one number drawn evenly between 0 and 1, so it falls under the keep chance that share of the time.
+
+A `for` loop's `else` runs when no `break` ended the loop. Both models keep lesson 23's cache, and after a rejection each cache forgets the tokens that were dropped.
 
 ## The proof
 
@@ -93,16 +96,23 @@ uv run python -m gpt.speculate
 ```
 
 ```
-@@OUTPUT@@
+each draft: 688,896 parameters, 1,500 steps of 32 windows
+a draft trained on the stories: 2.343 nats on unseen stories
+a draft trained on the big model's chances: 2.239 nats on unseen stories
+the big model alone: 636 tokens a second
+with a draft trained on the stories: 35% of its guesses kept, 2.37 tokens for each pass of the big model, 594 tokens a second
+with a draft trained on the big model's chances: 35% of its guesses kept, 2.38 tokens for each pass of the big model, 596 tokens a second
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run.
 
-@@RESULTS@@
+The draft that copied the big model has the lower loss on unseen stories: 2.239 nats against 2.343. Its guesses are kept no more often: 35% of those drafted, for each draft. Guesses dropped after a rejection count as not kept, so a round writes 1 + 4 × 0.35 = 2.4 tokens for each pass of the big model.
+
+Neither is faster than no draft. The big model alone writes 636 tokens a second, and with a draft 594 and 596.
 
 ## What it still cannot do
 
-Each script so far runs once, in a terminal, and stops. Nobody else can ask our model for a story.
+Each script so far runs once, in a terminal, and stops. Other programs cannot ask our model for a story.
 
 ## Check yourself
 
@@ -121,5 +131,5 @@ That is greedy: the same text each time. Drawing by chance is what gave twenty d
 Go deeper:
 
 - Leviathan and others, [Fast Inference from Transformers via Speculative Decoding](https://arxiv.org/abs/2211.17192) (2022). The keep rule, and the sum for tokens for each pass.
-- Chen and others, [Accelerating Large Language Model Decoding with Speculative Sampling](https://arxiv.org/abs/2302.01318) (2023). The same rule, found independently, with timings on a large model.
+- Chen and others, [Accelerating Large Language Model Decoding with Speculative Sampling](https://arxiv.org/abs/2302.01318) (2023). The same rule, found independently.
 - Hinton and others, [Distilling the Knowledge in a Neural Network](https://arxiv.org/abs/1503.02531) (2015). Training a small model on a large model's chances.

@@ -1,12 +1,12 @@
 # 29. Preferences without a scorer
 
-By the end of this page the storyteller has learned from lesson 28's pairs directly, with no second model in between.
+By the end of this page the storyteller has learned from lesson 28's pairs with no second model in between.
 
-The scorer of lesson 28 is a second model to train, to keep and to be fooled. The pairs themselves already say which story is better, and we have not learned from them directly.
+The scorer of lesson 28 is a second model to train and keep, and it can be fooled. The pairs themselves already say which story is better, and we have not learned from them directly.
 
 ## The idea
 
-A pair says that for one order, story A is better than story B. What should that do to the storyteller? It should make A more likely and B less likely. Our model gives each text a chance, so "more likely" has an exact meaning: the log of A's chance should rise and the log of B's should fall.
+A pair says that for one order, story A is better than story B. Training should then make A more likely and B less likely. Our model gives each text a chance, so "more likely" has an exact meaning: the log of A's chance should rise and the log of B's should fall.
 
 We cannot compare the two log chances as they stand. They differ for reasons that say nothing about which story is better: each token lowers a story's log chance, so length alone can put one story far below another. So we compare how far each has moved since training began. Keep a frozen copy of the model, made before this training starts, and call it the reference.
 
@@ -14,19 +14,19 @@ For each story, ask how much more likely our model makes it than the reference d
 
 lead = gain of the better story - gain of the worse story
 
-We want the lead to grow, and the loss is lesson 28's bet again, with the lead times a small number beta in the place of x. Three things follow from that one line.
+We want the lead to grow, and the loss is lesson 28's bet again, with the lead times a small number beta in the place of x.
 
 1. At the start our model is the reference. Each gain is 0, each lead is 0, and the loss is ln 2.
-2. The loss falls as the better story gains on the worse one. It does not care whether the better one rose or the worse one fell.
-3. A pair with a large lead has little left to teach, because a sure bet cannot get much surer. That is what stops the push, and it keeps the model near the reference. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
+2. The loss falls as the better story gains on the worse one. A rise in the better and a fall in the worse count alike.
+3. A pair with a large lead has little left to teach: its loss is nearly flat there, so it pushes little. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
-Its authors show where the loss comes from. Take lesson 28's setting, and let a story's score be beta times its gain. The storyteller then is its own scorer, and the two models of lesson 28 fold into one.
+Its authors derive the loss from lesson 28's setting with one addition, a penalty for drifting from the reference. Let a story's score be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
 
 ## By hand
 
-One pair. Log chances are sums over the story's tokens.
+In one pair, each log chance is a sum over a story's tokens.
 
 | | Better story | Worse story |
 |---|---|---|
@@ -40,8 +40,6 @@ The lead is 1.0 - (-3.0) = 4.0. With a beta of 0.1, x is 0.4.
 |---|---|---|
 | Chance the bet puts on the better story | 1 / (1 + e^-0.4) | 0.599 |
 | Loss | -ln 0.599 | 0.513 |
-
-At the start, with our model equal to the reference, x is 0, the chance 0.5 and the loss 0.693.
 
 ## The code
 
@@ -63,42 +61,43 @@ uv run pytest tests/test_prefer.py
 
 - With our model equal to the reference the loss is ln 2. It is lower when the better story has gained 2 nats on the reference, and higher when it has lost 2.
 - The hand example gives 0.513.
+- One step on a pair makes the better answer gain on the worse one, against the copy made before the step.
 
-The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. The script also asks lesson 28's question: what do the readers give the model's new stories, before and after?
+The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. Training is 200 steps of 8 pairs at a rate of 0.00001. As in lesson 28, the readers also score the model's new stories before and after.
 
 ```bash
 uv run python -m gpt.prefer
 ```
 
 ```
-pairs to learn from: 1,353, pairs held back: 210
-lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.20
+pairs to learn from: 1,386, pairs held back: 240. A story is 178 tokens on average
+lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.21
 lesson 25's model: 0.57 of the asked words used, 95% interval 0.53 to 0.61
 lesson 25's model: 196 stories end by themselves, plain stories 1.549 nats a token
 step 1: 0.693 on 8 pairs. ln 2 is 0.693
-step 50: 0.470 on 8 pairs. ln 2 is 0.693
-step 100: 0.487 on 8 pairs. ln 2 is 0.693
-step 150: 0.412 on 8 pairs. ln 2 is 0.693
-step 200: 0.358 on 8 pairs. ln 2 is 0.693
-held-back pairs where the better story gained on the worse one: 115 of 210, 95% interval 0.48 to 0.61
-after the pairs: 34 of 200 tasks passed, 95% interval 0.12 to 0.22
-after the pairs: 0.61 of the asked words used, 95% interval 0.57 to 0.64
-after the pairs: 200 stories end by themselves, plain stories 1.556 nats a token
-plain stories, after minus before: +0.006 nats, 95% interval +0.006 to +0.007
-the readers give its stories 0.65 on average, where they gave 0.56. The change has a 95% interval of +0.05 to +0.13
+step 50: 0.640 on 8 pairs. ln 2 is 0.693
+step 100: 0.557 on 8 pairs. ln 2 is 0.693
+step 150: 0.303 on 8 pairs. ln 2 is 0.693
+step 200: 0.270 on 8 pairs. ln 2 is 0.693
+held-back pairs where the better story gained on the worse one: 150 of 240, 95% interval 0.55 to 0.70
+after the pairs: 35 of 200 tasks passed, 95% interval 0.13 to 0.23
+after the pairs: 0.60 of the asked words used, 95% interval 0.56 to 0.63
+after the pairs: 197 stories end by themselves, plain stories 1.556 nats a token
+plain stories, after minus before: +0.007 nats, 95% interval +0.006 to +0.008
+the readers give its stories 0.62 on average, where they gave 0.53. The change has a 95% interval of +0.04 to +0.13
 ```
 
-The first loss is ln 2. By step 200 it is 0.358 on a batch of 8 pairs.
+The first loss is ln 2. By step 200 it is 0.270 on a batch of 8 pairs.
 
-That fall says less than it seems to. By then the model has drawn 1,600 pairs from 1,353, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 210 pairs held back, from orders it never trained on. There the better story gained on the worse one in 115. The interval, 0.48 to 0.61, holds one half.
+That fall is on pairs it trains on: by then the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on. There the better story gained on the worse one in 150, and the interval, 0.55 to 0.70, is clear of a half.
 
-The stories it writes did change. On 200 unseen orders the readers give 0.65 where they gave 0.56, and the change has an interval of +0.05 to +0.13, clear of zero. Each of the 200 stories ends, and 34 pass where 30 did. Plain stories cost 0.006 nats, under a tenth of lesson 25's price.
+The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. Lesson 28 drew afresh from the same model and got 0.57. 197 of the 200 stories end, and 35 pass where 30 did, and the two intervals overlap. Plain stories cost 0.007 nats. Lesson 25's cost 0.069, from lesson 21's model, in ten times the steps at a hundred times this rate.
 
-Lesson 28's trap was a number that training sees going up while the readers' number goes down. Here the readers' number went up.
+Lesson 28's push sent the readers' number down. This one sent it up.
 
 ## What it still cannot do
 
-Each lesson since 25 has taught the model to do something better. None has taught it that there is something it must not do.
+Lessons 25 to 29 trained the model toward what to write. None taught it what to refuse.
 
 ## Check yourself
 
@@ -106,7 +105,7 @@ Predict before you run: what is the loss on the first step, before the model has
 
 <details><summary>Answer</summary>
 
-ln 2 = 0.693, or close to it. The model starts as the reference, so each lead is 0 and each bet is even.
+ln 2 = 0.693. The model starts as the reference, so each lead is 0 and each bet is even.
 </details>
 
 <details><summary>Our model makes both stories of a pair 5 nats more likely than the reference does. What is the lead?</summary>
@@ -114,18 +113,18 @@ ln 2 = 0.693, or close to it. The model starts as the reference, so each lead is
 0. Both gains are 5, and the lead is their difference. The loss rewards the better story for gaining on the worse one, and nothing else.
 </details>
 
-<details><summary>What would go wrong with a loss that only raised the better story's log chance?</summary>
+<details><summary>Lesson 25's loss only raised the log chance of good stories. What does this loss have that it lacked?</summary>
 
-Nothing would stop it. The surest way to raise one story's chance is to give it all the chance there is, and the model would lose the rest of what it knows. Here a large lead earns almost nothing more, so the push fades.
+An end to the push. Lesson 25's loss pulls until a story's chance is 1, which it never is. Here a pair with a large lead pulls little.
 </details>
 
-<details><summary>From lesson 28: which of that lesson's two models has gone, and what does its job now?</summary>
+<details><summary>From lesson 14: the readers' number rose from 0.53 to 0.62, with an interval clear of zero. What does that interval leave out?</summary>
 
-The scorer has gone. A story's gain over the reference, times beta, stands in for its score, so the storyteller scores its own stories.
+The seed. It is drawn over the 200 orders, for one training run. Lesson 14 would run more seeds before calling a setting such as beta well chosen.
 </details>
 
 Go deeper:
 
-- Rafailov and others, [Direct Preference Optimization: Your Language Model is Secretly a Reward Model](https://arxiv.org/abs/2305.18290) (2023). The loss on this page, and the proof that it is lesson 28 with the scorer folded in.
+- Rafailov and others, [Direct Preference Optimization: Your Language Model is Secretly a Reward Model](https://arxiv.org/abs/2305.18290) (2023). The loss on this page, and the proof that it is lesson 28's setting, held near a reference, with the scorer folded in.
 - Lambert, [the RLHF book](https://rlhfbook.com/). It sets DPO beside the methods of lessons 27 and 28.
 - Hugging Face, [TRL](https://github.com/huggingface/trl). A library with this loss and its relatives, ready to run.

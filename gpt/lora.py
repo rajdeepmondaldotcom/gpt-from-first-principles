@@ -13,7 +13,8 @@ class LoRA(nn.Module):
 
     def __init__(self, layer, rank):
         super().__init__()
-        self.layer, self.scale = layer, 32 / rank  # over the rank: a first step of one size
+        self.layer = layer
+        self.scale = 32 / rank  # over the rank: the first step is the same size on average
         edge = layer.in_features**-0.5
         self.down = nn.Parameter(torch.empty(rank, layer.in_features).uniform_(-edge, edge))
         self.up = nn.Parameter(torch.zeros(layer.out_features, rank))  # zero: no change at first
@@ -48,6 +49,7 @@ def merge(model):
 
 
 if __name__ == "__main__":
+    from gpt.evaluate import interval
     from gpt.finetune import STEPS, examples_from, measure, plain_gap, prepare, tune
     from gpt.optim import AdamW
     from gpt.story import load
@@ -97,6 +99,22 @@ if __name__ == "__main__":
             f"95% interval {low:+.3f} to {high:+.3f}"
         )
         runs[name] = {"trained": count, "after": after, "plain_gap": gap, "interval": [low, high]}
+
+    # Each run answered the same 200 tasks, so a change is judged on its gap task by task, as
+    # lesson 24 compared two models. Each of the other two runs changes one thing from the first.
+    first, *changed = runs
+    for name in changed:
+        gaps = [
+            [int(ours) - int(theirs) for ours, theirs in zip(new, old)]
+            for new, old in zip(runs[name]["after"]["by_task"], runs[first]["after"]["by_task"])
+        ]
+        gap = sum(map(sum, gaps)) / sum(map(len, gaps))
+        low, high = interval(gaps, generator)
+        say(
+            f"asked words used, {name} minus {first}: {gap:+.3f}, "
+            f"95% interval {low:+.3f} to {high:+.3f}"
+        )
+        runs[name]["gap"] = {"mean": gap, "interval": [low, high]}
 
     window = unseen[0][None, :64]
     with torch.no_grad():

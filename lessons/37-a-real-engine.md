@@ -2,7 +2,7 @@
 
 By the end of this page our model runs in Apple's MLX engine, gives the scores it gives in ours, and you have timed both engines on both of this Mac's chips.
 
-Our server gives the right answers, and we wrote it to be read. We have not asked how fast an engine built for speed would run the same model.
+Our server gives the answers the model gives alone, and we wrote its Python for people to read. We have not asked how fast an engine built for speed would run the same model.
 
 ## The idea
 
@@ -12,7 +12,7 @@ Finding the weights is settled already. Lesson 21 saved them under the names tha
 
 Doing what we do is harder to see. The engine has its own code for attention, for rotary positions, for RMSNorm and for SwiGLU. One detail done another way, such as which entries lesson 15's rotation pairs up, and its scores would differ from ours with no error shown. So we do not ask whether the file loads. We ask whether the scores are the same: the same tokens go into both engines, and we compare each score. They cannot agree to the last bit, because the two engines add the same numbers in different orders and 32-bit sums depend on the order.
 
-Then speed, like against like. Both engines write 128 tokens after the same prompt and take the top token each time, so they write the same story. We time four corners: our engine or Apple's, on the processor or on the graphics chip. We time one reader, and sixteen at once.
+Then speed, like against like. Both engines write 128 tokens after the same prompt and take the top token each time, so they write the same story. We time four corners: our engine or Apple's, on the processor or on the graphics chip. We time one listener, and sixteen at once.
 
 One more timing helps to read the rest. In our engine one token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is most of a pass, a far smaller model will not be much faster. So the script also times a model with 35 times fewer weights.
 

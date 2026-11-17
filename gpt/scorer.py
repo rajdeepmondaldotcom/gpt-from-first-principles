@@ -8,6 +8,8 @@ from torch import nn
 from gpt.reinforce import sample
 from gpt.tasks import score
 
+TRIES = 4  # lesson 27 wrote this many stories for each order
+
 
 class Scorer(nn.Module):
     """A GPT's body with one new layer on top. It reads a text and gives it a single number."""
@@ -41,15 +43,15 @@ def readers(words, task, example):
     return taste(task, text, ids[-1] == words.end)
 
 
-def pairs_from(drawn, words, tries=4):
-    """From each order's `tries` stories, each pair where the readers like one story more.
+def pairs_from(drawn, words):
+    """From each order's stories, each pair where the readers like one story more.
 
     Returns one list for each order, of (better, worse) pairs of examples. An example is lesson
     25's: the token ids of prompt and story, and the place where the story starts.
     """
     out = []
-    for g in range(0, len(drawn), tries):
-        marks = [(readers(words, task, one), one) for task, one, _ in drawn[g : g + tries]]
+    for g in range(0, len(drawn), TRIES):
+        marks = [(readers(words, task, one), one) for task, one, _ in drawn[g : g + TRIES]]
         pairs = []
         for i, (mine, a) in enumerate(marks):
             pairs += [(a, b) for theirs, b in marks[i + 1 :] if mine > theirs]
@@ -58,12 +60,12 @@ def pairs_from(drawn, words, tries=4):
     return out
 
 
-def split(drawn, words, held=60, tries=4):
-    """The pairs to learn from, as one list, and the pairs of the last `held` orders, order by
-    order. Lessons 28 and 29 hold back the same orders."""
-    cut = len(drawn) - held * tries
-    learn = [pair for pairs in pairs_from(drawn[:cut], words, tries) for pair in pairs]
-    return learn, pairs_from(drawn[cut:], words, tries)
+def split(drawn, words, held=60):
+    """The pairs to learn from, as one list; the pairs of the last `held` orders, order by order;
+    and those orders' stories. Lessons 28 and 29 hold back the same orders."""
+    cut = len(drawn) - held * TRIES
+    learn = [pair for pairs in pairs_from(drawn[:cut], words) for pair in pairs]
+    return learn, pairs_from(drawn[cut:], words), drawn[cut:]
 
 
 def liked(model, words, tasks, generator):
@@ -100,12 +102,11 @@ if __name__ == "__main__":
     model, words = load(cache / "storyteller")  # lesson 25's model
     generator = torch.Generator().manual_seed(0)
     drawn = torch.load(cache / "drawn.pt")  # lesson 27's stories: 4 for each order
-    learn, held = split(drawn, words)
-    late = drawn[-4 * len(held) :]  # the stories of the orders held back
+    learn, held, late = split(drawn, words)  # late: the stories of the orders held back
     count = sum(map(len, held))
     say(
-        f"pairs to learn from: {len(learn):,}, from {len(drawn) // 4 - len(held)} orders. "
-        f"Pairs held back: {count}, from {len(held)}"
+        f"pairs to learn from: {len(learn):,}, from {len(drawn) // TRIES - len(held)} orders. "
+        f"Pairs held back: {count}, from {len(held)} orders"
     )
 
     torch.manual_seed(0)  # for the new layer's first weights
@@ -150,7 +151,7 @@ if __name__ == "__main__":
         f"lesson 27's score {base['check']:.2f}"
     )
     pairs, unseen, _ = prepare(cache, words)
-    tasks = [task for task, _ in pairs][len(drawn) // 4 :]  # orders lesson 27 did not use
+    tasks = [task for task, _ in pairs][len(drawn) // TRIES :]  # orders lesson 27 did not use
     liked_before = liked(model, words, unseen, generator)
     optimizer, rounds, curve = AdamW(model.parameters(), rate=3e-4, decay=0.0), 100, []
     learned, loved, checked = [], [], []

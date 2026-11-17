@@ -26,7 +26,7 @@ class Request:
 
 
 def slide(kept, by, pad):
-    """Put `pad` empty places before a cache and turn its keys `by` places on.
+    """Put `pad` empty places before a cache and turn its keys `by` places further.
 
     Only the distance between two tokens enters a score (lesson 15), so a whole row can sit
     anywhere along the batch as long as its keys are turned to match.
@@ -182,7 +182,7 @@ if __name__ == "__main__":
         numbers = sizes[rows] = max(tries[1:], key=lambda one: one["tokens_a_second"])
         say(
             f"{rows} at once: {numbers['tokens_a_second']:,.0f} tokens a second in all, "
-            f"{1 / numbers['seconds_a_token_p50']:,.0f} for each reader"
+            f"{1 / numbers['seconds_a_token_p50']:,.0f} for each listener"
         )
 
     # Lesson 31's three rates of arrival again, with room for 16 requests at once.

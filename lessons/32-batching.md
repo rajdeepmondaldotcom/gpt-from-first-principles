@@ -1,20 +1,20 @@
 # 32. Batching
 
-By the end of this page many readers share each pass of the model, a request joins or leaves between two tokens, and each reader still gets the story they would get alone.
+By the end of this page many listeners share each pass of the model, a request joins or leaves between two tokens, and each listener still gets the story they would get alone.
 
-Lesson 31's machine served one reader while the rest stood in line, and each pass of the model wrote one token for that one reader.
+Lesson 31's machine served one listener while the rest stood in line, and each pass of the model wrote one token for that one listener.
 
 ## The idea
 
-A pass of the model works on a grid of tokens with one row for each text. In training the grid had 32 rows. In writing it has had one. Give it a row for each reader, and one pass writes a token for each of them. The run below measures what that buys.
+A pass of the model works on a grid of tokens with one row for each text. In training the grid had 32 rows. In writing it has had one. Give it a row for each listener, and one pass writes a token for each of them.
 
 1. The rows have different lengths, and a grid needs rows of one length. We line the rows up at their ends and put empty places in front of the shorter ones. A grid of true and false, called `real`, marks the places that hold tokens, and attention reads only those.
-2. Readers come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
-3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token. The engine takes a request only if the cache it may come to need, for its prompt and the most it may write, still fits in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
+2. Listeners come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
+3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine counts each request at the size of the longest, and takes a new one only if the rows together still fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
 
-Joining takes care with places. A row read its prompt at places 0, 1, 2 and so on, and lesson 15 turned each key by its place. In the batch that row may sit further along, behind some empty places. With rotary positions a score depends only on the distance between two tokens, so we turn each of the row's keys on by the same number of places and no score changes.
+A row read its prompt at places 0, 1, 2 and so on, and the model turned each key by its place, as in lesson 15. In the batch that row may sit further along, behind some empty places. With rotary positions a score depends only on the distance between two tokens, so we turn each of the row's keys further by the same number of places and no score changes.
 
-A long prompt is read in chunks of 64 tokens, one chunk a round. The readers who are already being written to get their next token between two chunks.
+The engine works in rounds. A round writes one token for each row and reads 64 tokens of each prompt still being read.
 
 ## By hand
 
@@ -26,20 +26,20 @@ Row A has read 5 tokens and row B has read 3. B gets two empty places in front.
 | Row B | empty | empty | b | b | b |
 | `real` for B | false | false | true | true | true |
 
-B's tokens were read at places 0, 1 and 2, and now sit at 2, 3 and 4, so each of B's keys is turned 2 places on. Alone, B's next query would sit at place 3 and meet its newest key at place 2, a distance of 1. In the batch the query is at 5 and that key at 4: a distance of 1 again.
+B's tokens were read at places 0, 1 and 2, and now sit at 2, 3 and 4, so each of B's keys is turned 2 more places. Alone, B's next query would sit at place 3 and meet its newest key at place 2, a distance of 1. In the batch the query is at 5 and that key at 4: a distance of 1 again.
 
 Memory. A request with a prompt of 64 tokens that may write 64 more can come to hold 128 tokens.
 
 128 × 6,144 = 786,432 bytes
 
-Room for 16 such requests is 12.6 MB.
+Room for 16 such requests is 12.6 MB. A request of 16 tokens beside them counts as 128 too.
 
 ## The code
 
 ```python
 # gpt/engine.py
 def slide(kept, by, pad):
-    """Put `pad` empty places before a cache and turn its keys `by` places on.
+    """Put `pad` empty places before a cache and turn its keys `by` places further.
 
     Only the distance between two tokens enters a score (lesson 15), so a whole row can sit
     anywhere along the batch as long as its keys are turned to match.
@@ -54,7 +54,7 @@ def slide(kept, by, pad):
         )
 ```
 
-`kept` is lesson 23's list of caches, one for each block. Values carry no place, so they are moved and not turned.
+`kept` is lesson 23's list of caches, one for each block. Values carry no place, so we move them without turning them.
 
 ```python
 # gpt/engine.py
@@ -87,7 +87,11 @@ def slide(kept, by, pad):
         return out
 ```
 
-`self.rows` are the requests being written to and `self.reading` the ones still reading their prompt. Each pass adds one real place to each row: the column of ones. `admit` does the sum of point 3, `join` lines a new row up with `slide`, and `leave` cuts out each row whose `done()` is true. Each row picks its token with lesson 22's `choose` and its own settings, `request.how`. `self.store` is empty until lesson 33. The model itself gained two lines: when a cache holds `real`, attention's mask leaves out the places it marks false.
+`self.rows` are the requests being written to and `self.reading` the ones still reading their prompt. Each pass adds one real place to each row: the column of ones.
+
+`admit` does the sum of point 3, `join` lines a new row up with `slide`, and `leave` cuts out each row whose `done()` is true. Each row picks its token with lesson 22's `choose` and its own settings, `request.how`. `self.store` is empty until lesson 33.
+
+The model itself gained two lines: when a cache holds `real`, attention's mask leaves out the places it marks false.
 
 ## The proof
 
@@ -95,11 +99,11 @@ def slide(kept, by, pad):
 uv run pytest tests/test_engine.py
 ```
 
-- Five requests with prompts of different lengths arrive in rounds 0, 2, 7 and 9, join a running batch and leave it at different times. Each writes what it writes alone.
+- Five requests with prompts of different lengths arrive in rounds 0, 2, 7 and 9, join a running batch and leave it at different times. Each gets, at each token, the scores the model gives that text read alone.
 - A stop token ends its own row and no other.
 - A prompt read in chunks of 4 tokens gives the answer it gives read whole, and a short request beside it gets its first token after one round.
 - With four rows, one round calls the model once, on a grid of 4 rows and 1 new token each.
-- With a budget for two requests, `admit` says no to a third, and yes once the first two are done.
+- With a budget for two requests, `admit` says no to a third, and yes once the first two are done. Beside a prompt of 40 tokens, a prompt of 2 counts as long, and the cache never passes the budget.
 - A row moved six places along, with its keys turned to match, gets the scores it got before.
 - With the mask taken out, the empty places are read and the scores change.
 
@@ -108,38 +112,49 @@ uv run python -m gpt.engine
 ```
 
 ```
-@@OUTPUT@@
+8 requests that join a running batch two steps apart: 8 write what they write alone
+a prompt of 192 tokens read in chunks of 64: the same answer, True
+1 at once: 617 tokens a second in all, 628 for each reader
+2 at once: 804 tokens a second in all, 412 for each reader
+4 at once: 1,166 tokens a second in all, 305 for each reader
+8 at once: 1,606 tokens a second in all, 215 for each reader
+16 at once: 2,002 tokens a second in all, 138 for each reader
+32 at once: 2,246 tokens a second in all, 79 for each reader
+lesson 31's machine finished 10.1 requests a second, one at a time
+the cache for one request of 64 + 64 tokens: 786,432 bytes
+5.0 requests a second, room for 16: first token after 3 ms for half, 8 ms for 95 in 100, 275 tokens a second in all
+9.1 requests a second, room for 16: first token after 6 ms for half, 10 ms for 95 in 100, 493 tokens a second in all
+15.1 requests a second, room for 16: first token after 8 ms for half, 13 ms for 95 in 100, 813 tokens a second in all
+a request offered one byte less than its cache needs is taken: False
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run.
 
-@@RESULTS@@
+Eight requests that join two steps apart each write what they write alone, and so does a prompt read in chunks.
+
+Alone, a listener gets 628 tokens a second. Among 16, each gets 138 and the machine writes 2,002 in all, 3.2 times what it wrote for one. At 32 it writes 2,246, 12% more than at 16.
+
+At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 13 ms or less, and the machine writes 813 tokens a second where it wrote 631.
 
 ## What it still cannot do
 
-Each request reads its whole prompt from the first token, even when a thousand requests before it began with the same words.
+Each request reads its whole prompt from the first token, even when the requests before it began with the same words.
 
 ## Check yourself
 
-Predict before you run: 16 readers share each pass. Does each one get their tokens faster or slower than a reader alone, and does the machine write more or fewer tokens a second in all?
+Predict before you run: 16 listeners share each pass. Does each one get their tokens faster or slower than a listener alone, and does the machine write more or fewer tokens a second in all?
 
 <details><summary>Answer</summary>
 
-Slower for each reader, more in all. A pass with 16 rows takes longer than a pass with one, and far less than 16 passes.
-</details>
-
-<details><summary>Row B joins a batch whose rows are 40 tokens long. B has read 25. How many empty places go in front of B, and how far are its keys turned?</summary>
-
-15 empty places, and each key is turned 15 places on. B's tokens then sit at places 15 to 39, ending where the other rows end.
+Slower for each listener, more in all: 138 tokens a second each where one alone gets 628, and 2,002 in all where one gets 617.
 </details>
 
 <details><summary>From lesson 15: what would break if positions came from lesson 8's table of places?</summary>
 
-A row could not be moved. Lesson 8 added a place's numbers to the token's at the input, so each key made from them has place 3 mixed in, with no way to take it out. Each joining row would have to be read again at its new places.
+A row could not be moved. Lesson 8 added a place's numbers to the token's at the input, so each key has its place mixed in. Each joining row would have to be read again at its new places.
 </details>
 
 Go deeper:
 
 - Kwon and others, [Efficient Memory Management for Large Language Model Serving with PagedAttention](https://arxiv.org/abs/2309.06180) (2023). The vLLM paper: this batch, with the cache in blocks that rows can share.
 - Yu and others, [Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu) (2022). Where joining and leaving between two tokens comes from.
-- [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm). A serving engine small enough to read whole.

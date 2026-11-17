@@ -120,7 +120,10 @@ if __name__ == "__main__":
 
     # A service that takes one request at a time, at three rates of arrival.
     one = Engine(model, 0).bytes_for(Request(prompts(1)[0], 64))  # the cache one request needs
-    each = serve(engine, [(0.0, Request(*prompts(1), 64, how=how))])[0]["tokens"][-1]
+    # The fastest of three: other work on the machine can only make a run slower.
+    each = min(
+        serve(engine, [(0.0, Request(*prompts(1), 64, how=how))])[0]["tokens"][-1] for _ in range(3)
+    )
     capacity = 1 / each  # requests a second, if the machine never rested
     say(f"alone, a prompt of 64 tokens and an answer of 64 take {each:.2f} s")
     say(f"one request at a time can finish {capacity:.1f} requests a second")

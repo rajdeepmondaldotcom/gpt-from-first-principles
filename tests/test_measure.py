@@ -23,7 +23,7 @@ class Ticks:
     """A clock that moves one second each time the engine takes a step."""
 
     def __init__(self, engine):
-        self.now, step = 0.0, engine.step
+        self.now, self.reads, step = 0.0, 0, engine.step
 
         def counted():
             out = step()
@@ -33,6 +33,8 @@ class Ticks:
         engine.step = counted
 
     def __call__(self):
+        self.reads += 1
+        assert self.reads < 10_000, "serve keeps reading a clock that does not move"
         return self.now
 
 
