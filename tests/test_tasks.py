@@ -17,10 +17,8 @@ SEEN = count_documents(STORIES)
 
 def test_a_task_is_the_name_and_the_three_words_the_story_leans_on():
     task = make(STORIES[0], SEEN, len(STORIES))
-    assert task == {
-        "name": "Mira",
-        "words": [RARE[0], RARE[7], RARE[13]],
-    }  # the one used twice first
+    # The word used twice comes first. The other two are as rare as each other: alphabetical.
+    assert task == {"name": "Mira", "words": [RARE[0], *sorted([RARE[7], RARE[13]])]}
 
 
 def test_common_words_and_one_off_names_make_no_task():
