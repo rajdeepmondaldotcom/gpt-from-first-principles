@@ -2,19 +2,19 @@
 
 By the end of this page our model runs in Apple's MLX engine, gives the scores it gives in ours, and you have timed both engines on both of this Mac's chips.
 
-Our server gives the answers the model gives alone, and we wrote its Python for people to read. We have not asked how fast an engine built for speed would run the same model.
+Our engine writes 539 tokens a second where memory alone allows 4,231, and lessons 34 and 35 made it no faster. We have not seen what an engine built for speed does with the same model.
 
 ## The idea
 
-Our model is one file of weights and about 200 lines of Python. An engine is another program that reads the same file and does the same arithmetic, written by people whose whole job is speed. Handing a model over takes two things: the engine must find each weight, and it must do with them what we do.
+Our model is one file of weights and about 200 lines of Python. An engine is another program that reads the same file and does the same arithmetic, built for speed. Handing a model over takes two things: the engine must find each weight, and do with them what we do.
 
-Finding the weights is settled already. Lesson 21 saved them under the names that engines for Llama-format models look for, in lesson 10's file format. What the engine still needs is the sizes: the width, the context, the number of blocks, of heads and of key heads, and the three settings that lesson 16 said our code fixes. Those are the width inside SwiGLU, the small number inside RMSNorm and the base of the rotary speeds. Those go in a small text file called `config.json`. Writing that file is the whole export.
+Finding the weights is settled: lesson 21 saved them under the names that engines for Llama-format models look for, in lesson 10's file format. The engine still needs the sizes, and the three settings lesson 16 said our code fixes: the width inside SwiGLU, the small number inside RMSNorm and the base of the rotary speeds. Those go in a small text file, `config.json`. Writing it is the whole export.
 
-Doing what we do is harder to see. The engine has its own code for attention, for rotary positions, for RMSNorm and for SwiGLU. One detail done another way, such as which entries lesson 15's rotation pairs up, and its scores would differ from ours with no error shown. So we do not ask whether the file loads. We ask whether the scores are the same: the same tokens go into both engines, and we compare each score. They cannot agree to the last bit, because the two engines add the same numbers in different orders and 32-bit sums depend on the order.
+Doing what we do is harder to see. The engine has its own code for attention, rotary positions, RMSNorm and SwiGLU. One detail done another way, such as which entries lesson 15's rotation pairs up, and its scores would differ from ours with no error shown. So we feed both engines the same tokens and compare each score. They cannot agree to the last bit: the engines add the same numbers in different orders, and 32-bit sums depend on the order.
 
-Then speed, like against like. Both engines write 128 tokens after the same prompt and take the top token each time, so they write the same story. We time four corners: our engine or Apple's, on the processor or on the graphics chip. We time one listener, and sixteen at once.
+Then speed, like against like. Both engines write 128 tokens after the same prompt and take the top token each time. We time our engine and Apple's, on the processor and on the graphics chip, for one listener and for sixteen at once.
 
-One more timing helps to read the rest. In our engine one token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is most of a pass, a far smaller model will not be much faster. So the script also times a model with 35 times fewer weights.
+One more timing reads the rest. One token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is a large part of a pass, a far smaller model will not be much faster. So the script also times an untrained model as deep as ours and an eighth as wide: 26 times fewer weights, the same calls.
 
 ## By hand
 
@@ -24,13 +24,19 @@ The story model's sizes, as the config file gives them.
 |---|---|---|
 | `hidden_size` | 256 | the width |
 | `num_hidden_layers` | 6 | the blocks |
-| `num_attention_heads` | 8 | a head for each 32 of width |
-| `num_key_value_heads` | 4 | lesson 16's grouped heads |
+| `num_attention_heads` | 8 | 256 / 32 |
+| `num_key_value_heads` | 4 | grouped heads |
 | `max_position_embeddings` | 256 | the context |
-| `intermediate_size` | 682 | SwiGLU's width: 8 × 256 / 3, rounded down |
-| `vocab_size` | 4,097 | 4,096 tokens and the end token |
+| `intermediate_size` | 682 | 8 × 256 / 3, rounded down |
+| `vocab_size` | 4,097 | 4,096 and the end token |
 
-From tokens a second to the time for one token. At @@OURS@@ tokens a second, one token takes 1,000 / @@OURS@@ = @@MS@@ ms. The story model has 6 blocks, so that is about @@PERBLOCK@@ ms a block.
+Where a pass's time goes. Say a pass costs a fixed part F for its calls and a part A for arithmetic that goes with the count of weights. In the run below our model takes 1,000 / 775 = 1.29 ms a token, and the model with 26 times fewer weights and the same calls takes 1,000 / 1,648 = 0.61 ms.
+
+1.29 = F + A
+
+0.61 = F + A / 26
+
+Subtract: 0.68 = A × 25 / 26, so A is 0.71 ms and F is 0.58 ms.
 
 ## The code
 
@@ -59,7 +65,7 @@ def export(folder, out):
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
 ```
 
-`shape.json` is the file lesson 21 saved beside the weights. `read_safetensors` is lesson 10's reader. `gate_proj` is the Llama name for SwiGLU's first grid, and a grid is stored with a row for each output (lesson 4), so its count of rows is SwiGLU's width. A `kv_heads` of None means a key head for each head. `tie_word_embeddings` says that the token rows and the scores layer are one grid, as they have been since lesson 10.
+`shape.json` is lesson 21's file of sizes, and `read_safetensors` lesson 10's reader. `gate_proj` is the Llama name for SwiGLU's first grid, stored with a row for each output, so its count of rows is SwiGLU's width. A `kv_heads` of None means a key head for each head. `tie_word_embeddings` says the token rows and the scores layer are one grid, as since lesson 10.
 
 ## The proof
 
@@ -69,7 +75,7 @@ uv run pytest tests/test_export.py
 
 - The config file of a small model names each of its sizes, and the weights file is copied byte for byte.
 
-One more test needs Apple's engine, which exists for Macs. As in lesson 5, `--extra reference` installs it and `-m reference` picks the tests that use it:
+One more test needs Apple's engine, which exists for Macs. As in lesson 5, `--extra reference` installs it and `-m reference` runs its tests:
 
 ```bash
 uv run --extra reference pytest -m reference tests/test_export.py
@@ -82,12 +88,28 @@ uv run python -m gpt.export
 ```
 
 ```
-@@OUTPUT@@
+256 unseen tokens, largest gap between the two engines' scores: 0.000013
+places where both engines put the same token on top: 256 of 256
+one token's pass makes 516 calls into PyTorch
+a model 26 times smaller makes 516
+ours, processor: 775 tokens a second
+ours, processor, 16 at once: 4,134 tokens a second
+ours, processor, a model 26 times smaller: 1,648 tokens a second
+ours, graphics chip: 104 tokens a second
+Apple's engine, graphics chip: 298 tokens a second
+Apple's engine, graphics chip, 16 at once: 5,921 tokens a second
+Apple's engine, processor: 942 tokens a second
+Apple's engine, processor, 16 at once: 5,943 tokens a second
+the two engines write the same first 128 tokens of 128
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run. Another program was using the graphics chip during this run, so the four timings on the chip are lower than a free chip gives.
 
-@@RESULTS@@
+The engines agree: the largest gap between their scores is 0.000013, the top token is the same at 256 of 256 places, and they write the same 128 tokens.
+
+On the processor, one listener gets 775 tokens a second from our engine and 942 from Apple's. With 16 at once it is 4,134 against 5,943. On the graphics chip ours writes 104, a seventh of its speed on the processor. Apple's writes 298 there alone and 5,921 with 16 at once, level with its processor.
+
+The small model answers part of lesson 31's question. It makes the same 516 calls on 26 times fewer weights and writes 1,648 tokens a second, only 2.1 times as fast. By the sum above, 0.58 of a pass's 1.29 ms is the fixed cost of its calls. Lessons 34 and 35 cut arithmetic, and close to half of a pass is not arithmetic. Sixteen listeners share the calls and get 5.3 times the tokens.
 
 ## What it still cannot do
 
@@ -99,7 +121,7 @@ Predict before you run: the same model, the same prompt, the top token each time
 
 <details><summary>Answer</summary>
 
-They can differ, and in our run they did not. Scores differ in about the fifth decimal place. Two top tokens that close would be a tie that the engines could break differently, and from there the stories would part.
+In our run they are, all 128 tokens. They need not be: the scores differ in about the fifth decimal place, and two top tokens that close would be a tie the engines could break differently.
 </details>
 
 <details><summary>An engine loads our file with no error, and its stories read well. Why is that not proof that the export is right?</summary>
@@ -107,9 +129,9 @@ They can differ, and in our run they did not. Scores differ in about the fifth d
 A model with one detail done differently still writes plausible text. Only a comparison of scores, token by token, shows that the arithmetic is ours.
 </details>
 
-<details><summary>A model has 35 times fewer weights and writes only a few times faster. What does that tell you?</summary>
+<details><summary>A model has 26 times fewer weights, makes the same calls and writes 2.1 times as fast. What does that tell you?</summary>
 
-Most of the time for a token is not arithmetic on weights. It is the fixed cost of each call into the engine, which a smaller model pays as often.
+Arithmetic on weights is about half of the time for a token. The rest is the fixed cost of each call into the engine, which a smaller model pays as often.
 </details>
 
 <details><summary>From lesson 16: why does the config file carry `rms_norm_eps` and `rope_theta`?</summary>
@@ -121,4 +143,3 @@ Go deeper:
 
 - Apple, [MLX](https://github.com/ml-explore/mlx) and [mlx-lm](https://github.com/ml-explore/mlx-lm). The engine used here, and its code for Llama-format models.
 - He, [Making Deep Learning Go Brrrr From First Principles](https://horace.io/brrr_intro.html). The three places a model's time goes: arithmetic, moving memory, and the cost of each call.
-- [llama.cpp](https://github.com/ggml-org/llama.cpp). Another engine, with a file format of its own, that runs the same kind of model on a processor.

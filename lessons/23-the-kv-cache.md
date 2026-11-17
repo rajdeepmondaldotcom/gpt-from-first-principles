@@ -103,15 +103,15 @@ uv run python -m gpt.generate
 ```
 
 ```
-without a cache: 20,700 tokens read, 102 tokens a second
-with the cache: 203 tokens read, 373 tokens a second
+without a cache: 20,700 tokens read, 227 tokens a second
+with the cache: 203 tokens read, 802 tokens a second
 the two stories are the same: True
 the cache holds 6,144 bytes for each token
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop, and they move from run to run.
 
-With the cache the model reads 102 times fewer tokens and writes 3.7 times as fast. It still calls the model 200 times, once for each token.
+With the cache the model reads 102 times fewer tokens and writes 3.5 times as fast. It still calls the model 200 times, once for each token.
 
 ## What it still cannot do
 

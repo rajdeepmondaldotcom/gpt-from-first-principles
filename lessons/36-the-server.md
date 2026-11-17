@@ -16,7 +16,7 @@ A server is a program that waits for requests from other programs, its clients, 
 4. Say no early. A request the engine has no memory for yet waits in a line, as in lesson 31. The line has a limit. When it is full, the server answers "busy, try again" at once.
 5. Count. A page at `/metrics` gives the running totals as plain text: requests, refusals, tokens, the wait for first tokens and the time requests spent inside.
 
-Two checks tell us the counts are right. An outside tool sends the load and measures it from its own side. And one sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
+Two checks tell us the counts are right. An outside tool sends the load and measures it. One sum has to balance: requests inside the server, averaged over time, equal the rate at which they arrive times the average time one spends inside.
 
 ## By hand
 
@@ -123,7 +123,7 @@ uv run pytest tests/test_server.py
 - An answer stops at the model's context, and a prompt that fills the context is refused with the reason.
 - A listener who leaves after one piece frees their row.
 - A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
-- The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests. A request waiting in line counts as inside.
+- The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests.
 - A request with no prompt, a temperature that is text or `float('nan')`, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
 - A pass that fails gives each answer it was writing an error, begun or not, and the next request is answered.
 
@@ -134,33 +134,35 @@ uv run python -m gpt.server
 ```
 
 ```
-one request over the web: 'Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking '
-200 requests, 16 at a time, by ab: 22.5 a second, 682 ms each
-the same run by our own counts: 22.5 a second, 680 ms each
-tokens written: 20,000, 2,245 a second
-first token after 31 ms on average
+one request over the web: 'Once upon a time there was a brave girl named Mira. She was always looking for something fun, so she wanted to buy a big'
+200 requests, 16 at a time, by ab: 21.4 a second, 718 ms each
+the same run by our own counts: 21.3 a second, 716 ms each
+tokens written: 19,971, 2,131 a second
+first token after 33 ms on average
 requests inside, averaged over the run: 15.2
 arrival rate times time inside: 15.3
-a million tokens at that speed: 7 minutes of this machine
-400 requests, 200 at a time: 100 answered, 300 told to try again
+a million tokens at that speed: 8 minutes of this machine
+400 requests, 200 at a time: 100 answered, 300 told to try again, 0 failed
 ```
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The outside tool and our own counts agree: 22.5 requests a second, and 682 ms each against our 680. The server wrote 2,245 tokens a second, with a first token after 31 ms on average. Requests inside averaged 15.2, and the arrival rate times the time inside is 22.5 × 0.680 = 15.3, so the sum holds.
+The outside tool and our own counts agree: 21.4 requests a second by its count and 21.3 by ours, and 718 ms each against 716. The server wrote 2,131 tokens a second, with a first token after 33 ms on average. Requests inside averaged 15.2. Requests left as fast as they arrived, at 21.3 a second, and 21.3 × 0.716 = 15.3: the sum holds.
 
-At that speed a million tokens take this laptop 7 minutes. Sent 400 requests, 200 at a time, the server answered 100 and told 300 to try again.
+At that speed a million tokens take this laptop 8 minutes. Sent 400 requests, 200 at a time, the server answered 100, told 300 to try again and failed none.
 
 To hear a story, start the server with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`: this machine, which nothing outside it can reach.
 
 ## What it still cannot do
 
 ```
-Once upon a time, there was a brave girl named Mira. Mira was always exploring and exploring. One day, Mira was looking for something special. She wanted to find something special to show her friends. 
-Suddenly, Mira saw a big, fluffy cat and a blue bird. She asked them if they wanted to play with the cat, but they were always scared. Mira said, "No, I don't want to play with the
+Once upon a time there was a brave girl named Mira. She was always looking for something fun, so she wanted to buy a big, beautiful fairy. One day she saw a beautiful, beautiful rainbow in the sky. She wanted to pick up the moon in her garden and take it home. 
+Mira was so excited, she ran off to talk to the rainbow. Everywhere she went, she could see the beautiful rainbow. One day, the moon started to increase in size, and it got so big, it filled her garden.
+Mira was so very brave, she didn’t even notice the moon! But Mira got trying to take the moon home, but she forgot about the moon. 
+The moon was so far away, as the moon got too small and she could not get there. Mira was so scared she had to leave the moon in the night, and now the moon was back in the sky.
 ```
 
-That story came over the web from our own server. The server gives the answers the model gives alone, and we wrote its Python for people to read. We have not asked how fast an engine built for speed would run the same model.
+That story came over the web from our own server, to the order Mira, cat, moon and brave. It has Mira, the moon and brave, and no cat. Its engine writes 539 tokens a second where memory alone allows 4,231, and lessons 34 and 35 made it no faster.
 
 ## Check yourself
 
