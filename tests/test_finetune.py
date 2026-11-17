@@ -1,6 +1,6 @@
 import torch
 
-from gpt.finetune import answer_loss, collate, tune
+from gpt.finetune import answer_loss, collate, example, tune
 from gpt.generate import generate
 from gpt.model import GPT
 from gpt.optim import AdamW
@@ -40,6 +40,21 @@ def test_changing_a_prompt_target_leaves_the_loss_alone():
     assert answer_loss(net, x, changed, scored).item() != before
 
 
+def test_an_example_is_the_prompt_then_the_answer_then_the_end_token(words):
+    ids, start = example(words, "ab", "cd")
+    assert ids == [97, 98, 99, 100, words.end] and start == 2  # the answer begins at place 2
+
+
+def test_tune_pads_each_batch_to_the_models_context():
+    net, shapes = model(), []
+    net.embed.register_forward_hook(lambda part, inputs, out: shapes.append(inputs[0].shape))
+    optimizer, generator = AdamW(net.parameters(), rate=0.0), torch.Generator().manual_seed(0)
+    short = [([1, 2, SEP, 1, 2, END], 3)]
+    for _ in tune(net, optimizer, short, 2, peak=1e-3, generator=generator, pad=END, size=4):
+        pass
+    assert shapes == [(4, net.context - 1)] * 2  # one shape for each batch, whatever is in it
+
+
 def test_it_learns_to_answer_and_to_stop():
     net, generator = model(), torch.Generator().manual_seed(0)
     examples = [copy_task(generator) for _ in range(500)]
@@ -56,4 +71,4 @@ def test_it_learns_to_answer_and_to_stop():
 
 def test_before_tuning_it_does_not_stop():
     written = generate(model(), [3, 7, SEP], 10, stop=END, temperature=0)
-    assert written[3:] != [3, 7, END]
+    assert END not in written[3:]

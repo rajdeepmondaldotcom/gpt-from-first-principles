@@ -1,3 +1,5 @@
+import itertools
+
 import pytest
 import torch
 
@@ -23,8 +25,11 @@ def test_an_answers_log_chance_is_the_sum_over_its_tokens():
         assert mine.item() == pytest.approx(by_hand.item(), abs=1e-5)
 
 
-def exact_and_sampled(baseline, samples=200_000):
-    """A policy over 5 answers with known rewards: the true slope of the mean reward, and estimates."""
+def exact_and_sampled(group, samples=200_000):
+    """A policy over 5 answers with known rewards: the true slope of the mean reward, and estimates.
+
+    Each sample's reward has the average of its group of `group` samples taken off. 0 takes nothing.
+    """
     scores = torch.tensor([0.5, -0.2, 0.1, 0.9, -0.6], requires_grad=True)
     rewards = torch.tensor([1.0, 0.0, 0.0, 1.0, 0.0])
     (torch.softmax(scores, 0) * rewards).sum().backward()  # the mean reward, exactly
@@ -33,21 +38,47 @@ def exact_and_sampled(baseline, samples=200_000):
     picks = torch.multinomial(torch.softmax(scores.detach(), 0), samples, True, generator=generator)
     onehot = torch.nn.functional.one_hot(picks, 5).float()
     slopes = onehot - torch.softmax(scores.detach(), 0)  # the slope of each pick's log chance
-    centre = rewards[picks].mean() if baseline else 0.0
-    each = (rewards[picks] - centre)[:, None] * slopes  # one estimate of the slope per sample
+    taken = rewards[picks]
+    centre = taken.view(-1, group).mean(dim=1).repeat_interleave(group) if group else 0.0
+    each = (taken - centre)[:, None] * slopes  # one estimate of the slope per sample
     return exact, each
 
 
 def test_the_sampled_slope_averages_to_the_exact_one():
-    exact, each = exact_and_sampled(baseline=False)
+    exact, each = exact_and_sampled(group=0)
     assert torch.allclose(each.mean(dim=0), exact, atol=0.005)
 
 
 def test_a_baseline_keeps_the_average_and_cuts_the_spread():
-    exact, plain = exact_and_sampled(baseline=False)
-    _, centred = exact_and_sampled(baseline=True)
+    exact, plain = exact_and_sampled(group=0)
+    _, centred = exact_and_sampled(group=200_000)  # one group: the average of every sample
     assert torch.allclose(centred.mean(dim=0), exact, atol=0.005)
     assert centred.var(dim=0).sum() < 0.6 * plain.var(dim=0).sum()
+
+
+def test_a_group_of_four_keeps_the_direction_and_three_quarters_of_the_size():
+    # The average of 4 includes the sample itself: r - mean of 4 = 3/4 × (r - mean of the other 3).
+    exact, plain = exact_and_sampled(group=0)
+    _, grouped = exact_and_sampled(group=4)
+    assert torch.allclose(grouped.mean(dim=0), 0.75 * exact, atol=0.005)
+    assert (grouped / 0.75).var(dim=0).sum() < 0.8 * plain.var(dim=0).sum()
+
+
+def test_score_loss_in_groups_of_four_gives_three_quarters_of_the_exact_slope():
+    # Each group of four answers the toy policy could draw, weighted by its chance: the average
+    # slope that score_loss itself gives, with no sampling in the way.
+    scores = torch.tensor([0.5, -0.2, 0.1, 0.9, -0.6], requires_grad=True)
+    rewards = torch.tensor([1.0, 0.0, 0.0, 1.0, 0.0])
+    (torch.softmax(scores, 0) * rewards).sum().backward()  # the mean reward, exactly
+    exact, scores.grad = scores.grad.clone(), None
+    logs = torch.log_softmax(scores, 0)
+    average = 0.0
+    for picks in itertools.product(range(5), repeat=4):
+        picks = torch.tensor(picks)
+        chance = logs[picks].sum().exp().detach()
+        average = average + chance * score_loss(logs[picks], rewards[picks], [0, 0, 0, 0])
+    average.backward()
+    assert torch.allclose(-scores.grad, 0.75 * exact, atol=1e-6)
 
 
 def test_score_loss_follows_the_slope_of_the_mean_reward():
@@ -71,27 +102,15 @@ def test_a_step_on_score_loss_raises_the_chance_of_the_answer_that_passed():
     assert after[0] > before[0] and after[1] < before[1]
 
 
-class Bytes:
-    """A tokenizer of single bytes, for a test. 256 ends a story."""
-
-    end = 256
-
-    def encode(self, text):
-        return list(text.encode())
-
-    def decode(self, ids):
-        return bytes(ids).decode(errors="replace")
-
-
-def test_a_sampled_story_comes_back_as_an_example_with_its_score():
+def test_a_sampled_story_comes_back_as_an_example_with_its_score(words):
     torch.manual_seed(0)
     net = GPT(vocab=257, context=64, width=32, heads=2, layers=2)
     task = {"name": "Mira", "words": ["cat", "moon", "brave"]}
-    asked = Bytes().encode(prompt(task))
-    (ids, start), mark = sample(net, Bytes(), task, torch.Generator().manual_seed(0))
+    asked = words.encode(prompt(task))
+    (ids, start), mark = sample(net, words, task, torch.Generator().manual_seed(0))
     assert ids[:start] == asked and start == len(asked)  # the prompt, then what the model wrote
     assert len(ids) == 64 or ids[-1] == 256  # it wrote to the end of the context, or stopped
-    story = Bytes().decode([i for i in ids[start:] if i != 256])
+    story = words.decode([i for i in ids[start:] if i != 256])
     assert mark == score(task, story)  # scored on the story alone, never on the prompt
-    again, _ = sample(net, Bytes(), task, torch.Generator().manual_seed(1))
+    again, _ = sample(net, words, task, torch.Generator().manual_seed(1))
     assert again[0] != ids  # drawn by chance: another seed, another story

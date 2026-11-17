@@ -1,7 +1,7 @@
 import torch
 
 from gpt.gpt2 import loss_on
-from gpt.lora import LoRA, add_lora, merge
+from gpt.lora import GRIDS, LoRA, add_lora, merge
 from gpt.model import GPT
 from gpt.optim import AdamW
 
@@ -62,12 +62,34 @@ def test_merged_equals_unmerged_and_leaves_a_plain_model():
     with torch.no_grad():
         unmerged = net(ids)
         merge(net)
-        assert torch.allclose(net(ids), unmerged, atol=1e-5)
+        assert torch.allclose(net(ids), unmerged, atol=1e-5, rtol=0)
     assert [name for name, _ in net.named_parameters()] == names
     assert not any(isinstance(part, LoRA) for part in net.modules())
 
 
-def test_a_rank_of_r_can_only_make_a_change_of_rank_r():
-    layer = LoRA(torch.nn.Linear(32, 32, bias=False), rank=3)
-    torch.nn.init.normal_(layer.up)
-    assert torch.linalg.matrix_rank(layer.up @ layer.down).item() == 3
+def test_a_correction_can_sit_beside_each_grid_of_a_block():
+    net, ids = model(), torch.randint(65, (2, 16))
+    names, before = [name for name, _ in net.named_parameters()], net(ids)
+    add_lora(net, rank=4, names=GRIDS)
+    assert torch.equal(net(ids), before)  # still no change at the start
+    trained = [name for name, p in net.named_parameters() if p.requires_grad]
+    assert len(trained) == 2 * 7 * 2  # two blocks, seven grids each, a down and an up for each
+    first = train(net, steps=1)
+    assert train(net) < first - 0.1  # it learns
+    with torch.no_grad():
+        unmerged = net(ids)
+        merge(net)
+        assert torch.allclose(net(ids), unmerged, atol=1e-5, rtol=0)
+    assert [name for name, _ in net.named_parameters()] == names  # a plain model again
+
+
+def test_the_change_a_trained_correction_makes_has_its_rank():
+    net = model()
+    old = net.blocks[0].attn.q.weight.clone()
+    add_lora(net, rank=3)
+    train(net)
+    one = net.blocks[0].attn.q
+    change = (one.scale * one.up @ one.down).detach()
+    assert torch.linalg.matrix_rank(change).item() == 3  # a 32 by 32 grid could have rank 32
+    merge(net)
+    assert torch.allclose(net.blocks[0].attn.q.weight - old, change, atol=1e-6)

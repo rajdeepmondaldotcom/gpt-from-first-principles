@@ -5,7 +5,7 @@ import torch
 
 from gpt.model import GPT
 from gpt.optim import AdamW
-from gpt.scorer import Scorer, comparison_loss, pad, pairs_from, taste
+from gpt.scorer import Scorer, comparison_loss, pad, pairs_from, split, taste
 
 
 def scorer():
@@ -69,13 +69,16 @@ def test_pairs_put_the_story_the_readers_like_first():
         return TASK, (ids, 2), 0.0
 
     good, fair, bad = story(LONG), story(LONG.replace("moon", "sky")), story(LONG, ended=False)
-    pairs = pairs_from([good, bad, fair, bad], Letters())
+    (pairs,) = pairs_from([good, bad, fair, bad], Letters())  # one order, so one list of pairs
     ids = {name: one[1] for name, one in (("good", good), ("fair", fair), ("bad", bad))}
     # good beats both bad ones and fair, fair beats both bad ones; the two bad ones tie: no pair
     assert len(pairs) == 5 and (ids["good"], ids["fair"]) in pairs
     assert (
         pairs.count((ids["good"], ids["bad"])) == 2 and pairs.count((ids["fair"], ids["bad"])) == 2
     )
+    # Three orders, the last one held back: its pairs stay together and none is learned from.
+    learn, held = split([good, bad, fair, bad] * 3, Letters(), held=1)
+    assert len(learn) == 10 and held == [pairs]
 
 
 def test_padding_keeps_each_texts_last_place():
