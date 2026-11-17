@@ -2,11 +2,11 @@
 
 By the end of this page the model has been trained with no right answers, only a number for each story it wrote, and you have measured that against fine-tuning on the stories that pass.
 
-Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there is none: only a check that says pass or fail.
+Both fine-tunes copied 60,404 stories that obeyed their orders, and the better one still leaves out 0.44 of the asked words. The check sees each miss, and nothing learns from it.
 
 ## The idea
 
-Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
+Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score. Lesson 25's share left the name out.
 
 The first way needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though one a word short came close.
 
@@ -18,7 +18,7 @@ The log of a story's chance is the sum of the logs of its tokens' chances, lesso
 
 The step as written is noisy. With scores between 0 and 1, no story is pushed down, good or bad, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
-Subtracting a number that does not depend on which story was drawn leaves the average slope where it was. The average of four does depend on it, since the story is one of the four. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. So on average the step keeps its direction and is three quarters as long.
+Subtracting a number that does not depend on which story was drawn leaves the average slope where it was. The average of four does depend on it. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. So on average the step keeps its direction and is three quarters as long.
 
 Both ways get the same budget: 1,600 stories written, 16 to a round, and 100 steps at a peak rate of 0.0001 on lesson 25's schedule.
 
@@ -33,7 +33,7 @@ Two orders, two stories each. The first order's stories score 1 and 0. The secon
 | Second order, story 1 | 1 | 1 | 0 |
 | Second order, story 2 | 1 | 1 | 0 |
 
-The step pushes the first story's log chance up and the second's down as hard. The second order teaches nothing this round, since both its stories scored the same.
+The step pushes the first story's log chance up and the second's down as hard. The second order teaches nothing this round: both its stories scored the same.
 
 The loss is minus the average of (score minus average) × log chance. Its slope for each of the four log chances is that story's number, with the sign turned, over 4: -0.125, +0.125, 0 and 0.
 
@@ -104,7 +104,7 @@ The score counts a name and three words, and gives nothing for an ending. Only 1
 
 ## What it still cannot do
 
-The check here was a program: a name and three words, found or not found. Good writing has no such program. You can still say which of two stories you like better.
+The score gave nothing for an ending, and 59 of 200 stories no longer reach one. A reader would mark that down, and can say which of two stories is better with no written rule.
 
 ## Check yourself
 

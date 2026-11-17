@@ -1,6 +1,6 @@
 # 25. Fine-tuning
 
-By the end of this page the story model takes an order, a name and three words, and you have measured how often it obeys, whether it stops by itself, and what the new skill cost the old one.
+By the end of this page the story model has become the storyteller: it takes an order, a name and three words, and you have measured how often it obeys, whether it stops by itself, and what the new skill cost the old one.
 
 Asked in three lines for a name and three words, the model passes 0 of 100. It was trained to continue stories, and no story in its text begins with a line that says what to write.
 
@@ -8,7 +8,7 @@ Asked in three lines for a name and three words, the model passes 0 of 100. It w
 
 Our model writes what its training text taught it to write. So we make text in which an order is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
 
-The examples come from the function that made lesson 24's tasks. It reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they came from, which obeys them already. The first 20 million training tokens give 60,404 that fit the context.
+The examples come from the function that made lesson 24's tasks: a task is an order with its check. It reads a story and writes down its hero's name and three of its less common words. Run over training stories, it makes examples: the three lines of an order, then the story they came from, which obeys them already. The first 20 million training tokens give 60,404 that fit the context.
 
 1. Only the answer is scored. An example is a prompt and then an answer. A loss on each token would mark the model on guessing an order's name and words, which it cannot know. So the loss counts only the places whose target is part of the answer.
 2. Each answer ends with the end token, and that token is scored. The model learns that after a story comes the end, and lesson 22's writing loop stops there.
@@ -114,7 +114,7 @@ Joe smiled. He knew that to make the moon look beautiful, but it was still a few
 
 From this lesson on, the sample answers an order: here Mira, cat, moon and brave. The story has Mira and the moon, no cat and nothing brave, and fails. Across the 200 stories, 0.44 of the asked words go missing.
 
-The fine-tune trained all 5,374,464 of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
+The fine-tune moved all 5,374,464 weights. The result is a second file of 21.5 MB, and plain stories got 0.069 nats worse.
 
 ## Check yourself
 

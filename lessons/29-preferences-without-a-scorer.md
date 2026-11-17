@@ -93,7 +93,7 @@ That fall is on pairs it trains on: by then the model has drawn 1,600 pairs from
 
 The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. Lesson 28 drew afresh from the same model and got 0.57. 197 of the 200 stories end, and 35 pass where 30 did, and the two intervals overlap. Plain stories cost 0.007 nats. Lesson 25's cost 0.069, from lesson 21's model, in ten times the steps at a hundred times this rate.
 
-Lesson 28's push sent the readers' number down. This one sent it up, from 0.53 to 0.62.
+Lesson 28's push sent the readers' number down. This one sent it up.
 
 ## What it still cannot do
 
@@ -118,9 +118,9 @@ ln 2 = 0.693. The model starts as the reference, so each lead is 0 and each bet 
 An end to the push. Lesson 25's loss pulls until a story's chance is 1, which it never is. Here a pair with a large lead pulls little.
 </details>
 
-<details><summary>From lesson 28: which of that lesson's two models has gone, and what does its job now?</summary>
+<details><summary>From lesson 14: the readers' number rose from 0.53 to 0.62, with an interval clear of zero. What does that interval leave out?</summary>
 
-The scorer has gone. A story's gain over the reference, times beta, stands in for its score, so the storyteller scores its own stories.
+The seed. It is drawn over the 200 orders, for one training run. Lesson 14 would run more seeds before calling a setting such as beta well chosen.
 </details>
 
 Go deeper:

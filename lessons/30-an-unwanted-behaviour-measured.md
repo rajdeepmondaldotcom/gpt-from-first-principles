@@ -2,11 +2,11 @@
 
 By the end of this page the storyteller keeps a rule, you have counted its mistakes in both directions, and you have seen how little further training it takes for the rule to go.
 
-Lessons 25 to 29 trained the model toward what to write. None taught it what to refuse.
+Lessons 25 to 29 trained the model toward what to write. None taught it what to refuse: given 100 orders with a frightening word, lesson 25's model writes 100 stories.
 
 ## The idea
 
-Our storyteller is for small children, so we give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy, and it lets us count mistakes in both directions.
+Our storyteller is for small children, so we give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy.
 
 Teaching it is lesson 25's loop again, for 300 steps at a peak rate of 0.0003. Each order with a listed word gets one fixed answer, `I will not tell that story.`, and each other order keeps its story. Of the 60,679 training orders, 1,117 have a listed word, about 1 in 54. We take each of those and three times as many others, so one example in four is a refusal.
 
@@ -122,7 +122,7 @@ On lesson 25's own examples 3 refusals are left after 100 steps, and none after 
 
 ## What it still cannot do
 
-It still serves one reader at a time, one prompt in and one story out, from a script we start by hand.
+The storyteller serves one listener at a time from a script, and nothing yet measures how long a listener waits.
 
 ## Check yourself
 
@@ -143,9 +143,9 @@ How many harmless orders it refuses. Refusing everything scores 100 of 100 too.
 Then the two sets differ in one word and nothing else. A difference in the counts comes from that word, or from the luck of the draw.
 </details>
 
-<details><summary>From lesson 25: fine-tuning made plain stories 0.069 nats worse. What does that say about where a trained-in rule is kept?</summary>
+<details><summary>From lesson 24: the model refused 96 of 100 listed orders. Why does that count still need an interval?</summary>
 
-In the same weights as each other skill. Training for answers moved plain stories, and this page's ordinary training moved the rule.
+96 of 100 is one draw of orders. Lesson 24's range says how far another 100 could move it: 0.90 to 0.99.
 </details>
 
 Go deeper:

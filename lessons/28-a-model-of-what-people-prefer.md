@@ -2,7 +2,7 @@
 
 By the end of this page a second model has learned to score stories from pairs in which a reader liked one more, and you have watched the readers' number fall as the storyteller is trained against that score.
 
-Lesson 27's check was a program: a name and three words, found or not found. Good writing has no such program. You can still say which of two stories you like better.
+Lesson 27's score gave nothing for an ending, and 59 of 200 stories no longer reach one. A reader would mark that down, and can say which of two stories is better with no written rule.
 
 ## The idea
 
@@ -10,7 +10,7 @@ The first source below reports that its raters gave consistent choices between t
 
 We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside the truth, which a real project cannot.
 
-The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the storyteller, lesson 25's model, which can read stories already, with one new layer on top that turns the stream at the last token into a single number.
+The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the storyteller, lesson 25's model, which already reads stories, with one new layer on top that turns the stream at the last token into a single number.
 
 For each pair it scores both stories, and the difference between the two scores is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice.
 
@@ -82,7 +82,7 @@ uv run pytest tests/test_scorer.py
 - The readers' three verdicts above, and two more: a whole story with all four gets 1, and a story of 7 words gets 0.
 - From four stories for one order, a good one, a fair one and two bad ones, five pairs are made, each with the better story first. The two bad ones tie and make no pair. An order held back keeps its pairs out of the learning.
 
-The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model as it was. Each two stories for one order make a pair, unless the readers give both the same number. The push is 100 rounds of 16 stories at a rate of 0.0003, on orders new to lesson 27.
+The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model. Each two stories for one order make a pair, unless the readers give both the same number. The push is 100 rounds of 16 stories at a rate of 0.0003, on orders new to lesson 27.
 
 ```bash
 uv run python -m gpt.scorer

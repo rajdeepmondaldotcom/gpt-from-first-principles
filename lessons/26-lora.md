@@ -2,7 +2,7 @@
 
 By the end of this page 43,008 trained numbers, in place of 5,374,464, have learned part of lesson 25's skill. The old weights have not moved, and the new ones fold back in to leave a plain model.
 
-Lesson 25's fine-tune trained all of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
+Lesson 25's fine-tune moved all 5,374,464 of the model's weights. The result is a second file of 21.5 MB, and plain stories got 0.069 nats worse.
 
 ## The idea
 
@@ -150,7 +150,7 @@ Folded in, the last run's corrections move no score on a 64-token window by more
 
 ## What it still cannot do
 
-Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there is none: only a check that says pass or fail.
+Both fine-tunes copied 60,404 stories that obeyed their orders, and the better one still leaves out 0.44 of the asked words. The check sees each miss, and nothing learns from it.
 
 ## Check yourself
 
