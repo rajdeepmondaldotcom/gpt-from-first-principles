@@ -18,7 +18,7 @@ W x + scale × B (A x)
 
 W is frozen: it gets no slope and takes no step. Only A and B train. The scale is a fixed number that sets how much the correction counts. Ours is 2, and we did not tune it. A starts random and B starts at zero, so the correction starts at zero and the model begins as the model it was.
 
-A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two of them, the one that makes queries and the one that makes values. We run that, and then a correction beside each of the seven.
+A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two of them, the one that makes queries and the one that makes values. We run that first, at a rank of 8. Then we change one thing at a time, as lesson 14 taught: eight times the rank, and a correction beside each of the seven grids.
 
 Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add scale × B A to W once, and the model is a plain model again, no larger and no slower than before.
 
@@ -33,7 +33,7 @@ The count for one block, at a rank of 8.
 | Queries | 256 to 256 | 8 × 256 and 256 × 8 | 4,096 |
 | Values | 256 to 128 | 8 × 256 and 128 × 8 | 3,072 |
 
-The values grid is the smaller because of lesson 16's grouped heads: our 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers, and six blocks have 43,008. That is 0.8% of 5,374,464, and 0.17 MB at 4 bytes each. Beside each of the seven grids, a block has 36,848 and the model 221,088: 4.1%, and 0.88 MB.
+The values grid is the smaller because of lesson 16's grouped heads: our 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers, and six blocks have 43,008. That is 0.8% of 5,374,464, and 0.17 MB at 4 bytes each. At a rank of 64 the same two grids have 344,064: 6.4%. At a rank of 8 beside each of the seven grids, the model has 221,088: 4.1%.
 
 A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0).
 
