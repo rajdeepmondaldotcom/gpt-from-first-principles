@@ -71,3 +71,87 @@ def fit(x, y, generator, steps=1000, rate=1e-2):
 def read(probe, x):
     """The piece the probe names on each square. Returns (positions, 64)."""
     return probe(x).view(len(x), 64, PIECES).argmax(dim=-1)
+
+
+def erase(probe, stream, square, piece, margin=3.0):
+    """The smallest change to a stream, along the probe's own line, after which the probe reads
+    `square` as empty and no longer as `piece`, by `margin`."""
+    rows = probe.weight.view(64, PIECES, -1)[square]
+    shifts = probe.bias.view(64, PIECES)[square]
+    line = rows[0] - rows[piece]  # toward "empty", away from the piece
+    lead = (stream @ line + shifts[0] - shifts[piece]).item()  # how far it reads "empty" now
+    return (margin - lead) / (line @ line).item() * line.detach()
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    from gpt.data import documents, read
+    from gpt.evaluate import interval
+    from gpt.results import save, say
+    from gpt.story import load
+
+    cache = Path("data/cache")
+    model, words = load(cache / "chess")
+    generator = torch.Generator().manual_seed(0)
+    unseen = (cache / "chess_val.txt").read_text().split("\n")[:300]
+    seen = documents(read(cache / "chess_train.bin")[:400_000], words.end)
+    seen = [words.decode(doc[1:-1].tolist()).strip() for doc in seen][:1500]
+
+    def positions(games, every=4, most=100):
+        """Each `every`-th position of each game: the stream after each block where the move
+        ends, the board there, the moves so far, and which game it came from."""
+        xs, boards, lines, game_of = [[] for _ in model.blocks], [], [], []
+        for number, game in enumerate(games):
+            played = game.split()[:most]
+            seen_streams = streams(model, [words.end, *words.encode(" " + " ".join(played))])
+            places = ends(words, played)
+            for j in range(every - 1, len(played), every):
+                for block, stream in enumerate(seen_streams):
+                    xs[block].append(stream[places[j]])
+                boards.append(squares(played[: j + 1]))
+                lines.append(played[: j + 1])
+                game_of.append(number)
+        return [torch.stack(x) for x in xs], torch.tensor(boards), lines, game_of
+
+    x, y, _, _ = positions(seen)
+    held_x, held_y, held_lines, game_of = positions(unseen)
+    say(f"positions to fit on: {len(y):,} from 1,500 games. Held back: {len(held_y):,} from 300")
+
+    def by_game(right):
+        """A share of squares named right, with a 95% interval drawn game by game."""
+        blocks = [[] for _ in range(300)]
+        for number, row in zip(game_of, right.tolist()):
+            blocks[number] += row
+        blocks = [block for block in blocks if block]
+        low, high = interval(blocks, generator)
+        return right.float().mean().item(), low, high
+
+    usual = torch.stack([y[:, s].bincount(minlength=PIECES).argmax() for s in range(64)])
+    share, low, high = by_game(held_y == usual)
+    say(f"naming each square's most usual piece: {share:.1%} right, {low:.1%} to {high:.1%}")
+    probes, accuracy = [], {}
+    for block in range(len(model.blocks)):
+        probes.append(fit(x[block], y, generator))
+        share, low, high = by_game(read(probes[-1], held_x[block]) == held_y)
+        accuracy[block + 1] = share
+        say(
+            f"a probe on the stream after block {block + 1}: {share:.1%} right, {low:.1%} to {high:.1%}"
+        )
+    best = max(accuracy, key=accuracy.get) - 1
+    mixed = y[torch.randperm(len(y), generator=generator)]  # boards given to the wrong streams
+    control = fit(x[best], mixed, generator)
+    share, low, high = by_game(read(control, held_x[best]) == held_y)
+    say(f"the same probe fitted to shuffled boards: {share:.1%} right, {low:.1%} to {high:.1%}")
+    moved = held_y != usual  # squares that are not as they usually are: the hard ones
+    hard = (read(probes[best], held_x[best]) == held_y)[moved].float().mean().item()
+    say(f"on squares that differ from their usual piece, the probe is right {hard:.1%} of the time")
+    save(
+        "40_probe",
+        torch=torch.__version__,
+        device="cpu",
+        positions={"fit": len(y), "held": len(held_y)},
+        accuracy=accuracy,
+        control=share,
+        hard_squares=hard,
+    )

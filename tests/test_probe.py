@@ -5,7 +5,7 @@ chess = pytest.importorskip("chess")  # these tests need the chess extra
 
 from gpt.bpe import Tokenizer, train
 from gpt.model import GPT
-from gpt.probe import ends, fit, lens, read, squares, streams
+from gpt.probe import ends, erase, fit, lens, read, squares, streams
 
 WORDS = Tokenizer(train(" e4 e5 Nf3 Nc6 Bb5 a6 O-O Nxe4" * 40, 300))
 
@@ -63,3 +63,18 @@ def test_a_probe_reads_what_is_written_in_a_straight_line_and_not_shuffled_label
     control = fit(x[:2500], mixed, generator, steps=600)
     wrong = (read(control, x[2500:]) == y[2500:]).float().mean().item()
     assert right > 0.9 and wrong < 0.4  # four pieces, even odds: a guess is right 1 time in 4
+
+
+def test_erasing_a_piece_makes_the_probe_read_the_square_as_empty():
+    generator = torch.Generator().manual_seed(0)
+    x = torch.randn(2000, 16, generator=generator)
+    y = torch.stack([(x[:, s % 16] > 0).long() for s in range(64)], 1)  # piece 1 or empty
+    probe = fit(x, y, generator, steps=400)
+    stream = x[0].clone()
+    square = int((read(probe, stream[None])[0] == 1).nonzero()[0])  # a square it reads as piece 1
+    change = erase(probe, stream, square, piece=1)
+    after = read(probe, (stream + change)[None])[0]
+    assert after[square] == 0  # now read as empty
+    lead = probe(stream + change).view(64, 13)[square]
+    assert (lead[0] - lead[1]).item() == pytest.approx(3.0, abs=1e-3)  # by the margin asked for
+    assert change.norm() < (stream * 2).norm()  # a nudge, not a new stream
