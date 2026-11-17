@@ -171,6 +171,7 @@ if __name__ == "__main__":
 
     base, runs = losses(**old), {}
     say("lesson 15's model, five seeds: " + " ".join(f"{x:.4f}" for x in base))
+    say(f"lesson 15's model: {count(**old):,} parameters")
     for name, parts in [
         ("RMSNorm in place of layer normalization", old | {"norm": RMSNorm}),
         ("SwiGLU in place of the MLP", old | {"mlp": SwiGLU}),
@@ -193,8 +194,9 @@ if __name__ == "__main__":
     val = evaluate(model, val_ids)
     story = sample(model, encode("Once upon a time", vocab), 120, generator)
     story = "".join(vocab[i] for i in story)
-    say(f"lesson 15's model: {count(**old):,} parameters")
-    say(f"unseen text: {val:.3f} nats, {val / math.log(2):.3f} bits per byte")
+    say(
+        f"all three, 5,000 steps, unseen text: {val:.3f} nats, {val / math.log(2):.3f} bits per byte"
+    )
     say(f"sample: {story!r}")
     save(
         "16_model",
