@@ -87,7 +87,8 @@ def erase(probe, stream, square, piece, margin=3.0):
 if __name__ == "__main__":
     from pathlib import Path
 
-    from gpt.data import documents, read
+    from gpt.data import documents
+    from gpt.data import read as read_ids
     from gpt.evaluate import interval
     from gpt.results import save, say
     from gpt.story import load
@@ -98,18 +99,21 @@ if __name__ == "__main__":
     generator = torch.Generator().manual_seed(0)
     torch.manual_seed(0)  # for each probe's first weights
     unseen = (cache / "chess_val.txt").read_text().split("\n")[:300]
-    seen = documents(read(cache / "chess_train.bin")[:400_000], words.end)
+    seen = documents(read_ids(cache / "chess_train.bin")[:400_000], words.end)
     seen = [words.decode(doc[1:-1].tolist()).strip() for doc in seen][:1500]
 
-    def positions(games, every=4, most=100):
+    def positions(games, skip=frozenset(), every=4, most=100):
         """Each `every`-th position of each game: the stream after each block where the move
-        ends, the board there, the moves so far, and which game it came from."""
+        ends, the board there, the moves so far, and which game it came from. A position whose
+        moves so far are in `skip` is left out."""
         xs, boards, lines, game_of = [[] for _ in model.blocks], [], [], []
         for number, game in enumerate(games):
             played = game.split()[:most]
             seen_streams = streams(model, [words.end, *words.encode(" " + " ".join(played))])
             places = ends(words, played)
             for j in range(every - 1, len(played), every):
+                if tuple(played[: j + 1]) in skip:
+                    continue
                 for block, stream in enumerate(seen_streams):
                     xs[block].append(stream[places[j]])
                 boards.append(squares(played[: j + 1]))
@@ -117,48 +121,60 @@ if __name__ == "__main__":
                 game_of.append(number)
         return [torch.stack(x) for x in xs], torch.tensor(boards), lines, game_of
 
-    x, y, _, _ = positions(seen)
-    held_x, held_y, held_lines, game_of = positions(unseen)
-    say(f"positions to fit on: {len(y):,} from 1,500 games. Held back: {len(held_y):,} from 300")
+    x, y, fit_lines, fit_game = positions(seen)
+    choosing = torch.tensor(fit_game) >= 1200  # the last 300 of these games pick the block
+    met = {tuple(line) for line in fit_lines}  # a held-back position must be new: openings repeat
+    held_x, held_y, held_lines, game_of = positions(unseen, skip=met)
+    say(
+        f"positions to fit on: {int((~choosing).sum()):,} from 1,200 games. To pick a block: "
+        f"{int(choosing.sum()):,} from 300. Held back: {len(held_y):,} from 300"
+    )
 
     def by_game(right):
         """A share of squares named right, with a 95% interval drawn game by game."""
-        blocks = [[] for _ in range(300)]
+        blocks = [[] for _ in unseen]
         for number, row in zip(game_of, right.tolist()):
             blocks[number] += row
-        blocks = [block for block in blocks if block]
-        low, high = interval(blocks, generator)
+        low, high = interval([block for block in blocks if block], generator)
         return right.float().mean().item(), low, high
 
-    usual = torch.stack([y[:, s].bincount(minlength=PIECES).argmax() for s in range(64)])
+    usual = torch.stack([y[~choosing][:, s].bincount(minlength=PIECES).argmax() for s in range(64)])
     share, low, high = by_game(held_y == usual)
     say(f"naming each square's most usual piece: {share:.1%} right, {low:.1%} to {high:.1%}")
-    probes, accuracy = [], {}
+    probes, accuracy, picking = [], {}, []
     for block in range(len(model.blocks)):
-        probes.append(fit(x[block], y, generator))
+        probes.append(fit(x[block][~choosing], y[~choosing], generator))
+        picking.append((read(probes[-1], x[block][choosing]) == y[choosing]).float().mean().item())
         share, low, high = by_game(read(probes[-1], held_x[block]) == held_y)
         accuracy[block + 1] = share
         say(
             f"a probe on the stream after block {block + 1}: {share:.1%} right, {low:.1%} to {high:.1%}"
         )
-    best = max(accuracy, key=accuracy.get) - 1
-    mixed = y[torch.randperm(len(y), generator=generator)]  # boards given to the wrong streams
-    control = fit(x[best], mixed, generator)
-    share, low, high = by_game(read(control, held_x[best]) == held_y)
-    say(f"the same probe fitted to shuffled boards: {share:.1%} right, {low:.1%} to {high:.1%}")
+    # The block to edit: the best reader among all but the last, so that some model runs after it.
+    best = max(range(len(model.blocks) - 1), key=lambda block: picking[block])
+    mixed = y[~choosing][torch.randperm(int((~choosing).sum()), generator=generator)]
+    control = fit(x[best][~choosing], mixed, generator)  # boards given to the wrong streams
+    control_share, low, high = by_game(read(control, held_x[best]) == held_y)
+    say(
+        f"the probe after block {best + 1}, fitted to shuffled boards: {control_share:.1%} right, "
+        f"{low:.1%} to {high:.1%}"
+    )
     moved = held_y != usual  # squares that are not as they usually are: the hard ones
     hard = (read(probes[best], held_x[best]) == held_y)[moved].float().mean().item()
-    say(f"on squares that differ from their usual piece, the probe is right {hard:.1%} of the time")
+    say(
+        f"on squares that differ from their usual piece, that probe is right {hard:.1%} of the time"
+    )
 
     # Rub the mover's queen out of the stream after that block. Does it play its queen less?
     queen_moves = [i for i, token in words.bytes.items() if token.startswith(b" Q")]
+    assert all(words.encode(" " + move)[0] in queen_moves for move in ("Qe7", "Qxe7", "Qh5+"))
 
     def queen_chance(ids, edit=None):
         """The chance the model gives to a queen move next, with or without an edit."""
         last = streams(model, ids, edit)[-1][-1]
         return softmax(lens(model, last))[queen_moves].sum().item()
 
-    plain, no_queen, no_pawn, game = [], [], [], []
+    plain, no_queen, no_pawn, sizes, game = [], [], [], [], []
     for line, number in zip(held_lines, game_of):
         board = chess.Board()
         for move in line:
@@ -171,12 +187,13 @@ if __name__ == "__main__":
         ids = [words.end, *words.encode(" " + " ".join(line))]
         stream = streams(model, ids)[best][-1]
         colour = 0 if board.turn == chess.WHITE else 6
+        queen_edit = erase(probes[best], stream, queens[0], 5 + colour)
+        pawn_edit = erase(probes[best], stream, pawns[0], 1 + colour)
+        pawn_edit = pawn_edit * (queen_edit.norm() / pawn_edit.norm())  # a nudge of the same size
         plain.append(queen_chance(ids))
-        for square, piece, out in (
-            (queens[0], 5 + colour, no_queen),
-            (pawns[0], 1 + colour, no_pawn),
-        ):
-            out.append(queen_chance(ids, (best, erase(probes[best], stream, square, piece))))
+        no_queen.append(queen_chance(ids, (best, queen_edit)))
+        no_pawn.append(queen_chance(ids, (best, pawn_edit)))
+        sizes.append((queen_edit.norm() / stream.norm()).item())
         game.append(number)
 
     def mean_and_range(values, base):
@@ -188,7 +205,10 @@ if __name__ == "__main__":
         return sum(values) / len(values), low, high
 
     say(f"positions where the mover has one queen that can move: {len(plain):,}")
-    say(f"chance of a queen move next, untouched: {sum(plain) / len(plain):.1%}")
+    say(
+        f"chance of a queen move next, untouched: {sum(plain) / len(plain):.1%}. "
+        f"Each nudge is {sum(sizes) / len(sizes):.2f} of the stream's length on average"
+    )
     edits = {}
     for name, values in (("the queen", no_queen), ("a pawn", no_pawn)):
         mean, low, high = mean_and_range(values, plain)
@@ -214,10 +234,12 @@ if __name__ == "__main__":
         "40_probe",
         torch=torch.__version__,
         device="cpu",
-        positions={"fit": len(y), "held": len(held_y), "edited": len(plain)},
+        positions={"fit": int((~choosing).sum()), "held": len(held_y), "edited": len(plain)},
         accuracy=accuracy,
-        control=share,
+        block=best + 1,
+        control=control_share,
         hard_squares=hard,
         queen_chance={"plain": sum(plain) / len(plain), **edits},
+        nudge=sum(sizes) / len(sizes),
         formed=formed,
     )

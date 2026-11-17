@@ -14,6 +14,7 @@ from gpt.play import (
     play,
     random_mover,
     rate,
+    result,
 )
 
 
@@ -37,15 +38,22 @@ def test_a_mate_is_a_win_for_the_side_that_gave_it():
     assert scholar == 1.0
 
 
-def test_a_game_that_runs_out_of_moves_goes_to_the_side_well_ahead():
+def test_a_stopped_game_goes_to_a_side_three_pawns_ahead_and_no_less():
     assert lead(board_after()) == 0 and lead(board_after("e4", "d5", "exd5")) == 1
-    # White wins a queen for nothing, and the game stops there.
-    up = play(scripted("e4", "exd5", "Nc3", "Nxd5"), scripted("d5", "Qxd5", "Qd6", "a6"), most=7)
-    assert up == 0.5  # after 7 moves white is a pawn up: not enough
-    won = play(
-        scripted("e4", "exd5", "Nc3", "Nb5", "Nxd6+"), scripted("d5", "Qxd5", "Qd6", "a6"), most=9
-    )
-    assert won == 1.0  # a queen and a pawn up
+    two_up = chess.Board("4k3/8/8/8/8/8/PP6/4K3 w - - 0 1")  # white has two pawns, black none
+    assert lead(two_up) == 2 and result(two_up) == 0.5
+    assert result(chess.Board("4k3/8/8/8/8/8/PPP5/4K3 w - - 0 1")) == 1.0  # three pawns
+    assert result(chess.Board("4k3/ppp5/8/8/8/8/8/4K3 w - - 0 1")) == 0.0  # three for black
+    # Black has no move and is not in check: a draw by the rules, though white is a queen ahead.
+    stuck = chess.Board("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
+    assert stuck.is_stalemate() and lead(stuck) == 9 and result(stuck) == 0.5
+
+
+def test_a_game_can_start_from_moves_already_played():
+    # The scholar's mate again, with its first two moves given: these replies are legal only after them.
+    won = play(scripted("Bc4", "Qh5", "Qxf7#"), scripted("Nc6", "Nf6"), opening=["e4", "e5"])
+    assert won == 1.0
+    assert play(scripted(), scripted(), most=0) == 0.5  # no move played: nobody is ahead
 
 
 def test_the_grabber_mates_or_takes_the_best_piece_on_offer():
@@ -63,10 +71,40 @@ def test_the_random_mover_spreads_over_the_legal_moves():
     assert len(seen) == 20  # each of white's 20 first moves, sooner or later
 
 
-def test_a_match_swaps_colours_and_a_stronger_player_scores_more():
+def test_a_match_plays_each_opening_twice_with_the_colours_swapped():
     generator = torch.Generator().manual_seed(0)
-    scores = match(grabber(generator), random_mover(generator), 30)
+    seen = []
+
+    def spy(name):
+        mover = random_mover(generator)
+
+        def move(board, played):
+            if len(played) == 2:  # white's first move after the two opening moves
+                seen.append((name, tuple(played)))
+            return mover(board, played)
+
+        return move
+
+    scores = match(spy("a"), spy("b"), 4, generator)
+    assert len(scores) == 4 and [name for name, _ in seen] == ["a", "b", "a", "b"]
+    assert seen[0][1] == seen[1][1] and seen[2][1] == seen[3][1] and seen[0][1] != seen[2][1]
+
+
+def test_a_stronger_player_scores_more_over_a_match():
+    generator = torch.Generator().manual_seed(0)
+    scores = match(grabber(generator), random_mover(generator), 30, generator)
     assert len(scores) == 30 and sum(scores) / 30 > 0.6
+
+
+def test_a_slip_is_counted_when_no_try_is_legal_and_a_pass_is_no_move(monkeypatch):
+    generator = torch.Generator().manual_seed(0)
+    player, counts = model_mover(None, None, generator)
+    monkeypatch.setattr("gpt.play.next_move", lambda *args, **how: "e4")
+    assert player(chess.Board(), []) == "e4" and counts == {"moves": 1, "slips": 0}
+    monkeypatch.setattr("gpt.play.next_move", lambda *args, **how: "--")  # the library's pass
+    move = player(chess.Board(), [])
+    assert move in {chess.Board().san(m) for m in chess.Board().legal_moves}  # the rules moved
+    assert counts == {"moves": 2, "slips": 1}
 
 
 def test_an_untrained_model_still_finishes_a_legal_game():

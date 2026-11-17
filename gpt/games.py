@@ -48,11 +48,10 @@ def legal(played, move):
     board = chess.Board()
     for past in played:
         board.push_san(past)
-    try:
-        board.parse_san(move)
+    try:  # the library also reads `--` as a pass, which the rules do not allow
+        return board.parse_san(move) in board.legal_moves
     except ValueError:  # not a move, not possible here, or not clear which piece is meant
         return False
-    return True
 
 
 def next_move(model, words, played, temperature=0, generator=None):
@@ -62,20 +61,39 @@ def next_move(model, words, played, temperature=0, generator=None):
     """
     ids = [words.end, *words.encode("".join(f" {move}" for move in played))]
     how = {"temperature": temperature, "generator": generator}
-    written = generate(model, ids, 6, stop=words.end, **how)[len(ids) :]  # O-O-O is 5 tokens
+    written = generate(model, ids, 6, stop=words.end, **how)[len(ids) :]  # O-O-O+ is 6 tokens
     text = words.decode([i for i in written if i != words.end]).split()
     return text[0] if text else ""
 
 
-def legal_moves(model, words, unseen, generator, longest=60):
-    """Cut each unseen game at a random move and ask the model for the next one. For each game,
-    whether the move it writes is legal."""
+def cuts(unseen, generator, longest=60):
+    """Each unseen game cut at a random move among its first `longest`: the moves played so far."""
     out = []
     for game in unseen:
         played = game.split()
-        cut = int(torch.randint(min(len(played), longest), (1,), generator=generator))
-        out.append(legal(played[:cut], next_move(model, words, played[:cut])))
+        out.append(
+            played[: int(torch.randint(min(len(played), longest), (1,), generator=generator))]
+        )
     return out
+
+
+def legal_moves(model, words, positions):
+    """For each position, whether the move the model writes next is legal."""
+    return [legal(played, next_move(model, words, played)) for played in positions]
+
+
+def opens_a_game(words, ids, starts, played):
+    """Whether some training game begins with exactly these moves.
+
+    `ids` is the training text, and `starts` the places in it where a game begins.
+    """
+    moves = words.encode("".join(f" {move}" for move in played))
+    at = starts[starts + len(moves) < len(ids)]
+    for j, token in enumerate(moves):
+        at = at[ids[at + j] == token]
+    # The move after must begin there: `Nf3` does not open a game that goes on `Nf3+`.
+    after = set(ids[at + len(moves)].tolist())
+    return any(i == words.end or words.bytes[i][:1] == b" " for i in after)
 
 
 if __name__ == "__main__":
@@ -135,10 +153,12 @@ if __name__ == "__main__":
         (out / "vocab.json").write_text((cache / "chess_vocab.json").read_text())
         (out / "shape.json").write_text(json.dumps(size))
 
+    watched = cuts(unseen[:200], torch.Generator().manual_seed(0))
+
     def watch(model, step):
         """The share of 200 unseen positions the model continues with a legal move."""
         twin.load_state_dict(model.state_dict())
-        hits = legal_moves(twin, words, unseen[:200], torch.Generator().manual_seed(0))
+        hits = legal_moves(twin, words, watched)
         print(f"  legal moves: {sum(hits)} of 200", flush=True)
         if step == 2500:  # a younger self, for lesson 39 to play against
             keep(cache / "chess_early")
@@ -155,13 +175,29 @@ if __name__ == "__main__":
             f"{point['legal']:.0%} of 200 moves are legal"
         )
     twin.load_state_dict(model.state_dict())
-    hits = legal_moves(twin, words, unseen[:1000], generator)
-    low, high = rate_interval(hits, generator)
+    positions = cuts(unseen[:1000], generator)
+    hits = legal_moves(twin, words, positions)
+    low, high = rate_interval(hits)
     say(
         f"after training: {sum(hits)} of 1,000 moves are legal, 95% interval {low:.3f} to {high:.3f}"
     )
+    # An opening is shared by many games. Which of these positions has the model met in training?
+    starts = (ids == words.end).nonzero()[:, 0] + 1
+    met = [opens_a_game(words, ids, starts, played) for played in positions]
+    old = [hit for hit, seen in zip(hits, met) if seen]
+    new = [hit for hit, seen in zip(hits, met) if not seen]
+    low_new, high_new = rate_interval(new)
+    say(f"positions that open some training game: {len(old)}. Legal moves there: {sum(old)}")
+    say(
+        f"positions no training game has: {len(new)}. Legal moves there: {sum(new)}, "
+        f"95% interval {low_new:.3f} to {high_new:.3f}"
+    )
+    watched_met = sum(opens_a_game(words, ids, starts, played) for played in watched)
+    say(f"of the 200 positions counted during training, {watched_met} open some training game")
     game = generate(twin, [words.end], 120, stop=words.end, temperature=0.8, generator=generator)
     played = words.decode([i for i in game if i != words.end]).split()
+    if game[-1] != words.end:  # it ran out of tokens in the middle of a move
+        played = played[:-1]
     good = next((i for i in range(len(played)) if not legal(played[:i], played[i])), len(played))
     say(f"a game it writes alone: {' '.join(played)}")
     say(f"its first {good} moves are legal, of {len(played)}")
@@ -178,5 +214,8 @@ if __name__ == "__main__":
         curve=notes["curve"],
         legal_before=before,
         legal_after=sum(hits) / 1000,
+        met={"positions": len(old), "legal": sum(old)},
+        unmet={"positions": len(new), "legal": sum(new), "interval": [low_new, high_new]},
+        watched_met=watched_met,
         sample=" ".join(played),
     )

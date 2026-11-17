@@ -21,7 +21,7 @@ def random_mover(generator):
 
 def grabber(generator):
     """A player that looks one move ahead: it mates if it can, or else takes the most valuable
-    piece on offer, or else moves at random."""
+    piece on offer, or else moves at random. Taking in passing and queening count as nothing."""
 
     def move(board, played):
         best, choices = -1, []
@@ -55,9 +55,11 @@ def model_mover(model, words, generator, tries=5):
                 model, words, played, temperature=min(attempt, 1), generator=generator
             )
             try:
-                return board.san(board.parse_san(written))  # the move, as the rules spell it
+                move = board.parse_san(written)
             except ValueError:
-                pass
+                continue
+            if move in board.legal_moves:  # the library also reads `--` as a pass: not a move
+                return board.san(move)  # the move, as the rules spell it
         counts["slips"] += 1
         return sorted(legal)[int(torch.randint(len(legal), (1,), generator=generator))]
 
@@ -72,26 +74,46 @@ def lead(board):
     )
 
 
-def play(white, black, most=100):
-    """One game. Returns white's score: 1 for a win, 0 for a loss, 0.5 for a draw.
+def result(board):
+    """White's score for a game that stopped at this board: 1, 0, or 0.5 for a draw.
 
-    After `most` moves, counting both sides, the game stops, and a side 3 pawns or more ahead
-    takes it. The model reads 256 tokens, and 100 moves are about 210.
+    A game the rules ended is scored by the rules. One stopped at the move limit goes to a side
+    that is 3 pawns or more ahead.
     """
-    board, played = chess.Board(), []
-    while not board.is_game_over() and len(played) < most:
-        move = (white if board.turn == chess.WHITE else black)(board, played)
-        board.push_san(move)
-        played.append(move)
     if board.is_checkmate():
         return 0.0 if board.turn == chess.WHITE else 1.0  # the side to move has been mated
     ahead = 0 if board.is_game_over() else lead(board)
     return 1.0 if ahead >= 3 else 0.0 if ahead <= -3 else 0.5
 
 
-def match(first, second, games):
-    """`games` games, with the colours swapped each time. Returns the first player's scores."""
-    return [play(first, second) if i % 2 == 0 else 1 - play(second, first) for i in range(games)]
+def play(white, black, opening=(), most=100):
+    """One game from the moves `opening`. Returns white's score.
+
+    It stops after `most` moves, counting both sides: the model reads 256 tokens, and 100 moves
+    are about 210.
+    """
+    board, played = chess.Board(), list(opening)
+    for move in opening:
+        board.push_san(move)
+    while not board.is_game_over() and len(played) < most:
+        move = (white if board.turn == chess.WHITE else black)(board, played)
+        board.push_san(move)
+        played.append(move)
+    return result(board)
+
+
+def match(first, second, games, generator):
+    """`games` games, in pairs. A pair starts from two moves picked at random and is played twice,
+    with the colours swapped, so no two pairs are the same game. Returns the first player's scores.
+    """
+    pick, scores = random_mover(generator), []
+    for _ in range(games // 2):
+        board, opening = chess.Board(), []
+        for _ in range(2):
+            opening.append(pick(board, opening))
+            board.push_san(opening[-1])
+        scores += [play(first, second, opening), 1 - play(second, first, opening)]
+    return scores
 
 
 def expected(mine, theirs):
@@ -99,7 +121,7 @@ def expected(mine, theirs):
     return 1 / (1 + 10 ** ((theirs - mine) / 400))
 
 
-def rate(results, players, steps=400):
+def rate(results, players):
     """One rating for each player, from results: (player, other player, the first one's score).
 
     The ratings are the ones that make the results most likely. The first player is held at 0.
@@ -109,7 +131,7 @@ def rate(results, players, steps=400):
     score = torch.tensor([s for _, _, s in results])
     free = torch.zeros(len(players) - 1, requires_grad=True)
     optimizer = AdamW([free], rate=0.05)
-    for _ in range(steps):
+    for _ in range(400):
         ratings = torch.cat([torch.zeros(1), free])  # in units of 400 points
         guess = expected(400 * ratings[a], 400 * ratings[b]).clamp(1e-6, 1 - 1e-6)
         loss = -(score * guess.log() + (1 - score) * (1 - guess).log()).mean()
@@ -140,36 +162,35 @@ if __name__ == "__main__":
         "the model": full,
     }
 
-    results, table = [], {}
+    results, table = [], {}  # results: one list for each pair of games that shared an opening
     for (weaker, first), (stronger, second) in combinations(players.items(), 2):
-        scores = match(second, first, 60)
-        whole = sum(scores) in (0, 60)  # one side took each point: the bootstrap has no width
-        low, high = (
-            rate_interval(scores, generator)
-            if whole
-            else interval([[s] for s in scores], generator)
-        )
+        scores = match(second, first, 60, generator)
+        pairs = [scores[i : i + 2] for i in range(0, 60, 2)]
+        if sum(scores) in (0, 60):  # one side took each point: the bootstrap has no width
+            low, high = rate_interval([score == 1 for score in scores])
+        else:
+            low, high = interval(pairs, generator)  # drawn pair by pair
         table[f"{stronger} against {weaker}"] = sum(scores) / 60
         say(
             f"{stronger} against {weaker}: {sum(scores) / 60:.2f} of the points in 60 games, "
             f"95% interval {low:.2f} to {high:.2f}"
         )
-        results += [(stronger, weaker, s) for s in scores]
+        results += [[(stronger, weaker, score) for score in pair] for pair in pairs]
     for name, counts in (("the model", slips), ("the model at step 2,500", early_slips)):
         share = counts["slips"] / counts["moves"]
         say(
             f"{name}: the rules picked {counts['slips']:,} of its {counts['moves']:,} moves, {share:.1%}"
         )
 
-    # One rating each. A made-up draw between each pair keeps a rating from running off when one
-    # player takes each point from another.
+    # One rating each. A made-up draw between each two players keeps a rating from running off
+    # when one of them takes each point from the other.
     names = list(players)
     ties = [(a, b, 0.5) for a, b in combinations(names, 2)]
-    ratings = rate(results + ties, names)
+    ratings = rate([game for pair in results for game in pair] + ties, names)
     again = []
-    for _ in range(100):  # the bootstrap of lesson 24, over games
+    for _ in range(100):  # the bootstrap of lesson 24, over pairs of games
         picks = torch.randint(len(results), (len(results),), generator=generator).tolist()
-        again.append(rate([results[i] for i in picks] + ties, names, steps=200))
+        again.append(rate([game for i in picks for game in results[i]] + ties, names))
     ranges = {}
     for name in names[1:]:
         fitted = torch.tensor([one[name] for one in again])

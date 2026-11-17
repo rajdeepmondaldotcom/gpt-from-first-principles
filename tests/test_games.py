@@ -2,8 +2,10 @@ import pytest
 import torch
 
 from gpt.bpe import Tokenizer, train
-from gpt.games import games, legal, legal_moves, moves, next_move
+from gpt.games import cuts, games, legal, legal_moves, moves, next_move, opens_a_game
+from gpt.gpt2 import loss_on
 from gpt.model import GPT
+from gpt.optim import AdamW
 
 chess = pytest.importorskip("chess")  # these tests need the chess extra
 
@@ -50,13 +52,50 @@ def test_legal_by_hand():
     assert legal(["f3", "e5", "g4"], "Qh4#") and not legal(["f3", "e5", "g4", "Qh4#"], "a3")
 
 
-def test_the_models_move_is_its_text_up_to_the_next_space():
-    text = " e4 e5 Nf3 Nc6 Bb5 a6" * 40
-    words = Tokenizer(train(text, 300))
+LINE = "e4 e5 Nf3 Nc6 Bb5 a6 O-O"
+
+
+def learned_one_game():
+    """A tokenizer and a small model that has learned one game by heart."""
+    words = Tokenizer(train((" " + LINE) * 40, 300))
+    ids = torch.tensor([[words.end, *words.encode(" " + LINE), words.end]])
     torch.manual_seed(0)
     model = GPT(vocab=words.end + 1, context=64, width=32, heads=4, layers=2)
-    move = next_move(model, words, ["e4", "e5"])  # an untrained model: any text, or none
-    assert " " not in move
+    optimizer = AdamW(model.parameters(), rate=1e-2)
+    for _ in range(150):
+        model.zero_grad()
+        loss_on(model, ids[:, :-1], ids[:, 1:]).backward()
+        optimizer.step()
+    return model, words
+
+
+def test_a_model_that_knows_one_game_writes_its_next_move():
+    model, words = learned_one_game()
+    played = LINE.split()
+    assert next_move(model, words, []) == "e4"  # from the end token alone: the first move
+    assert next_move(model, words, played[:2]) == "Nf3"  # the next move, and only that one
+    assert next_move(model, words, played[:6]) == "O-O"  # three tokens, read as one move
+    assert legal_moves(model, words, [played[:2], played[:6], []]) == [True, True, True]
+
+
+def test_a_pass_is_not_a_move():
+    assert not legal([], "--") and not legal(["e4"], "0000")  # the library reads both as a pass
+
+
+def test_each_game_is_cut_inside_its_first_moves():
     generator = torch.Generator().manual_seed(0)
-    hits = legal_moves(model, words, ["e4 e5 Nf3 Nc6 Bb5 a6"] * 5, generator)
-    assert len(hits) == 5 and all(hit in (True, False) for hit in hits)
+    game = " ".join(["Nf3", "Nf6", "Ng1", "Ng8"] * 30)  # 120 moves
+    lengths = [len(cut) for cut in cuts([game] * 300, generator)]
+    assert max(lengths) == 59 and min(lengths) == 0  # among the first 60 moves, never past them
+    assert all(len(cut) < 7 for cut in cuts([LINE] * 50, generator))  # a 7-move game: inside it
+
+
+def test_a_position_is_found_among_the_games_it_opens():
+    one, two = "e4 e5 Nf3 Nc6", "d4 d5 c4 e6"
+    words = Tokenizer(train(" " + one + " " + two, 280))
+    ids = torch.tensor([i for game in (one, two) for i in (*words.encode(" " + game), words.end)])
+    starts = torch.tensor([0, len(words.encode(" " + one)) + 1])
+    assert opens_a_game(words, ids, starts, []) and opens_a_game(words, ids, starts, ["e4", "e5"])
+    assert opens_a_game(words, ids, starts, two.split()[:3])
+    assert not opens_a_game(words, ids, starts, ["e4", "d5"])  # no game goes that way
+    assert not opens_a_game(words, ids, starts, ["d4", "d5", "c"])  # half a move opens nothing
