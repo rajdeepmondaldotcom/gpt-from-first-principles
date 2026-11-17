@@ -2,11 +2,11 @@
 
 By the end of this page 43,008 trained numbers, in place of 5,374,464, have learned part of lesson 25's skill. The old weights have not moved, and the new ones fold back in to leave a plain model.
 
-Lesson 25's fine-tune trained all of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
+Lesson 25's fine-tune moved all 5,374,464 of the model's weights. The result is a second file of 21.5 MB, and plain stories got 0.069 nats worse.
 
 ## The idea
 
-Fine-tuning turns a grid of weights W into W plus a change D, and D is as large as W. LoRA bets that the change a new task needs is simpler than that, and builds D from two thin grids.
+Fine-tuning turns a grid of weights W into W plus a change D, and D is as large as W. LoRA's authors bet that a new task needs a simpler change, and build D from two thin grids.
 
 Take a grid that maps 256 numbers to 256. In place of a free D, write D as B times A. A maps the 256 numbers down to r of them, and B maps those r back up to 256. With r = 8, A and B hold 4,096 numbers, where D held 65,536. The number r, the fewest numbers the change can be passed through, is called its rank.
 
@@ -14,13 +14,13 @@ The layer becomes the old result plus the correction:
 
 W x + (32 / r) × B (A x)
 
-W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. It is divided by r so that the first step is the same on average at each rank, and one learning rate can serve them all. A starts random and B at zero, so the correction starts at zero and the model begins as it was.
+W is frozen: it gets no slope and takes no step. Only A and B train. The number in front sets how much the correction counts. We divide it by r so that the first step is the same on average at each rank, and one learning rate can serve them all. A starts random and B at zero, so the correction starts at zero and the model begins as it was.
 
 A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two, the ones that make queries and values. We run that first, at a rank of 8. Then, one change at a time as lesson 14 taught: eight times the rank, and a correction beside each of the seven.
 
-Two things can be done with a trained A and B. Keep them apart: one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is a plain model again, no larger and no slower.
+Keep a trained A and B apart, and one copy of the big model serves many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is a plain model again, no larger and no slower.
 
-Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ: the peak rate is 0.01, ten times as high, and there is no weight decay. The 32, the division by r and the ten times are from Schulman and others, below, and not from a search of ours.
+Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ: the peak rate is 0.01, ten times as high, and there is no weight decay. The 32, the division by r and the ten times are Schulman and others', below, not from a search of ours.
 
 ## By hand
 
@@ -41,7 +41,7 @@ A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0)
 | (0, 1) | 2 | (6, 0) |
 | (5, -1) | 3 | (9, 0) |
 
-Each result is a multiple of (3, 0). No input can make this correction change the second number, where a free D could move each output on its own.
+Each result is a multiple of (3, 0). No input can make this correction change the second number. A free D could.
 
 ## The code
 
@@ -87,7 +87,7 @@ def merge(model):
                     setattr(part, name, one.layer)
 ```
 
-`down` is A and `up` is B. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights, and `nn.Parameter` marks the two new grids as weights that train. `named_children` lists a part's layers by name and `setattr` replaces one, so the model's own file does not change.
+`down` is A and `up` is B. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `named_children` lists a part's layers by name and `setattr` replaces one, so the model's own file does not change.
 
 ## The proof
 
@@ -99,7 +99,7 @@ uv run pytest tests/test_lora.py
 - Only `down` and `up` train. In a small model they hold under a tenth of the weights.
 - Training lowers the loss, moves `up` away from zero, and leaves each frozen weight as it was, to the last bit.
 - After the merge the scores match to 0.00001, the model's parts have their old names, and no LoRA layer is left.
-- The same holds with a correction beside each of the seven grids.
+- Beside each of the seven grids: no change at first, the loss falls, and the merge leaves a plain model.
 - After training at r = 3 and the merge, the change in a grid has a rank of 3.
 
 ```bash
@@ -140,17 +140,17 @@ rank 8, each grid in a block: plain stories, after minus before, +0.009 nats, 95
 merged against unmerged, largest difference in a score: 0.000014
 ```
 
-Beside queries and values at a rank of 8, the corrections are 43,008 numbers and 0.17 MB. In lesson 25's 2,000 steps the model uses 0.37 of the asked words. The full fine-tune reached 0.56, and the model as it was 0.14. It passes 10 of 200 orders, against 27.
+Beside queries and values at a rank of 8, the model uses 0.37 of the asked words after lesson 25's 2,000 steps: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 orders, against 27.
 
-Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, so these runs do not tell the settings apart. None reaches 0.56.
+Eight times the rank gives 0.41, and a correction beside each grid 0.34. The three intervals overlap or touch, and none reaches 0.56. We put no interval on the gaps between settings, so these runs do not rank them.
 
 The price on plain stories is lower too: 0.006 to 0.009 nats, against 0.069.
 
-Folded in, the corrections move no score by more than 0.000014.
+Folded in, the last run's corrections move no score on a 64-token window by more than 0.000014.
 
 ## What it still cannot do
 
-Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there is none: only a check that says pass or fail.
+Both fine-tunes copied 60,404 stories that obeyed their orders, and the better one still leaves out 0.44 of the asked words. The check sees each miss, and nothing learns from it.
 
 ## Check yourself
 

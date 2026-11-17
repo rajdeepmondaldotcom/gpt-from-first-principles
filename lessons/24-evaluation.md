@@ -1,6 +1,6 @@
 # 24. Evaluation
 
-By the end of this page each loss and each comparison of two models carries a 95% interval, and each task a pass rate.
+By the end of this page the loss on unseen stories and each comparison of two models carry a 95% interval, and each task a pass rate.
 
 The model now writes fast enough to be judged on hundreds of stories. We cannot yet say how sure a loss is, or whether a second model is better than this one.
 
@@ -15,7 +15,7 @@ Lesson 21 scored the model at 1.565 nats a token with lesson 10's `evaluate`: wi
 
 A loss measures prediction, and a task checks one job with a rule that says pass or fail. We have two tasks. The easy one opens a story with a name, and passes when the story uses the name again and reaches its end. The hard one asks, in three lines, for a story with a given name and three given words.
 
-A pass rate is a mean of passes and failures, but the bootstrap serves it badly when passes are few. Draw again from 100 failures and each draw is 100 failures, so the interval has no width. So a pass rate gets the range worked out by hand below: each rate at which a count this low, and one this high, still comes 1 time in 40.
+A pass rate is a mean of passes and failures, but the bootstrap serves it badly when passes are few. Draw again from 100 failures and each draw is 100 failures, so the interval has no width. So a pass rate gets the range worked out by hand below: the rates at which this many passes or more, and this many or fewer, still come 1 time in 40.
 
 We also ask for the chance that at least one of k tries passes, called pass at k. Given n tries of which c passed, count the ways to pick k tries that all failed, divide by the ways to pick any k, and take the result from 1.
 
@@ -96,9 +96,9 @@ a name to carry on: 'Once upon a time, there was a little cat named Ollie.'
 a story to order: 'Name: Ollie\nWords: fish, stone, duck\nStory:'
 ```
 
-All 2,525 stories, read one at a time, score 1.480 nats, 0.543 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. The first 250 give an interval 0.094 nats wide drawn story by story and 0.033 drawn token by token, a third as wide as it should be.
+All 2,525 stories, read one at a time, score 1.480 nats, about 0.54 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. The first 250 give an interval 0.094 nats wide drawn story by story and 0.033 drawn token by token, a third as wide as it should be.
 
-With lesson 12's 16-bit switch on, 500 stories score 0.0001 nats worse, and the interval reaches 0: they have not separated the two. Given a name to carry on, the model passes 97 of 100.
+With lesson 12's 16-bit switch on, 500 stories score 0.0001 nats worse, and the interval reaches 0. Given a name to carry on, the model passes 97 of 100.
 
 ## What it still cannot do
 
