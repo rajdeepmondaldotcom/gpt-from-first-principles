@@ -16,7 +16,7 @@ Readers do not arrive evenly. The script draws each gap between two arrivals by 
 
 The line is where latency comes from. Say the machine can finish 3 requests a second. At half that rate, a request seldom finds another ahead of it. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows for as long as readers keep coming. The machine writes no slower in any of the three cases. Only the wait for the first token grows.
 
-How fast could writing be? One new token reads each weight once, as lesson 17 counted, and the story model's weights are 21.5 MB. The script times how fast this machine copies memory. That speed over 21.5 MB is the most tokens a second that memory alone would allow, and the run sets our speed beside it.
+How fast could writing be? One new token reads each weight once, as lesson 17 counted, and the story model's weights are 21.5 MB. The script times a copy of 256 MB. A copy reads each byte and writes it, so it moves 512 MB through memory. That speed over 21.5 MB is the most tokens a second that memory alone would allow, and the run sets our speed beside it.
 
 ## By hand
 
@@ -32,7 +32,7 @@ A slow tail. Of 100 readers, 90 wait 0.1 s and 10 wait 3 s.
 
 No reader waited 0.39 s.
 
-The most that one request at a time can finish. In the run below the prompt is read at @@READ@@ tokens a second and the answer written at @@WRITE@@. The pass that reads the prompt gives the first token of the answer, so an answer of 64 has 63 more to write. A request with a prompt of 64 tokens and an answer of 64 takes 64 / @@READ@@ + 63 / @@WRITE@@ = @@EACH@@ s, so the machine finishes @@CAPACITY@@ requests a second and no more.
+The most that one request at a time can finish. In the run below, a request with a prompt of 64 tokens and an answer of 64 takes @@EACH@@ s with the machine to itself. With no rest between requests, that is 1 / @@EACH@@ = @@CAPACITY@@ requests a second and no more.
 
 ## The code
 

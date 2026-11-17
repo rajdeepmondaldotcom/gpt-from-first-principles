@@ -91,9 +91,7 @@ class Service:
                     out.put(None)
                 held = None
             now = time.perf_counter()
-            inside = (
-                len(self.outs) + self.inbox.qsize() + bool(held)
-            )  # being written to, or in line
+            inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
             self.counts["in_flight_seconds"] += inside * (now - last)
             last = now
             if not self.outs:
@@ -117,9 +115,7 @@ class Service:
                     self.counts["first_token_seconds"] += now - arrived
                 self.counts["tokens"] += 1
                 out.put(token)
-                if (
-                    request.done()
-                ):  # count it before the stream ends, so a reader of the counts sees it
+                if request.done():  # counted before the stream ends, so the counts are never behind
                     self.counts["finished"] += 1
                     self.counts["seconds_in_system"] += now - arrived
                     del self.outs[id(request)]

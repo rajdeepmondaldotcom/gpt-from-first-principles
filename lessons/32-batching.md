@@ -10,7 +10,7 @@ A pass of the model works on a grid of tokens with one row for each text. In tra
 
 1. The rows have different lengths, and a grid needs rows of one length. We line the rows up at their ends and put empty places in front of the shorter ones. A grid of true and false, called `real`, marks the places that hold tokens, and attention reads only those.
 2. Readers come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token it is cut out of the grid.
-3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token. The engine takes a request only if the cache it may come to need, for its prompt and the most it may write, still fits in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
+3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine counts each request at the size of the longest one, prompt and the most it may write, and takes a new one only if the rows together still fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
 
 Joining takes care with places. A row read its prompt at places 0, 1, 2 and so on, and lesson 15 turned each key by its place. In the batch that row may sit further along, behind some empty places. With rotary positions a score depends only on the distance between two tokens, so we turn each of the row's keys on by the same number of places and no score changes.
 
@@ -32,7 +32,7 @@ Memory. A request with a prompt of 64 tokens that may write 64 more can come to 
 
 128 × 6,144 = 786,432 bytes
 
-Room for 16 such requests is 12.6 MB.
+Room for 16 such requests is 12.6 MB. A request of 16 tokens beside them is padded to their length, and counts as 128 too.
 
 ## The code
 
@@ -96,10 +96,11 @@ uv run pytest tests/test_engine.py
 ```
 
 - Five requests with prompts of different lengths arrive in rounds 0, 2, 7 and 9, join a running batch and leave it at different times. Each writes what it writes alone.
+- Two rows share a batch, one at temperature 0 and one drawn at 1.5 from its own seed. Each writes what it writes alone.
 - A stop token ends its own row and no other.
 - A prompt read in chunks of 4 tokens gives the answer it gives read whole, and a short request beside it gets its first token after one round.
 - With four rows, one round calls the model once, on a grid of 4 rows and 1 new token each.
-- With a budget for two requests, `admit` says no to a third, and yes once the first two are done.
+- With a budget for two requests, `admit` says no to a third, and yes once the first two are done. Beside a prompt of 40 tokens, a prompt of 2 counts as long, and the cache never passes the budget.
 - A row moved six places along, with its keys turned to match, gets the scores it got before.
 - With the mask taken out, the empty places are read and the scores change.
 

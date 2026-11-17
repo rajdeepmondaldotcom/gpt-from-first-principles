@@ -68,9 +68,7 @@ The engine's thread:
                     out.put(None)
                 held = None
             now = time.perf_counter()
-            inside = (
-                len(self.outs) + self.inbox.qsize() + bool(held)
-            )  # being written to, or in line
+            inside = len(self.outs) + self.inbox.qsize() + bool(held)  # written to, or in line
             self.counts["in_flight_seconds"] += inside * (now - last)
             last = now
             if not self.outs:
@@ -94,9 +92,7 @@ The engine's thread:
                     self.counts["first_token_seconds"] += now - arrived
                 self.counts["tokens"] += 1
                 out.put(token)
-                if (
-                    request.done()
-                ):  # count it before the stream ends, so a reader of the counts sees it
+                if request.done():  # counted before the stream ends, so the counts are never behind
                     self.counts["finished"] += 1
                     self.counts["seconds_in_system"] += now - arrived
                     del self.outs[id(request)]
@@ -106,7 +102,7 @@ The engine's thread:
                 out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
-`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
+`self.inbox` is the waiting line, a queue that holds a set number of requests and no more. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine. If that step fails, the thread ends the streams it was writing, counts them as failed, starts a fresh engine and goes on. A request it can tell is bad before then, such as text that is not JSON or a temperature that is not a number, never reaches the engine: it gets an error and the reason. The rest of the file is Python's standard web server, the no for a full line, the stop for a listener who has left, and the page you see in the browser.
 
 ## The proof
 
@@ -120,7 +116,9 @@ uv run pytest tests/test_server.py
 - An answer stops at the model's context, and a prompt that fills the context is refused with the reason.
 - A listener who leaves after one piece frees their row.
 - A request too big for the whole memory gets a no at once. With memory for one request, a second waits and is then answered. With a line of two full, the third is turned away.
-- The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests.
+- The metrics page counts what happened, and requests inside added up over time equal time inside added up over requests. A request waiting in line counts as inside.
+- A request with no prompt, a temperature given as text, or a limit of 0 tokens gets an error and the reason, and the next request is answered.
+- A pass of the model that fails ends the streams it was writing. The next request is answered.
 
 The script starts the server, asks it for one story, then has `ab`, a load tool that comes with the Apache web server, send 200 requests, 16 at a time.
 
