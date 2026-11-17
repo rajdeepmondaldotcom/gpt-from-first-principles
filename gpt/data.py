@@ -119,6 +119,13 @@ def read(path):
     return torch.from_file(str(path), dtype=torch.int32, size=path.stat().st_size // 4)
 
 
+def tokenizer(path):
+    """The tokenizer the script below saved: each token's bytes, in the order of the ids."""
+    return Tokenizer(
+        {bytes.fromhex(token): i for i, token in enumerate(json.loads(path.read_text()))}
+    )
+
+
 if __name__ == "__main__":
     cache = Path("data/cache")
     fetch(cache / "tinystories.txt")

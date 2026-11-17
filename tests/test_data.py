@@ -4,7 +4,19 @@ from pathlib import Path
 import pytest
 import torch
 
-from gpt.data import clean, held_out, minhash, near_repeats, overlap, prepare, read, shingles, write
+from gpt.bpe import train
+from gpt.data import (
+    clean,
+    held_out,
+    minhash,
+    near_repeats,
+    overlap,
+    prepare,
+    read,
+    shingles,
+    tokenizer,
+    write,
+)
 from gpt.gpt2 import batch
 
 LINES = Path("data/tiny_shakespeare.txt").read_text().split("\n\n")
@@ -77,3 +89,13 @@ def test_batches_from_disk_equal_batches_from_memory(tmp_path):
         batch(in_memory, 16, 8, torch.Generator().manual_seed(1)),
     ):
         assert torch.equal(mine, theirs)
+
+
+def test_a_saved_tokenizer_comes_back_the_same(tmp_path):
+    import json
+
+    vocab = train(" ".join(DOCS[:20]), 300)
+    (tmp_path / "vocab.json").write_text(json.dumps([token.hex() for token in vocab]))
+    again = tokenizer(tmp_path / "vocab.json")
+    assert again.vocab == vocab
+    assert again.decode(again.encode(DOCS[30])) == DOCS[30]

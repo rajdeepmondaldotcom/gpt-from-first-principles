@@ -35,8 +35,10 @@ def run(shape, flops, ids, val_ids, seed=0, size=32, peak=1e-3):
     steps = round(flops / (3 * forward_flops(model, size * model.context, model.context)))
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
     generator = torch.Generator().manual_seed(seed)
-    loop = train(model, optimizer, ids, steps, peak=peak, generator=generator, size=size)
-    for _ in loop:
+    warmup = max(1, steps // 10)  # a tenth of the run, so a short run is not all warmup
+    for _ in train(
+        model, optimizer, ids, steps, peak=peak, generator=generator, size=size, warmup=warmup
+    ):
         pass
     return sum(p.numel() for p in model.parameters()), steps, evaluate(model, val_ids)
 
