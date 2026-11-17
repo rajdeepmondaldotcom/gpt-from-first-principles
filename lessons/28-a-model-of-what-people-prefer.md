@@ -2,19 +2,19 @@
 
 By the end of this page a second model has learned to score stories from pairs in which a reader liked one more, and you have watched the readers' number fall as the storyteller is trained against that score.
 
-Lesson 27's score gave nothing for an ending, and 59 of 200 stories no longer reach one. A reader would mark that down, and can say which of two stories is better with no written rule.
+Lesson 27's score gave nothing for an ending, and 59 of 200 stories now never reach one, where 4 did. A reader would mark that down, and that score cannot.
 
 ## The idea
 
-The first source below reports that its raters gave consistent choices between two more easily than consistent numbers, in some of its tasks. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
+In some of the first source's tasks, raters gave consistent choices between two more easily than consistent numbers. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
-We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside the truth, which a real project cannot.
+We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside it, which a real project cannot.
 
 The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the storyteller, lesson 25's model, which already reads stories, with one new layer on top that turns the stream at the last token into a single number.
 
 For each pair it scores both stories, and the difference between the two scores is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is the surprise of lesson 1 at the reader's real choice.
 
-A trained scorer can stand where lesson 27's check stood: the storyteller writes stories, the scorer scores them, and the step raises the chance of those above their group's average.
+A trained scorer can stand where lesson 27's score stood: the storyteller writes stories, the scorer scores them, and the step raises the chance of those above their group's average.
 
 The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and nothing makes its number hold for stories unlike the ones it learned from. So we watch the scorer's number, which the training sees, and two it does not: the readers', and lesson 27's score.
 
@@ -108,7 +108,7 @@ on 200 unseen orders the readers give its stories 0.03, where they gave 0.57. Th
 
 The scorer's loss on a batch of 16 of its own pairs falls from 0.916 to 0.024. Of the 240 held-back pairs it ranked 109 right before training and 140 after: 0.51 to 0.65, against a coin's 0.5.
 
-Before the push, the scorer gave the storyteller's stories +3.41 on average, the readers 0.58 and lesson 27's score 0.61. Over the last 20 rounds the scorer gives +12.72, the readers 0.05 and lesson 27's score 0.09. The number training could see rose in each line, and the two it could not see fell.
+Before the push, the scorer gave the storyteller's stories +3.41 on average, the readers 0.58 and lesson 27's score 0.61. Over the last 20 rounds the scorer gives +12.72, the readers 0.05 and lesson 27's score 0.09. In each line the scorer's number rose and the other two fell.
 
 On 200 orders it did not train on, the readers gave its stories 0.57 before the push and give 0.03 after, a change of -0.58 to -0.51.
 
@@ -123,7 +123,7 @@ One day, a happy sad girl named Mia wanted to find more. She wanted to bake anot
 Bby was happy again. They were happy again. They could not sell past again. They had fun and sang their new things again. They were happy again. They were happy again because they did their choory together.
 ```
 
-The last order asked for Bob, movie, movies and watch, and the story above is what the storyteller now writes. The scorer is a second model to train and keep, and it can be fooled. The pairs themselves already say which story is better, and we have not learned from them directly.
+The last order asked for Bob, movie, movies and watch, and the story above is what the storyteller now writes. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs themselves already say which story is better, and we have not learned from them directly.
 
 ## Check yourself
 
@@ -134,7 +134,7 @@ Predict before you run: as the storyteller is trained against the scorer, the sc
 Fall: from 0.58 to 0.05, while the scorer's number rose from +3.41 to +12.72.
 </details>
 
-<details><summary>Why can training against the scorer make stories worse, when the scorer ranks most unseen pairs correctly?</summary>
+<details><summary>Why can training against the scorer make stories worse, when the scorer ranks most unseen pairs right?</summary>
 
 It learned from lesson 25's stories only. Here the number it gives rose while the readers' fell, so its number stopped tracking theirs.
 </details>
