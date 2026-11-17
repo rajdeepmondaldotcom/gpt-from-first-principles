@@ -8,13 +8,13 @@ Each model in this course has read English: Shakespeare, then stories. We have n
 
 Nothing in the model knows what a word is. It reads the ids of tokens and gives a chance to each id that could come next. Anything that can be written as text can be put in front of it, and chess players write their games down as text.
 
-A game is a list of moves. `e4` moves a pawn to the square e4: the letter is the column, a to h, and the digit is the row, 1 to 8. `Nf3` moves a knight to f3. `Bxc6` is a bishop taking the piece on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`, and that line is all the model will ever see. On these pages a move is one side's turn: that line has four. It gets no board, no pieces and no rules.
+A game is a list of moves. `e4` moves a pawn to the square e4: the letter is the column, a to h, and the digit is the row, 1 to 8. `Nf3` moves a knight to f3. `Bxc6` is a bishop taking the piece on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`. On these pages a move is one side's turn, so that line has four. The line is all the model will ever see: no board, no pieces and no rules.
 
 The games come from Lichess, a free site that gives the record of each game played on it to the public. We take one month, March 2014. A record carries the players' names, the clocks and the result as well as the moves, and a function called `moves` keeps the moves alone. We keep each game of 20 moves or more.
 
 From there the steps are lesson 18's, in the same order: drop repeats, drop near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. One thing had to give. Lesson 18 threw out a document as junk when under 80% of it was letters and spaces, and a game of chess is 74%. That one test is switched off for games.
 
-The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well, to the line. That script's long run is now a function, and this lesson calls it with other data: three short runs to pick a rate, the two checks, then the same budget of arithmetic, with a checkpoint each 500 steps.
+The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well. That script's long run is now a function, and this lesson calls it with other data: three short runs to pick a rate, the two checks, then the same budget of arithmetic.
 
 A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal on that board. A model that copied common moves would often be wrong, since what is legal depends on where each piece now stands. An untrained model writes 0 legal moves in 200.
 
@@ -130,12 +130,6 @@ Predict before you run: the model has never seen a board. After three hours of r
 <details><summary>What changed in the model's file to make it play chess?</summary>
 
 Nothing. The model is built with a vocabulary of 636 in place of 4,097, which is a number passed in. The data, the tokens and the check are new, and each lives outside the model.
-
-</details>
-
-<details><summary>Why is "is this move legal?" a harder test than it looks?</summary>
-
-Whether a move is legal depends on the whole game so far: where each piece has gone, what was taken, whose turn it is. The model sees only the list of moves and has to work the position out from it.
 </details>
 
 <details><summary>From lesson 18: why split the games by fingerprint before training?</summary>

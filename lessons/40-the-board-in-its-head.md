@@ -68,7 +68,7 @@ def erase(probe, stream, square, piece, margin=3.0):
     return (margin - lead) / (line @ line).item() * line.detach()
 ```
 
-PyTorch stores the layer's grid with a row for each score (lesson 4), so `view(64, PIECES, -1)` sorts the rows by square and piece. `rows[0]` holds the probe's weights for "empty" on this square and `rows[piece]` those for the piece. Their difference is the one line in the stream along which the probe tells the two apart. `.item()` turns a tensor of one number into a plain number, and `.detach()` cuts the result loose from the slopes.
+PyTorch stores the layer's grid with a row for each score (lesson 4), so `view(64, PIECES, -1)` sorts the rows by square and piece. `rows[0]` holds the probe's weights for "empty" on this square and `rows[piece]` those for the piece. Their difference is the one line in the stream along which the probe tells the two apart. `.item()` turns a tensor of one number into a plain number.
 
 ## The proof
 
