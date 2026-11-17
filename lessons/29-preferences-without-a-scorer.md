@@ -63,35 +63,35 @@ uv run pytest tests/test_prefer.py
 - The hand example gives 0.513.
 - One step on a pair makes the better answer gain on the worse one, against the copy made before the step.
 
-The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. The script also asks lesson 28's question: what do the readers give the model's new stories, before and after?
+The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. Training is 200 steps of 8 pairs at a rate of 0.00001. The script also asks lesson 28's question: what do the readers give the model's new stories, before and after?
 
 ```bash
 uv run python -m gpt.prefer
 ```
 
 ```
-pairs to learn from: 1,353, pairs held back: 210
-lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.20
+pairs to learn from: 1,386, pairs held back: 240. A story is 178 tokens on average
+lesson 25's model: 30 of 200 tasks passed, 95% interval 0.10 to 0.21
 lesson 25's model: 0.57 of the asked words used, 95% interval 0.53 to 0.61
 lesson 25's model: 196 stories end by themselves, plain stories 1.549 nats a token
 step 1: 0.693 on 8 pairs. ln 2 is 0.693
-step 50: 0.470 on 8 pairs. ln 2 is 0.693
-step 100: 0.487 on 8 pairs. ln 2 is 0.693
-step 150: 0.412 on 8 pairs. ln 2 is 0.693
-step 200: 0.358 on 8 pairs. ln 2 is 0.693
-held-back pairs where the better story gained on the worse one: 115 of 210, 95% interval 0.48 to 0.61
-after the pairs: 34 of 200 tasks passed, 95% interval 0.12 to 0.22
-after the pairs: 0.61 of the asked words used, 95% interval 0.57 to 0.64
-after the pairs: 200 stories end by themselves, plain stories 1.556 nats a token
-plain stories, after minus before: +0.006 nats, 95% interval +0.006 to +0.007
-the readers give its stories 0.65 on average, where they gave 0.56. The change has a 95% interval of +0.05 to +0.13
+step 50: 0.640 on 8 pairs. ln 2 is 0.693
+step 100: 0.557 on 8 pairs. ln 2 is 0.693
+step 150: 0.303 on 8 pairs. ln 2 is 0.693
+step 200: 0.270 on 8 pairs. ln 2 is 0.693
+held-back pairs where the better story gained on the worse one: 150 of 240, 95% interval 0.55 to 0.70
+after the pairs: 35 of 200 tasks passed, 95% interval 0.13 to 0.23
+after the pairs: 0.60 of the asked words used, 95% interval 0.56 to 0.63
+after the pairs: 197 stories end by themselves, plain stories 1.556 nats a token
+plain stories, after minus before: +0.007 nats, 95% interval +0.006 to +0.008
+the readers give its stories 0.62 on average, where they gave 0.53. The change has a 95% interval of +0.04 to +0.13
 ```
 
-The first loss is ln 2. By step 200 it is 0.358 on a batch of 8 pairs.
+The first loss is ln 2. By step 200 it is 0.270 on a batch of 8 pairs.
 
-That fall says less than it seems to. By then the model has drawn 1,600 pairs from 1,353, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 210 pairs held back, from orders it never trained on. There the better story gained on the worse one in 115. The interval, 0.48 to 0.61, holds one half.
+That fall says less than it seems to. By then the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on. There the better story gained on the worse one in 150, and the interval, 0.55 to 0.70, is clear of a half.
 
-The stories it writes did change. On 200 unseen orders the readers give 0.65 where they gave 0.56, and the change has an interval of +0.05 to +0.13, clear of zero. Each of the 200 stories ends, and 34 pass where 30 did. Plain stories cost 0.006 nats, under a tenth of lesson 25's price.
+The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. 197 of the 200 stories end, and 35 pass where 30 did, a gap the two intervals do not separate. Plain stories cost 0.007 nats. Lesson 25's cost 0.069, in ten times the steps at a peak rate a hundred times this one.
 
 Lesson 28's trap was a number that training sees going up while the readers' number goes down. Here the readers' number went up.
 
@@ -115,7 +115,7 @@ ln 2 = 0.693. The model starts as the reference, so each lead is 0 and each bet 
 
 <details><summary>Lesson 25's loss only raised the log chance of good stories. What does this loss have that it lacked?</summary>
 
-An end to the push. Lesson 25's loss pulled for as long as it trained, and plain stories got 0.069 nats worse. Here a pair with a large lead stops pulling, and plain stories cost 0.006.
+An end to the push. Lesson 25's loss pulled on each example for as long as it trained. Here a pair with a large lead stops pulling.
 </details>
 
 <details><summary>From lesson 28: which of that lesson's two models has gone, and what does its job now?</summary>
