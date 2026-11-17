@@ -2,7 +2,7 @@
 
 By the end of this page the model learns lesson 25's skill again with 43,008 trained numbers in place of 5,374,464, the old weights do not move, and the new ones fold back in to leave a plain model.
 
-Lesson 25's fine-tune moved each of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
+Lesson 25's fine-tune trained all of the model's weights, and the result is a second file of 21.5 MB. Ten tasks would mean ten such files.
 
 ## The idea
 
@@ -115,7 +115,7 @@ uv run python -m gpt.lora
 
 ## What it still cannot do
 
-Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. For most things we want from a model, nobody has written the right answers. We have only a check that says pass or fail.
+Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there are no right answers to copy. There is only a check that says pass or fail.
 
 ## Check yourself
 

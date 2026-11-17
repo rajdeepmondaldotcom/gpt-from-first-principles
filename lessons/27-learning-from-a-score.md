@@ -1,26 +1,26 @@
 # 27. Learning from a score
 
-By the end of this page the model has been trained with no right answers at all, only a number for each story it wrote, and you have measured that against the simplest thing one could try.
+By the end of this page the model has been trained with no right answers, only a number for each story it wrote, and you have measured that against the simplest thing one could try.
 
-Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. For most things we want from a model, nobody has written the right answers. We have only a check that says pass or fail.
+Both fine-tunes learned from 60,404 stories that already obeyed their orders: a right answer to copy, for each example. Often there are no right answers to copy. There is only a check that says pass or fail.
 
 ## The idea
 
 Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
 
-The first thing to try needs nothing new. Let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away each story that failed, though a failure says something too.
+The first thing to try needs nothing new. Let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did. This throws away the stories that failed, though a story one word short came close.
 
-The second way uses each story. Write the average score the model would earn as a sum: each story it might write, times its chance, times its score. We want that sum's slope for each weight. No one can list each story, but one fact lets us draw a few. By lesson 2's table, the slope of ln x is the slope of x over x. So the slope of a chance is the chance times the slope of its logarithm. Each term of the sum then starts with a chance, and the slope is an average, over stories the model itself wrote, of
+The second way uses them all. Write the average score the model would earn as a sum: each story it might write, times its chance, times its score. We want that sum's slope for each weight. We cannot list them all, so we rewrite the sum to sample it. By lesson 2's table, the slope of ln x is the slope of x over x, so the slope of a chance is the chance times the slope of its logarithm. Each term of the sum then starts with a chance, and the slope is an average, over stories the model itself wrote, of
 
 score × slope of the log of the story's chance
 
-The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write some stories, score each, and step so that each story's log chance rises in proportion to its score. Nothing in the step needs a right answer.
+The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write some stories, score each, and step so that each story's log chance rises in proportion to its score, with no right answer.
 
-As it stands, this is noisy. If each score is between 0 and 1, each story is pushed up, good and bad alike, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
+The step as written is noisy. If each score is between 0 and 1, each story is pushed up, good and bad alike, and only the difference between pushes teaches anything. So we write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
 Subtracting a number that does not depend on which story was drawn leaves the average slope where it was. The average of four does depend on it, since the story is one of the four. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. So the step keeps its direction and is three quarters as long.
 
-Both ways get the same budget: 1,600 stories written, 16 to a round, and 100 steps.
+Both ways get the same budget: 1,600 stories written, 16 to a round, and 100 steps at a peak rate of 0.0001 on lesson 25's schedule.
 
 ## By hand
 
@@ -33,7 +33,7 @@ Two orders, two stories each. The first order's stories score 1 and 0. The secon
 | Second order, story 1 | 1 | 1 | 0 |
 | Second order, story 2 | 1 | 1 | 0 |
 
-The step raises the log chance of the first story and lowers the second's by the same amount. The second order teaches nothing this round, since both its stories did equally well.
+The step pushes the first story's log chance up and the second's down as hard. The second order teaches nothing this round, since both its stories scored the same.
 
 The loss is minus the average of (score minus average) × log chance. Its slope for each of the four log chances is that story's number, with the sign turned, over 4: -0.125, +0.125, 0 and 0.
 
@@ -104,7 +104,7 @@ It also learned what the score left out. Only 176 of its stories reach their end
 
 ## What it still cannot do
 
-The check here was a program: four words, found or not found. Most of what people want from a story has no such program. People can still say which of two stories they like better.
+The check here was a program: a name and three words, found or not found. What makes a story good has no such program. You can still say which of two stories you like better.
 
 ## Check yourself
 
@@ -127,6 +127,6 @@ The chance of a story is the product of the chances of its tokens, each given th
 
 Go deeper:
 
-- Williams, [Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning](https://link.springer.com/article/10.1007/BF00992696) (1992). Where the rule on this page was first written down.
+- Williams, [Simple Statistical Gradient-Following Algorithms for Connectionist Reinforcement Learning](https://link.springer.com/article/10.1007/BF00992696) (1992). The first paper to write down this page's rule.
 - OpenAI, [Spinning Up: Intro to Policy Optimization](https://spinningup.openai.com/en/latest/spinningup/rl_intro3.html). The same derivation, with baselines.
 - Shao and others, [DeepSeekMath](https://arxiv.org/abs/2402.03300) (2024). It introduces a version with a group of answers for each question.

@@ -2,11 +2,11 @@
 
 By the end of this page a second model has learned to score stories from pairs in which a reader liked one more, and you have watched what happens to the storyteller when it is trained hard against that score.
 
-Lesson 27's check was a program: four words, found or not found. Most of what people want from a story has no such program. People can still say which of two stories they like better.
+Lesson 27's check was a program: a name and three words, found or not found. What makes a story good has no such program. You can still say which of two stories you like better.
 
 ## The idea
 
-People are poor at giving a story a number and good at choosing between two. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
+Choosing between two is often easier than giving one a number. The first source below found so with its own raters. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
 We have no readers, so a short function stands in for them, and we say now what it likes. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule. It sees pairs. Having the rule lets us do what a real project cannot: set a learned score beside the truth.
 
@@ -16,7 +16,7 @@ It learns from a pair like this. It scores both stories. Treat the difference be
 
 A trained scorer can stand where lesson 27's check stood. The storyteller writes stories, the scorer scores them, and the step raises the chance of the stories that scored above their group's average.
 
-Here is the trap. The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and that can be a story unlike any the scorer has seen, where its number means little. The storyteller is paid to find the scorer's mistakes. So we watch two numbers through the training: the scorer's, which the training sees, and the readers', which it does not.
+Here is the trap. The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and that can be a story unlike any the scorer has seen, where its number means little. The storyteller is paid to find the scorer's mistakes. So we watch the scorer's number, which the training sees, and two it does not: the readers', and lesson 27's score.
 
 ## By hand
 
