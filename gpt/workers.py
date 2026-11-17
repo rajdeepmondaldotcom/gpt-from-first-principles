@@ -73,12 +73,11 @@ if __name__ == "__main__":
     ids = encode(text, vocab)
     shape = {"vocab": len(vocab), "context": 64, "width": 128, "heads": 4, "layers": 4}
     timings = {}
+    say(f"threads one process spreads its arithmetic over: {torch.get_num_threads()}")
     for count in (1, 2, 4):
         generator = torch.Generator().manual_seed(0)
         pipes = launch(count, shape, seed=0, rate=1e-3)
-        share(
-            pipes, *batch(ids, 64, 64, generator)
-        )  # the first step waits for the workers to start
+        share(pipes, *batch(ids, 64, 64, generator))  # this step waits for the workers to start
         began = time.perf_counter()
         for _ in range(20):
             share(pipes, *batch(ids, 64, 64, generator))
