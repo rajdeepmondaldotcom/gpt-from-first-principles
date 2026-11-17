@@ -124,14 +124,23 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     twin = GPT(**size)  # a copy on the processor, where writing one move at a time is faster
 
-    def watch(model):
+    def keep(out):
+        """Save the twin as a model folder that lesson 21's `load` reads."""
+        out.mkdir(exist_ok=True)
+        save_llama(twin, out / "model.safetensors")
+        (out / "vocab.json").write_text((cache / "chess_vocab.json").read_text())
+        (out / "shape.json").write_text(json.dumps(size))
+
+    def watch(model, step):
         """The share of 200 unseen positions the model continues with a legal move."""
         twin.load_state_dict(model.state_dict())
         hits = legal_moves(twin, words, unseen[:200], torch.Generator().manual_seed(0))
         print(f"  legal moves: {sum(hits)} of 200", flush=True)
+        if step == 2500:  # a younger self, for lesson 39 to play against
+            keep(cache / "chess_early")
         return {"legal": sum(hits) / 200}
 
-    before = watch(twin)["legal"]
+    before = watch(twin, 0)["legal"]
     model, notes, steps, generator = long_run(cache, "chess", size, ids, val_ids, watch)
     count = sum(p.numel() for p in model.parameters())
     say(f"parameters: {count:,}, steps: {steps:,}, rate {notes['peak']:g}")
@@ -153,11 +162,7 @@ if __name__ == "__main__":
     say(f"a game it writes alone: {' '.join(played)}")
     say(f"its first {good} moves are legal, of {len(played)}")
 
-    out = cache / "chess"
-    out.mkdir(exist_ok=True)
-    save_llama(model, out / "model.safetensors")
-    (out / "vocab.json").write_text((cache / "chess_vocab.json").read_text())
-    (out / "shape.json").write_text(json.dumps(size))
+    keep(cache / "chess")
     save(
         "38_games",
         torch=torch.__version__,

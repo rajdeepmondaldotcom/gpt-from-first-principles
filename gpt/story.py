@@ -47,7 +47,7 @@ def load(folder):
     return model.eval(), tokenizer(folder / "vocab.json")
 
 
-def long_run(cache, name, shape, ids, val_ids, watch=lambda model: {}):
+def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
     """A run of hours, with what lessons 12 to 14 taught: pick a rate with short runs, check the
     untrained model, then train with a checkpoint every 500 steps.
 
@@ -94,7 +94,8 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model: {}):
     for step, loss in loop:
         if step % 500 == 0 or step == steps:
             unseen = evaluate(model, val_ids[:100_000])
-            notes["curve"].append({"step": step, "train": loss, "val": unseen} | watch(model))
+            point = {"step": step, "train": loss, "val": unseen} | watch(model, step)
+            notes["curve"].append(point)
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
             checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
             note()

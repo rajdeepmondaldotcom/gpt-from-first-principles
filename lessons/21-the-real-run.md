@@ -49,7 +49,8 @@ The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
     for step, loss in loop:
         if step % 500 == 0 or step == steps:
             unseen = evaluate(model, val_ids[:100_000])
-            notes["curve"].append({"step": step, "train": loss, "val": unseen} | watch(model))
+            point = {"step": step, "train": loss, "val": unseen} | watch(model, step)
+            notes["curve"].append(point)
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
             checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
             note()
