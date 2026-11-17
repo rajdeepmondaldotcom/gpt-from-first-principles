@@ -264,12 +264,16 @@ if __name__ == "__main__":
     from pathlib import Path
 
     from gpt.cost import cache_bytes
+    from gpt.prefix import PrefixStore
     from gpt.results import save, say
     from gpt.story import load
 
     cache = Path("data/cache")
     model, words = load(cache / "storyteller")  # lesson 25's model, which writes to order
-    service = Service(model, words, budget=16 * cache_bytes(model, model.context), waiting=64)
+    room = cache_bytes(model, model.context)  # the cache of one request that fills the context
+    # Room for 16 requests at once, a line of 64, and a store of beginnings as large as 8 caches:
+    # a listener who asks what happens next sends the story so far again.
+    service = Service(model, words, 16 * room, waiting=64, store=PrefixStore(8 * room))
     server = serve(service)
     url = "http://127.0.0.1:8000/v1/chat/completions"
     if sys.argv[1:] == ["stay"]:
