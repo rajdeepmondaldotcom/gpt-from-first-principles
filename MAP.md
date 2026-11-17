@@ -66,8 +66,8 @@ Each link was fetched on 17 November 2026.
 | Fast attention on a graphics chip | Lesson 17's tiles, done so the grid of scores never leaves the chip's fastest memory | Dao and others, [FlashAttention](https://arxiv.org/abs/2205.14135) |
 | Kernels and compilers | Why the same arithmetic can run fast or slow, and what a chip's own code changes | He, [Making Deep Learning Go Brrrr From First Principles](https://horace.io/brrr_intro.html) |
 | The words of the hardware | What each part of a graphics chip is called and does | Modal, [GPU Glossary](https://modal.com/gpu-glossary) |
-| Many machines for one service | Routing requests across copies of a model, adding copies under load, and replacing them safely | BentoML, [LLM Inference Handbook](https://bentoml.com/llm/) |
-| Staying up | What a service does when more arrives than it can serve, and how to say what "up" means | Beyer and others, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) |
+| Many machines for one service | Routing requests across copies of a model, adding copies under load, and replacing them safely | BentoML, [LLM Inference Handbook](https://github.com/modular/llm-inference-handbook) |
+| Staying up | What a service does when more arrives than it can serve, and how to say what "up" means | Google, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) |
 | One model across chips | Splitting a single model's arithmetic over several chips to answer faster | Pope and others, [Efficiently Scaling Transformer Inference](https://arxiv.org/abs/2211.05102) |
 | Load tests | Lesson 36 uses `ab`. Tools built for language models sweep the rate and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
 | Lines and waits | The mathematics of lesson 31's waiting line | Harchol-Balter, [Performance Modeling and Design of Computer Systems](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html) |
@@ -80,7 +80,7 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 |---|---|---|---|
 | The whole path, at university depth | [Stanford CS336](https://cs336.stanford.edu/) | Assignments MIT | Five assignments graded by tests: the model, systems, scaling, data, alignment |
 | The whole path, small | Karpathy, [Zero to Hero](https://github.com/karpathy/nn-zero-to-hero) and [nanochat](https://github.com/karpathy/nanochat) | MIT | The clearest teaching from nothing, and one current recipe from tokenizer to chat |
-| A GPT in one file | Karpathy, [nanoGPT](https://github.com/karpathy/nanoGPT) | MIT | GPT-2's training, reproduced in a few hundred lines |
+| A GPT in one file | Karpathy, [nanoGPT](https://github.com/karpathy/nanoGPT) | MIT | GPT-2's training, reproduced in a few hundred lines. Its author now points readers to nanochat |
 | The mathematics underneath | Deisenroth and others, [Mathematics for Machine Learning](https://mml-book.github.io/) | None stated | Linear algebra, calculus and probability, written for this use |
 | Deep learning as a textbook | Prince, [Understanding Deep Learning](https://udlbook.github.io/udlbook/) | CC BY-NC-ND 4.0 | Losses as maximum likelihood, starting weights, why models generalise |
 | Running experiments | [Deep Learning Tuning Playbook](https://github.com/google-research/tuning_playbook) | CC BY 4.0 | How to decide what works |
@@ -94,8 +94,8 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 | Interpretability | [ARENA](https://github.com/ARENA-education/ARENA_materials) and [Transformer Circuits](https://transformer-circuits.pub/) | None stated | Circuits, probes and features, by exercise and by paper |
 | Efficient inference | [MIT 6.5940](https://hanlab.mit.edu/courses/2026-fall-65940) | None stated | Quantization, pruning and distillation in depth |
 | Serving engines | [vLLM](https://github.com/vllm-project/vllm) and [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm) | Apache-2.0, MIT | The engine most services run, and one small enough to read |
-| Serving in production | BentoML, [LLM Inference Handbook](https://bentoml.com/llm/) | Apache-2.0 | Operations: routing, scaling, cost, what to watch |
-| Reliability | [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) | Free to read | Overload, monitoring, and what a promise about uptime means |
+| Serving in production | BentoML, [LLM Inference Handbook](https://github.com/modular/llm-inference-handbook) | CC BY 4.0 | Operations: routing, scaling, cost, what to watch |
+| Reliability | Google, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) | CC BY-NC-ND 4.0 | Overload, monitoring, and what a promise about uptime means |
 | Apple hardware | [MLX](https://github.com/ml-explore/mlx) and [mlx-lm](https://github.com/ml-explore/mlx-lm) | MIT | The engine lesson 37 hands our model to |
 | Engineering lore | Bekman, [Machine Learning Engineering Open Book](https://github.com/stas00/ml-engineering) | CC BY-SA 4.0 | Hardware, debugging and failures, from someone who ran the jobs |
 
