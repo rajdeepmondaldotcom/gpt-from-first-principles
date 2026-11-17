@@ -1,5 +1,5 @@
 {
-  "commit": "78fe19a",
+  "commit": "2296ed8",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "mps",
@@ -3043,7 +3043,14 @@
       "interval": [
         0.00698406295850873,
         0.01128027867525816
-      ]
+      ],
+      "gap": {
+        "mean": 0.03666666666666667,
+        "interval": [
+          -0.004999999888241291,
+          0.07999999821186066
+        ]
+      }
     },
     "rank 8, each grid in a block": {
       "trained": 221088,
@@ -4059,7 +4066,14 @@
       "interval": [
         0.007134785410016775,
         0.011756902560591698
-      ]
+      ],
+      "gap": {
+        "mean": -0.03333333333333333,
+        "interval": [
+          -0.07999999821186066,
+          0.011708373203873634
+        ]
+      }
     }
   },
   "printed": [
@@ -4093,6 +4107,8 @@
     "rank 8, each grid in a block: 0.34 of the asked words used, 95% interval 0.29 to 0.37",
     "rank 8, each grid in a block: 194 stories end by themselves, plain stories 1.490 nats a token",
     "rank 8, each grid in a block: plain stories, after minus before, +0.009 nats, 95% interval +0.007 to +0.012",
+    "asked words used, rank 64, queries and values minus rank 8, queries and values: +0.037, 95% interval -0.005 to +0.080",
+    "asked words used, rank 8, each grid in a block minus rank 8, queries and values: -0.033, 95% interval -0.080 to +0.012",
     "merged against unmerged, largest difference in a score: 0.000014"
   ]
 }
