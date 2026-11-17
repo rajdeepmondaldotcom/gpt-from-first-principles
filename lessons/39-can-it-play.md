@@ -6,7 +6,7 @@ A legal move can be a terrible one. We do not know yet whether the model can win
 
 ## The idea
 
-To find out whether something plays well, make it play. The referee is lesson 38's chess library: it holds the board, lists the legal moves and says when the game is over.
+We make the model play whole games. The referee is lesson 38's chess library: it holds the board, lists the legal moves and says when the game is over.
 
 The model is handed the moves so far and writes its top move. If that move is not legal, it gets four more tries, each drawn by chance at a temperature of 1. If none of the five is legal, the referee picks a legal move at random, and we count a slip.
 
@@ -20,7 +20,7 @@ It meets three opponents.
 
 A win scores 1, a draw 0.5 and a loss 0. Each two of the four players meet for 60 games, in 30 pairs. A pair starts from two moves picked at random, so no two pairs are the same game, and is played twice with colours swapped, since white moves first. The share of the points is a mean over games, so lesson 24's bootstrap gives it an interval, drawn pair by pair.
 
-One number for strength is a rating. The Elo rule says what score to expect from two ratings: a player 400 points above another is expected to take 10 points for each 1 the other takes. We turn the rule round: given the results, we look for the ratings that make them most likely, which is lesson 1's fitting done with lesson 11's AdamW. The random mover is held at 0, so the scale is ours and not a chess site's. One made-up draw between each two players keeps a rating finite when one side took each point. Drawing the pairs of games again and fitting again gives each rating a range.
+One number for strength is a rating. The Elo rule says what score to expect from two ratings: a player 400 points above another is expected to take 10 points for each 1 the other takes. We turn the rule round: given the results, we look for the ratings that make them most likely, which is lesson 1's fitting done with lesson 11's AdamW. We hold the random mover at 0, so these ratings do not compare with a chess site's. One made-up draw between each two players keeps a rating finite when one side took each point. Drawing the pairs of games again and fitting again gives each rating a range.
 
 ## By hand
 
@@ -116,23 +116,23 @@ the model: rated +340 with the random mover at 0, 95% interval +267 to +439
 
 The model takes 0.82 of the points from the random mover. At step 2,500 it took 0.87, and the two intervals overlap: against this opponent, more training does not show.
 
-Against the grabber it does. The model takes 0.23 of the points, where its younger self took 0.05. And it takes 0.62 from that younger self, with an interval of 0.53 to 0.71, clear of a half.
+Against the grabber it shows: the model takes 0.23 of the points, where its younger self took 0.05. And it takes 0.62 from that younger self, with an interval of 0.53 to 0.71, clear of a half.
 
 The referee moved for the model in 278 of its 8,017 turns, 3.5%, and for its younger self in 9.6%.
 
-On one scale, with the random mover at 0, the grabber is at +608, the model at +340 with an interval of +267 to +439, and its younger self at +250. The model beats a player that moves at random. A player that looks one move ahead takes three points in four from it.
+On one scale, with the random mover at 0, the grabber is at +608, the model at +340 with an interval of +267 to +439, and its younger self at +250.
 
 ## What it still cannot do
 
-The model plays chess from a list of moves. It was never shown a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
+The model plays chess from a list of moves. We never showed it a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
 
 ## Check yourself
 
-Predict before you run: the grabber only ever looks one move ahead. Will 10,420 steps of reading games be enough for the model to beat it?
+Predict before you run: the grabber looks one move ahead. Will 10,420 steps of reading games be enough for the model to beat it?
 
 <details><summary>Answer</summary>
 
-No. The model takes 0.23 of the points from the grabber. It has learned which moves are legal. Which moves win is another thing to learn.
+No. The model takes 0.23 of the points from the grabber. It has learned which moves are legal, and not yet which moves win.
 </details>
 
 <details><summary>Player A is rated 200 above player B. In 100 games, about how many points should A expect?</summary>

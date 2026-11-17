@@ -2,15 +2,15 @@
 
 By the end of this page you have read a chess position out of the model's inner numbers, and changed the model's move by rubbing one piece out of them.
 
-The model plays chess from a list of moves. It was never shown a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
+The model plays chess from a list of moves. We never showed it a board. A legal move depends on where each piece stands, and we have not looked for the pieces inside the model.
 
 ## The idea
 
-After the model reads a move's last token, each block leaves a row of 256 numbers there: lesson 9's stream. The next move is worked out from those numbers, and they carry no labels. Can the position be read from them?
+After the model reads a move's last token, each block leaves a row of 256 numbers there: lesson 9's stream. The next move is worked out from those numbers, and they carry no labels. We look for the position in them.
 
-A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on positions from games, where a chess program gives the right answer by replaying the moves. The model is frozen and only read.
+A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on positions from games, where a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
 
-A probe this weak is the point: a big network could work the position out for itself. One linear layer cannot, so if it reads the board, the board was laid out along straight lines in the stream.
+We want it weak: a big network could work the position out for itself. One linear layer cannot, so if it reads the board, the stream holds the board along straight lines.
 
 We check three things.
 
@@ -18,7 +18,7 @@ We check three things.
 2. Compare with a lazy guess. Most squares hold what they usually hold, so we count how often the most usual piece for each square is right, and score the probe apart on the squares where it is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
-Reading is not using: the board could be written in the stream and play no part in the move. So we change it. We work after the best reader among the first five blocks, picked on other games, so that a block still runs after the change. Take a position where the side to move has its queen. Along the probe's own line for "queen on this square", nudge the stream until the probe scores empty well above queen, and let the model run on. A model that works from this board should now give queen moves less chance. Rubbing out a pawn with a nudge of the same length should not. We try three lengths.
+The board could be in the stream and play no part in the move. So we change it. We edit after whichever of the first five blocks reads best on other games, so that a block still runs after the edit. Take a position where the side to move has its queen. Along the probe's own line for "queen on this square", nudge the stream until the probe scores empty well above queen, and let the model run on. A model that works from this board should now give queen moves less chance. Rubbing out a pawn with a nudge of the same length should not. We try three lengths.
 
 Last, we watch the move form: lesson 10's last two steps, a normalization and the scores layer, applied to the stream after each earlier block, show what the model would say if it stopped there.
 
@@ -112,9 +112,9 @@ after block 5: the final choice is on top in 43% of positions, with a chance of 
 after block 6: the final choice is on top in 100% of positions, with a chance of 35%
 ```
 
-Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%, and the true one 80.7%. On squares that are not as usual it is right 60.9% of the time: one linear layer reads part of a board, and not all of it.
+Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%, and the true one 80.7%. On squares that are not as usual it is right 60.9% of the time.
 
-Untouched, the model gives queen moves a chance of 20.3%. The nudge set before the run, 0.08 of the stream's length, takes that to 20.1%, and longer ones to 19.9% and 18.5%, each interval clear of zero. A pawn rubbed out with nudges of the same lengths leaves 20.3%, 20.3% and 20.5%. The model uses the line the probe reads, a little.
+Untouched, the model gives queen moves a chance of 20.3%. The nudge set before the run, 0.08 of the stream's length, takes that to 20.1%, and longer ones to 19.9% and 18.5%, each interval clear of zero. A pawn rubbed out with nudges of the same lengths leaves 20.3%, 20.3% and 20.5%. The model does use the line the probe reads: by 1.8 points at the longest nudge.
 
 The move forms late. After block 4 the final choice is on top in 27% of positions, and after block 5 in 43%.
 
@@ -133,7 +133,7 @@ Predict before you run: a probe fitted to shuffled boards has never been told wh
 
 <details><summary>From lesson 9: why is the stream after a block the right place to look?</summary>
 
-Each block reads the stream and adds to it, and the final layer reads it to choose the move. What one block hands to a later one passes through it.
+Each block reads the stream and adds to it, and the final layer reads it to choose the move. Anything one block hands to a later one passes through it.
 </details>
 
 Go deeper:

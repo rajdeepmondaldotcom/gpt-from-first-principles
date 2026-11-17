@@ -1,6 +1,6 @@
 # The map
 
-The lessons are one chain. A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40, and on one rented machine for the last two. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
+A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40, and on one rented machine for the last two. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
 
 Each link was fetched on 17 November 2026.
 
@@ -79,13 +79,13 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 | Area | Resource | Licence | Why this one |
 |---|---|---|---|
 | The whole path, at university depth | [Stanford CS336](https://cs336.stanford.edu/) | Assignments MIT | Five assignments graded by tests: the model, systems, scaling, data, alignment |
-| The whole path, small | Karpathy, [Zero to Hero](https://github.com/karpathy/nn-zero-to-hero) and [nanochat](https://github.com/karpathy/nanochat) | MIT | The clearest teaching from nothing, and one current recipe from tokenizer to chat |
+| The whole path, small | Karpathy, [Zero to Hero](https://github.com/karpathy/nn-zero-to-hero) and [nanochat](https://github.com/karpathy/nanochat) | MIT | Videos from zero to a GPT, and one current recipe from tokenizer to chat |
 | A GPT in one file | Karpathy, [nanoGPT](https://github.com/karpathy/nanoGPT) | MIT | GPT-2's training, reproduced in a few hundred lines. Its author now points readers to nanochat |
 | The mathematics underneath | Deisenroth and others, [Mathematics for Machine Learning](https://mml-book.github.io/) | None stated | Linear algebra, calculus and probability, written for this use |
 | Deep learning as a textbook | Prince, [Understanding Deep Learning](https://udlbook.github.io/udlbook/) | CC BY-NC-ND 4.0 | Losses as maximum likelihood, starting weights, why models generalise |
-| Running experiments | [Deep Learning Tuning Playbook](https://github.com/google-research/tuning_playbook) | CC BY 4.0 | How to decide what works |
+| Running experiments | [Deep Learning Tuning Playbook](https://github.com/google-research/tuning_playbook) | CC BY 4.0 | Choosing settings by experiment |
 | Small-model training in practice | Hugging Face, [The Smol Training Playbook](https://huggingface.co/spaces/HuggingFaceTB/smol-training-playbook) | None stated | A real training log, with each choice and its ablation |
-| Cost and scale | [How to Scale Your Model](https://jax-ml.github.io/scaling-book/) | MIT | The way labs reason about memory, arithmetic and time |
+| Cost and scale | [How to Scale Your Model](https://jax-ml.github.io/scaling-book/) | MIT | Memory, arithmetic and time, counted for real accelerators |
 | Data | Hugging Face, [FineWeb](https://huggingface.co/spaces/HuggingFaceFW/blogpost-fineweb-v1) and [datatrove](https://github.com/huggingface/datatrove) | Apache-2.0 | A real filtering and dedup pipeline, with each filter measured |
 | Scaling laws | Hoffmann and others, [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556) | None stated | The law lesson 19 fits, at a budget 200 million times ours |
 | Post-training | Lambert, [the RLHF book](https://rlhfbook.com/) | CC BY-NC-SA 4.0 | Reward models, learning from checks, preferences |
@@ -97,8 +97,8 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 | Serving in production | Modular, [LLM Inference Handbook](https://github.com/modular/llm-inference-handbook) | CC BY 4.0 | Operations: routing, scaling, cost, what to watch |
 | Reliability | Google, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) | CC BY-NC-ND 4.0 | Overload, monitoring, and what a promise about uptime means |
 | Apple hardware | [MLX](https://github.com/ml-explore/mlx) and [mlx-lm](https://github.com/ml-explore/mlx-lm) | MIT | The engine lesson 37 hands our model to |
-| Engineering lore | Bekman, [Machine Learning Engineering Open Book](https://github.com/stas00/ml-engineering) | CC BY-SA 4.0 | Hardware, debugging and failures, from someone who ran the jobs |
+| Engineering lore | Bekman, [Machine Learning Engineering Open Book](https://github.com/stas00/ml-engineering) | CC BY-SA 4.0 | Hardware, debugging and failures, in one engineer's notes |
 
 ## What a laptop cannot claim
 
-Lessons 31 to 37 prove a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost read off a bill. Lessons 41 and 42 take the first steps of that on a rented machine. The rest is the work of a job, and the table above says where to read about it first.
+Lessons 31 to 37 prove a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost read off a bill. Lessons 41 and 42 take the first steps of that on a rented machine. You learn the rest on the job, and the tables above list where to read first.

@@ -6,13 +6,13 @@ Each model in this course has read English: Shakespeare, then stories. We have n
 
 ## The idea
 
-Nothing in the model knows what a word is. It reads token ids and gives a chance to each id that could come next. Anything written as text can be put in front of it, and chess players write their games down.
+Nothing in the model knows what a word is. It reads token ids and gives a chance to each id that could come next. We can put anything written as text in front of it, and chess players write their games down.
 
-A game is a list of moves. `e4` moves a pawn to the square e4, `Nf3` a knight to f3, and `Bxc6` is a bishop taking on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`. On these pages a move is one side's turn, so that line has four. The line is all the model will ever see: no board, no pieces and no rules.
+A game is a list of moves. `e4` moves a pawn to the square e4, `Nf3` a knight to f3, and `Bxc6` is a bishop taking on c6. `O-O` is castling, `+` is check and `#` is checkmate. White and black take turns, so a game reads `e4 e5 Nf3 Nc6`. On these pages a move is one side's turn, so that line has four. The model sees this line and never a board.
 
 The games come from Lichess, a free site that gives the public a record of each game played on it. We take March 2014. A function called `moves` strips a record down to its moves, and we keep each game of 20 moves or more.
 
-From there the steps are lesson 18's, in the same order: drop repeats and near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. One thing had to give. Lesson 18's `clean` threw out a document under 100 characters, or under 80% letters and spaces, and a game is 74%. So `clean` is switched off for games: `moves` has done the cleaning.
+From there the steps are lesson 18's, in the same order: drop repeats and near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. Lesson 18's `clean` threw out a document under 100 characters, or under 80% letters and spaces, and a game is 74%. So we switch `clean` off for games: `moves` has done the cleaning.
 
 The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's as well: that script's long run is now a function, called here with other data.
 
@@ -29,7 +29,7 @@ After `e4 e5` it is white's turn.
 | `e5` | no | black's pawn stands there |
 | `Qh5` | yes | the pawn has left e2, so the queen's diagonal is open |
 
-Before `e4`, `Qh5` was not legal: the pawn on e2 stood in the way. The same three characters are right or wrong by what came before.
+Before `e4`, `Qh5` was not legal: the pawn on e2 stood in the way. So `Qh5` is legal or not by the moves before it.
 
 Tokens. Lesson 5's tokenizer never joins a letter to a digit, so a move is two tokens or more.
 

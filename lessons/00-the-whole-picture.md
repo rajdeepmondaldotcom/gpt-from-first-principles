@@ -2,13 +2,13 @@
 
 By the end of this page you know where the next 42 lessons go, and what each one is for.
 
-Forty-two lessons are easy to get lost in. So before the first one, here is the finished thing, followed from one end to the other.
+Before lesson 1, we follow the finished storyteller from one end to the other.
 
 ## The idea
 
 You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener says what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn chess.
 
-Each lesson adds one piece, and the pieces sit along one road.
+Each lesson adds one piece, in this order.
 
 | Lessons | Stage | The question it answers |
 |---|---|---|
@@ -25,13 +25,11 @@ Each lesson adds one piece, and the pieces sit along one road.
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
 
-The road is a loop. What people do with a served model becomes text, and text is where training starts.
+The model answers one prompt, `Once upon a time`, at each stage, so you can watch it learn to write. A scoreboard, in bits per byte, shows what each idea up to lesson 21 bought. Each lesson opens on something the last lesson's model could not do.
 
-Three threads run through the lessons. One prompt, `Once upon a time`, is answered by the model at each stage, so you can watch it learn to write. One scoreboard, in bits per byte, puts each model on the same scale. And each lesson opens on something the last lesson's model could not do.
+Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so.
 
-Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. Where an idea does not pay off on a laptop, the page says so.
-
-It is hard on purpose. You will work sums by hand before the code does them, and guess each result before you see it.
+The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it.
 
 ## By hand
 
@@ -54,7 +52,7 @@ Each number in that table is one you will be able to work out. The weights that 
 
 ## The code
 
-Each lesson has a short file in `gpt/`, a test in `tests/` and a page in `lessons/`. A later file uses the earlier ones and does not change them. Here is the whole of attention, from lesson 6, to show the size of the pieces:
+Each lesson has a short file in `gpt/`, a test in `tests/` and a page in `lessons/`. A later file uses the earlier ones and does not change them. The whole of attention, from lesson 6, shows the size of the pieces:
 
 ```python
 # gpt/attention.py
@@ -68,7 +66,7 @@ def attend(q, k, v, mask=None):
     return weights @ v, weights
 ```
 
-You are not meant to follow it yet. By lesson 6 each word in it will be yours.
+You are not meant to follow it yet. By lesson 6 you will know each line of it.
 
 ## The proof
 
@@ -82,7 +80,7 @@ uv run pytest
 
 The first command installs what the code needs. The second runs each lesson's tests on the processor in a few minutes.
 
-A test here is a claim that can fail. For each idea, the lesson says what would be true if the code were wrong, and the test checks that it is not. Break a line the way the lesson warns about and its test goes red. That is the difference between code that runs and code you can trust.
+A test here is a claim that can fail. For each idea, the lesson says what would be true if the code were wrong, and the test checks that it is not. Break a line the way the lesson warns about and its test goes red.
 
 ## What it still cannot do
 
@@ -90,7 +88,7 @@ You have built none of it yet. Lesson 1 starts with a text file and a loop that 
 
 ## Check yourself
 
-Each lesson ends like this one. First comes a number to guess before you run the code. Guess it, in writing, and then look. The gap between your guess and the answer is the lesson.
+Each lesson ends like this one. First comes a number to guess before you run the code. Guess it, in writing, and then look.
 
 Predict before you run: the model gives a score to each token that could come next. From the table above, how many scores is that?
 
@@ -99,7 +97,7 @@ Predict before you run: the model gives a score to each token that could come ne
 4,097: one for each of 4,096 tokens, and one for the token that ends a story.
 </details>
 
-Then come questions with hidden answers. One of them always reaches back to an earlier lesson.
+Then come questions with hidden answers. One of them asks about an earlier lesson.
 
 <details><summary>A request has a prompt of 20 tokens and may write 120 more. Each token kept costs 6,144 bytes. How much memory can the request come to need?</summary>
 

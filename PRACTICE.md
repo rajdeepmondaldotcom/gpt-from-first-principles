@@ -1,6 +1,6 @@
 # Practice
 
-The lessons teach how a GPT works. Some of what AI labs ask for comes only from practice. This page has eight routines you can start today, and says for each one what it rests on.
+The lessons teach how a GPT works. Some of what AI labs ask for comes only from practice. Each of the eight routines below names what it rests on.
 
 On 17 November 2026 we read 11 job postings for training and inference roles at Anthropic, OpenAI and Google DeepMind. Ten were open that day. DeepMind's had closed, and we read a copy that a job site had kept. This is what the eleven ask for that the lessons do not give you.
 
@@ -53,7 +53,7 @@ Lesson 20's four workers assume that none of them fails. Kill one in the middle 
 uv run pytest tests/test_workers.py
 ```
 
-Then write down each choice you had to make: how long to wait for a worker, who tries again, what happens to slopes that arrive late, and whether a step on three shares is still the step you wanted. Those choices are what distributed-systems work is made of.
+Then write down each choice you had to make: how long to wait for a worker, who tries again, what happens to slopes that arrive late, and whether a step on three shares is still the step you wanted.
 
 ## 5. Profile before you guess
 
@@ -76,11 +76,11 @@ Set the table beside your guess. Then pick the top row, find the line of `gpt/` 
 
 ## 6. Read a codebase you did not write
 
-Start with [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm), a small serving engine. Trace one request from the moment it arrives to its last token, and write down the file and line where each idea from lessons 32 and 33 lives: the batch, the cache, the memory budget. Then open [vLLM](https://github.com/vllm-project/vllm) and find the same three things, starting from its scheduler. Give it two hours and stop. The skill is finding your way in code that size, and you do not need to read it all.
+Start with [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm), a small serving engine. Trace one request from the moment it arrives to its last token, and write down the file and line where each idea from lessons 32 and 33 lives: the batch, the cache, the memory budget. Then open [vLLM](https://github.com/vllm-project/vllm) and find the same three things, starting from its scheduler. Give it two hours and stop. You do not need to read it all.
 
 ## 7. Criticise a paper in one page
 
-No posting asks for this by name. It is here because each lesson rests on sources, most of them papers, and this is how you learn to check one. Take one from a lesson's "Go deeper" each week and write four short paragraphs: what it claims, what evidence it gives, which step is weakest, and the one experiment you would run to test that step.
+No posting asks for this by name. It is here because each lesson rests on sources, most of them papers. Take one from a lesson's "Go deeper" each week and write four short paragraphs: what it claims, what evidence it gives, which step is weakest, and the one experiment you would run to test that step.
 
 ## 8. Report each experiment in writing
 
