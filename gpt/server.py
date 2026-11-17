@@ -383,11 +383,10 @@ if __name__ == "__main__":
     minutes = 1e6 / (ours["tokens"] / took) / 60
     say(f"a million tokens at that speed: {minutes:.0f} minutes of this machine")
 
-    report, burst, _ = load_test(400, 200)  # far more at once than the line of 64 holds
-    turned = re.search(r"Non-2xx responses:\s+(\d+)", report)  # ab leaves the line out at none
-    turned_away = int(turned[1]) if turned else 0
+    _, burst, _ = load_test(400, 200)  # far more at once than the line of 64 holds
     say(
-        f"400 requests, 200 at a time: {burst['finished']} answered, {turned_away} told to try again"
+        f"400 requests, 200 at a time: {burst['finished']} answered, "
+        f"{burst['refused']} told to try again, {burst['failed']} failed"
     )
     save(
         "36_server",
@@ -395,6 +394,6 @@ if __name__ == "__main__":
         device="cpu",
         ab={"requests_a_second": theirs_rate, "ms_each": theirs_each},
         ours={"requests_a_second": rate, "ms_each": each * 1e3, **ours},
-        burst={"answered": burst["finished"], "turned_away": turned_away},
+        burst=burst,
         sample=story.strip(),
     )

@@ -26,7 +26,7 @@ class Request:
 
 
 def slide(kept, by, pad):
-    """Put `pad` empty places before a cache and turn its keys `by` places on.
+    """Put `pad` empty places before a cache and turn its keys `by` places further.
 
     Only the distance between two tokens enters a score (lesson 15), so a whole row can sit
     anywhere along the batch as long as its keys are turned to match.
