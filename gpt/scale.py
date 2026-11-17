@@ -128,6 +128,7 @@ if __name__ == "__main__":
     for one in [shape(128, 4), shape(192, 4), shape(256, 6), shape(320, 8), shape(384, 8)]:
         model = GPT(**one)
         count, steps = sum(p.numel() for p in model.parameters()), steps_for(model, BUDGET)
+        # A step reads train's batch: 32 windows of 256 tokens.
         expected = predict(final, count, steps * 32 * 256)
         choices.append({"shape": one, "parameters": count, "steps": steps, "predicted": expected})
         say(f"{count:>10,} parameters, {steps:>6,} steps: predicted {expected:.3f} nats")

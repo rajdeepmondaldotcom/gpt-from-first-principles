@@ -154,7 +154,7 @@ if __name__ == "__main__":
     for name, passed in [("a name to carry on", carries_on), ("a story to order", to_order)]:
         first = [passed(task) for task in tasks[:100]]
         low_rate, high_rate = rate_interval(first)
-        say(f"{name}: {sum(first)} of 100, 95% interval {low_rate:.2f} to {high_rate:.2f}")
+        say(f"{name}: {sum(first)} of {len(first)}, 95% interval {low_rate:.2f} to {high_rate:.2f}")
         tries = [sum(passed(task) for _ in range(10)) for task in tasks[:20]]
         at = {k: sum(pass_at_k(10, n, k) for n in tries) / len(tries) for k in (1, 5)}
         say(f"{name}: pass at 1 {at[1]:.2f}, pass at 5 {at[5]:.2f}, from 10 tries on each of 20")

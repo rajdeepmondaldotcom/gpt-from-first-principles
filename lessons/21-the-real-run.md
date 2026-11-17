@@ -52,7 +52,7 @@ The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
             point = {"step": step, "train": loss, "val": unseen} | watch(model, step)
             notes["curve"].append(point)
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
-            checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
+            checkpoint(saved, model, optimizer, step, generator)  # a stopped run restarts here
             note()
 ```
 

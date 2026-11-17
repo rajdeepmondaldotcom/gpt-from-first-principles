@@ -54,7 +54,7 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
     `watch` may measure the model at each checkpoint. What it returns joins the curve.
     Returns the model, the notes kept along the way, the number of steps, and the generator.
     """
-    kept, log = cache / f"{name}.pt", cache / f"{name}_log.json"
+    saved, log = cache / f"{name}.pt", cache / f"{name}_log.json"
 
     def note():
         """Write the notes beside the old ones, then swap: a stop while writing loses nothing."""
@@ -74,8 +74,8 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
     model = GPT(**shape).to(ids.device)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
     steps = steps_for(model, BUDGET)
-    if kept.exists():
-        start = resume(kept, model, optimizer, generator)
+    if saved.exists():
+        start = resume(saved, model, optimizer, generator)
     else:  # lesson 13's checks, before the long run and not after
         assert starts_with_no_opinion(model, val_ids[:20_000], shape["vocab"])
         assert reads_no_future(model, val_ids[None, :64])
@@ -97,7 +97,7 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
             point = {"step": step, "train": loss, "val": unseen} | watch(model, step)
             notes["curve"].append(point)
             print(f"step {step}: train {loss:.3f}, unseen {unseen:.3f} nats", flush=True)
-            checkpoint(kept, model, optimizer, step, generator)  # a stopped run restarts here
+            checkpoint(saved, model, optimizer, step, generator)  # a stopped run restarts here
             note()
     return model, notes, steps, generator
 
@@ -116,6 +116,7 @@ if __name__ == "__main__":
     for peak, loss in notes["tried"]:
         say(f"{steps_for(model, CHECK)} steps at a rate of {peak:g}: {loss:.3f} nats")
     say(f"parameters: {count:,}")
+    # A step reads train's batch of 32 windows.
     say(f"steps: {steps:,}, tokens: {steps * 32 * SHAPE['context']:,}, rate {notes['peak']:g}")
     for point in notes["curve"][:: max(1, len(notes["curve"]) // 9)]:
         say(f"step {point['step']}: train {point['train']:.3f}, unseen {point['val']:.3f} nats")

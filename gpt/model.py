@@ -101,9 +101,9 @@ class GPT(nn.Module):
         self.out = nn.Linear(width, vocab, bias=False)
         self.out.weight = self.embed.weight
         for name, p in self.named_parameters():  # lesson 10's starting weights
-            if p.dim() > 1:
-                last = name.endswith(("proj.weight", "narrow.weight"))  # adds into the stream
-                nn.init.normal_(p, std=0.02 / math.sqrt(2 * layers) if last else 0.02)
+            if p.dim() == 2:
+                adds = name.endswith(("proj.weight", "narrow.weight"))  # adds into the stream
+                nn.init.normal_(p, std=0.02 / math.sqrt(2 * layers) if adds else 0.02)
             elif name.endswith("bias"):
                 nn.init.zeros_(p)
 

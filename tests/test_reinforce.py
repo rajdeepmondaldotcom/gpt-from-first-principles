@@ -44,6 +44,8 @@ def exact_and_sampled(group, samples=200_000):
     return exact, each
 
 
+# The next three tests check lesson 27's method by listing each outcome of a tiny model. They
+# call nothing in gpt/: the tests after them hold score_loss to the same sums.
 def test_the_sampled_slope_averages_to_the_exact_one():
     exact, each = exact_and_sampled(group=0)
     assert torch.allclose(each.mean(dim=0), exact, atol=0.005)
