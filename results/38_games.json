@@ -1,5 +1,5 @@
 {
-  "commit": "996386e",
+  "commit": "96b88d3",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "mps",
@@ -193,6 +193,7 @@
     "step 9500: unseen 1.326 nats, 90% of 200 moves are legal",
     "step 10420: unseen 1.317 nats, 92% of 200 moves are legal",
     "after training: 929 of 1,000 moves are legal, 95% interval 0.911 to 0.944",
+    "of those, 884 are written with each mark as the rules write it",
     "positions that open some training game: 192. Legal moves there: 192",
     "positions no training game has: 808. Legal moves there: 737, 95% interval 0.890 to 0.931",
     "of the 200 positions counted during training, 36 open some training game",
