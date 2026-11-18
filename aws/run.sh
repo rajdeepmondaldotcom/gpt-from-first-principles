@@ -10,7 +10,7 @@
 set -euo pipefail
 host=${1:?the address of the machine, as aws/start.sh printed it}
 shift
-key=~/.ssh/gpt-from-first-principles
+key=~/.ssh/${PROJECT:-gpt-from-first-principles}
 door=(-i "$key" -o StrictHostKeyChecking=accept-new -o "UserKnownHostsFile=$key.hosts")
 on() { ssh "${door[@]}" "ubuntu@$host" "$@"; }
 there=ubuntu@$host:course

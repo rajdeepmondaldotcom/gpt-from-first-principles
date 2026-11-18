@@ -3,7 +3,7 @@
 #   AWS_PROFILE=<profile> AWS_REGION=us-east-1 aws/stop.sh
 set -euo pipefail
 : "${AWS_PROFILE:?name the AWS profile to use}" "${AWS_REGION:?name the region}"
-name=gpt-from-first-principles
+name=${PROJECT:-gpt-from-first-principles}
 ours="Name=tag:project,Values=$name"
 live="Name=instance-state-name,Values=pending,running,stopping,stopped"
 

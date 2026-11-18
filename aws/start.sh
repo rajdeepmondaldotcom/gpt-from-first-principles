@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Start one GPU machine and print its id and address.
 #   AWS_PROFILE=<profile> AWS_REGION=us-east-1 aws/start.sh g6e.xlarge 300
+# PROJECT, if set, is the name the machine, its key and its tag carry in your account.
 # The second number is a time limit in minutes. When it passes the machine shuts itself down,
 # and a machine started this way is destroyed when it shuts down. So is its disk.
 set -euo pipefail
 : "${AWS_PROFILE:?name the AWS profile to use}" "${AWS_REGION:?name the region}"
 kind=${1:?the machine, such as g6e.xlarge} minutes=${2:?a time limit in minutes}
-name=gpt-from-first-principles key=~/.ssh/$name
+name=${PROJECT:-gpt-from-first-principles} key=~/.ssh/$name
 tag="{Key=project,Value=$name}"
 
 # The image: Ubuntu with the NVIDIA driver and PyTorch, which AWS publishes under this name.
