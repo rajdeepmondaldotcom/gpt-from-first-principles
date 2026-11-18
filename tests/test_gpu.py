@@ -1,18 +1,32 @@
+from types import SimpleNamespace
+
 import torch
 
+import gpt.gpu
 from gpt.data import held_out, read, write
-from gpt.gpu import PRICE, more, pick, race, step_seconds
+from gpt.gpu import more, pick, race, step_seconds
 from gpt.model import GPT
 from gpt.scale import predict, shape, steps_for
 
 SMALL = {"vocab": 65, "context": 16, "width": 32, "heads": 2, "layers": 2}
 
 
-def test_a_step_is_timed_and_the_16_bit_switch_runs():
-    torch.manual_seed(0)
-    ids = torch.randint(65, (2000,))
-    for half in (False, True):
-        assert 0 < step_seconds(GPT(**SMALL), ids, size=4, repeats=2, half=half) < 5
+def test_a_step_time_is_the_fastest_after_the_first_and_the_16_bit_switch_is_on(monkeypatch):
+    ticks = iter([0, 5, 7, 7, 10])  # the first step starts at 0. The next two take 2 s and 3 s
+    monkeypatch.setattr(gpt.gpu, "time", SimpleNamespace(perf_counter=lambda: next(ticks)))
+    seen, real = [], gpt.gpu.loss_on
+
+    def watched(*args):
+        seen.append(torch.is_autocast_enabled("cpu"))
+        return real(*args)
+
+    monkeypatch.setattr(gpt.gpu, "loss_on", watched)
+    ids = torch.randint(65, (2000,), generator=torch.Generator().manual_seed(0))
+    assert step_seconds(GPT(**SMALL), ids, size=4, repeats=2, half=True) == 2
+    assert seen == [True, True, True]
+    ticks = iter([0, 5, 7, 7, 10])
+    step_seconds(GPT(**SMALL), ids, size=4, repeats=2)
+    assert seen[3:] == [False, False, False]
 
 
 def test_more_text_keeps_unseen_documents_out_and_writes_each_kept_one(tmp_path, words):
@@ -46,10 +60,15 @@ def test_the_pick_is_the_smallest_shape_the_law_cannot_tell_from_the_best():
         model = GPT(**row["shape"])
         assert row["steps"] == steps_for(model, 1e13) and row["tokens"] == row["steps"] * 32 * 256
         assert row["predicted"] == predict(fitted, row["parameters"], row["tokens"])
-    # A law that cannot tell any two apart takes the smallest. A shape that reads too much is out.
+    # A law that cannot tell any two apart takes the smallest.
     assert pick(fitted | {"miss": 9}, family, 1e13, float("inf"))[1]["shape"] == family[0]
-    capped = pick(fitted | {"miss": 9}, family, 1e13, most=rows[1]["tokens"])[1]
-    assert capped["shape"] == family[1]
+    # A shape that reads too much is out, and "the best" is then the best of those left.
+    left = rows[1:]
+    best = min(row["predicted"] for row in left)
+    near = [row for row in left if row["predicted"] - best <= 0.05]
+    capped = pick(fitted, family, 1e13, most=rows[1]["tokens"])[1]
+    assert capped == min(near, key=lambda row: row["parameters"])
+    assert rows[0]["predicted"] < best - 0.05  # so a best taken over each shape would fit none
 
 
 def test_two_workers_that_share_slopes_end_where_one_worker_on_the_whole_batch_does(tmp_path):
@@ -62,7 +81,3 @@ def test_two_workers_that_share_slopes_end_where_one_worker_on_the_whole_batch_d
     moved = max((single[name] - start[name]).abs().max().item() for name in single)
     apart = max((single[name] - pair[name]).abs().max().item() for name in single)
     assert moved > 1e-3 and apart < 1e-5
-
-
-def test_four_cards_cost_more_an_hour_than_one():
-    assert PRICE[4] > 4 * PRICE[1]  # so four cards have to be more than four times as fast

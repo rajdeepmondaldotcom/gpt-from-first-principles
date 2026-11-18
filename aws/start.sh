@@ -27,8 +27,9 @@ if [ -z "$group" ] || [ "$group" = None ]; then
   group=$(aws ec2 create-security-group --group-name "$name" --description "SSH for $name" \
     --tag-specifications "ResourceType=security-group,Tags=[$tag]" --query GroupId --output text)
 fi
+mine=$(curl -sf https://checkip.amazonaws.com) # with no address the script stops here
 aws ec2 authorize-security-group-ingress --group-id "$group" --protocol tcp --port 22 \
-  --cidr "$(curl -s https://checkip.amazonaws.com)/32" > /dev/null 2>&1 || true # open already
+  --cidr "$mine/32" > /dev/null 2>&1 || true # open already
 
 # AWS_ZONE, if set, names the zone to start in: a zone can run out of a kind of machine.
 id=$(aws ec2 run-instances --image-id "$image" --instance-type "$kind" --key-name "$name" \

@@ -5,7 +5,7 @@ import json
 import threading
 import time
 
-from gpt.export import export
+from gpt.export import export, fastest
 
 
 def handoff(folder, out):
@@ -114,16 +114,7 @@ if __name__ == "__main__":
     prompts = [text[128 * i : 128 * i + 64].tolist() for i in range(3000)]
     say(f"the card: {torch.cuda.get_device_name()}")
 
-    def fastest(work, tries=3):
-        """Tokens a second for `work`, which writes and returns a count. The best of three."""
-        best = 0.0
-        for _ in range(tries):
-            began = time.perf_counter()
-            count = work()
-            best = max(best, count / (time.perf_counter() - began))
-        return best
-
-    def together(count):
+    def shared(count):
         """Lesson 32's engine writes 128 tokens for `count` listeners at once."""
         engine = Engine(ours, float("inf"), chunk=256)
         for prompt in prompts[:count]:
@@ -133,21 +124,15 @@ if __name__ == "__main__":
             written += len(engine.step())
         return written
 
-    def chances(ids):
-        """Our model's log of the chance of each token after the first, given those before."""
-        with torch.no_grad():
-            scored = torch.log_softmax(ours(ids[None, :-1].to("cuda"))[0], -1).cpu()
-        return scored[range(len(ids) - 1), ids[1:]]
-
     # Our own engine on the card, and where one pass of it spends its time.
-    unseen = text[:201].long()
+    unseen = text[:201].to("cuda")  # lesson 24's `losses` scores each token after the first
     mine = [generate(ours, prompt, 128, temperature=0)[64:] for prompt in prompts[:16]]
-    own = chances(unseen)
+    own = -losses(ours, unseen, 256, 256).cpu()
     torch.backends.cuda.matmul.allow_tf32 = True  # the card's faster 32-bit multiply (below)
-    coarse = (chances(unseen) - own).abs().max().item()
+    coarse = (-losses(ours, unseen, 256, 256).cpu() - own).abs().max().item()
     torch.backends.cuda.matmul.allow_tf32 = False
     alone = fastest(lambda: len(generate(ours, prompts[0], 128, temperature=0)) - 64)
-    many = fastest(lambda: together(64))
+    many = fastest(lambda: shared(64))
     kept = [{} for _ in ours.blocks]
     activities = [torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA]
     with torch.no_grad():
@@ -195,10 +180,16 @@ if __name__ == "__main__":
                 server.terminate()
                 server.wait()
 
-    def counted(name):
-        """One of the server's own counters, from its metrics page."""
+    def counted():
+        """Three of the server's own counts, from its metrics page: tokens written, first tokens
+        sent, and the seconds those first tokens were waited for, added up."""
         page = urllib.request.urlopen(f"http://127.0.0.1:{PORT}/metrics").read().decode()
-        return sum(float(row.split()[-1]) for row in page.splitlines() if row.startswith(name))
+        rows = [row.split() for row in page.splitlines() if row.startswith("vllm:")]
+        names = ("generation_tokens_total", "time_to_first_token_seconds_count")
+        names += ("time_to_first_token_seconds_sum",)
+        return torch.tensor(
+            [sum(float(row[-1]) for row in rows if row[0].startswith("vllm:" + n)) for n in names]
+        )
 
     def one_listener(four):
         """Tokens a second and the wait for the first token, for one request alone. The first
@@ -218,12 +209,17 @@ if __name__ == "__main__":
         while True:
             chance = torch.Generator().manual_seed(1)
             count = min(len(asked), max(100, round(10 * rate)))  # about ten seconds of arrivals
-            before = counted("vllm:generation_tokens_total")
+            before = counted()
             records = load(PORT, arrivals(asked[:count], rate, chance, temperature=0.8))
             numbers = report(records)
-            numbers["server_counted"] = counted("vllm:generation_tokens_total") - before
+            tokens, firsts, waited = (counted() - before).tolist()
             came, went = ([r[key] for r in records] for key in ("arrived", "tokens"))
             ends = [moments[-1] for moments in went]
+            numbers |= {
+                "server_counted": tokens,
+                "server_first_token_mean": waited / firsts,
+                "first_token_mean": sum(m[0] - at for at, m in zip(came, went)) / len(came),
+            }
             rows.append({"rate": rate} | numbers)
             say(
                 f"{name}, {rate:,} requests a second: first token after "
@@ -258,12 +254,19 @@ if __name__ == "__main__":
             f"tokens written in the sweep: {sent:,} by our count, "
             f"{sum(row['server_counted'] for row in small):,.0f} by the server's"
         )
+        kept_up = small[-2]  # the last rate the server kept up with
+        say(
+            f"at {kept_up['rate']} requests a second the first token took "
+            f"{kept_up['first_token_mean'] * 1e3:.0f} ms on average by our clock, "
+            f"{kept_up['server_first_token_mean'] * 1e3:.0f} ms by the server's"
+        )
 
     # A model 500 times the size, at 16 bits and then at 8, on the same stories.
     stories = documents(text, words.end)[:200]
     told = [words.decode(doc[1:-1].tolist()) for doc in stories]
     asked = [words.decode(prompt) for prompt in prompts]
-    ours_nats = [losses(ours, doc[:-1], 256, 256).tolist() for doc in stories]
+    # A stride of half the context: each token is scored with 128 tokens or more before it.
+    ours_nats = [losses(ours, doc[:-1], 256, 128).tolist() for doc in stories]
 
     def bits(nats):
         """Bits per byte of the 200 stories, from each story's loss at each token."""

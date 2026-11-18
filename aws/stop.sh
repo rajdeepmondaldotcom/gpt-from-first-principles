@@ -15,6 +15,7 @@ if [ -n "$ids" ]; then
 fi
 aws ec2 delete-security-group --group-name "$name" 2> /dev/null || true
 aws ec2 delete-key-pair --key-name "$name" > /dev/null
+rm -f ~/.ssh/$name.hosts # the addresses of machines that no longer exist
 
 echo "machines of ours still alive in $AWS_REGION (each line is one):"
 aws ec2 describe-instances --filters "$ours" "$live" \
@@ -22,3 +23,6 @@ aws ec2 describe-instances --filters "$ours" "$live" \
 echo "disks of ours attached to nothing, which still cost money (each line is one):"
 aws ec2 describe-volumes --filters "$ours" Name=status,Values=available \
   --query 'Volumes[].[VolumeId,Size]' --output text
+echo "the door for SSH, if AWS has not let go of it yet (it costs nothing: run this again):"
+aws ec2 describe-security-groups --filters "$ours" \
+  --query 'SecurityGroups[].GroupId' --output text

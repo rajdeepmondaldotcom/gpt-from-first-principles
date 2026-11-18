@@ -68,6 +68,7 @@ def test_ask_returns_each_token_with_the_moment_it_came(port):
     assert len(moments) == 4 and moments == sorted(set(moments))  # a later moment for each
     sent = BODIES[0]
     assert sent["prompt"] == [5, 6, 7] and sent["temperature"] == 0 and sent["ignore_eos"]
+    assert sent["stream"] and sent["return_token_ids"]  # without these vLLM sends no token ids
 
 
 def test_a_refusal_is_an_error_not_an_empty_answer(port):
@@ -81,7 +82,8 @@ def test_load_sends_each_request_and_times_it_from_the_start_of_the_line(port):
     records = load(port, line)
     assert sorted(r["arrived"] for r in records) == [at for at, _ in line]
     for record in records:
-        assert len(record["tokens"]) == 3 and record["tokens"][0] >= record["arrived"]
+        assert len(record["tokens"]) == 3
+        assert record["arrived"] <= record["tokens"][0] < record["arrived"] + 1  # the line's clock
     assert sorted(body["prompt"] for body in BODIES) == prompts
     assert report(records)["served"] == 12
 

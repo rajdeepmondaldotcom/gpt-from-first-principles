@@ -73,13 +73,16 @@ def pick(fitted, family, budget, most):
     return rows, min(near, key=lambda row: row["parameters"])
 
 
-def together(rank, cards, shape, path, steps, size, backend, port, out):
+def together(rank, cards, shape, path, steps, size, backend, half, port, out):
     """One of `cards` workers, each with a card of its own. Lesson 20's rule with no coordinator:
     the workers add their slopes up among themselves, and each steps with the average."""
+    device = "cpu"
+    if backend == "nccl":  # the cards' own link: this worker takes card number `rank`
+        torch.cuda.set_device(rank)
+        device = "cuda"
     distributed.init_process_group(
         backend, init_method=f"tcp://127.0.0.1:{port}", rank=rank, world_size=cards
     )
-    device = f"cuda:{rank}" if backend == "nccl" else "cpu"
     ids = read(Path(path)).to(device)
     torch.manual_seed(0)  # the same seed: each worker starts from the same weights
     model = GPT(**shape).to(device)
@@ -89,13 +92,15 @@ def together(rank, cards, shape, path, steps, size, backend, port, out):
         began = time.perf_counter()
         x, y = batch(ids, model.context, size * cards, generator)  # each worker draws one batch
         model.zero_grad()
-        loss_on(model, x[rank::cards], y[rank::cards]).backward()  # and takes its own share
+        with torch.autocast(device, dtype=torch.bfloat16, enabled=half):
+            loss = loss_on(model, x[rank::cards], y[rank::cards])  # and takes its own share
+        loss.backward()
         for p in model.parameters():
             distributed.all_reduce(p.grad)  # now each worker holds the sum of everyone's slopes
             p.grad /= cards
         optimizer.step()
         if backend == "nccl":
-            torch.cuda.synchronize(device)  # wait for the card to finish
+            torch.cuda.synchronize()  # wait for the card to finish
         times.append(time.perf_counter() - began)
     if rank == 0:
         torch.save({name: value.cpu() for name, value in model.state_dict().items()}, out)
@@ -103,16 +108,16 @@ def together(rank, cards, shape, path, steps, size, backend, port, out):
     distributed.destroy_process_group()
 
 
-def race(cards, shape, path, steps, size, backend, out):
-    """Run `steps` shared steps on `cards` workers, each with `size` windows a step. Returns the
-    seconds the fastest step took and the weights the workers ended with."""
+def race(cards, shape, path, steps, size, backend, out, half=False):
+    """Run `steps` shared steps on `cards` workers, each with `size` windows a step, in 16-bit
+    numbers if `half`. Returns the seconds the fastest step took and the weights they ended with."""
     with socket.socket() as probe:  # a free port for the workers to find each other on
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
     context = multiprocessing.get_context("spawn")
     workers = [
         context.Process(
-            target=together, args=(rank, cards, shape, path, steps, size, backend, port, out)
+            target=together, args=(rank, cards, shape, path, steps, size, backend, half, port, out)
         )
         for rank in range(cards)
     ]
@@ -146,11 +151,17 @@ if __name__ == "__main__":
     assert cards, "this script needs an NVIDIA card. Lesson 41's page says how to rent one."
 
     if cards > 1:  # the second machine: four cards, and lesson 20's question asked again
+        assert cards in PRICE, "add the hourly price of a machine with this many cards to PRICE"
         one = json.loads((cache / "story_big" / "shape.json").read_text())  # the one-card pick
         text = cache / "stories_train.bin"  # lesson 18's file: a timing needs no new text
-        alone, single = race(1, one, text, 12, 32 * cards, "nccl", cache / "race_1.pt")
-        shared, several = race(cards, one, text, 12, 32, "nccl", cache / "race_many.pt")
+        out = cache / "race.pt"
+        # In 32-bit numbers, where rounding is small: do the cards end where one card does?
+        single = race(1, one, text, 12, 32 * cards, "nccl", out)[1]
+        several = race(cards, one, text, 12, 32, "nccl", out)[1]
         apart = max((single[name] - several[name]).abs().max().item() for name in single)
+        # In 16-bit numbers, as the run above trained: how long does a step take each way?
+        alone = race(1, one, text, 12, 32 * cards, "nccl", out, half=True)[0]
+        shared = race(cards, one, text, 12, 32, "nccl", out, half=True)[0]
         tokens = 32 * cards * one["context"]
         say(
             f"one card, {32 * cards} windows a step: {alone * 1e3:.0f} ms, {tokens / alone:,.0f} tokens a second"
@@ -159,7 +170,10 @@ if __name__ == "__main__":
             f"{cards} cards, 32 windows each: {shared * 1e3:.0f} ms a step, "
             f"{tokens / shared:,.0f} tokens a second, {alone / shared:.2f} times as fast"
         )
-        say(f"after 12 steps, the largest gap between the two sets of weights: {apart:.6f}")
+        say(
+            f"after 12 steps in 32-bit numbers, the largest gap between the two sets of weights: "
+            f"{apart:.6f}"
+        )
         say(
             f"a million tokens of training: ${PRICE[1] / 3600 / (tokens / alone) * 1e6:.4f} on "
             f"one card, ${PRICE[cards] / 3600 / (tokens / shared) * 1e6:.4f} on {cards}"
