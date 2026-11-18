@@ -1,0 +1,21 @@
+Lines from vLLM's own log (vllm.log) during the run that results/42_production.json records,
+18 November 2026, vLLM 0.34.0 on one NVIDIA L40S. Lesson 42's sentences about what vLLM does
+rest on these: it compiles the model's pass and captures it as a graph at start-up, and with
+--quantization fp8_per_tensor it puts four kinds of layer in each of the big model's 28
+blocks in 8 bits (112 layers), which leaves the scores layer as it was. Long lines are cut
+at 420 characters. Copied by hand from the machine, not written by a lesson's script.
+
+(APIServer pid=20314) INFO 11-18 10:58:10 [startup.py:96] non-default args: {'model_tag': 'data/cache/story_vllm', 'host': '127.0.0.1', 'model': 'data/cache/story_vllm', 'dtype': 'float32', 'skip_tokenizer_init': True, 'served_model_name': ['model']}
+(EngineCore pid=20332) INFO 11-18 10:58:16 [core.py:153] Initializing a V1 LLM engine (v0.34.0) with config: model='data/cache/story_vllm', speculative_config=None, tokenizer='data/cache/story_vllm', skip_tokenizer_init=True, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.float32, max_seq_len=256, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_
+(EngineCore pid=20332) INFO 11-18 10:58:19 [cuda.py:549] Using TRITON_ATTN attention backend out of potential backends: ['TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=20332) INFO 11-18 10:58:43 [model_runner.py:1216] Graph capturing finished in 2 secs, took 0.15 GiB
+(APIServer pid=25426) INFO 11-18 11:00:16 [startup.py:96] non-default args: {'model_tag': 'Qwen/Qwen2.5-7B-Instruct', 'host': '127.0.0.1', 'model': 'Qwen/Qwen2.5-7B-Instruct', 'max_model_len': 2048, 'served_model_name': ['model']}
+(EngineCore pid=25449) INFO 11-18 11:00:24 [core.py:153] Initializing a V1 LLM engine (v0.34.0) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=2048, download_dir=None, load_format=auto, tensor_parallel_size=1, 
+(EngineCore pid=25449) INFO 11-18 11:00:27 [cuda.py:549] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=25449) INFO 11-18 11:00:37 [model_runner.py:1216] Graph capturing finished in 5 secs, took 0.48 GiB
+(APIServer pid=28258) INFO 11-18 11:03:46 [startup.py:96] non-default args: {'model_tag': 'Qwen/Qwen2.5-7B-Instruct', 'host': '127.0.0.1', 'model': 'Qwen/Qwen2.5-7B-Instruct', 'max_model_len': 2048, 'quantization': 'fp8_per_tensor', 'served_model_name': ['model']}
+(EngineCore pid=28282) INFO 11-18 11:03:55 [core.py:153] Initializing a V1 LLM engine (v0.34.0) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=2048, download_dir=None, load_format=auto, tensor_parallel_size=1, 
+(EngineCore pid=28282) INFO 11-18 11:03:56 [__init__.py:818] Selected CutlassFP8ScaledMMLinearKernel for Fp8PerTensorOnlineLinearMethod
+(EngineCore pid=28282) INFO 11-18 11:03:57 [cuda.py:549] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=28282) INFO 11-18 11:03:57 [base_loader.py:164] Quantizing 112 layers of types: mlp.down_proj: 28 (from linear: fp8_per_tensor_static); mlp.gate_up_proj: 28 (from linear: fp8_per_tensor_static); self_attn.o_proj: 28 (from linear: fp8_per_tensor_static); self_attn.qkv_proj: 28 (from linear: fp8_per_tensor_static)
+(EngineCore pid=28282) INFO 11-18 11:04:07 [model_runner.py:1216] Graph capturing finished in 4 secs, took 0.48 GiB

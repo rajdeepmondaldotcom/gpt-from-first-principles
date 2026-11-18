@@ -68,7 +68,9 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | the card's faster 32-bit multiply | TF32 |
 | a pass recorded once and replayed as one job | CUDA graph |
 | the rate at which the server stops keeping up | the knee of the latency curve, or saturation |
-| what a token reads over what memory moves in a second | the memory-bandwidth bound on decode speed |
+| what memory reads in a second over what a token reads | the memory-bandwidth bound on decode speed |
+| a job the card is handed | kernel. Handing one over is a kernel launch |
+| vLLM's 8 bits | FP8: 8-bit floating-point numbers |
 
 ## The terms
 
@@ -92,6 +94,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **bootstrap**: Drawing again, with repeats allowed, as many items as you hold and taking the mean again, many times. [Lesson 24](lessons/24-evaluation.md)
 - **broadcasting**: PyTorch stretching a column or smaller tensor across all places of a larger one in arithmetic. [Lesson 3](lessons/03-tensors.md)
 - **budget**: The bytes of cache the engine may hold. A request joins the batch only if the rows together still fit. [Lesson 32](lessons/32-batching.md)
+- **budget** (of a run): The multiplies and adds a training run may spend. Lesson 19 sizes a model for one, and lesson 41 measures an hour of a card as one. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **byte**: A number from 0 to 255. A computer stores text as bytes. [Lesson 5](lessons/05-tokens.md)
 - **byte pair encoding** (BPE): Make the most frequent pair of neighbouring tokens a new token, replace it everywhere, and repeat until the vocabulary is the size you want. [Lesson 5](lessons/05-tokens.md)
 - **card** (graphics card): A graphics chip on a board of its own, with its own memory. A rented machine has one or several. [Lesson 41](lessons/41-train-on-a-gpu.md)
@@ -119,7 +122,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **embedding**: The row of numbers a token is given. The rows start random and training moves them. [Lesson 4](lessons/04-a-neural-language-model.md)
 - **encoding**: Turning text into token ids. [Lesson 5](lessons/05-tokens.md)
 - **end token**: An extra token that marks where a document ends. It never comes out of ordinary text. [Lesson 5](lessons/05-tokens.md)
-- **engine**: The code that takes requests in and writes their tokens. In lesson 37, any program that runs a model's arithmetic, such as Apple's MLX. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **engine**: The code that takes requests in and writes their tokens. In lessons 37 and 42, any program that runs a model's arithmetic, such as Apple's MLX or vLLM. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **fine-tuning**: Training a trained model further on new text. [Lesson 25](lessons/25-fine-tuning.md)
 - **fingerprint**: A short number worked out from a document's text, the same for the same text. [Lesson 18](lessons/18-data.md)
 - **floor**: The loss that neither the model-size term nor the token-count term removes. [Lesson 19](lessons/19-how-big-should-it-be.md)
@@ -129,6 +132,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **GELU**: A bend that gives about 0 for large negative numbers and about the number itself for large positive ones. [Lesson 9](lessons/09-the-block.md)
 - **GPT**: A generative pre-trained transformer: it writes, it is trained once on a great deal of text, and its body is a stack of attention blocks. [Lesson 10](lessons/10-the-gpt.md)
 - **GPU**: The graphics chip. [Lesson 12](lessons/12-the-training-loop.md)
+- **grabber**: Lesson 39's opponent that looks one move ahead: it mates if it can, or else takes the most valuable piece on offer, or else moves at random. [Lesson 39](lessons/39-can-it-play.md)
 - **gradient**: The slopes for all the parameters, taken together. [Lesson 2](lessons/02-gradients.md)
 - **gradient descent**: Repeating the rule: new value = old value - rate × slope. [Lesson 2](lessons/02-gradients.md)
 - **greedy**: The plainest picking rule: take the token with the top score each time, so the same prompt gives the same story. [Lesson 22](lessons/22-sampling.md)
@@ -148,7 +152,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **least squares**: The exact answer for the weights that make the sum of squared misses smallest. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **leftover**: What is drawn from after a drafted token is thrown out: the chance the big model has and the draft lacks, shared out to sum to 1. [Lesson 35](lessons/35-speculative-decoding.md)
 - **legal move**: A move the rules of chess allow in the position at hand. [Lesson 38](lessons/38-the-same-code-a-different-world.md)
-- **listener**: A person the storyteller writes for. Lessons 31 to 36 measure how long one waits. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **listener**: A person the storyteller writes for. Lessons 31 to 36 and 42 measure how long one waits. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **Llama**: A family of open models from Meta. [Lesson 16](lessons/16-todays-parts.md)
 - **logarithm**: The natural logarithm of x, ln x, is the power that e, about 2.718, must be raised to in order to give x. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **look-alike**: A harmless word that resembles a listed one, used to count the orders a rule refuses wrongly. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
@@ -182,15 +186,17 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **percentile**: The 95th percentile of a set of waits is the wait that 1 listener in 20 went over. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **piece**: The keys and values of a run of 16 tokens in the store of beginnings, filed under the whole text up to its end. [Lesson 33](lessons/33-prefix-caching.md)
 - **place** (position): Where a token stands in the text, counted from the start. [Lesson 8](lessons/08-position.md)
-- **profiler**: A tool that records each job a program hands the card and how long the card works on it. [Lesson 42](lessons/42-serve-on-a-gpu.md)
 - **prefix caching**: Keeping the keys and values of a beginning that many prompts share, so that each later request reads only what is new. [Lesson 33](lessons/33-prefix-caching.md)
 - **probe**: One linear layer trained to read something, here the board, out of the stream of a frozen model. [Lesson 40](lessons/40-the-board-in-its-head.md)
+- **profiler**: A tool that records each job a program hands the card and how long the card works on it. [Lesson 42](lessons/42-serve-on-a-gpu.md)
 - **quantization**: Storing each weight as a small whole number, with one scale for its row. [Lesson 34](lessons/34-quantization.md)
 - **query**: What a token is looking for. [Lesson 6](lessons/06-attention.md)
 - **queue**: A line that one thread puts things into and another takes them out of. [Lesson 36](lessons/36-the-server.md)
 - **radian**: A unit of angle, in which a full turn is 2π, about 6.283. [Lesson 15](lessons/15-rotary-positions.md)
+- **random mover**: Lesson 39's weakest opponent, which picks any legal move with the same chance. Ratings in lessons 39 and 41 hold it at 0. [Lesson 39](lessons/39-can-it-play.md)
 - **random number generator**: Makes its numbers by a fixed rule from a state it keeps, so the state sets the batches to come. [Lesson 12](lessons/12-the-training-loop.md)
 - **rank**: The fewest numbers a grid's input can be passed through. A LoRA correction of rank r passes through r. [Lesson 26](lessons/26-lora.md)
+- **rank** (of a worker): A worker's number among the workers that share a step, from 0. [Lesson 41](lessons/41-train-on-a-gpu.md)
 - **rating**: One number for a player's strength, fitted so that the Elo rule makes the results most likely. [Lesson 39](lessons/39-can-it-play.md)
 - **readers**: A short function that stands in for people who compare stories. [Lesson 28](lessons/28-a-model-of-what-people-prefer.md)
 - **reference**: A frozen copy of the model from before training, against which each story's gain is measured. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
@@ -217,7 +223,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **spread** (standard deviation): The usual distance of a set of numbers from their average. [Lesson 6](lessons/06-attention.md)
 - **standard error**: The spread of a set of measurements divided by the square root of how many there are. Lesson 14 calls it the error. [Lesson 14](lessons/14-running-an-experiment.md)
 - **stochastic gradient descent**: Learning from random batches in place of the whole text. [Lesson 3](lessons/03-tensors.md)
-- **story model**: Lesson 21's model: 5,374,464 parameters, trained on short stories. [Lesson 21](lessons/21-the-real-run.md)
+- **story model**: Lesson 21's model: 5,374,464 parameters, trained on short stories. Lesson 41's bigger story model has 14,555,904. [Lesson 21](lessons/21-the-real-run.md)
 - **storyteller**: The story model after lesson 25's fine-tune, which writes a story to an order. Lesson 36 serves it as lesson 29 left it. [Lesson 25](lessons/25-fine-tuning.md)
 - **stream** (from a server): An answer sent as a run of small events, one for each piece of text. [Lesson 36](lessons/36-the-server.md)
 - **stride**: How far the window moves on each time, scoring only the tokens not scored before. [Lesson 24](lessons/24-evaluation.md)
@@ -238,9 +244,9 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **training text**: The part of the text a model learns from. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **unseen text**: The part held back from training, on which the loss is reported. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **usual piece**: The piece a square holds most often: the lazy guess that a probe has to beat. [Lesson 40](lessons/40-the-board-in-its-head.md)
-- **vLLM**: An open engine for serving models on graphics cards. It shares each pass among the requests inside, as lesson 32's engine does. [Lesson 42](lessons/42-serve-on-a-gpu.md)
 - **value**: What a token hands over when chosen. [Lesson 6](lessons/06-attention.md)
 - **vector**: A row of numbers. [Lesson 6](lessons/06-attention.md)
+- **vLLM**: An open engine for serving models on graphics cards. It shares each pass among the requests inside, as lesson 32's engine does. [Lesson 42](lessons/42-serve-on-a-gpu.md)
 - **vocabulary**: The set of different tokens. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **warmup**: Beginning with a small rate and raising it in a straight line over the first steps. [Lesson 12](lessons/12-the-training-loop.md)
 - **weight decay**: On each step each weight grid is multiplied by 1 - rate × decay, so weights drift back toward 0. [Lesson 11](lessons/11-optimizers.md)

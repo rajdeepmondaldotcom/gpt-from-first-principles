@@ -2,7 +2,7 @@
 
 By the end of this page the chess model has played whole games against three opponents, and has a rating with a range around it.
 
-A legal move can be a terrible one. We do not know yet whether the model can win a game.
+A legal move can be a terrible one. We do not yet know whether it can win a game.
 
 ## The idea
 

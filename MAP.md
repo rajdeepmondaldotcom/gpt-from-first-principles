@@ -1,6 +1,6 @@
 # The map
 
-A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40, and on one rented machine for the last two. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
+A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40, and on rented machines for the last two. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
 
 Each link was fetched on 17 November 2026.
 
@@ -22,7 +22,7 @@ Each link was fetched on 17 November 2026.
 |---|---|---|
 | Muon | An optimizer for the grids inside the blocks, which its title calls hidden layers. The speed records of the next row use it | Jordan, [Muon: An optimizer for hidden layers in neural networks](https://kellerjordan.github.io/posts/muon/) |
 | What speeds training up | A record of each change that cut the time to train one small GPT, with the measurement for each | Jordan and others, [modded-nanogpt](https://github.com/KellerJordan/modded-nanogpt) |
-| Training across many chips | Lesson 20 shares slopes. Real runs also split the model itself, across chips and across machines | Hugging Face, [The Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook) |
+| Training across many chips | Lessons 20 and 41 share slopes. Real runs also split the model itself, across chips and across machines | Hugging Face, [The Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook) |
 | Hardware arithmetic | Lesson 17's counting, for models a million times larger: where the time goes on real accelerators | Austin and others, [How to Scale Your Model](https://jax-ml.github.io/scaling-book/) |
 | Tuning as a method | Lesson 14's discipline, as a full procedure for choosing each setting of a run | Godbole and others, [Deep Learning Tuning Playbook](https://github.com/google-research/tuning_playbook) |
 
@@ -69,7 +69,7 @@ Each link was fetched on 17 November 2026.
 | Many machines for one service | Routing requests across copies of a model, adding copies under load, and replacing them safely | Modular, [LLM Inference Handbook](https://github.com/modular/llm-inference-handbook), begun at BentoML |
 | Staying up | What a service does when more arrives than it can serve, and how to say what "up" means | Google, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) |
 | One model across chips | Splitting a single model's arithmetic over several chips to answer faster | Pope and others, [Efficiently Scaling Transformer Inference](https://arxiv.org/abs/2211.05102) |
-| Load tests | Lesson 36 uses `ab`. Tools built for language models sweep the rate and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
+| Load tests | Lesson 36 uses `ab`, and lesson 42 doubles the rate by hand. Tools built for language models sweep it and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
 | Lines and waits | The mathematics of lesson 31's waiting line | Harchol-Balter, [Performance Modeling and Design of Computer Systems](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html) |
 
 ## The best open resources, by area
@@ -101,4 +101,4 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 
 ## What a laptop cannot claim
 
-Lessons 31 to 37 prove a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost in dollars. Lessons 41 and 42 take the first steps on rented machines: 256 requests arriving each second, the rate at which a real engine falls behind, and what each run cost. You learn the rest on the job, and the tables above list where to read first.
+Lessons 31 to 37 build a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost in dollars. Lessons 41 and 42 cover three of these on rented machines: 256 requests a second, the rate at which vLLM falls behind, and the dollar cost of each run. You learn the rest on the job, and the tables above list where to read first.
