@@ -114,31 +114,42 @@ def serving(port, model, *options):
 
 
 if __name__ == "__main__" and sys.argv[1:] == ["late"]:
-    # python -m gpt.production late: at the sweep's last two rates, each request's wait for its
-    # first token, and how much of that wait passed before our own sender asked.
+    # python -m gpt.production late: is the wait at the sweep's last rate the server's, or our
+    # own sender's? The same arrivals again, from one sending process and then shared among four.
+    import multiprocessing
     from pathlib import Path
 
     import torch
 
     from gpt.data import read
-    from gpt.measure import arrivals
+    from gpt.measure import arrivals, report
     from gpt.results import save, say
 
     cache, rows = Path("data/cache"), []
     text = read(cache / "stories_val.bin")
     prompts = [text[128 * i : 128 * i + 64].tolist() for i in range(3000)]
-    with serving(8000, cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"):
+    with (
+        serving(8000, cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"),
+        multiprocessing.Pool(4) as pool,
+    ):
         for prompt in prompts[:4]:  # warm the server up
             ask(8000, prompt, 64, temperature=0)
-        for rate in (128, 256):
+        pool.starmap(load, [(8000, [])] * 16)  # and the four processes
+        for senders, rate in ((1, 128), (1, 256), (4, 256), (4, 512)):
             chance = torch.Generator().manual_seed(1)
-            records = load(8000, arrivals(prompts[: 10 * rate], rate, chance, temperature=0.8))
+            line = arrivals(prompts[: 10 * rate], rate, chance, temperature=0.8)
+            shares = [(8000, line[i::senders]) for i in range(senders)]
+            parts = [load(*shares[0])] if senders == 1 else pool.starmap(load, shares)
+            records = [record for part in parts for record in part]
             first = sum(r["tokens"][0] - r["arrived"] for r in records) / len(records)
             late = sum(r["sent"] - r["arrived"] for r in records) / len(records)
-            rows.append({"rate": rate, "first_token_mean": first, "sent_late_mean": late})
+            numbers = report(records) | {"first_token_mean": first, "sent_late_mean": late}
+            rows.append({"rate": rate, "senders": senders} | numbers)
             say(
-                f"at {rate} requests a second the first token took {first * 1e3:,.0f} ms on "
-                f"average, and our sender asked {late * 1e3:,.0f} ms late"
+                f"{rate} requests a second from {senders} sending process"
+                f"{'es' if senders > 1 else ''}: first token after {first * 1e3:,.0f} ms on "
+                f"average, {numbers['tokens_a_second']:,.0f} tokens a second in all. "
+                f"Each request was asked {late * 1e3:,.0f} ms late"
             )
     save("42_production_late", torch=torch.__version__, rows=rows)
 
