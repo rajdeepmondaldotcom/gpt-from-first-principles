@@ -73,26 +73,28 @@ def test_links_and_commands_resolve(page):
         assert Path(f"gpt/{module}.py").exists(), f"{page}: no such script gpt/{module}.py"
 
 
-def saved(page):
-    """What the lesson's script printed and saved: results/NN_name.json for lessons/NN-name.md."""
+def results(page):
+    """What the lesson's scripts printed and saved: each results/NN_*.json for lessons/NN-name.md."""
     files = sorted(Path("results").glob(f"{page.name[:2]}_*.json"))
-    return json.loads(files[0].read_text()) if files else None
+    return [json.loads(file.read_text()) for file in files]
+
+
+def saved(page):
+    """The lesson's first results file. A lesson with two runs has a second (lesson 41)."""
+    return results(page)[0] if results(page) else None
 
 
 @pytest.mark.parametrize("page", LESSONS, ids=str)
 def test_the_output_on_the_page_is_what_the_script_printed(page):
-    shown = re.search(
+    shown = re.findall(
         r"python -m gpt\.\w+\n```\n\n```\n(.*?)```", page.read_text(), flags=re.DOTALL
     )
     assert bool(shown) == bool(saved(page)), (
         f"{page}: an output block needs a results file, and back"
     )
-    if shown:
-        printed = iter(saved(page)["printed"])
-        for line in shown[1].splitlines():
-            assert line in printed, (
-                f"{page}: the script did not print {line!r} (or not in this order)"
-            )
+    printed = iter([line for run in results(page) for line in run["printed"]])
+    for line in "".join(shown).splitlines():
+        assert line in printed, f"{page}: the script did not print {line!r} (or not in this order)"
 
 
 @pytest.mark.parametrize("page", LESSONS, ids=str)

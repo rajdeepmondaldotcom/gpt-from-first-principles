@@ -30,7 +30,9 @@ fi
 aws ec2 authorize-security-group-ingress --group-id "$group" --protocol tcp --port 22 \
   --cidr "$(curl -s https://checkip.amazonaws.com)/32" > /dev/null 2>&1 || true # open already
 
+# AWS_ZONE, if set, names the zone to start in: a zone can run out of a kind of machine.
 id=$(aws ec2 run-instances --image-id "$image" --instance-type "$kind" --key-name "$name" \
+  ${AWS_ZONE:+--placement "AvailabilityZone=$AWS_ZONE"} \
   --security-group-ids "$group" --instance-initiated-shutdown-behavior terminate \
   --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=200,VolumeType=gp3,DeleteOnTermination=true}' \
   --user-data "$(printf '#!/bin/bash\nshutdown -h +%s\n' "$minutes")" \
