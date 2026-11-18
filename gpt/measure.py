@@ -66,7 +66,7 @@ def report(records):
         "first_token_p50": percentile(first, 50),
         "first_token_p95": percentile(first, 95),
         "seconds_a_token_p50": percentile(gaps, 50),
-        "tokens_a_second": written / span,  # all users together
+        "tokens_a_second": written / span,  # all listeners together
     }
 
 

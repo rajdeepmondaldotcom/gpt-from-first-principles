@@ -87,6 +87,8 @@ uv run pytest tests/test_quantize.py
 - The numbers of a 256 by 256 grid take a quarter of the bytes at 8 bits and an eighth at 4. The scales add 1,024 bytes.
 - A shrunk model's scores move less at 8 bits than at 4, and by under 0.005 at 8.
 
+Predict before you run: the blocks' grids are 17.3 MB of the model's 21.5 MB. About how large is the whole model with those grids at 8 bits?
+
 ```bash
 uv run python -m gpt.quantize
 ```
@@ -111,9 +113,7 @@ The model is smaller, and it wrote slower: 393 tokens a second against 643. Each
 
 ## Check yourself
 
-Predict before you run: the blocks' grids are 17.3 MB of the model's 21.5 MB. About how large is the whole model with those grids at 8 bits?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 17.3 / 4 = 4.3 MB for the grids, plus the 4.2 MB that stays at 32 bits: about 8.6 MB with the scales. The whole model shrinks 2.5 times.
 </details>

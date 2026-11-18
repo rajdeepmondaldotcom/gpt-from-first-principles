@@ -1,0 +1,32 @@
+{
+  "commit": "10efbe9",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "mlx": "0.32.4",
+  "tokens_a_second": {
+    "ours, processor": 813.1028112536052,
+    "ours, processor, 16 at once": 4533.543207607664,
+    "ours, processor, a model 35 times smaller": 4682.76977760848,
+    "ours, graphics chip": 233.50026469996027,
+    "Apple's engine, graphics chip": 1186.908774715894,
+    "Apple's engine, graphics chip, 16 at once": 12599.965703714444,
+    "Apple's engine, processor": 913.5168402751266,
+    "Apple's engine, processor, 16 at once": 6092.35284087592
+  },
+  "calls": 516,
+  "same": 128,
+  "printed": [
+    "256 unseen tokens, largest gap between the two engines' scores: 0.000013",
+    "places where both engines put the same token on top: 256 of 256",
+    "one token's pass makes 516 calls into PyTorch",
+    "ours, processor: 813 tokens a second",
+    "ours, processor, 16 at once: 4,534 tokens a second",
+    "ours, processor, a model 35 times smaller: 4,683 tokens a second",
+    "ours, graphics chip: 234 tokens a second",
+    "Apple's engine, graphics chip: 1,187 tokens a second",
+    "Apple's engine, graphics chip, 16 at once: 12,600 tokens a second",
+    "Apple's engine, processor: 914 tokens a second",
+    "Apple's engine, processor, 16 at once: 6,092 tokens a second",
+    "the two engines write the same first 128 tokens of 128"
+  ]
+}

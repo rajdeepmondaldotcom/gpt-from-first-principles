@@ -100,7 +100,7 @@ Part of what it prints is above, and "19 laptops" means 19 times lesson 21's bud
 
 The card takes lesson 21's step in 34 ms where the laptop took 928. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. Its run took 88 minutes, not 60: the hour was paced by a wider model's fastest step, and the run also tries three rates and checks its loss each 500 steps. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
 
-The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and the rules pick 0.4% of its moves where they picked 3.6% of the laptop's. It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber, which took 0.84 from the laptop's model. It is rated +775. The laptop's model is +355 in this fit and was +421 in lesson 39's: a rating depends on who else is in the fit.
+The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6%. It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber, which took 0.84 from the laptop's model. It is rated +775. The laptop's model is +355 in this fit and was +421 in lesson 39's: a rating depends on who else is in the fit.
 
 Predict before you run: four L4 cards cost 5.7 times what one costs. Will a million tokens of training cost less on four?
 
@@ -132,7 +132,7 @@ The bigger story model begins a story:
 Once upon a time, there was a little girl named Lily. She had a pretty dress that she loved to wear. One day, she felt sad because she could not find her dress. She looked everywhere, but it was gone. Lily started to weep.
 ```
 
-Only our own engine can serve the bigger story model, and lesson 37 found that 0.58 ms of each 1.29 ms pass of that engine is the fixed cost of its calls.
+Only our own engine has served the bigger story model. On the laptop's processor, lesson 37 found 0.58 ms of each 1.29 ms pass to be the fixed cost of its calls.
 
 ## Check yourself
 

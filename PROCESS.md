@@ -22,7 +22,7 @@ A page written before its run tends to say what the author hoped for. So the pag
 
 ## What the tests enforce
 
-`tests/test_lessons.py` runs on each push and fails the build when:
+`tests/test_lessons.py` runs on each push to `main` and on each pull request, and fails the build when:
 
 - code quoted on a page differs from the source file by one character
 - a line in a page's output block is not a line its script printed, or is out of order
@@ -47,7 +47,7 @@ Findings are fixed before the merge. A real choice between two reasonable option
 
 ## Timings
 
-A timing is the fastest of several tries on a machine doing nothing else, and the page names the machine. Timings move from run to run, and each page that has one says so. When two runs disagree by more than that, the page gives both.
+Most timings are the fastest of several tries on a machine doing nothing else, or the page says what else ran. A run under load is timed once, and so is each run of lesson 35. The page names the machine. Compare timings within one page: across pages the loop, the prompt and the day differ, and one listener gets 539, 669, 643, 490 and 775 tokens a second from the same model in lessons 31, 32, 34, 35 and 37. Timings move from run to run, and each page that has one says so. When two runs disagree by more than that, the page gives both.
 
 ## Rented machines
 

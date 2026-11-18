@@ -87,7 +87,7 @@ uv run pytest tests/test_speculate.py
 - The hand example: keep chances of 1, 0.5 and 1, and a leftover that is all on the first token.
 - For 50 random pairs of p and q over 8 tokens, drafted and kept plus redrawn equals p for each token.
 - Two tokens written 3,000 times with a draft that disagrees with the big model: each of the 25 pairs comes within 0.03 of the chance the big model alone gives it.
-- With the big model as its own draft, each guess is kept and 20 tokens take 4 passes.
+- With the big model as its own draft, each guess is kept.
 - A poor draft has guesses thrown out, and never needs more than one pass a token.
 - The copying loss equals lesson 3's loss when the big model is sure of one token, and is lowest when the draft's chances equal the big model's.
 
@@ -110,9 +110,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 The draft that copied the big model has the lower loss, 2.238 nats against 2.346, and 63% of its checked guesses are kept, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
 
-Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. By these timings this draft, with nearly 8 times fewer weights and half the blocks, costs more. Lesson 37 times a smaller model's pass.
-
-Alone, the same model wrote 643 tokens a second in lesson 34, and 490 here after the drafts trained.
+Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings this draft, with nearly 8 times fewer weights and half the blocks, costs more. Lesson 37 times a smaller model's pass.
 
 ## What it still cannot do
 

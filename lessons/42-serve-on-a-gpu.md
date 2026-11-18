@@ -2,7 +2,7 @@
 
 By the end of this page vLLM serves the bigger story model that lesson 41 trained. You know how many requests a second it keeps up with, and what a million tokens cost, for our model and for one about 520 times its size.
 
-Only our own engine can serve the bigger story model, and lesson 37 found that 0.58 ms of each 1.29 ms pass of that engine is the fixed cost of its calls.
+Only our own engine has served the bigger story model. On the laptop's processor, lesson 37 found 0.58 ms of each 1.29 ms pass to be the fixed cost of its calls.
 
 ## The idea
 
@@ -95,7 +95,7 @@ Timings are from one rented machine and move from run to run.
 
 vLLM computes what we compute to within 0.007. Our own code differs from itself by 0.0038 when we let the card use its faster 32-bit multiply, which keeps fewer digits. After 15 of 16 prompts the two write the same 128 tokens, and the 16th answer leaves ours where our two best choices were 0.0010 apart, less than either gap.
 
-One listener gets 786 tokens a second where our engine gave 110. Memory would allow 12,732: for a model this small, fixed costs are still the limit.
+One listener gets 786 tokens a second where our engine gave 110. Memory would allow 12,732, so reading the weights does not set vLLM's speed here. We did not profile vLLM to find what does.
 
 vLLM keeps up at 128 requests a second, where a million tokens cost $0.065: 2.1 minutes of the card where lesson 36's server took 8 of the laptop. At 256 our clock averages 1,416 ms to the first token and the server's 83 ms. The server's clock starts when it begins work on a request, so the wait comes before that: in the server's line, or in our 2,560 sending threads, which share four processor cores with it. We did not find out which.
 
@@ -107,7 +107,7 @@ On the 200 stories, each scored from its own start, our model gets 0.426 bits pe
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/stop.sh
 ```
 
-`stop.sh` destroys each machine and lists any of ours left. Lessons 41 and 42 cost us $12.40 by the price list: `results/42_bill.json` has each machine's hours.
+Lessons 41 and 42 cost us $12.40 by the price list: `results/42_bill.json` has each machine's hours.
 
 ## What it still cannot do
 

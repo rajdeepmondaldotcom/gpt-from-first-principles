@@ -83,7 +83,7 @@ Each link was fetched on 17 or 18 November 2026.
 | Staying up | What a service does when more arrives than it can serve, and how to say what "up" means | Google, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) |
 | One model across chips | Splitting a single model's arithmetic over several chips to answer faster | Pope and others, [Efficiently Scaling Transformer Inference](https://arxiv.org/abs/2211.05102) |
 | Reading and writing on separate chips | Lesson 31's two waits compete for one chip. DistServe reads prompts on some chips and writes tokens on others, so each wait can be held to its own limit | Zhong and others, [DistServe](https://arxiv.org/abs/2401.09670) |
-| Load tests | Lesson 36 uses `ab`, and lesson 42 doubles the rate by hand. Tools built for language models sweep it and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
+| Load tests | Lesson 36 uses `ab`, and lesson 42's script doubles the rate until vLLM falls behind. Tools built for language models sweep it and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
 | Lines and waits | The mathematics of lesson 31's waiting line | Harchol-Balter, [Performance Modeling and Design of Computer Systems](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html) |
 
 ## The best open resources, by area

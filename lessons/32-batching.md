@@ -132,11 +132,9 @@ a request offered one byte less than its cache needs is taken: False
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The eight requests each write what they write alone, as does the prompt read in chunks.
-
 After a 64-token prompt, one listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. At 32 it writes 2,275, 13% more than at 16.
 
-At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 12 ms or less, and the machine writes 813 tokens a second where it wrote 631.
+At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms, and the machine writes 813 tokens a second where it wrote 631. At the two lower rates both engines write the same, to within 4 tokens a second: a machine that keeps up writes what arrives.
 
 ## What it still cannot do
 

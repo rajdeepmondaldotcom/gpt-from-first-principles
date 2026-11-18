@@ -139,7 +139,7 @@ its first 26 moves are legal, of 44
 
 The month holds 749,462 games of 20 moves or more. 29 are repeats or near-repeats, and 7,450 of the rest are unseen.
 
-Before training, none of 200 moves is legal. After 500 steps 58% are, and at the end 92%. On 1,000 fresh positions the model writes a legal move 929 times: 0.911 to 0.944. It writes 884 of them as the rules do. The other 45 name a legal move and write it another way.
+On 1,000 fresh positions the model writes a legal move 929 times: 0.911 to 0.944. It writes 884 of them as the rules do. The other 45 name a legal move and write it another way.
 
 Some of that could be memory. 192 of the 1,000 positions open some training game, and each move there is legal. The other 808 are lists of moves that no training game begins with, and 737 of their moves are legal: 0.890 to 0.931.
 
@@ -149,7 +149,7 @@ Some of that could be memory. 192 of the 1,000 positions open some training game
 e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5 Nd4 Nxd4 Bxd4 c5 dxc5 dxc5 Be3 b5 bxc5 Ng4 Bd4 Qh4 Bxh7+ Kxh7 Ng3 Qxh3 Nf5 Qf1+
 ```
 
-The model wrote that game alone, from the end token. Its first 26 moves are legal and the 27th is not.
+The model wrote that game alone, from the end token. Its first 26 moves are legal and the 27th is not. The 27th, `Nd4`, moves a knight onto d4, where white's own pawn has stood since `cxd4`.
 
 A legal move can be a terrible one. We do not yet know whether it can win a game.
 

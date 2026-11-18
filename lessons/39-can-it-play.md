@@ -122,7 +122,7 @@ The model takes 0.92 of the points from the random mover, and its younger self 0
 
 Against the grabber the model takes 0.16 of the points, where its younger self took 0.05. It takes 0.64 from that younger self, with an interval of 0.60 to 0.68, clear of a half.
 
-The referee moved for the model in 961 of its 27,049 turns, 3.6%, and for its younger self in 9.7%.
+The model slipped on 961 of its 27,049 turns, 3.6%, and its younger self on 9.7%.
 
 With the random mover at 0, the grabber is rated +738, the model +421 and its younger self +310. The last two intervals, +378 to +465 and +270 to +359, do not meet.
 

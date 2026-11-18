@@ -90,6 +90,8 @@ uv run pytest tests/test_prefix.py
 - A store with room for two pieces is given three. The one used longest ago goes, and a piece that was used again in between stays.
 - Given five pieces with room for four, the store keeps no piece without the shorter ones before it.
 
+Predict before you run: 20 prompts share their first 160 tokens and end in 16 tokens of their own. With pieces of 16 tokens, how many tokens does the model read for the second prompt?
+
 ```bash
 uv run python -m gpt.prefix
 ```
@@ -117,9 +119,7 @@ Twelve pieces in the store take 1.2 MB. The weights take 21.5 MB, each one a 32-
 
 ## Check yourself
 
-Predict before you run: 20 prompts share their first 160 tokens and end in 16 tokens of their own. With pieces of 16 tokens, how many tokens does the model read for the second prompt?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 16. The first 160 tokens are ten whole pieces, all in the store after the first prompt. The last 16 are new.
 </details>

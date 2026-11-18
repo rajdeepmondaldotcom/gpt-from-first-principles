@@ -2,7 +2,7 @@
 
 By the end of this page you can say how long a listener waits and how much the machine gets done, and you have watched both as listeners arrive faster and faster.
 
-Every story so far came from a script, one order at a time. We have not measured how long someone asking for a story waits, or how much the machine writes in a second. A service has many listeners, and they arrive when they like. Before we change the code, we need numbers to judge each change by.
+Every story so far came from a script, one order at a time. We have not measured how long someone asking for a story waits, or how much the machine writes in a second. A service has many such listeners, and they arrive when they like. Before we change the code, we need numbers to judge each change by.
 
 ## The idea
 
@@ -67,7 +67,7 @@ def report(records):
         "first_token_p50": percentile(first, 50),
         "first_token_p95": percentile(first, 95),
         "seconds_a_token_p50": percentile(gaps, 50),
-        "tokens_a_second": written / span,  # all users together
+        "tokens_a_second": written / span,  # all listeners together
     }
 ```
 

@@ -70,7 +70,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | a miss, an overreach | under-refusal, over-refusal. Also false negative, false positive |
 | the wait before anything appears | time to first token, TTFT |
 | the gap between tokens | inter-token latency, or time per output token |
-| a promise about waits, such as 95 first tokens in 100 inside 200 ms | service-level objective, SLO. The requests a second served inside it are the goodput |
+| a promise about waits, such as a first token inside 200 ms (PRACTICE.md, routine 3) | service-level objective, SLO. The requests a second served inside it are the goodput |
 | reading the prompt, then writing | prefill, then decode |
 | the line | queue |
 | joining and leaving between two tokens | continuous batching |
@@ -95,7 +95,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | fitting the probe to shuffled boards | control task |
 | a graphics card | GPU. CUDA is NVIDIA's name for programming one, and PyTorch's name for the device |
 | workers adding their slopes up among themselves | all-reduce. NCCL is NVIDIA's library for it between cards |
-| the share of a card's listed speed that a run gets | model FLOPs utilisation, MFU |
+| the share of a card's listed speed that a run gets (PRACTICE.md, routine 3) | model FLOPs utilisation, MFU |
 | the card's faster 32-bit multiply | TF32 |
 | a pass recorded once and replayed as one job | CUDA graph |
 | the rate at which the server stops keeping up | the knee of the latency curve, or saturation |
@@ -183,7 +183,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **least squares**: The exact answer for the weights that make the sum of squared misses smallest. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **leftover**: What is drawn from after a drafted token is thrown out: the chance the big model has and the draft lacks, shared out to sum to 1. [Lesson 35](lessons/35-speculative-decoding.md)
 - **legal move**: A move the rules of chess allow in the position at hand. [Lesson 38](lessons/38-the-same-code-a-different-world.md)
-- **listener**: A person the storyteller writes for. Lessons 31 to 36 and 42 measure how long one waits. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **listener**: A person the storyteller writes for. Lessons 31 to 37 and 42 measure what one gets. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **Llama**: A family of open models from Meta. [Lesson 16](lessons/16-todays-parts.md)
 - **logarithm**: The natural logarithm of x, ln x, is the power that e, about 2.718, must be raised to in order to give x. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **look-alike**: A harmless word that resembles a listed one, used to count the orders a rule refuses wrongly. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
@@ -194,7 +194,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **merge** (of LoRA): Adding a trained correction into its grid, which leaves a plain model. [Lesson 26](lessons/26-lora.md)
 - **metrics**: Running totals a server gives as plain text: requests, refusals, tokens and waits. [Lesson 36](lessons/36-the-server.md)
 - **MinHash**: Scramble each five-word run into a number and keep the smallest, so two documents agree with chance equal to their overlap. Skips most comparisons. [Lesson 18](lessons/18-data.md)
-- **miss**: A story written for an order the rule says to refuse. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
+- **miss**: A story written for an order the rule says to refuse. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md) Of the law, how far its prediction falls from a run's loss. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **momentum**: Keep a velocity for each parameter, multiply it by 0.9, add the new slope, and move along the velocity. [Lesson 11](lessons/11-optimizers.md)
 - **move**: One side's turn in a game of chess, written as text such as `Nf3`. [Lesson 38](lessons/38-the-same-code-a-different-world.md)
 - **multi-layer perceptron** (MLP): A linear layer, a bend and a second linear layer. Lesson 4's model is one with embeddings in front and softmax behind, and each block of lesson 9 has one inside. [Lesson 4](lessons/04-a-neural-language-model.md)
@@ -214,7 +214,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **parameters**: The adjustable numbers in a model's calculation. [Lesson 2](lessons/02-gradients.md)
 - **pass at k**: The chance that at least one of k tries passes. [Lesson 24](lessons/24-evaluation.md)
 - **pass rate**: A task's mean of passes and failures. [Lesson 24](lessons/24-evaluation.md)
-- **percentile**: The 95th percentile of a set of waits is the wait that 1 listener in 20 went over. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **percentile**: The 95th percentile of a set of waits is the smallest wait that 95 listeners in 100 were at or under. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **piece**: The keys and values of a run of 16 tokens in the store of beginnings, filed under the whole text up to its end. [Lesson 33](lessons/33-prefix-caching.md)
 - **place** (position): Where a token stands in the text, counted from the start. [Lesson 8](lessons/08-position.md)
 - **prefix caching**: Keeping the keys and values of a beginning that many prompts share, so that each later request reads only what is new. [Lesson 33](lessons/33-prefix-caching.md)
@@ -239,7 +239,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **safetensors**: A weights file format: 8 bytes holding a length, then that many bytes of JSON naming each tensor, then the raw numbers. [Lesson 10](lessons/10-the-gpt.md)
 - **scale** (in quantization): The 32-bit number, one for each row, that says how large a step of 1 is. [Lesson 34](lessons/34-quantization.md)
 - **schedule**: The plan for the rate over a run. [Lesson 12](lessons/12-the-training-loop.md)
-- **score**: A parameter or output that can be any number, which softmax turns into chances. [Lesson 2](lessons/02-gradients.md) Of a story, the share of the name and the three asked words that it has. [Lesson 27](lessons/27-learning-from-a-score.md)
+- **score**: A parameter or output that can be any number, which softmax turns into chances. [Lesson 2](lessons/02-gradients.md) Of a story, the share of the name and the three asked words that it has. [Lesson 27](lessons/27-learning-from-a-score.md) Of a game, 1 for a win, a half for a draw and 0 for a loss. [Lesson 39](lessons/39-can-it-play.md)
 - **scorer**: A second model that reads an order and its story and gives one number, learned from pairs. [Lesson 28](lessons/28-a-model-of-what-people-prefer.md)
 - **seed**: The number that starts the random number generator, fixing the starting weights and the batches. [Lesson 11](lessons/11-optimizers.md)
 - **self-attention**: Attention where the queries, keys and values all come from the same tokens. [Lesson 7](lessons/07-causal-multi-head-self-attention.md)

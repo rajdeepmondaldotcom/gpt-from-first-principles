@@ -120,11 +120,11 @@ after block 6: the final choice is on top in 100% of positions, with a chance of
 a probe after block 5 on positions with either side to move: 74.9% right, 74.3% to 75.3%
 ```
 
-Guessing each square's usual piece is right for 67.3% of squares. The probe after block 1 reads 73.8%, rising block by block to 81.2%. Fitted to shuffled boards, the probe after block 5 reads 63.2%. Fitted to the true boards it reads 80.7%, and 60.9% on squares that are not as usual.
+Guessing each square's usual piece is right for 67.3% of squares. Fitted to shuffled boards, the probe after block 5 reads 63.2%. Fitted to the true boards it reads 80.7%, and 60.9% on squares that are not as usual. On those squares the usual piece is wrong by definition: it scores 0 there.
 
-Untouched, the model gives queen moves a chance of 20.3%. A margin of 3 takes a nudge of 0.07 of the stream's length on average, and brings that to 20.1%. Margins of 10 and 30, at 0.12 and 0.28, bring it to 19.9% and 18.5%, each interval clear of zero. Pawn nudges of the same lengths leave 20.3%, 20.3% and 20.5%, the last 0.1 to 0.3 points up. So the model uses the probe's line: the longest nudge costs queen moves 1.5 to 2.0 points.
+Untouched, the model gives queen moves a chance of 20.3%. Margins of 3, 10 and 30 take nudges of 0.07, 0.12 and 0.28 of the stream's length on average, and bring that to 20.1%, 19.9% and 18.5%, each interval clear of zero. Pawn nudges of the same lengths leave 20.3%, 20.3% and 20.5%, the last 0.1 to 0.3 points up. So the model's next move depends in part on the probe's line: the longest nudge costs queen moves 1.5 to 2.0 of their 20.3 points.
 
-The final choice is on top in 27% of positions after block 4, and 43% after block 5.
+The move forms late: the final choice tops 43% of positions after block 5.
 
 A last probe is fitted and tested on each third position, with either side to move. After block 5 it reads 74.9%, against 80.7% with white to move.
 

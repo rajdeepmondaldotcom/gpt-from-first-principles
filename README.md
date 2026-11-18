@@ -8,7 +8,7 @@ Each lesson adds one idea, in code short enough to read in a sitting, with a tes
 
 *A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. It gives you the ideas that interviews for training and inference work start from, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
 
-The numbers of lessons 1 to 40 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $12.40. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine and the scripts of lessons 41 and 42, which need an NVIDIA card.
+The numbers of lessons 1 to 40 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $12.40. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac, and the scripts of lessons 41 and 42, which need an NVIDIA card.
 
 One prompt, `Once upon a time`, answered by the model at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. Line breaks are shown as spaces.
 
