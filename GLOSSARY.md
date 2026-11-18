@@ -45,7 +45,8 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | fingerprint | hash |
 | the bands that pick near-repeats | locality-sensitive hashing, LSH |
 | workers that each take a share of the batch and share their slopes | data parallelism. PyTorch's version is DDP |
-| each worker keeping only a share of the weights, slopes and averages | ZeRO, FSDP. Cutting one layer's grid across chips is tensor parallelism, and giving each chip some of the blocks is pipeline parallelism |
+| the optimizer's averages shared out among workers | sharding the optimizer state, the first stage of ZeRO. With the slopes and the weights shared out too: FSDP |
+| a layer's hidden units dealt among workers | tensor parallelism. Giving each chip some of the blocks is pipeline parallelism |
 | writing one token at a time, each from those before it | autoregressive generation |
 | top-p | nucleus sampling |
 | a leak | contamination |

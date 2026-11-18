@@ -1,6 +1,6 @@
 # 0. The whole picture
 
-By the end of this page you know where the next 42 lessons go, and what each one is for.
+By the end of this page you know where the next 43 lessons go, and what each one is for.
 
 Before lesson 1, we follow the finished storyteller from one end to the other.
 
@@ -24,6 +24,7 @@ Each lesson adds a piece or tests one, in this order.
 | 31 to 37 | Serving | How do many people use it at once, and how fast? |
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
+| 43 | Many cards | What if no one card holds the model? |
 
 The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. The stages between count their own results. Each lesson opens on something the last one left undone.
 

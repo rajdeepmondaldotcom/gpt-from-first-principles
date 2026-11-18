@@ -56,7 +56,7 @@ Then do four sums at the size labs work at, on paper, timed and out loud. NVIDIA
 
 <details><summary>Answers</summary>
 
-1. 70 × 10⁹ × 16 bytes = 1,120 GB. No card holds a copy, so the weights, slopes and averages must themselves be split. [MAP.md](MAP.md) has two rows on that, under Training.
+1. 70 × 10⁹ × 16 bytes = 1,120 GB. No card holds a copy, so the weights, slopes and averages must themselves be split. Lesson 43 shares out the averages and one layer, and [MAP.md](MAP.md) has two rows on the rest, under Training.
 2. 2 × 80 × 8 × 128 × 2 = 327,680 bytes a token. Times 128,000 tokens and 32 listeners, that is 1.34 TB: the memory of 17 cards.
 3. The weights are 60 GB. 3,350 / 60 = 56 tokens a second.
 4. 6 × 7 × 10¹⁰ × 10¹² = 4.2 × 10²³ multiplies and adds, by lesson 17's count. The cards do 1,000 × 0.4 × 990 × 10¹² = 3.96 × 10¹⁷ a second. That is 1.06 million seconds: 12 days.
