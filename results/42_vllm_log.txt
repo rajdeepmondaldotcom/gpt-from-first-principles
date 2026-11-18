@@ -1,6 +1,6 @@
 Lines from vLLM's own log (vllm.log) during the run that results/42_production.json records,
 18 November 2026, vLLM 0.34.0 on one NVIDIA L40S. Lesson 42's sentences about what vLLM does
-rest on these: it compiles the model's pass and captures it as a graph at start-up, and with
+rest on these: it captures the model's pass as a graph at start-up, and with
 --quantization fp8_per_tensor it puts four kinds of layer in each of the big model's 28
 blocks in 8 bits (112 layers), which leaves the scores layer as it was. Long lines are cut
 at 420 characters. Copied by hand from the machine, not written by a lesson's script.

@@ -1,21 +1,61 @@
 {
-  "commit": "d81c4cf",
+  "commit": "8cebaec",
   "python": "3.13.18",
   "torch": "2.14.0+cu130",
   "rows": [
     {
       "rate": 128,
-      "first_token_mean": 0.02674729127678006,
-      "sent_late_mean": 0.00014841843149611124
+      "senders": 1,
+      "served": 1280,
+      "refused": 0,
+      "first_token_p50": 0.024417934080702253,
+      "first_token_p95": 0.04645633274776628,
+      "seconds_a_token_p50": 0.0033535556349739808,
+      "tokens_a_second": 7922.725312923174,
+      "first_token_mean": 0.02684024761680064,
+      "sent_late_mean": 0.00013687984563262034
     },
     {
       "rate": 256,
-      "first_token_mean": 1.3739836698841104,
-      "sent_late_mean": 0.00016408476846407893
+      "senders": 1,
+      "served": 2560,
+      "refused": 0,
+      "first_token_p50": 1.2152290412304865,
+      "first_token_p95": 2.5707819885064964,
+      "seconds_a_token_p50": 0.007197439460310667,
+      "tokens_a_second": 12871.870309331542,
+      "first_token_mean": 1.269102541768251,
+      "sent_late_mean": 0.00015833728194252216
+    },
+    {
+      "rate": 256,
+      "senders": 4,
+      "served": 2560,
+      "refused": 0,
+      "first_token_p50": 1.2603963808578555,
+      "first_token_p95": 2.739216524962103,
+      "seconds_a_token_p50": 0.007394511095226913,
+      "tokens_a_second": 12657.005202713955,
+      "first_token_mean": 1.332733818060298,
+      "sent_late_mean": 0.00012607572985103843
+    },
+    {
+      "rate": 512,
+      "senders": 4,
+      "served": 3000,
+      "refused": 0,
+      "first_token_p50": 4.406395941583469,
+      "first_token_p95": 8.55121696896822,
+      "seconds_a_token_p50": 0.007338037111092865,
+      "tokens_a_second": 12777.253945396493,
+      "first_token_mean": 4.430167354386141,
+      "sent_late_mean": 0.00011994023749017894
     }
   ],
   "printed": [
-    "at 128 requests a second the first token took 27 ms on average, and our sender asked 0 ms late",
-    "at 256 requests a second the first token took 1,374 ms on average, and our sender asked 0 ms late"
+    "128 requests a second from 1 sending process: first token after 27 ms on average, 7,923 tokens a second in all. Each request was asked 0 ms late",
+    "256 requests a second from 1 sending process: first token after 1,269 ms on average, 12,872 tokens a second in all. Each request was asked 0 ms late",
+    "256 requests a second from 4 sending processes: first token after 1,333 ms on average, 12,657 tokens a second in all. Each request was asked 0 ms late",
+    "512 requests a second from 4 sending processes: first token after 4,430 ms on average, 12,777 tokens a second in all. Each request was asked 0 ms late"
   ]
 }

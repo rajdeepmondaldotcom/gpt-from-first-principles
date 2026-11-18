@@ -8,13 +8,13 @@ Only our own engine has served the bigger story model. On the laptop's processor
 
 On the card our engine gives one listener 110 tokens a second, where lesson 37's laptop gave a smaller model 775. A pass takes 9.1 ms. A profiler, which records each job the card is handed and how long the card works on it, counts 634 jobs in one pass and 1.15 ms of work. The card idles for the other 8 ms.
 
-vLLM is an open engine for serving models on graphics cards. It loads lesson 37's exported folder, given two more entries in its config file. Its log shows that at start-up it compiles the model's pass and records the pass's jobs once, as a graph it replays as one job. Like lesson 32's engine, it shares each pass among the requests it holds.
+vLLM is an open engine for serving models on graphics cards. It loads lesson 37's exported folder, given two more entries in its config file. Its log shows that at start-up it records the pass's jobs once, as a graph it replays as one job. Like lesson 32's engine, it shares each pass among the requests it holds.
 
 First we check that it computes what we compute, on the tokens both write and on the log chance each gives 200 unseen tokens.
 
 Then we find where it stops keeping up: the script sends lesson 31's arrivals over the web and doubles the rate until the answers take over 1.1 times as long to leave as their requests took to arrive.
 
-Last, we test whether memory is the limit. Lesson 31's sum divides the bytes the machine reads in a second by the bytes a token must read. On the laptop it allowed 4,231 tokens a second and one listener got 539. A big model spends its pass reading weights and should come close, so the script also serves Qwen2.5-7B-Instruct, an open model of 7.6 billion parameters, and scores it on 200 of our unseen stories.
+Last, we test whether memory is the limit. Lesson 31's sum divides the bytes the machine moves in a second by the bytes a token must read. On the laptop it allowed 4,231 tokens a second and one listener got 539. A big model spends its pass reading weights and should come close, so the script also serves Qwen2.5-7B-Instruct, an open model of 7.6 billion parameters, and scores it on 200 of our unseen stories.
 
 That model also tests lesson 34's 8-bit weights, which made ours smaller and slower. vLLM's are floating-point numbers with one scale a grid, where lesson 34's were whole numbers with a scale a row.
 
@@ -22,12 +22,12 @@ That model also tests lesson 34's 8-bit weights, which made ours smaller and slo
 
 Lesson 31 timed a copy, which reads and writes. A pass only reads, so the script times a read: 741 GB a second on this card.
 
-The big model's weights fill 15.2 GB at 16 bits. A token reads one row of the 1.1 GB grid of token rows, so that grid is left out. The scores layer is a grid of its own here, and vLLM keeps it at 16 bits.
+The big model's weights fill 15.23 GB at 16 bits. A token reads one row of the 1.09 GB grid of token rows, so that grid is left out. The scores layer is a grid of its own here, and vLLM keeps it at 16 bits.
 
 | Weights | A token reads | Tokens a second memory allows |
 |---|---|---|
-| 16 bits | 15.2 − 1.1 = 14.1 GB | 741 / 14.14 = 52 |
-| 8 bits | (15.2 − 2 × 1.1) / 2 + 1.1 = 7.6 GB | 741 / 7.6 = 97 |
+| 16 bits | 15.23 − 1.09 = 14.14 GB | 741 / 14.14 = 52 |
+| 8 bits | (15.23 − 2 × 1.09) / 2 + 1.09 = 7.62 GB | 741 / 7.62 = 97 |
 
 ## The code
 
@@ -42,7 +42,7 @@ def handoff(folder, out):
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
 ```
 
-The end token is the last id (lesson 5). The client, `ask`, sends token ids and reads them back from lesson 36's stream of events, so vLLM needs no tokenizer of ours. `load` gives each of lesson 31's requests a thread that sleeps until its moment, then asks.
+The end token is the last id, 4,096. The client, `ask`, sends token ids and reads them back from lesson 36's stream of events, so vLLM needs no tokenizer of ours. `load` gives each of lesson 31's requests a thread that sleeps until its moment, then asks.
 
 ## The proof
 
@@ -54,9 +54,11 @@ uv run pytest tests/test_production.py
 - `ask` returns each token with the moment it came, and `load` sends each request at its moment.
 - `scores` picks each prompt token's own log chance out of a reply that also holds the top token's.
 
+These run anywhere, against a stand-in server.
+
 Predict before you run: at 8 bits a token of the big model reads 7.6 GB where it read 14.1. Will one listener get twice the speed?
 
-These run anywhere, against a stand-in server. The run needs lesson 41's `story_big` folder and an L40S card for under an hour. vLLM needs its own PyTorch, so it gets its own Python environment:
+The run needs lesson 41's `story_big` folder and an L40S card for under an hour. vLLM needs its own PyTorch, so it gets its own Python environment:
 
 ```bash
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/start.sh g6e.xlarge 90
@@ -93,22 +95,24 @@ a million tokens written, the big model, 16 bits: $0.155
 
 Timings are from one rented machine and move from run to run.
 
-vLLM computes what we compute to within 0.007. Our own code differs from itself by 0.0038 when we let the card use its faster 32-bit multiply, which keeps fewer digits. After 15 of 16 prompts the two write the same 128 tokens, and the 16th answer leaves ours where our two best choices were 0.0010 apart, less than either gap.
+vLLM computes what we compute to within 0.007. Our own code differs from itself by 0.0038 when we let the card use its faster 32-bit multiply, which keeps fewer digits. After 15 of 16 prompts the two write the same 128 tokens, and the other answer leaves ours where our two best choices were 0.0010 apart, less than either gap.
 
 One listener gets 786 tokens a second where our engine gave 110. Memory would allow 12,732, so reading the weights does not set vLLM's speed here. We did not profile vLLM to find what does.
 
-vLLM keeps up at 128 requests a second, where a million tokens cost $0.065: 2.1 minutes of the card where lesson 36's server took 8 of the laptop. At 256 our clock averages 1,416 ms to the first token and the server's 83 ms. The server's clock starts when it begins work on a request, so the wait comes before that. A second stage sends those two rates again and times our sender:
+vLLM keeps up at 128 requests a second, where a million tokens cost $0.065: 2.1 minutes of the card where lesson 36's server took 8 of the laptop. At 256 our clock averages 1,416 ms to the first token and the server's 83 ms. A second stage asks whether that wait is our sender's: the same arrivals again, from one sending process and then from four:
 
 ```bash
 VENV='~/vllm' aws/run.sh <host> python -m gpt.production late
 ```
 
 ```
-at 128 requests a second the first token took 27 ms on average, and our sender asked 0 ms late
-at 256 requests a second the first token took 1,374 ms on average, and our sender asked 0 ms late
+128 requests a second from 1 sending process: first token after 27 ms on average, 7,923 tokens a second in all. Each request was asked 0 ms late
+256 requests a second from 1 sending process: first token after 1,269 ms on average, 12,872 tokens a second in all. Each request was asked 0 ms late
+256 requests a second from 4 sending processes: first token after 1,333 ms on average, 12,657 tokens a second in all. Each request was asked 0 ms late
+512 requests a second from 4 sending processes: first token after 4,430 ms on average, 12,777 tokens a second in all. Each request was asked 0 ms late
 ```
 
-Our 2,560 sending threads asked on time. So the wait is on the way in, before the server's clock starts, and its 83 ms leaves it out.
+Each request was asked on time, and four sending processes wait as long as one: the wait is not our sender's. At 256 and at 512 the machine writes about 12,800 tokens a second, its limit for this model. vLLM's own 83 ms does not count the wait behind it.
 
 The big model meets the sum: one listener gets 50 tokens a second where memory allows 52. At 8 bits it gets 73 where memory allows 97: the reading falls to 0.54 of what it was, and by subtraction the rest of a pass grows from 1.1 ms to 3.5. So 8 bits buy 46% more speed for 0.0095 nats a token, where lesson 34's cost ours 0.0001.
 
@@ -118,13 +122,13 @@ On the 200 stories, each scored from its own start, our model gets 0.426 bits pe
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/stop.sh
 ```
 
-Lessons 41 and 42 cost us $12.40 by the price list: `results/42_bill.json` has each machine's hours.
+Lessons 41 and 42 cost us $18.31 by the price list: `results/42_bill.json` has each machine's hours.
 
 ## What it still cannot do
 
-Two things this course started are undone on the card: the bigger story model has not been taught to take an order, and lesson 36's own server has not run there. [MAP.md](../MAP.md) says where to read first for what comes after, such as copies of a model behind a router that shares requests among them.
+Two things this course started are undone on the card: the bigger story model has not been taught to take an order, and lesson 36's own server has not run there. [MAP.md](../MAP.md) says where to read first for what comes after, such as copies of a model behind a router.
 
-You began with a loop that counted characters. One file of model code has since written stories and played chess, on a laptop and on a rented card.
+You began with a loop that counted characters. One file of model code has since learned stories and chess, on a laptop and on a rented card.
 
 ## Check yourself
 
@@ -135,7 +139,7 @@ No: 73 tokens a second against 50. The rest of a pass grows as the reading shrin
 
 <details><summary>From lesson 37: why would smaller weights not speed up our own engine on the card?</summary>
 
-The card works for 1.15 ms of a 9.1 ms pass. The rest is the fixed cost of 634 jobs, which smaller weights leave alone.
+The card works for 1.15 ms of a 9.1 ms pass. Smaller weights could shorten only that part.
 </details>
 
 Go deeper:
