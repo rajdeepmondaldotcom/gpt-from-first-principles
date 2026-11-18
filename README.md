@@ -181,7 +181,7 @@ Lesson 43 is back on the laptop. Its four workers are in one process, so it coun
 | Measure | Lesson | Result |
 |---|---|---|
 | What one of four workers holds to train lesson 41's story model: a whole copy, then with AdamW's averages shared out | 43 | 232.9 MB, then 155.0 MB for the fullest worker |
-| What each worker hands over in a step: its slopes, then its parts of eight split MLPs | 43 | 58.2 MB, then 201.3 MB |
+| What the workers add up between them in a step: their slopes, then their parts of eight split MLPs | 43 | 58.2 MB, then 201.3 MB |
 
 ## Run it
 

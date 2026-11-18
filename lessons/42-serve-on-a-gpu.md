@@ -128,7 +128,7 @@ Lessons 41 and 42 cost us $18.31 by the price list: `results/42_bill.json` has e
 
 Two things this course started are undone on the card: the bigger story model has not been taught to take an order, and lesson 36's own server has not run there.
 
-We served a model of 7.6 billion parameters from one card. We could not train it there: lesson 17's 16 bytes a parameter come to 122 GB, and the card has 48. Lessons 20 and 41 gave each worker a whole copy, so more cards would not help.
+We served a model of 7.6 billion parameters from one card. We could not train it there: lesson 17's 16 bytes a parameter come to 122 GB, and NVIDIA lists the card at 48. Lessons 20 and 41 gave each worker a whole copy, so more cards would not help.
 
 ## Check yourself
 
