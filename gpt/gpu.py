@@ -146,10 +146,8 @@ if __name__ == "__main__":
     assert cards, "this script needs an NVIDIA card. Lesson 41's page says how to rent one."
 
     if cards > 1:  # the second machine: four cards, and lesson 20's question asked again
-        one = json.loads(Path("results/41_gpu.json").read_text())["shape"]
-        text = (
-            cache / "stories_train.bin"
-        )  # lesson 18's file: the timing needs batches, not new text
+        one = json.loads((cache / "story_big" / "shape.json").read_text())  # the one-card pick
+        text = cache / "stories_train.bin"  # lesson 18's file: a timing needs no new text
         alone, single = race(1, one, text, 12, 32 * cards, "nccl", cache / "race_1.pt")
         shared, several = race(cards, one, text, 12, 32, "nccl", cache / "race_many.pt")
         apart = max((single[name] - several[name]).abs().max().item() for name in single)
