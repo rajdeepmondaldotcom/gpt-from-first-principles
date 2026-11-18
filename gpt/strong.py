@@ -270,15 +270,15 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     cache, generator = Path("data/cache"), torch.Generator().manual_seed(0)
     gpt.model.attend = fused
 
-    def against(player, elo, games, most):
+    def against(player, elo, games, most, seconds=0.05):
         """A match with Stockfish held to `elo`. Returns our scores, and says the result."""
-        theirs, engine = stockfish(elo, path=engine_path)
+        theirs, engine = stockfish(elo, seconds, engine_path)
         scores = match(player, theirs, games, generator, most)
         engine.quit()
         low, high = interval([scores[i : i + 2] for i in range(0, games, 2)], generator)
         say(
-            f"against Stockfish held to {elo:,}: {sum(scores) / games:.2f} of the points in "
-            f"{games} games, 95% interval {low:.2f} to {high:.2f}"
+            f"against Stockfish held to {elo:,}, {seconds} s a move: {sum(scores) / games:.2f} of "
+            f"the points in {games} games, 95% interval {low:.2f} to {high:.2f}"
         )
         return scores
 
@@ -319,6 +319,9 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
         f"the stronger player is rated {best:,} on Stockfish's scale, "
         f"95% interval {low:,.0f} to {high:,.0f}"
     )
+    # Stockfish's scale was set with far more time for a move. Does our 0.05 s flatter us?
+    near = min((1400, 1600, 1800, 2000, 2200, 2400, 2600), key=lambda elo: abs(elo - best))
+    slow = against(ours, near, 100, 240, seconds=0.5)
     save(
         "43_strong_play",
         torch=torch.__version__,
@@ -327,6 +330,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
         top=top,
         trial=trial,
         told=name,
+        slow={"elo": near, "score": sum(slow) / len(slow)},
         results=results,
         rating={"best": best, "interval": [low, high]},
     )
