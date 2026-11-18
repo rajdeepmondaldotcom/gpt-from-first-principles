@@ -2,13 +2,13 @@
 
 By the end of this page each token's vector says where the token stands.
 
-In one attention layer, the last token reads the earlier tokens as a bag. To the last token of `dog bites man today`, `man bites dog today` puts the same three tokens in the bag.
+In one attention layer, the last token reads the earlier tokens as a bag, with nothing to say which came first.
 
 ## The idea
 
 Tell each token its place before attention runs. A token's place is also called its position.
 
-A first try is to attach the place as one more number: 0 for the first token, 1 for the second. That gives the model a single number to work with, and its size has no limit: place 500 is 500 times place 1.
+A first try is to attach the place as one more number: 0 for the first token, 1 for the second. That gives the model a single number to work with, and its size has no limit: place 500 is 500 times place 1. A layer multiplies it by fixed weights, so later places push ever harder, and a place beyond training is a size the layer never met.
 
 The fix repeats what worked for tokens. A token's id picks a row from a table of embeddings. Let its place pick a row from a second table, with one row per place. Add the two rows:
 
@@ -18,7 +18,7 @@ Both tables start random and both are learned. Training moves the place rows the
 
 After the addition, the same token in two places gives two different vectors. The layer makes queries and keys from those vectors, so what a token reads can now depend on where things stand.
 
-The second table has a fixed number of rows. We call that number the context: the most tokens the model can read at once, which lesson 4 called its window. A model with a context of 64 has no row for place 64, so it cannot read a 65th token.
+The second table has a fixed number of rows. We call that number the context: the most tokens the model can read at once, the length of lesson 4's window. A model with a context of 64 has no row for place 64, so it cannot read a 65th token.
 
 ## By hand
 
@@ -77,7 +77,7 @@ uv run pytest tests/test_gpt2.py
 
 We have the parts of one layer: embeddings with positions, and attention. One round of reading lets a token gather facts from other tokens. To use a fact that another token gathered, it needs a second round, so we want to stack layers.
 
-Attention also only mixes. A token's result is a weighted average of values, passed through one linear layer, with no bend after it.
+Attention also only mixes. A token's result is a weighted average of values, passed through one linear layer, with no bend after it. And a plain stack of many such layers passes almost no slope back to the first.
 
 ## Check yourself
 

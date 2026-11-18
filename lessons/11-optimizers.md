@@ -6,9 +6,9 @@ Lesson 10's GPT scored 3.017 bits per byte. It had scored three times as many ta
 
 ## The idea
 
-Gradient descent uses one rate for every parameter, and the step is rate × slope. Take the average size of the slopes in each tensor of our untrained GPT's parameters. Between two grids of weights it differs by up to 14 times, and between a bias and a gain by 400. With one rate, the flattest moves 400 times less than the steepest.
+Gradient descent uses one rate for every parameter, and the step is rate × slope. Take the average size of the slopes in each tensor of our untrained GPT's parameters. Between two grids of weights it differs by 10 to 20 times, and between a bias and a gain by 300 to 500. With one rate, the flattest moves hundreds of times less than the steepest.
 
-Each slope also comes from one small batch, so it carries noise, as lesson 3 said. Steps point this way, then that, and undo some of each other's work.
+Each slope also comes from one small batch, so it carries noise. Steps point this way, then that, and undo some of each other's work.
 
 An optimizer is the rule that turns slopes into steps.
 
@@ -20,9 +20,9 @@ rate × average slope / square root of the average squared slope
 
 The bottom of that fraction is the slope's usual size. Dividing by it removes the scale. A parameter whose slope is steady moves by about `rate` on each step, whether that slope is 0.001 or 1,000. A parameter whose slope keeps flipping has a small average and a large usual size, so it moves little.
 
-Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t. Both factors rise to 1.
+Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t.
 
-AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. AdamW leaves biases, gains and shifts alone. Lesson 13 measures what decay does.
+AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights outside the division. We leave biases, gains and shifts alone. PyTorch's AdamW decays whatever it is handed. Lesson 13 measures decay, paired with another change.
 
 ## By hand
 
@@ -60,7 +60,7 @@ Adam's first step, with a slope of 0.001. The average slope moves a tenth of the
             p.addcdiv_(mean, size, value=-self.rate / fix_mean)  # p -= rate * mean / size
 ```
 
-`b1` is 0.9 and `b2` is 0.999. `p.dim() > 1` picks out the grids. `fix_mean` and `fix_square` are the two correction factors. `addcmul_(g, g, value=c)` adds c × g × g in place. `eps` is a tiny number that keeps the division safe when a slope has been 0.
+`b1` is 0.9 and `b2` is 0.999. `p.dim() > 1` picks out the grids. `fix_mean` and `fix_square` are the two correction factors. `addcmul_(g, g, value=c)` adds c × g × g in place. `eps` keeps the division safe when a slope has been 0.
 
 ## The proof
 
@@ -73,7 +73,9 @@ uv run pytest tests/test_optim.py
 - Adam's first step is the rate, for slopes of 0.001, 1 and 1,000.
 - Decay shrinks a weight grid and leaves a bias alone.
 - A slope that stays at 1 builds the velocity to 10, and Adam moves a flipping slope far less than a steady one.
-- In the untrained GPT the average size of a slope differs by a factor of 10 to 20 between two weight grids, and of 300 to 500 between a gain and a bias.
+- The slope sizes above hold in the untrained GPT.
+
+Predict before you run: gradient descent scores 3.017 and AdamW 2.372. Does momentum close more or less than half that gap?
 
 ```bash
 uv run python -m gpt.optim
@@ -87,9 +89,9 @@ lesson 4's MLP reading 8 characters back, with AdamW: 2.551 bits per byte
 lesson 4's MLP reading 64 characters back, with AdamW: 2.863 bits per byte
 ```
 
-The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. Gradient descent prints lesson 10's 3.017 again. A seed is the number that starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
+The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. A seed starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
 
-The last two lines give lesson 4's MLP the same AdamW, steps and count of guesses. Reading 8 characters back it scores 2.551. Reading 64, as the GPT does, it scores 2.863: each place has its own weights, so 64 places are 64 sets to train. The GPT reads the same 64 and scores 2.372.
+The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8: each place has its own weights, so 64 places are 64 sets to train.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -115,11 +117,14 @@ We ran 3,000 steps at one fixed rate and stopped. Nothing looked at unseen text 
 
 ## Check yourself
 
-Predict before you run: with momentum of 0.9, a slope that stays at 1 forever builds the velocity toward what value?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+More: 2.564 closes 0.453 of the 0.645, 70%.
+</details>
 
-10. The velocity settles where 0.9 × v + 1 = v.
+<details><summary>Momentum is 0.9 and the slope stays at 1. Where does the velocity settle?</summary>
+
+10, where 0.9 × v + 1 = v.
 </details>
 
 <details><summary>A parameter's slope is 0.5, then -0.5, then 0.5, and so on. Roughly how far does Adam move it per step, compared with a parameter whose slope stays at 0.5?</summary>

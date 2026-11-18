@@ -10,13 +10,13 @@ Each part of this run comes from an earlier lesson. The run takes hours, so it i
 
 Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, for 4,096 tokens and the end token, and changing the last token of a window changes no earlier score. Either bug, found only after training, would have wasted the run.
 
-Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart on one run each, and by lesson 14's rule that is no difference. The run needs some rate, and the script takes the lowest loss. That rate, 0.002, was also the highest we tried. The script scored the three short runs on 200,000 unseen tokens, so one small choice has already seen the text behind the final score.
+Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart. With one run each, lesson 14's rule cannot call that a difference: its five seeds of one setting spread over 0.047 nats. The run needs some rate, and the script takes the lowest loss. That rate, 0.002, was also the highest we tried. We did not try 0.003, which lesson 19's largest sizes preferred. The script scored the three short runs on 200,000 unseen tokens, so one small choice has already seen the text behind the final score.
 
 Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 tokens, 1.4 times through the training text. Every 500 steps the loop measures the loss on 100,000 unseen tokens and writes a checkpoint. If the machine stops, starting the script again carries on from the last checkpoint. Lesson 12's test that a resumed run matches an unbroken one ran on the processor. We have not checked it on the graphics chip.
 
 The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text. So this run uses no dropout.
 
-Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in either fit, and the miss is 2.7 times larger. We trained one size, so we cannot say whether the law's choice of size was right.
+Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in either fit, and the miss is 2.7 times larger. The run also used a lower rate than any of the law's runs, so part of the miss may be the rate. We trained one size, so we cannot say whether the law's choice of size was right.
 
 Keep the weights. The script writes them in lesson 16's Llama layout and lesson 10's file format, with the token rows stored once. Lesson 16's loader reads the file back.
 
@@ -118,14 +118,9 @@ Predict before you run: the script writes a checkpoint every 500 steps. If the m
 499. The last checkpoint was written at step 8,000.
 </details>
 
-<details><summary>At step 8,500 the training loss is 1.510 nats and the unseen loss 1.567. What does lesson 13 read from that?</summary>
+<details><summary>The law's largest miss was 0.098 at 2 times its largest budget, and 0.263 at 34 times. What does that suggest about using it at 628 times, as lesson 41 does?</summary>
 
-The gap is 0.057 nats. Lesson 13's model, which stored its text, had a gap of 3.157. A gap this small is no sign of storing.
-</details>
-
-<details><summary>The law predicted 1.302 nats and the run gave 1.565. Was the law wrong to use?</summary>
-
-Its prediction was too low by 0.263 nats at 34 times its largest budget, so its losses should not be trusted that far out. Whether it chose the size well is a separate question that one run cannot answer.
+The miss grew with the distance, so at 628 times it is likely to be larger still, and again on the low side. Lesson 41 finds 0.347.
 </details>
 
 <details><summary>From lesson 12: name the four things the checkpoint holds.</summary>

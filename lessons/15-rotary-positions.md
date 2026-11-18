@@ -12,7 +12,7 @@ Pair up a query's entries: entry i with the entry half the vector's length furth
 
 A score is a dot product. For one pair of entries, the dot product of two points is their two lengths times the cosine of the angle between them, a fact of school geometry that the hand example below shows. Turn the query by m × speed and the key by n × speed, and the angle between them changes by (m - n) × speed. So the score depends only on m - n. Move both tokens 100 places on and the score is the same.
 
-One speed is not enough, because an angle comes back to where it started after a full turn. At 1 radian a place, a distance of 44 is seven full turns and 0.018 radians, which looks like a distance of 0. So each pair gets a speed of its own. The first turns 1 radian a place and the speeds fall, pair by pair, toward one ten-thousandth of that. Fast pairs change a score between neighbours. Slow pairs change it only across long distances.
+One speed is not enough, because an angle comes back to where it started after a full turn. At 1 radian a place, a distance of 44 is seven full turns and 0.018 radians, which looks like a distance of 0. So each pair gets a speed of its own. The first turns 1 radian a place and the speeds fall, pair by pair, toward one ten-thousandth of that: each pair turns at the same fraction of the speed of the pair before it. Fast pairs change a score between neighbours. Slow pairs change it only across long distances.
 
 Nothing here has a size tied to the length of the text. The model can be handed more tokens than it trained on. The run below measures how well it reads them.
 

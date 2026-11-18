@@ -122,7 +122,7 @@ Timings are from an M4 laptop and move from run to run.
 | Bigram, counted | 3.581 |
 | Bigram, learned | 3.599 |
 
-The learned table sits 0.018 bits behind the counted one after 2,000 noisy steps.
+The learned table sits 0.018 bits behind the counted one, which adds 1 to each count. The learned one fits the raw text in 2,000 noisy steps.
 
 ## What it still cannot do
 

@@ -17,7 +17,7 @@ The scores at place i are the model's guess for token i + 1. This model is calle
 
 PyTorch stores the last layer's grid with one row per token in the vocabulary, each as wide as the model. The table of token embeddings has the same shape. GPT-2 uses one grid for both jobs: the vector that says "this token came in" is also the vector a result is compared with to score that token. This is called weight tying. In GPT-2 it saves 38,597,376 parameters out of what would be 163 million.
 
-Each grid starts as random numbers with a spread of 0.02, and each bias at 0. The two layers in a block that add into the residual stream start smaller, divided by the square root of twice the number of blocks. With 12 blocks the stream receives 24 additions, and by lesson 6's rule the spread of a sum of 24 random terms grows like the square root of 24. Dividing by that root keeps the total the same size at any depth. Our small model's first loss is 4.246, against ln 65 = 4.174.
+Each grid starts as random numbers with a spread of 0.02, and each bias at 0. The two layers in a block that add into the residual stream start smaller, divided by the square root of twice the number of blocks. With 12 blocks the stream receives 24 additions, and by lesson 6's rule the spread of a sum of 24 random terms grows like the square root of 24. Dividing by that root keeps the total the same size at any depth.
 
 GPT-2 small has 12 blocks, a width of 768, 12 heads, a context of 1,024 tokens and 50,257 tokens in its vocabulary: 124,439,808 parameters. OpenAI published its trained weights. If our parts are that model, our code with those weights must give the scores that an independent implementation gives.
 
@@ -60,7 +60,7 @@ One window gives a guess at each place. The window is `the c`, and the targets a
         return self.out(self.norm(x))
 ```
 
-`nn.ModuleList` is a list that PyTorch searches for parameters. `bias=False` leaves the biases out of the last layer, as GPT-2 does. The line `# ...` stands for the lines that set the starting weights.
+`nn.ModuleList` is a list that PyTorch searches for parameters. `bias=False` leaves the biases out of the last layer, as GPT-2 does. `layers` is the number of blocks, and `# ...` stands for the lines that set the starting weights.
 
 A batch now holds a target for each place, the window moved one token on:
 
@@ -81,7 +81,7 @@ def loss_on(model, x, y):
 
 `view(-1, ...)` lays the places of each window in the batch out as one long list of rows, which is the shape lesson 3's `cross_entropy` takes.
 
-A tensor lives on a device: `cpu`, the processor, or a graphics chip. `.to(ids.device)` puts the positions where the text is. This page runs on `cpu`.
+A tensor lives on a device: `cpu`, the processor, or a graphics chip. `.to(ids.device)` puts the positions where the text is.
 
 ## The proof
 
@@ -95,7 +95,7 @@ uv run pytest tests/test_gpt2.py
 - The whole model cannot read the future: change token 8 and the scores at places 0 to 7 do not change by a bit.
 - We can read the weight file format.
 
-For the check against GPT-2, download the weights, 548 MB:
+For the check against GPT-2, download the weights:
 
 ```bash
 mkdir -p data/cache
@@ -106,7 +106,7 @@ uv run --extra reference pytest -m reference
 
 The third line checks that the file is the one we tested. `tests/gpt2_reference.py` is the script that made the saved scores from Hugging Face's code.
 
-Then train the small model with lesson 4's loop, plain gradient descent. We go back to characters: Shakespeare is one megabyte, and 65 tokens keep these runs to minutes.
+Then train the small model with lesson 4's loop, plain gradient descent. We go back to characters: Shakespeare is one megabyte, and 65 tokens keep these runs to minutes. Each step reads 32 windows of 64 characters: 6,144,000 targets in 3,000 steps.
 
 ```bash
 uv run python -m gpt.gpt2

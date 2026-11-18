@@ -10,7 +10,7 @@ RMSNorm replaces layer normalization. Lesson 9's normalization subtracts a vecto
 
 SwiGLU replaces the MLP. Lesson 9's MLP widens, bends and narrows. SwiGLU widens twice, with two separate grids. One result passes through a bend and is multiplied, entry by entry, with the other. It scales each entry of the other, and can shrink it to 0 or flip its sign. Then one grid narrows the product. The bend is called SiLU: x times sigmoid(x), where sigmoid(x) = 1 / (1 + e to the -x) squashes any number into the range 0 to 1.
 
-Three grids cost more than two, so we make each narrower: 8/3 of the width in place of 4 times. At a width of 128 that is 130,944 parameters against the old 131,712, which included 640 biases.
+Three grids cost more than two, so we make each narrower: 8/3 of the width in place of 4 times. Three grids at 8/3 hold as many weights as two at 4: 3 × 8/3 = 2 × 4. At a width of 128 that is 130,944 parameters against the old 131,712, which included 640 biases.
 
 Grouped heads share keys and values. Lesson 7 gave each head its own queries, keys and values. Here several query heads read from one key head and one value head: our 4 query heads read from 2. The grids that make keys and values halve. So does the memory a model needs if it keeps each token's keys and values while it writes text.
 
@@ -102,7 +102,7 @@ Each comparison is lesson 14's method, 600 steps on five seeds. The first three 
 
 RMSNorm's difference is 0.7 errors from zero. SwiGLU is a real gain at 600 steps: 0.080 nats, 12.8 errors from zero. Grouped heads differ by 0.7 errors and remove 8% of the parameters: 734,080 against 799,616. All three together are ahead by 0.076 nats.
 
-After 5,000 steps, one run of each design scores 2.209 bits per byte for today's model, 2.210 for lesson 15's and 2.206 for lesson 12's. With one seed each, we cannot tell these apart. Today's model has 9% fewer parameters than lesson 15's.
+Today's model has 9% fewer parameters than lesson 15's.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|

@@ -1,6 +1,6 @@
 # 26. LoRA
 
-By the end of this page 43,008 trained numbers, in place of 5,374,464, have learned part of lesson 25's skill. The old weights have not moved, and the new ones fold back in to leave a plain model.
+By the end of this page 43,008 new numbers, in place of 5,374,464, have trained on lesson 25's task. The old weights have not moved, and the new ones fold back in to leave a plain model.
 
 Lesson 25's fine-tune moved all 5,374,464 weights. The result is a second file of 21.5 MB, and plain stories got 0.069 nats worse.
 
@@ -106,6 +106,8 @@ uv run pytest tests/test_lora.py
 - Beside each of the seven grids: no change at first, the loss falls, and the merge leaves a plain model.
 - After training at r = 3 and the merge, the change in a grid has a rank of 3.
 
+Predict before you run: beside queries and values, the corrections hold 0.8% of the weights. Will the model learn the task as well as lesson 25's did?
+
 ```bash
 uv run python -m gpt.lora
 ```
@@ -146,7 +148,7 @@ asked words used, rank 8, each grid in a block minus rank 8, queries and values:
 merged against unmerged, largest difference in a score: 0.000014
 ```
 
-Beside queries and values at a rank of 8, the model uses 0.37 of the asked words after lesson 25's 2,000 steps: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 orders, against 27.
+Beside queries and values at a rank of 8, the model uses 0.37 of the asked words: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 tasks, against the 27 of lesson 25's draw.
 
 Eight times the rank gives 0.41: a gap of +0.037, interval -0.005 to +0.080. A correction beside each grid gives 0.34: -0.033, interval -0.080 to +0.012. Neither is clear of zero, so these runs do not rank the settings. None reaches 0.56.
 
@@ -160,11 +162,9 @@ Each fine-tune so far learned from 60,404 stories that obeyed their orders, and 
 
 ## Check yourself
 
-Predict before you run: beside queries and values, the corrections hold 0.8% of the weights. Will the model learn the task as well as lesson 25's did?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
-
-Not in these 2,000 steps: 0.37 of the asked words against 0.56, and 10 orders against 27.
+Not in these 2,000 steps: 0.37 of the asked words against 0.56, and 10 tasks against 27.
 </details>
 
 <details><summary>Why does B start at zero and A at random numbers, and not both at zero?</summary>

@@ -2,6 +2,7 @@
 
 import json
 import shutil
+import time
 
 from gpt.gpt2 import read_safetensors
 
@@ -29,6 +30,16 @@ def export(folder, out):
     (out / "config.json").write_text(json.dumps(config, indent=2) + "\n")
 
 
+def fastest(work, tries=3):
+    """Tokens a second for `work`, which writes and returns a count. The best of three."""
+    best = 0.0
+    for _ in range(tries):
+        began = time.perf_counter()
+        count = work()
+        best = max(best, count / (time.perf_counter() - began))
+    return best
+
+
 def mlx_scores(folder, ids):
     """The scores Apple's engine gives a batch of token ids, as a PyTorch tensor."""
     import mlx.core as mx
@@ -39,7 +50,6 @@ def mlx_scores(folder, ids):
 
 
 if __name__ == "__main__":
-    import time
     from pathlib import Path
 
     import mlx.core as mx
@@ -86,15 +96,6 @@ if __name__ == "__main__":
     outer = calls(ours)
     say(f"one token's pass makes {outer} calls into PyTorch")
     say(f"a model {fewer:.0f} times smaller makes {calls(small)}")
-
-    def fastest(work, tries=3):
-        """Tokens a second for `work`, which writes and returns a count. The best of three."""
-        best = 0.0
-        for _ in range(tries):
-            began = time.perf_counter()
-            count = work()
-            best = max(best, count / (time.perf_counter() - began))
-        return best
 
     def ours_alone(device, net=ours):
         net.to(device)

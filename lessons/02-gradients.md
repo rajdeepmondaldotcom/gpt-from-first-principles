@@ -20,7 +20,7 @@ A positive slope means raising the parameter hurts, so we lower it. The rate, ca
 
 One way to get a slope is to nudge. Add 0.000001 to one score, work out the loss again, and divide the change by 0.000001. That costs one full loss calculation per parameter, on each step. Our sentence has 10 different characters, so its model has 100 scores. GPT-2, which lesson 10 rebuilds, has 124 million parameters.
 
-The chain rule gets all the slopes from one pass backwards. A loss is built from a few small operations, and each has a known slope:
+The chain rule gets all the slopes from one pass backwards, because there is one loss. Going forwards would need one pass for each parameter. A loss is built from a few small operations, and each has a known slope:
 
 | Operation | Slope for x |
 |---|---|
@@ -29,8 +29,6 @@ The chain rule gets all the slopes from one pass backwards. A loss is built from
 | x to the power k | k × x to the power k - 1 |
 | e to the power x | e to the power x, the result itself |
 | ln x | 1 / x |
-
-Division is covered too, because x / y is x × y to the power -1.
 
 Slopes combine by two rules. If x moves y at a rate of 3, and y moves the loss at a rate of 2, then x moves the loss at a rate of 6: multiply along a path. If x reaches the loss by two paths, add them.
 
@@ -84,7 +82,7 @@ class Value:
 
 Python calls `__add__` when it meets `a + b` and `__mul__` for `a * b`. So plain-looking arithmetic on Values builds new Values that remember their parents, with the slopes from the table. The `isinstance` line lets a plain number take part by wrapping it in a Value.
 
-`backward` makes a list, `order`, of each Value after the Values it was made from. The result moves one for one with itself, so its `grad` is 1. Then `backward` walks the list in reverse:
+`backward` makes a list, `order`, of each Value after the Values it was made from. The result moves one for one with itself, so its `grad` is 1. Then `backward` walks the list in reverse. A Value must have collected the slopes from every Value made from it before it passes its own on:
 
 ```python
 # gpt/autograd.py
@@ -136,11 +134,11 @@ learned, step 2999:  0.5160 nats
 one step on 2,000 pairs of Shakespeare builds 277,188 Values
 ```
 
-The learned model closes in on the counted one. It cannot pass it, because the counted table is the maximum-likelihood table. It cannot land on it either: the counted table holds chances of 0 and 1, and softmax reaches those only with scores of infinite size.
+The learned model closes in on the counted one.
 
 ## What it still cannot do
 
-It learns one sentence. Each `Value` is a Python object holding one number, and a step on 2,000 pairs of Shakespeare builds 277,188 of them. One step on all 1,003,853 pairs would build about 139 million.
+It learns one sentence. Each `Value` is a Python object holding one number, and one step on 2,000 pairs builds 277,188 of them. One step on all 1,003,853 pairs would build about 139 million.
 
 ## Check yourself
 
@@ -148,7 +146,7 @@ Predict before you run: after 3,000 steps the loss is 0.5160. Change `steps=3000
 
 <details><summary>Answer</summary>
 
-No. It keeps closing in and never arrives.
+No. It keeps closing in and never arrives. No table beats the counted one, the maximum-likelihood table, and softmax reaches its chances of 0 and 1 only with scores of infinite size.
 </details>
 
 <details><summary>What is the slope of x³ at x = 2? Check by nudging.</summary>

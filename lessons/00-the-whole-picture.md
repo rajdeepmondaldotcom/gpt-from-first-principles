@@ -6,7 +6,7 @@ Before lesson 1, we follow the finished storyteller from one end to the other.
 
 ## The idea
 
-You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess.
+You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess. Last, you rent a graphics card, train bigger models on it with the same code, and serve one with an engine that services run.
 
 Each lesson adds a piece or tests one, in this order.
 
@@ -25,11 +25,11 @@ Each lesson adds a piece or tests one, in this order.
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
 
-The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24 we score each idea in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. Later stages count their own results. Each lesson opens on something the last one left undone.
+The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. The stages between count their own results. Each lesson opens on something the last one left undone.
 
-Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so.
+Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so, and lessons 41 and 42 try some of them again on a rented card. The dollars in those two lessons are the hours AWS reported times its price list.
 
-The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page ends with a question that begins "Predict before you run". Read that question first, and write your guess down before you reach the page's output.
+The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page asks one question that begins "Predict before you run". Where the run answers it, the question stands above the run. Write your guess down before you read on.
 
 ## By hand
 
@@ -88,7 +88,7 @@ You have built none of it yet. Lesson 1 starts with a text file and a loop that 
 
 ## Check yourself
 
-Each lesson ends like this one. First comes a number to guess before you run the code. Guess it, in writing, and then look.
+Each lesson ends with questions like these. Guess each one in writing, and then look.
 
 Predict before you run: the model gives a score to each token that could come next. From the table above, how many scores is that?
 
@@ -107,5 +107,5 @@ Then come questions with hidden answers. One of them asks about an earlier lesso
 Go deeper:
 
 - [MAP.md](../MAP.md). What the lessons leave out, and where to learn each thing.
-- [PRACTICE.md](../PRACTICE.md). Eight routines for the skills that reading cannot give you.
+- [PRACTICE.md](../PRACTICE.md). Nine routines for the skills that reading cannot give you.
 - [GLOSSARY.md](../GLOSSARY.md). Each term, with the lesson that defines it, and our plain words beside the field's.

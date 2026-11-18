@@ -18,9 +18,9 @@ Examples have different lengths and a batch is a grid, so each example is padded
 
    The hand example pads to its longest row. The run pads each batch to the model's whole context, so each batch has one shape.
 
-We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share is the finer measure: a story with two of the three words fails the check.
+We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share is the finer measure: a story with two of the three words fails the check. Each story is drawn at a temperature of 0.8 with no top-p, so another draw gives other counts.
 
-The new skill may cost the old one. Fine-tuning trains each weight, and the examples hold stories only after an order. So we score 500 plain unseen stories before and after, take the difference at each token, and give the mean difference lesson 24's interval, drawn story by story.
+The new skill may cost the old one. Fine-tuning trains each weight, and the examples hold stories only after an order. So we score 500 plain unseen stories before and after, take the difference at each token, and give the mean difference lesson 24's interval, drawn story by story. A common guard against forgetting is to mix plain training text into each batch. We did not try it.
 
 ## By hand
 
@@ -73,6 +73,8 @@ uv run pytest tests/test_finetune.py
 
 The script trains on the graphics chip and measures on the processor.
 
+Predict before you run: before fine-tuning, the model has never seen an order. What share of the asked words will its stories use?
+
 ```bash
 uv run python -m gpt.finetune
 ```
@@ -98,9 +100,7 @@ plain stories, after minus before: +0.069 nats, 95% interval +0.059 to +0.079
 
 Each step's line is the loss of one batch of 32, so it rises and falls. Of 200 tasks the model passed 0 before fine-tuning and passes 27 after, and the interval of 0.09 to 0.19 is clear of the 0.02 that bounded the rate before. The finer measure moves further: stories use 0.56 of the asked words, up from 0.14.
 
-195 of 200 stories now reach the end token, where 177 did.
-
-The price is on plain stories: 1.549 nats where they scored 1.480, a difference of +0.069 with an interval of +0.059 to +0.079.
+195 of 200 stories now reach the end token, where 177 did. Plain stories cost 0.069 nats.
 
 ## What it still cannot do
 
@@ -120,9 +120,7 @@ The fine-tune moved all 5,374,464 weights. The result is a second file of 21.5 M
 
 ## Check yourself
 
-Predict before you run: before fine-tuning, the model has never seen an order. What share of the asked words will its stories use?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 About one in seven: 0.14. The asked words are ordinary story words, and some turn up by chance. No story of the 200 has the name and all three.
 </details>
@@ -134,7 +132,7 @@ Scoring it would train the model to write orders, and mark it down for not guess
 
 <details><summary>From lesson 24: why take the difference on plain stories at each token, and not compare two means?</summary>
 
-Both models read the same 500 stories, so most of what moves a story's loss is the same for both and cancels in the difference. Lesson 14 did the same with seeds: each gave one difference between two models that had the same luck.
+Both models read the same 500 stories, so most of what moves a story's loss is the same for both and cancels in the difference.
 </details>
 
 Go deeper:

@@ -1,14 +1,16 @@
 # GPT from first principles
 
-Build a GPT yourself. Train it, serve it, then teach the same code chess.
+Build a GPT yourself. Train it, serve it, teach the same code chess, then run it all on a rented graphics card.
 
-You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games.
+You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs.
 
-Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
+Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41 and 42 also need an AWS account and about $18. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
 
-The numbers here come from an M4 MacBook. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine.
+*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas that interviews for training and inference work start from, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
 
-One prompt, `Once upon a time`, answered by the model at six stages. Lessons 1 to 16 learn from Shakespeare, and lesson 21 from children's stories. Line breaks are shown as spaces.
+The numbers of lessons 1 to 40 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $18.31. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac, and the scripts of lessons 41 and 42, which need an NVIDIA card.
+
+One prompt, `Once upon a time`, answered by the model at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. Line breaks are shown as spaces.
 
 ```
 lesson 1    Once upon a timeron: Foleithathavout: Whe irtthogor s.
@@ -17,6 +19,7 @@ lesson 10   Once upon a timer deat tilses te grin and frit proner bese aff felli
 lesson 12   Once upon a time of men, in backling all an embrace As your o'er peace will keep again the sword,
 lesson 16   Once upon a time but fortune and 'I, She is my return waves; and play twice king;
 lesson 21   Once upon a time, there was a little girl named Lily. She had a big red bag. Lily liked her bag very much.
+lesson 41   Once upon a time, there was a little girl named Lily. She had a pretty dress that she loved to wear.
 ```
 
 From lesson 25 the model takes an order. Asked for a story with Mira, a cat, the moon and the word brave, the storyteller that lesson 36 serves begins:
@@ -33,7 +36,7 @@ Lesson 38 trains lesson 21's code, unchanged, on records of chess games. Left to
 e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5
 ```
 
-Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one request through the finished storyteller. Lessons 41 and 42, which move training and serving to a rented machine, are still to come.
+Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one request through the finished storyteller.
 
 ## The lessons
 
@@ -80,12 +83,15 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 38 | [The same code, a different world](lessons/38-the-same-code-a-different-world.md) | Lesson 21's model code, unchanged, trained from nothing on records of chess games, with its legal moves counted |
 | 39 | [Can it play?](lessons/39-can-it-play.md) | Whole games against three opponents, and a rating with a range |
 | 40 | [The board in its head](lessons/40-the-board-in-its-head.md) | A chess position read out of the model's inner numbers, and the chance of a move changed by editing them |
+| 41 | [Train on a GPU](lessons/41-train-on-a-gpu.md) | The same code on a rented graphics card: a bigger story model, a stronger chess player, four cards sharing a step, and each run's cost in dollars |
+| 42 | [Serve on a GPU](lessons/42-serve-on-a-gpu.md) | The bigger story model served by vLLM, the request rate it keeps up with, and the price of a million tokens, for our model and for one about 520 times its size |
 
-Three guides go with the lessons.
+Four guides go with the lessons.
 
 - [MAP.md](MAP.md): what the lessons leave out, and the open resource we would read first for each thing.
-- [PRACTICE.md](PRACTICE.md): eight routines for what 11 job postings at AI labs ask for and the lessons do not teach.
+- [PRACTICE.md](PRACTICE.md): nine routines for what 11 job postings at AI labs ask for and the lessons do not teach.
 - [GLOSSARY.md](GLOSSARY.md): each term with the lesson that defines it, and our plain words beside the field's.
+- [PROCESS.md](PROCESS.md): how each lesson is made and checked, so you can check any claim yourself.
 
 ## The scoreboard
 
@@ -114,6 +120,7 @@ From lesson 18 the text is 210 MB of short stories, and the scoreboard starts ag
 | Model | Lesson | Bits per byte on unseen stories |
 |---|---|---|
 | Story model, 5,374,464 parameters | 21 | 0.575 |
+| Story model, 14,555,904 parameters, 88 minutes of a rented card | 41 | 0.467 |
 
 From lesson 25 the question changes from how well the model predicts text to how often it does what it is asked. Each row is 200 orders made from unseen stories, and a story passes when it has the asked name and all three asked words.
 
@@ -154,6 +161,20 @@ The chess model of lesson 38 is scored by the rules of the game and by play.
 | Points against itself at step 2,500, 200 games | 39 | 0.64 |
 | Squares a linear probe names from the model's inner numbers | 40 | 80.7% after block 5, against 67.3% for naming each square's most usual piece |
 
+Lessons 41 and 42 run the same code on rented NVIDIA cards: one L40S, except for the four-card timing, which ran on four L4s.
+
+| Measure | Lesson | Result |
+|---|---|---|
+| One training step of lesson 21's model: the laptop, the card, the card with 16-bit numbers | 41 | 928 ms, 49 ms, 34 ms |
+| A story model of 14,555,904 parameters, 88 minutes of the card, $2.74 | 41 | 1.270 nats on unseen stories, where the laptop's model had 1.565 and lesson 19's law expected 0.923 |
+| The same budget on 25,170,944 parameters, then on 47,678,720 | 41 | 1.241 nats, then 1.271: the size lesson 19's own rule would have picked was the best of the three |
+| A chess model of 13,226,880 parameters: legal moves at 1,000 unseen positions, and its points against the laptop's model | 41 | 987 (the laptop's: 932 at the same positions), and 0.86 |
+| One step on four cards, against the same step on one | 41 | 4.19 times as fast, at 1.4 times the price for each token |
+| Tokens a second for one listener: our engine on the card, then vLLM with the same weights | 42 | 110, then 786 |
+| Requests a second vLLM keeps up with, and the price of a million tokens there | 42 | 128, at $0.065. At 256 and at 512 it writes about 12,800 tokens a second and requests wait |
+| A model of 7.6 billion parameters, one listener, at 16 bits then 8: tokens a second the card's memory allows, then what it gets | 42 | 52 then 50, and 97 then 73 |
+| 200 unseen stories, each scored from its own start, in bits per byte: our 14.6 million parameters, then the 7.6 billion | 42 | 0.426, then 0.514 |
+
 ## Run it
 
 ```bash
@@ -192,9 +213,11 @@ Three tests check our code against outside code: OpenAI's tiktoken, Hugging Face
 uv run --extra reference pytest -m reference
 ```
 
+Every test runs on a laptop. Only the scripts of lessons 41 and 42 need a rented machine: an AWS account that may start G instances in us-east-1, and the `aws` command set up with a profile of yours. `aws/start.sh` starts a machine that destroys itself at a time limit, `aws/run.sh` runs a lesson on it and brings the results back, and `aws/stop.sh` destroys each machine and lists any left. Each page gives its commands. With the downloaded `story_big`, lesson 42 needs no run of lesson 41.
+
 ## The trained models
 
-You can skip the long runs. The story model, the storyteller at two stages and the chess model at two stages are on Hugging Face, each with the numbers we measured on it. Each command fills `data/cache` with the folders the scripts load: `story`, `storyteller` and `preferred` from the first, and `chess`, `chess_early` and the chess run's last checkpoint from the second.
+You can skip the long runs. The story model, the storyteller at two stages, the chess model at two stages and lesson 41's two bigger models are on Hugging Face, each with the numbers we measured on it. Each command fills `data/cache` with the folders the scripts load: `story`, `storyteller`, `preferred` and `story_big` from the first, and `chess`, `chess_early`, `chess_big` and the chess run's last checkpoint from the second.
 
 ```bash
 uvx --from huggingface_hub hf download rajdeepmondal/gpt-from-first-principles-storyteller --local-dir data/cache
@@ -221,4 +244,4 @@ None of their text, code or figures is in this repository.
 
 ## License
 
-Apache-2.0. `data/tiny_shakespeare.txt` is public-domain text. The stories are from TinyStories, under CDLA-Sharing-1.0, and the chess games from the Lichess open database, under CC0; neither is stored here. The chess lessons use the `python-chess` library, which is under GPL-3. It is an optional extra, and no code of it is in this repository.
+Apache-2.0. `data/tiny_shakespeare.txt` is public-domain text. The stories are from TinyStories, under CDLA-Sharing-1.0, and the chess games from the Lichess open database, under CC0; neither is stored here. The chess lessons use the `python-chess` library, which is under GPL-3. It is an optional extra, and no code of it is in this repository. Lesson 42 runs vLLM and the Qwen2.5-7B-Instruct model, both under Apache-2.0, on a rented machine. Neither is stored here or installed by `uv sync`.

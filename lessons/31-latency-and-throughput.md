@@ -2,7 +2,7 @@
 
 By the end of this page you can say how long a listener waits and how much the machine gets done, and you have watched both as listeners arrive faster and faster.
 
-We have served the storyteller to one listener at a time from a script, and have not measured how long a listener waits. A service has many listeners, and they arrive when they like. Before we change the code, we need numbers to judge each change by.
+Every story so far came from a script, one order at a time. We have not measured how long someone asking for a story waits, or how much the machine writes in a second. A service has many such listeners, and they arrive when they like. Before we change the code, we need numbers to judge each change by.
 
 ## The idea
 
@@ -14,11 +14,11 @@ A mean hides the listeners who waited longest, so we sort the waits and read off
 
 Listeners do not arrive evenly. The script draws each gap between two arrivals by chance, at a set rate on average, so some listeners come in a bunch and some after a pause. A request that arrives while the machine is busy waits in line.
 
-The code that takes requests in and writes their tokens is the engine. It refuses a request too big for the machine's memory. It takes one request at a time until we widen it in lesson 32.
+The code that takes requests in and writes their tokens is the engine. It turns away a request too big for the machine's memory. It takes one request at a time until we widen it in lesson 32. The script times lesson 21's story model, which has the storyteller's shape.
 
 Long waits come from the line. Say the machine can finish 3 requests a second. At half that rate, a request seldom finds another ahead of it. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows as long as listeners keep coming.
 
-A ceiling on writing speed: each new token reads each weight once (lesson 17), and the story model's weights are 21.5 MB. The script times a copy of 268 MB, which reads each byte and writes it: 537 MB through memory. Those bytes a second divided by 21.5 MB is the most tokens a second memory alone allows, and we set our speed beside it.
+A ceiling on writing speed: each new token reads each weight once (lesson 17), and the story model's weights are 21.5 MB. The script times a copy of 268 MB, which reads each byte and writes it: 537 MB through memory. Those bytes a second divided by 21.5 MB is the most tokens a second memory alone allows.
 
 ## By hand
 
@@ -67,7 +67,7 @@ def report(records):
         "first_token_p50": percentile(first, 50),
         "first_token_p95": percentile(first, 95),
         "seconds_a_token_p50": percentile(gaps, 50),
-        "tokens_a_second": written / span,  # all users together
+        "tokens_a_second": written / span,  # all listeners together
     }
 ```
 
@@ -105,9 +105,9 @@ one request at a time can finish 10.1 requests a second
 
 Timings are from an M4 laptop, and they move from run to run.
 
-Alone, a request waits 8 ms for its first token after a prompt of 192 tokens, then gets a token each 1.9 ms: 539 a second. Memory alone would allow 4,231, almost eight times as many. We look for what holds it at 539 in lesson 37.
+For one request alone, the prompt is read at 24,647 tokens a second: its 192 tokens pass through each weight in one read. Writing reads every weight for each token: 539 a second. Memory alone would allow 4,231, almost eight times that. Lesson 37 looks for what holds it there.
 
-At 5.0 requests a second, half the listeners wait 3 ms for a first token and 95 in 100 wait 157 ms or less. At 9.1 the middle wait is 250 ms, and at 15.1 it is 1,737 ms. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, and the writing keeps its pace. The 120 gaps are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens.
+The three rates are half, nine tenths and one and a half times the 10.1 above. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, and the writing keeps its pace. Each rate's 120 arrival times are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
 
 ## What it still cannot do
 
@@ -124,7 +124,7 @@ Predict before you run: a machine finishes 3 requests a second and 4.5 arrive ea
 
 <details><summary>A request has a prompt three times as long as another's. Which of its two waits grows more?</summary>
 
-The wait for the first token: the model reads the whole prompt first. The gap grows a little too: 1.9 ms after 192 tokens, 1.5 ms after 64.
+The wait for the first token. The gap barely moves: each new token still costs one pass over one token, though it reads a longer cache.
 </details>
 
 <details><summary>From lesson 23: without the cache, what would happen to the gap between tokens as the answer grows?</summary>

@@ -100,12 +100,14 @@ uv run pytest tests/test_engine.py
 ```
 
 - Five requests with prompts of different lengths arrive in rounds 0, 2, 7 and 9, join a running batch and leave it at different times. Each gets, at each token, the scores the model gives that text read alone.
-- A stop token ends its own row and no other.
+- An end token ends its own row and no other.
 - A prompt read in chunks of 4 tokens gives the answer it gives read whole, and a short request beside it gets its first token after one round.
 - With four rows, one round calls the model once, on a grid of 4 rows and 1 new token each.
 - With a budget for two requests, `admit` says no to a third, and yes once the first two are done. Beside a prompt of 40 tokens, a prompt of 2 counts as long, and the cache never passes the budget.
 - A row moved six places along, with its keys turned to match, gets the scores it got before.
 - With the mask taken out, the empty places are read and the scores change.
+
+Predict before you run: 16 listeners share each pass. Does each one get their tokens faster or slower than a listener alone, and does the machine write more or fewer tokens a second in all?
 
 ```bash
 uv run python -m gpt.engine
@@ -130,11 +132,9 @@ a request offered one byte less than its cache needs is taken: False
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The eight requests each write what they write alone, as does the prompt read in chunks.
-
 After a 64-token prompt, one listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. At 32 it writes 2,275, 13% more than at 16.
 
-At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms and 95 in 100 wait 12 ms or less, and the machine writes 813 tokens a second where it wrote 631.
+At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms, and the machine writes 813 tokens a second where it wrote 631. At the two lower rates both engines write the same, to within 4 tokens a second: a machine that keeps up writes what arrives.
 
 ## What it still cannot do
 
@@ -142,9 +142,7 @@ Each request reads its whole prompt from the first token, even when the requests
 
 ## Check yourself
 
-Predict before you run: 16 listeners share each pass. Does each one get their tokens faster or slower than a listener alone, and does the machine write more or fewer tokens a second in all?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 Slower for each listener, more in all: 139 tokens a second each where one alone gets 669, and 2,020 in all where one gets 657.
 </details>

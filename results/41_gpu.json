@@ -1,0 +1,163 @@
+{
+  "commit": "ada07b5",
+  "python": "3.13.18",
+  "torch": "2.14.1+cu130",
+  "device": "NVIDIA L40S",
+  "seconds_a_step": {
+    "laptop": 0.9283229160355404,
+    "card": 0.04894745299998249,
+    "card_16_bit": 0.034306925999999294
+  },
+  "budget": 5.024616317703764e+16,
+  "rows": [
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 256,
+        "heads": 8,
+        "kv_heads": 4,
+        "layers": 6
+      },
+      "parameters": 5374464,
+      "steps": 166017,
+      "tokens": 1360011264,
+      "predicted": 1.0864640958517
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 384,
+        "heads": 12,
+        "kv_heads": 6,
+        "layers": 8
+      },
+      "parameters": 14555904,
+      "steps": 63407,
+      "tokens": 519430144,
+      "predicted": 0.9227802712020855
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 512,
+        "heads": 16,
+        "kv_heads": 8,
+        "layers": 8
+      },
+      "parameters": 25170944,
+      "steps": 37501,
+      "tokens": 307208192,
+      "predicted": 0.862398208012331
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 640,
+        "heads": 20,
+        "kv_heads": 10,
+        "layers": 10
+      },
+      "parameters": 47678720,
+      "steps": 20067,
+      "tokens": 164388864,
+      "predicted": 0.8210297042934281
+    },
+    {
+      "shape": {
+        "vocab": 4097,
+        "context": 256,
+        "width": 768,
+        "heads": 24,
+        "kv_heads": 12,
+        "layers": 12
+      },
+      "parameters": 81022464,
+      "steps": 11925,
+      "tokens": 97689600,
+      "predicted": 0.8125816448802746
+    }
+  ],
+  "shape": {
+    "vocab": 4097,
+    "context": 256,
+    "width": 384,
+    "heads": 12,
+    "kv_heads": 6,
+    "layers": 8
+  },
+  "steps": 63407,
+  "val_nats": 1.2702507779722976,
+  "val_bits_per_byte": 0.4667931925692598,
+  "predicted": {
+    "lesson 19's law": 0.9227802712020855,
+    "the law with lesson 21's run added": 1.0615649501188353
+  },
+  "minutes": {
+    "stories": 88.34844891856666,
+    "chess": 91.04823583574998,
+    "all": 239.02679958971666
+  },
+  "sample": "Once upon a time, there was a little girl named Lily. She had a pretty dress that she loved to wear. One day, she felt sad because she could not find her dress. She looked everywhere, but it was gone. Lily started to weep.\nLily's mom saw her crying and asked, \"Why are you sad, Lily?\" Lily said, \"I lost my pretty dress. I can't find it anywhere.\" Her mom smiled and said, \"Don't worry, Lily. We will look for it together.\"\nThey looked in the living room, the kitchen, and even the",
+  "chess": {
+    "nats": 1.0136316978354916,
+    "legal": {
+      "the laptop's model": 932,
+      "the bigger model": 987
+    },
+    "points": {
+      "the random mover": 0.94,
+      "the grabber": 0.8925,
+      "the laptop's model": 0.865
+    },
+    "slips": {
+      "moves": 21783,
+      "slips": 88
+    },
+    "ratings": {
+      "the random mover": 0.0,
+      "the grabber": 550.4837036132812,
+      "the laptop's model": 354.67022705078125,
+      "the bigger model": 775.0621337890625
+    }
+  },
+  "printed": [
+    "the card: NVIDIA L40S",
+    "stories read: 2,717,495, kept: 2,717,461, written for training: 2,690,389, 551,449,289 tokens",
+    "the story model's training step: 928 ms on the laptop, 49 ms on this card, 34 ms with 16-bit numbers",
+    "multiplies and adds a second: 326 billion on the laptop, 6,183 billion here, 8,822 with 16 bits",
+    "an hour of this card: 5.0e+16 multiplies and adds, 19 laptops",
+    "  5,374,464 parameters, 166,017 steps, 2.5 times through the text: predicted 1.086 nats",
+    " 14,555,904 parameters,  63,407 steps, 0.9 times through the text: predicted 0.923 nats",
+    " 25,170,944 parameters,  37,501 steps, 0.6 times through the text: predicted 0.862 nats",
+    " 47,678,720 parameters,  20,067 steps, 0.3 times through the text: predicted 0.821 nats",
+    " 81,022,464 parameters,  11,925 steps, 0.2 times through the text: predicted 0.813 nats",
+    "the pick: 14,555,904 parameters, width 384, 8 blocks",
+    "step 500: train 2.512, unseen 2.582 nats",
+    "step 11000: train 1.653, unseen 1.595 nats",
+    "step 21500: train 1.498, unseen 1.515 nats",
+    "step 32000: train 1.428, unseen 1.446 nats",
+    "step 42500: train 1.391, unseen 1.377 nats",
+    "step 53000: train 1.252, unseen 1.308 nats",
+    "step 63407: train 1.260, unseen 1.269 nats",
+    "the bigger model, unseen stories: 1.270 nats a token, 0.467 bits per byte. The laptop's model: 1.565 and 0.575",
+    "lesson 19's law predicted 0.923 nats: off by +0.347",
+    "the law with lesson 21's run added predicted 1.062 nats: off by +0.209",
+    "the run: 88 minutes of one card, $2.74",
+    "sample: 'Once upon a time, there was a little girl named Lily. She had a pretty dress that she loved to wear. One day, she felt sad because she could not find her dress. She looked everywhere, but it was gone. Lily started to weep.\\nLily\\'s mom saw her crying and asked, \"Why are you sad, Lily?\" Lily said, \"I lost my pretty dress. I can\\'t find it anywhere.\" Her mom smiled and said, \"Don\\'t worry, Lily. We will look for it together.\"\\nThey looked in the living room, the kitchen, and even the'",
+    "games written for training: 3,256,826, 488,464,921 tokens",
+    "the bigger chess model: 13,226,880 parameters, 69,103 steps, 1.2 times through the games, unseen 1.014 nats where the laptop's had 1.317",
+    "the laptop's model: 932 of 1,000 moves are legal, 95% interval 0.915 to 0.947",
+    "the bigger model: 987 of 1,000 moves are legal, 95% interval 0.978 to 0.993",
+    "the bigger model against the random mover: 0.94 of the points in 200 games, 95% interval 0.91 to 0.96",
+    "the bigger model against the grabber: 0.89 of the points in 200 games, 95% interval 0.86 to 0.93",
+    "the bigger model against the laptop's model: 0.86 of the points in 200 games, 95% interval 0.83 to 0.90",
+    "the rules picked 88 of its 21,783 moves",
+    "the bigger model: rated +775 with the random mover at 0, 95% interval +714 to +829. The laptop's model: +355",
+    "the chess run: 91 minutes, $2.82",
+    "this script, start to end: 239 minutes of one card, $7.41"
+  ]
+}

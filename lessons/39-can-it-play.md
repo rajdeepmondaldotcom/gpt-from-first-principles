@@ -2,7 +2,7 @@
 
 By the end of this page the chess model has played whole games against three opponents, and has a rating with a range around it.
 
-A legal move can be a terrible one. We do not know yet whether the model can win a game.
+A legal move can be a terrible one. We do not yet know whether it can win a game.
 
 ## The idea
 
@@ -98,6 +98,8 @@ uv run pytest tests/test_play.py
 - An untrained model still finishes a legal game: the referee picks nearly each of its moves.
 - The Elo rule gives a half for equal ratings, and ten to one either way at 400 points. Ratings of 0, 200 and 500, used to make 6,000 results, are found again: the 200 to within 25 points and the 500 to within 35.
 
+Predict before you run: the grabber looks one move ahead. Will 10,420 steps of reading games be enough for the model to beat it?
+
 ```bash
 uv run python -m gpt.play
 ```
@@ -120,7 +122,7 @@ The model takes 0.92 of the points from the random mover, and its younger self 0
 
 Against the grabber the model takes 0.16 of the points, where its younger self took 0.05. It takes 0.64 from that younger self, with an interval of 0.60 to 0.68, clear of a half.
 
-The referee moved for the model in 961 of its 27,049 turns, 3.6%, and for its younger self in 9.7%.
+The model slipped on 961 of its 27,049 turns, 3.6%, and its younger self on 9.7%.
 
 With the random mover at 0, the grabber is rated +738, the model +421 and its younger self +310. The last two intervals, +378 to +465 and +270 to +359, do not meet.
 
@@ -130,9 +132,7 @@ The model plays chess from a list of moves. We never showed it a board. A legal 
 
 ## Check yourself
 
-Predict before you run: the grabber looks one move ahead. Will 10,420 steps of reading games be enough for the model to beat it?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 No. The model takes 0.16 of the points from the grabber. It has learned which moves are legal, and not yet which moves win.
 </details>

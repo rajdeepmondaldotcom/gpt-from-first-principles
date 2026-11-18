@@ -81,7 +81,9 @@ One more test needs Apple's engine, which exists for Macs. As in lesson 5, `--ex
 uv run --extra reference pytest -m reference tests/test_export.py
 ```
 
-- A small model with random weights and grouped heads, loaded in MLX, gives our scores to 0.0001, and the same top token at each place.
+- A small model with random weights and grouped heads, loaded in MLX, gives our scores to 0.0001.
+
+Predict before you run: the same model, the same prompt, the top token each time, in two engines. Will the two stories be the same?
 
 ```bash
 uv run python -m gpt.export
@@ -103,7 +105,7 @@ Apple's engine, processor, 16 at once: 5,943 tokens a second
 the two engines write the same first 128 tokens of 128
 ```
 
-Timings are from an M4 laptop, and they move from run to run. The chip's three timings are the least settled: an earlier run read two to four times higher on each, and we have not found why.
+Timings are from an M4 laptop, and they move from run to run. The chip's three timings are the least settled: an earlier run, kept in `results/37_export_earlier.json`, read two to four times higher on each, and we have not found why.
 
 The engines agree: the largest gap between their scores is 0.000013, the top token is the same at 256 of 256 places, and they write the same 128 tokens.
 
@@ -117,9 +119,7 @@ Each model in this course has read English: Shakespeare, then stories. We have n
 
 ## Check yourself
 
-Predict before you run: the same model, the same prompt, the top token each time, in two engines. Will the two stories be the same?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 In our run they are, all 128 tokens. They need not be: the scores differ in about the fifth decimal place, and two top tokens that close would be a tie the engines could break differently.
 </details>

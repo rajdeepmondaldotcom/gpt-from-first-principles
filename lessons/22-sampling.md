@@ -14,7 +14,7 @@ The rule that matches training draws a token by its chance, as lesson 1 did. A t
 
 Temperature moves between those two rules, and past them. Divide each score by a number T before the softmax. At a T of 1 nothing changes. With T under 1 the gaps between scores grow, so likely tokens become more likely. With T over 1 the gaps shrink and the chances move toward even. A T of 0.5 doubles each score, and e to twice a score is the square of e to that score. So it squares each chance and then shares the total out again. As T goes to 0 the top token takes all of it, and we treat a T of 0 as greedy.
 
-Top-p removes the unlikely tokens. Sort the tokens from most to least likely and keep the smallest set whose chances reach p. Drop the rest and share their chance among the kept ones. With a p of 0.9, the dropped tokens held at most a tenth of the chance.
+Top-p removes the unlikely tokens. Sort the tokens from most to least likely and keep the smallest set whose chances reach p. Drop the rest and share their chance among the kept ones. With a p of 0.9, the dropped tokens held at most a tenth of the chance. Top-k, the older rule, keeps a fixed number of tokens. Top-p keeps few when the model is sure and many when it is not.
 
 Writing stops when the end token is picked, when the text has as many new tokens as we allow, or when it is as long as the context the model trained on.
 
@@ -62,9 +62,11 @@ uv run pytest tests/test_generate.py
 - Top-p keeps 1 token at 0 and at 0.5, 2 at 0.6 and at 0.79, 3 at 0.81 and 4 at 1.
 - At a top-p of 0.75 the two kept tokens come at 0.625 and 0.375.
 - Choosing leaves the scores as they were.
-- Writing stops at the stop token, and at the model's context.
+- Writing stops at the end token, and at the model's context.
 
 The script writes 20 stories from `Once upon a time` at each of five settings. It counts how many of the 20 differ, how many reach their end inside 250 tokens, and how many of their words the training text never uses.
+
+Predict before you run: at a temperature of 1.5, will the share of made-up words be under 1%, about a tenth, or over half?
 
 ```bash
 uv run python -m gpt.generate
@@ -83,7 +85,7 @@ temperature 1, top-p 0.9: 20 different stories of 20, 20 reach their end, 0.0% o
   'Once upon a time, there was a bird. The bird had a pretty feather. The bird liked to fly high in the sky. The bird was a happy bird.\nOne day, the bird'
 ```
 
-A temperature of 0 writes one story twenty times. At 0.5 and at 1 the twenty differ, and nearly every word is one the training text uses. At 1.5 the stories fall apart: 12.6% of their words are made up, such as `breatamed`. Top-p at 0.9 also gives twenty different stories, and in them no word is made up.
+A temperature of 0 writes one story twenty times. At 0.5 and at 1 the twenty differ, and nearly every word is one the training text uses. At 1.5 the stories fall apart, with made-up words such as `breatamed`. Top-p at 0.9 also gives twenty different stories, and in them no word is made up.
 
 ## What it still cannot do
 
@@ -91,9 +93,12 @@ To write each new token, the model reads the whole text again from its first tok
 
 ## Check yourself
 
-Predict before you run: at a temperature of 0, how many of the 20 stories differ?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+About a tenth: 12.6%, against 0.3% at a temperature of 1. Over 1 the chances move toward even, so unlikely tokens come far more often, and they join into words the training text never uses.
+</details>
+
+<details><summary>At a temperature of 0, how many of the 20 stories differ?</summary>
 
 One. Nothing is drawn by chance, so each run takes the same path.
 </details>

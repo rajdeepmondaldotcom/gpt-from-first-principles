@@ -2,7 +2,7 @@
 
 By the end of this page you have an attention layer that can be trained on each place in a text at once without seeing the answers, and that reads the text in several ways at the same time.
 
-Lesson 6 left two problems. A token can read the token after it, which is the answer it is meant to guess. And each token gets one view of the text.
+Lesson 6 left two problems. A token can read the token after it, which is the answer it is meant to guess. And each token gets one row of attention weights, so one view of the text.
 
 ## The idea
 
@@ -10,9 +10,9 @@ Hide the future. Token i may read tokens 0 to i and nothing later. Before softma
 
 The rule is called a causal mask: each token's result depends only on what came before it. The layer is called self-attention because the queries, keys and values all come from the same tokens.
 
-The mask also gives one guess per place. Lesson 4's model made one guess per window. A masked layer gives a result at each place, and each result can be turned into a guess for the token that follows: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on. A window of 8 tokens gives 8 guesses in one pass, and none of them saw its answer.
+With the mask, no guess sees its answer: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on.
 
-Now the second problem. Cut each query, key and value into equal slices and run attention on each slice by itself. Each slice is called a head. The numbers in a head's slice come from its own columns of the layer that makes queries, keys and values, so each head has weights of its own and makes its own choice of what to read. Lay the heads' results end to end, and pass them through one more linear layer that mixes them.
+Now the second problem. Cut each query, key and value into equal slices and run attention on each slice by itself. Each slice is called a head. The numbers in a head's slice come from its own columns of the layer that makes queries, keys and values, so each head has weights of its own and makes its own choice of what to read. One head's weights sum to 1, so it cannot take all of one token and all of another at once. Four heads can. Lay the heads' results end to end, and pass them through one more linear layer that mixes them.
 
 At a width of 16, four heads have a width of 4 each. The parameter count does not depend on the number of heads, because the same vectors are cut into more or fewer slices.
 
@@ -66,7 +66,7 @@ class CausalSelfAttention(nn.Module):
 
 `view(B, T, self.heads, C // self.heads)` cuts each vector into heads. `transpose(1, 2)` then moves the heads next to the batch, giving the shape (batch, heads, tokens, head width). `attend` works on the last two directions, so it runs once and handles each head of each text.
 
-`tril()` keeps the lower-left triangle of a grid of ones, which is the mask above. `device=x.device` builds the mask wherever `x` is stored, and lesson 10 says more about that. `attend` returns the result and the weights, and `_` throws the weights away. The last line lays the heads end to end again and mixes them.
+`tril()` keeps the lower-left triangle of a grid of ones, which is the mask above. In lesson 6's `attend`, `~` turns True to False and back, so `~mask` marks the places that get minus infinity. `device=x.device` builds the mask wherever `x` is stored, and lesson 10 says more about that. `attend` returns the result and the weights, and `_` throws the weights away. The last line lays the heads end to end again and mixes them.
 
 ## The proof
 
@@ -86,9 +86,14 @@ In one layer, the last token reads the earlier tokens as a bag. It knows which t
 
 ## Check yourself
 
-Predict before you run: a window holds 8 tokens. Lesson 4's model learned from 1 guess per window. How many does this layer give?
+Predict before you run: at a width of 128 with 4 heads, how many parameters does this layer have?
 
 <details><summary>Answer</summary>
+
+128 × 384 + 384 + 128 × 128 + 128 = 66,048, the same as with 1 head.
+</details>
+
+<details><summary>A window holds 8 tokens. Lesson 4's model learned from 1 guess per window. How many does this layer give?</summary>
 
 8, one after each token.
 </details>
