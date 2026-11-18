@@ -15,12 +15,25 @@ LISTING = "https://huggingface.co/api/datasets/Lichess/standard-chess-games/tree
 FILE = "https://huggingface.co/datasets/Lichess/standard-chess-games/resolve/main/"
 
 
-def strong(path, least):
-    """The move lines of one file of Lichess games, for each game whose two players are both
-    rated `least` or more. Bullet games, a minute or two a side, are left out."""
+def told(white, black, result):
+    """The three words that open a game's line: each player's rating in hundreds, and how the
+    game ended. In training they are facts. At the board we choose them."""
+    return f"W{white // 100} B{black // 100} {result}"
+
+
+def strong(path, least, moves=20):
+    """One line for each game in a file of Lichess games whose two players are both rated
+    `least` or more: what `told` says of it, then lesson 38's line of its moves. Left out:
+    bullet games, a minute or two a side, and games that a clock or a lost connection ended."""
     wanted = (pc.field("WhiteElo") >= least) & (pc.field("BlackElo") >= least)
-    wanted &= ~pc.match_substring(pc.field("Event"), "ullet")
-    return pq.read_table(path, columns=["movetext"], filters=wanted)["movetext"].to_pylist()
+    wanted &= ~pc.match_substring(pc.field("Event"), "ullet") & (
+        pc.field("Termination") == "Normal"
+    )
+    columns = ["WhiteElo", "BlackElo", "Result", "movetext"]
+    table = pq.read_table(path, columns=columns, filters=wanted)
+    for white, black, result, text in zip(*(table[name].to_pylist() for name in columns)):
+        for line in games([text], moves):
+            yield f"{told(white, black, result)} {line}"
 
 
 # Lesson 5 cuts prose into runs of letters and runs of digits, so `Nf3` can never be one token.
@@ -34,13 +47,16 @@ def fused(q, k, v, mask=None):
     return F.scaled_dot_product_attention(q, k, v, attn_mask=mask), None
 
 
-def best_legal(model, words):
+def best_legal(model, words, rated, wins=True):
     """A player for lesson 39's games. Of the legal moves that are one token, it plays the one
-    the model gives the highest chance, so the rules never have to pick a move for it."""
+    the model gives the highest chance, so the rules never have to pick a move for it. The model
+    is told that both players are rated `rated`, and that its own side wins, or that they draw."""
     import torch
 
     def move(board, played):
-        ids = [words.end, *words.encode("".join(f" {one}" for one in played))]
+        result = "1/2-1/2" if not wins else "1-0" if board.turn else "0-1"  # white is to move
+        opening = told(rated, rated, result).split()
+        ids = [words.end, *words.encode("".join(f" {one}" for one in (*opening, *played)))]
         ids = torch.tensor([ids[-model.context :]], device=model.embed.weight.device)
         with torch.no_grad():
             scores = model(ids)[0, -1]
@@ -97,7 +113,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["games"]:
         with out.with_suffix(".part").open("w") as file:
             for path in files:
                 urllib.request.urlretrieve(FILE + path, out.with_suffix(".parquet"))
-                for game in games(strong(out.with_suffix(".parquet"), 2200)):
+                for game in strong(out.with_suffix(".parquet"), 2200):
                     file.write(game + "\n")
                     kept += 1
         out.with_suffix(".parquet").unlink()
@@ -165,40 +181,56 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
         )
     ids = torch.cat([read(month) for month in months]).to("cuda")
     val_ids = read(cache / "strong_val.bin").to("cuda")
-    moves = sum(len(game.split()) for game in unseen)
+    spoken = sum(len(game.split()) for game in unseen)
     say(
         f"games between players rated 2,200 or more: {sum(c['read'] for c in counts):,} read, "
         f"{sum(c['written'] for c in counts):,} written for training, {len(ids):,} tokens"
     )
     say(
         f"tokens in the vocabulary: {words.end + 1:,}. Unseen games: "
-        f"{(len(val_ids) - len(unseen)) / moves:.2f} tokens a move"
+        f"{(len(val_ids) - len(unseen)) / spoken:.2f} tokens a word"
     )
 
-    # The same step with lesson 6's attention and with PyTorch's fused routine in its place.
-    size = shape(768, 12) | {"vocab": words.end + 1}
+    # The same step with lesson 6's attention and with PyTorch's fused routine in its place,
+    # then with more windows in a step: the card gets through more tokens a second when full.
+    form = shape(768, 12) | {"vocab": words.end + 1}
     torch.manual_seed(0)
-    model = GPT(**size).to("cuda")
+    model = GPT(**form).to("cuda")
     ours = step_seconds(model, ids, half=True)
     gpt.model.attend = fused
-    fast = step_seconds(model, ids, half=True)
-    work = 3 * forward_flops(model, 32 * model.context, model.context)
+    took = {windows: step_seconds(model, ids, windows, half=True) for windows in (32, 64, 128, 256)}
     say(
         f"a training step of {sum(p.numel() for p in model.parameters()):,} parameters: "
-        f"{ours * 1e3:.0f} ms with lesson 6's attention, {fast * 1e3:.0f} ms with the fused one"
+        f"{ours * 1e3:.0f} ms with lesson 6's attention, {took[32] * 1e3:.0f} ms with the fused one"
     )
+    for windows, seconds in took.items():
+        say(
+            f"{windows} windows a step: {seconds * 1e3:.0f} ms, "
+            f"{windows * model.context / seconds:,.0f} tokens a second"
+        )
+    windows = max(took, key=lambda windows: windows / took[windows])  # the most tokens a second
+    work = 3 * forward_flops(model, windows * model.context, model.context)
     del model
 
-    budget = hours * 3600 * work / fast
+    budget = hours * 3600 * work / took[windows]
     model, notes, steps, _ = long_run(
-        cache, "strong", size, ids, val_ids, budget=budget, check=budget / 100, half=True
+        cache,
+        "strong",
+        form,
+        ids,
+        val_ids,
+        budget=budget,
+        check=budget / 100,
+        half=True,
+        size=windows,
     )
     nats = evaluate(model, val_ids)
     for point in notes["curve"][:: max(1, len(notes["curve"]) // 8)]:
         say(f"step {point['step']}: train {point['train']:.3f}, unseen {point['val']:.3f} nats")
     card = torch.cuda.get_device_name(0)
     say(
-        f"{steps:,} steps, {steps * 32 * size['context'] / len(ids):.1f} times through the games: "
+        f"{steps:,} steps of {windows} windows, "
+        f"{steps * windows * form['context'] / len(ids):.1f} times through the games: "
         f"{nats:.3f} nats a token on unseen games, {hours:.0f} hours of one card, "
         f"${hours * PRICE[card][1]:.2f}"
     )
@@ -206,13 +238,14 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
     out.mkdir(exist_ok=True)
     save_llama(model.to("cpu"), out / "model.safetensors")
     (out / "vocab.json").write_text((cache / "strong_vocab.json").read_text())
-    (out / "shape.json").write_text(json.dumps(size))
+    (out / "shape.json").write_text(json.dumps(form))
     save(
         "43_strong",
         torch=torch.__version__,
         device=card,
         counts=counts,
-        seconds_a_step={"ours": ours, "fused": fast},
+        seconds_a_step={"ours": ours} | {str(windows): took[windows] for windows in took},
+        windows=windows,
         steps=steps,
         val_nats=nats,
         curve=notes["curve"],
@@ -220,7 +253,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
 
 
 if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
-    # python -m gpt.strong play: the stronger player against Stockfish held to five ratings.
+    # python -m gpt.strong play: the stronger player against Stockfish held to seven ratings.
     import shutil
     from pathlib import Path
 
@@ -255,10 +288,26 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     floor = against(model_mover(before.to(device), old_words, generator)[0], 1320, 100, 100)
 
     model, words = load(cache / "strong")
-    words.split = MOVES
-    ours, results = best_legal(model.to(device), words), []
-    say("the stronger player:")
-    for elo in (1400, 1600, 1800, 2000, 2200):
+    model, words.split = model.to(device), MOVES
+    unseen = [line for month in sorted(cache.glob("strong_20*.val")) for line in month.open()]
+    ratings = sorted(int(line.split()[0][1:]) for line in unseen if line.strip())
+    top = ratings[len(ratings) * 49 // 50] * 100  # white's rating in the strongest fiftieth
+    say(f"in one unseen game of fifty, white is rated {top:,} or more")
+
+    # What should we tell it? Three tellings, 100 games each against Stockfish held to 1,800.
+    tellings = {
+        "both players rated 2,200, and a draw": (2200, False),
+        f"both players rated {top:,}, and a draw": (top, False),
+        f"both players rated {top:,}, and its own side wins": (top, True),
+    }
+    trial = {}
+    for name, how in tellings.items():
+        say(f"the stronger player, told: {name}")
+        trial[name] = sum(against(best_legal(model, words, *how), 1800, 100, 240)) / 100
+    name = max(trial, key=trial.get)
+    ours, results = best_legal(model, words, *tellings[name]), []
+    say(f"the stronger player in new games, told: {name}")
+    for elo in (1400, 1600, 1800, 2000, 2200, 2400, 2600):
         results += [(elo, score) for score in against(ours, elo, 100, 240)]
     pairs = [results[i : i + 2] for i in range(0, len(results), 2)]  # an opening's two games
     best, again = rating(results), []
@@ -275,6 +324,9 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
         torch=torch.__version__,
         device=device,
         floor=sum(floor) / len(floor),
+        top=top,
+        trial=trial,
+        told=name,
         results=results,
         rating={"best": best, "interval": [low, high]},
     )
