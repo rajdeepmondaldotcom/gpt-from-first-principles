@@ -42,6 +42,23 @@ def test_counting_gives_the_most_likely_table():
         assert loss(nudged, SENTENCE) > loss(P, SENTENCE)
 
 
+def test_any_table_loses_the_counted_tables_loss_plus_the_kl_divergence():
+    """Loss of q = loss of the text's own counted table p + KL(p, q), each row weighted by use."""
+    vocab = sorted(set(SENTENCE))
+    counts = count(SENTENCE)
+    p = table(counts, vocab)
+    q = table(counts, vocab, smooth=1)  # any other table with no zeros will do
+    pairs = len(SENTENCE) - 1
+    kl = sum(
+        sum(counts[a, b] for b in vocab)
+        / pairs
+        * sum(p[a][b] * math.log(p[a][b] / q[a][b]) for b in vocab if p[a][b] > 0)
+        for a in vocab
+    )
+    assert kl > 0
+    assert math.isclose(loss(q, SENTENCE), loss(p, SENTENCE) + kl)
+
+
 def test_an_unseen_pair_costs_infinity_until_we_smooth():
     """In "abab", a is followed only by b. The pair "aa" was never seen."""
     assert loss(table(count("abab"), "ab"), "aa") == math.inf

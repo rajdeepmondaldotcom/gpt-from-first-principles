@@ -23,13 +23,15 @@ The model picks each character from the one before, so the chance it gives to a 
 
 The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. Prince's chapter 5, linked below, has the argument.
 
+No table scores below the text's own randomness, called its entropy: the counted table's loss on its own text. Any other table loses more, by the KL divergence between the two.
+
 Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2, because log₂ x = ln x / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. That number is the scoreboard for the whole course.
 
 A model that knows nothing gives each of the 65 characters the same chance, 1/65. By the second rule its surprise is ln 65 = 4.174 nats on any character, which is 6.022 bits. A useful model beats 6.022 on unseen text.
 
 We count on the first 90% of the file, the training text, and measure on the last 10%, which the model never saw. A model can look good on its training text by memorising it, so we report the loss on the unseen part.
 
-Suppose a pair of characters never occurs in the first 90% and does occur in the last 10%. The table gives it probability 0, the surprise is infinite, and so is the average. So before dividing we add 1 to each count, which leaves no zero in the table. It is no longer exactly the maximum-likelihood table, and it is the one we use on Shakespeare.
+Suppose a pair of characters never occurs in the first 90% and does occur in the last 10%. The table gives it probability 0, the surprise is infinite, and so is the average. So before dividing we add 1 to each count, which leaves no zero in the table. It is no longer exactly the maximum-likelihood table.
 
 ## By hand
 
@@ -46,7 +48,7 @@ Measure the table on its own sentence. Twelve pairs cost nothing, four cost ln 2
 
 (4 × 0.693 + 5 × 1.609) / 21 = 0.515 nats
 
-A blind guess over 10 characters costs ln 10 = 2.303 nats. Counting cut the surprise by more than four times.
+A blind guess over 10 characters costs ln 10 = 2.303 nats.
 
 ## The code
 
@@ -99,6 +101,7 @@ uv run pytest tests/test_bigram.py
 - The hand example gives 1, 1/2 and 0.515 nats.
 - Move some probability in the counted table from one next character to another, and the loss on the training text rises. The test tries 200 such moves.
 - An unseen pair costs infinity until we add 1 to the counts.
+- Another table's loss on the sentence is the counted table's plus the KL divergence.
 
 Then run the model on Shakespeare:
 
@@ -130,7 +133,7 @@ Whe irtthogor s.
 
 It cannot spell, because it picks each letter knowing only the one before.
 
-More context needs a bigger table. Two characters back means 65 × 65 rows. Ten back means 65 to the power 10 rows, far more rows than the file has characters, so nearly all of them stay empty.
+More context needs a bigger table. Ten back means 65 to the power 10 rows, far more rows than the file has characters, so nearly all of them stay empty.
 
 Counting also works only for a table. A model of any other shape has nothing to count.
 

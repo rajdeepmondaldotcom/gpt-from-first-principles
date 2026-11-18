@@ -56,7 +56,7 @@ Lessons 41 and 42 run on AWS. The scripts in `aws/` follow four rules:
 - Each machine is started with a time limit, after which it destroys itself and its disk.
 - Each machine, disk, key and door for SSH carries one tag, so what was started can be found and removed.
 - SSH is open to the address that started the machine and no other.
-- A run's cost is the machine's hours, from the times AWS reports, times the on-demand price. `results/42_bill.json` has ours.
+- A run's cost is the machine's hours, from the times AWS reports, times the on-demand price, plus its disk. `results/42_bill.json` has ours.
 
 ## Adding a lesson
 

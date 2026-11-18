@@ -77,7 +77,7 @@ uv run pytest tests/test_gpt2.py
 
 We have the parts of one layer: embeddings with positions, and attention. One round of reading lets a token gather facts from other tokens. To use a fact that another token gathered, it needs a second round, so we want to stack layers.
 
-Attention also only mixes. A token's result is a weighted average of values, passed through one linear layer, with no bend after it. And a plain stack of many such layers passes almost no slope back to the first.
+Attention also only mixes. A token's result is a weighted average of values, passed through one linear layer, with no bend after it. And with GPT-2's starting weights, a plain stack of many such layers passes almost no slope back to the first, as lesson 9 measures.
 
 ## Check yourself
 

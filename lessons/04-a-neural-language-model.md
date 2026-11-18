@@ -2,7 +2,7 @@
 
 By the end of this page the model reads eight characters back and writes things that look like words.
 
-The bigram sees one character back. A table for eight characters back needs 65 to the power 8 rows, more than 300 trillion. The file has a million characters, so nearly all of those rows would stay empty.
+The bigram sees one character back. A table for eight characters back needs 65 to the power 8 rows, more than 300 trillion. Nearly all of them would stay empty.
 
 ## The idea
 
@@ -27,7 +27,7 @@ Count the parameters:
 
 The lookup is a matrix multiplication too. Write a character as 65 numbers, all 0 except a 1 at its place, called a one-hot row. Multiply it by the embedding grid and out comes the character's row. So the model is multiply, add and bend, and lesson 2's chain rule handles each. From here on PyTorch's autograd finds the slopes.
 
-The second layer starts at zero. Each score is then 0, each character gets the same chance, and the first loss is ln 65: the model starts with no opinion.
+The second layer starts at zero, so each score is 0 and the first loss is ln 65: the model starts with no opinion.
 
 The other parts start as small random numbers. They must differ: two hidden units that start with equal weights get equal slopes and stay equal for ever.
 
@@ -117,6 +117,8 @@ uv run pytest tests/test_mlp_lm.py
 - A first layer 20 times too large starts with more than half its hidden units stuck, and its slopes come out more than 3 times smaller.
 - After 2,000 steps the model beats the bigram on unseen text.
 
+Predict before you run: start the first layer 20 times too large. After 2,000 steps, is its loss better or worse than the normal start's?
+
 ```bash
 uv run python -m gpt.mlp_lm
 ```
@@ -129,8 +131,6 @@ loss before training: 4.174 nats (ln 65 = 4.174)
 after 30,000 steps, first 100,000 training characters: 1.657 nats
 unseen text:   1.846 nats, 2.663 bits per byte
 ```
-
-The script measures the training loss on the training text's first 100,000 characters.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -153,9 +153,12 @@ Each place in the window also has weights of its own. The 6,144 weights that rea
 
 ## Check yourself
 
-Predict before you run: widen the window from 8 characters to 16. How many parameters does the first layer have now?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+Worse: 2.652 nats against 2.302.
+</details>
+
+<details><summary>Widen the window from 8 characters to 16. How many parameters does the first layer have now?</summary>
 
 16 × 24 × 256 + 256 = 98,560, twice the weights.
 </details>

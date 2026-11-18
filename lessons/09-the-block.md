@@ -2,7 +2,7 @@
 
 By the end of this page you have a unit whose gradients survive a stack of 24 as well as a stack of 2.
 
-One attention layer is one round of reading, and we want several rounds. Attention also only mixes: with no bend, no token computes on what it read. And a plain stack of many such layers passes almost no slope back to the first.
+One attention layer is one round of reading, and we want several rounds. Attention also only mixes: with no bend, no token computes on what it read. And with GPT-2's starting weights, a plain stack of many such layers passes almost no slope back to the first.
 
 ## The idea
 
@@ -16,7 +16,7 @@ We also add each layer's result to its input. In place of `x = layer(x)` we writ
 
 Lesson 2 showed that an addition passes a slope back unchanged. So each block has a path around it with a slope of exactly 1, and however many blocks we stack, the early ones still get slope from the loss. A test measures it with the starting weights of GPT-2, the 2019 model that lesson 10 rebuilds. Each block multiplies what passes through it by small weights (numbers with a spread of 0.02, which lesson 10 sets out). Without the additions, two blocks already pass back less than a hundredth of the gradient, and 24 blocks pass back less than a trillionth of it. With the additions, the gradient reaching the first block is about as large at 24 blocks as at 2, within a factor of 2.
 
-The normalization keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Steady sizes matter for the reason lesson 6 gave: scores that are too large put nearly all of a softmax's weight on one token.
+The normalization keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Batch normalization takes its mean over the batch in place of over the vector, so a token's result would depend on the other texts in the batch. Steady sizes matter for the reason lesson 6 gave: scores that are too large put nearly all of a softmax's weight on one token.
 
 We normalize the input to each layer and leave the residual stream alone:
 
@@ -116,7 +116,7 @@ Predict before you run: how many parameters does one block have at a width of 12
 
 <details><summary>Answer</summary>
 
-198,272. Attention holds 49,536 + 16,512, the MLP holds 66,048 + 65,664, and the normalizations 256 each. The MLP is two thirds of the block.
+198,272. Attention holds 49,536 + 16,512, the MLP holds 66,048 + 65,664, and the normalizations 256 each. The MLP is two thirds of the block. That is about 12 × 128² = 196,608: 4 × width² in attention and 8 × width² in the MLP, plus biases, gains and shifts.
 </details>
 
 <details><summary>What does layer normalization return for (5, 5, 5, 5)?</summary>

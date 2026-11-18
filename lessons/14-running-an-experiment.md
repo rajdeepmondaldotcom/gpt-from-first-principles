@@ -12,17 +12,17 @@ So run one setting on five seeds. Lesson 12's model, trained for 600 steps, ends
 
 To compare two settings, run both on the same seeds and take the difference for each seed. Average the differences. Then ask how sure that average is: work out the spread of the differences as lesson 9 did for a vector, but divide by one less than their count, as By hand explains. Then divide the spread by the square root of the number of seeds. The result is called the standard error, and here we call it the error.
 
-The rule: count a difference as real when it is more than 3 errors from zero. Five seeds give only a rough error, so we set the bar above the usual 2.
+The rule: count a difference as real when it is more than 3 errors from zero. Five seeds give only a rough error, so we set the bar above the 1.96 errors that Miller, below, uses for a 95% interval.
 
-A rule like this is wrong at a rate we can measure. A test draws 10,000 pretend experiments in which nothing changed, so each difference is noise. With five seeds the rule passes 4 or 5 of each 100 as real. With three seeds it passes 9.
+A rule like this is wrong at a rate we can measure. A test draws 10,000 pretend experiments in which nothing changed. With five seeds the rule passes 4 or 5 of each 100 as real. With three seeds it passes 9.
 
 The rule also misses real changes. A change three times the spread of the differences is found more than 90 times in 100 with five seeds. A change as large as that spread is missed more often than found with five seeds, and found more than 80 times in 100 with twenty.
 
 Three habits go with the rule:
 
-- Change one thing at a time. If two things change, you cannot tell which one caused the difference.
+- Change one thing at a time, or you cannot tell which caused the difference.
 - Search a rate by factors. Lesson 13's planted rate was wrong by a factor of 100. So try 0.0003, 0.001, 0.003, 0.01 and 0.03, each about three times the last, on a few seeds. This is called a sweep. Trust a rate that wins on each seed.
-- Say what was measured. Our runs are 600 steps long. A rate that wins at 600 steps may lose at 5,000.
+- Say what was measured. A rate that wins at 600 steps may lose at 5,000.
 
 ## By hand
 
@@ -79,6 +79,8 @@ uv run pytest tests/test_experiment.py
 - A planted change three times the noise is found. One as large as the noise needs twenty seeds.
 - On a tiny model, a rate 100 times too low is more than 3 errors worse, and each of three seeds picks 0.01 or 0.03 out of five rates.
 
+Predict before you run: the sweep tries five rates on three seeds. Does lesson 12's peak of 0.003 win?
+
 ```bash
 uv run python -m gpt.experiment
 ```
@@ -96,23 +98,26 @@ half the width: +0.1458 nats, error 0.0095, ratio 15.4
 a fixed rate in place of the schedule: +0.2220 nats, error 0.0246, ratio 9.0
 ```
 
-Each number is the loss on unseen text after 600 steps of lesson 12's model and loop.
+Each number is the loss on unseen text after 600 steps of lesson 12's loop.
 
 Two of the comparisons are planted. The same setting on five new seeds differs by 0.4 errors, and the rule rejects it. Half the width is worse by 15.4 errors, and the rule passes it.
 
 The other two were open questions. A fixed rate of 0.003 with no warmup is worse than lesson 12's schedule by 0.222 nats, 9.0 errors from zero. That is warmup and the falling rate together, at 600 steps. We cannot tell from it which of the two helps.
 
-In the sweep, lesson 12's rate was too low for a run this short. A peak of 0.01 wins on each of the three seeds, by 0.065 nats on average over 0.003. Lessons 15 and 16 keep 0.003, so that their numbers can be set beside lesson 12's.
+In the sweep, lesson 12's rate was too low for a run this short. Lessons 15 and 16 keep 0.003, so that their numbers can be set beside lesson 12's.
 
 ## What it still cannot do
 
-Each of these models reads 64 tokens and no more. Hand one a 65th, and lesson 8's table of places has no row for it: the model stops with an error.
+Each of these models reads 64 tokens. Lesson 8's table has no row for a 65th, so the model stops with an error, and each row learns only from tokens at its own place.
 
 ## Check yourself
 
-Predict before you run: five seeds gave an error of 0.010 nats. About how many seeds would bring it to 0.005?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No. 0.01 wins on each seed, by 0.065 nats on average.
+</details>
+
+<details><summary>Five seeds gave an error of 0.010 nats. About how many seeds would bring it to 0.005?</summary>
 
 Twenty. The error falls with the square root of the number of seeds, so halving it takes four times as many.
 </details>

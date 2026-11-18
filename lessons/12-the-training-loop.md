@@ -12,7 +12,7 @@ A batch can produce a gradient far longer than usual, so we put a limit on it. A
 
 Slopes add, as lesson 2 showed, so small batches can stand in for a big one. Run four small batches, let their slopes add up, then take one step. The step is the same as for one batch four times the size, which might not fit in memory.
 
-Every 500 steps the loop measures the loss on unseen text. The training loss shows how well the model fits text it has seen, and the unseen loss how it does on text it has not.
+Every 500 steps the loop measures the loss on unseen text.
 
 A checkpoint lets the run stop and start. It is a file that holds what shapes the rest of this run:
 
@@ -23,7 +23,7 @@ A checkpoint lets the run stop and start. It is a file that holds what shapes th
 
 The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with each number held in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time. Here the switch stays off. Its format, `bfloat16`, keeps the range of a 32-bit number and gives up digits, so tiny slopes do not round to 0 as they can in other 16-bit formats.
 
-The run below uses a peak rate of 0.003, a limit of 1, batches of 32 windows, a decay of 0.1 and 5,000 steps.
+The run below uses a limit of 1 and batches of 32 windows.
 
 ## By hand
 
@@ -66,7 +66,7 @@ def rate_at(step, peak, warmup, steps, floor=0.1):
         yield step + 1, total
 ```
 
-`yield` hands the step number and the loss back to whoever called `train`, then carries on when asked for the next one. We divide each small loss by `parts` because a loss is an average, and the average over the big batch is the average of the small averages. `torch.autocast` is the 16-bit switch, off unless `half` is set. `.item()` turns a tensor that holds one number into a plain Python number.
+`yield` hands the step number and the loss back to whoever called `train`, then carries on when asked for the next one. We divide each small loss by `parts` because a loss is an average, and the average over the big batch is the average of the small averages. `torch.autocast` is the 16-bit switch, off unless `half` is set.
 
 ```python
 # gpt/train.py
@@ -95,6 +95,8 @@ uv run pytest tests/test_train.py
 - Four small batches through the loop give the same step and the same loss as one big batch.
 - The loop clips before it steps: with a limit of 0.01 and a rate of 1, one step moves the weights by 0.01.
 - Training in 16 bits ends within 0.05 nats of training in 32, and not at the same number.
+
+Predict before you run: from step 4,500 to 5,000 the rate sits near its floor. Does the loss on unseen text still fall?
 
 ```bash
 uv run python -m gpt.train
@@ -126,7 +128,7 @@ unseen text: 1.529 nats, 2.206 bits per byte
 | GPT, with AdamW | 2.372 |
 | GPT, with the loop, 5,000 steps | 2.206 |
 
-Between the last two rows four things changed: the steps, the peak rate, the decay, and the schedule with clipping.
+Between the last two rows four things changed: 5,000 steps, not 3,000; a peak of 0.003, not a fixed 0.001; a decay of 0.1, not 0.01; and the schedule with clipping.
 
 ## What it still cannot do
 
@@ -140,9 +142,12 @@ From the printed numbers alone you cannot tell a healthy run from a broken one. 
 
 ## Check yourself
 
-Predict before you run: the peak is 0.003 and the warmup is 100 steps. What is the rate on the first step?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+Yes, from 1.541 to 1.529 nats. The training loss, from one batch, rose from 1.259 to 1.291.
+</details>
+
+<details><summary>The peak is 0.003 and the warmup is 100 steps. What is the rate on the first step?</summary>
 
 0.003 × 1 / 100 = 0.00003.
 </details>

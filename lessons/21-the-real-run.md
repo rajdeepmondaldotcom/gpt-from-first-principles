@@ -2,7 +2,7 @@
 
 By the end of this page you have a model that writes short stories, trained on your own machine in an afternoon.
 
-We have clean text on disk, a chosen size, a loop that can stop and start, and checks written ahead. We have not yet trained a model on any of it.
+Lesson 20's workers ran no faster than one process on one laptop, so this run uses one. We have clean text on disk, a chosen size, a loop that can stop and start, and checks written ahead. We have not yet trained a model on any of it.
 
 ## The idea
 
@@ -16,7 +16,7 @@ Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 token
 
 The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text. So this run uses no dropout.
 
-Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in either fit, and the miss is 2.7 times larger. The run also used a lower rate than any of the law's runs, so part of the miss may be the rate. We trained one size, so we cannot say whether the law's choice of size was right.
+Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in the final fit, and the miss is 2.7 times larger. The run also used a lower rate than any of the law's runs, so part of the miss may be the rate. We trained one size, so we cannot say whether lesson 19's choice of size was right.
 
 Keep the weights. The script writes them in lesson 16's Llama layout and lesson 10's file format, with the token rows stored once. Lesson 16's loader reads the file back.
 

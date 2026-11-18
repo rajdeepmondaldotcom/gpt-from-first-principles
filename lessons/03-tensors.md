@@ -29,7 +29,7 @@ The slopes in a row sum to zero. The loss is an average over N pairs, so each sl
 
 Big scores overflow. A computer stores a number in a fixed count of bits, and e to the power 1,000 does not fit. PyTorch writes `inf`, and `inf / inf` gives `nan`, which means "not a number". Softmax depends only on the gaps between scores: add 5 to each score in a row and the chances stay put. So we subtract the row's largest score first. The largest becomes 0, e to the 0 is 1, and nothing overflows.
 
-A step on 2,000 pairs picked at random does 500 times less arithmetic than a step on all 1,003,853, and its slopes come from the same text, with some noise. The random handful is called a batch, and learning from batches is called stochastic gradient descent. The run below times both.
+A step on 2,000 pairs picked at random does 500 times less arithmetic than a step on all 1,003,853, and its slopes come from the same text, with some noise. The random handful is called a batch, and learning from batches is called stochastic gradient descent.
 
 ## By hand
 
@@ -42,9 +42,9 @@ One row of scores, (2, 1, 0). The true next character is the first.
 | Chance (divide by 11.107) | 0.665 | 0.245 | 0.090 |
 | Slope | 0.665 - 1 = -0.335 | 0.245 | 0.090 |
 
-The loss is -ln 0.665 = 0.408. The slopes sum to zero.
+The loss is -ln 0.665 = 0.408.
 
-Now the row (1000, 999, 998). Subtract the largest: (0, -1, -2). e to those powers gives 1, 0.368 and 0.135, which total 1.503. The chances are 0.665, 0.245 and 0.090 again, because the gaps between the scores did not change.
+Now the row (1000, 999, 998). Subtract the largest: (0, -1, -2). e to those powers gives 1, 0.368 and 0.135, which total 1.503. The chances are 0.665, 0.245 and 0.090 again.
 
 ## The code
 
@@ -102,6 +102,8 @@ uv run pytest tests/test_tensors.py
 - On the sentence, the tensor model gives the same loss as lesson 2's model after 1, 10 and 30 steps.
 - On 20,000 characters of Shakespeare, random batches end within 0.05 nats of using the whole text. Both end under 2.6 nats, where an untrained table scores more than 4.
 
+Predict before you run: a step on 2,000 pairs does 500 times less arithmetic. Is it 500 times faster?
+
 ```bash
 uv run python -m gpt.tensors
 ```
@@ -122,7 +124,7 @@ Timings are from an M4 laptop and move from run to run.
 | Bigram, counted | 3.581 |
 | Bigram, learned | 3.599 |
 
-The learned table sits 0.018 bits behind the counted one, which adds 1 to each count. The learned one fits the raw text in 2,000 noisy steps.
+The learned table sits 0.018 bits behind the counted one, which adds 1 to each count.
 
 ## What it still cannot do
 
@@ -136,9 +138,12 @@ The loop needs only slopes. Any function built from operations with known slopes
 
 ## Check yourself
 
-Predict before you run: `W[x]` for the training text holds 1,003,853 × 65 numbers at 4 bytes each. How much memory is that?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No. 0.10 s against 0.3 ms is over 300 times, not 500.
+</details>
+
+<details><summary>`W[x]` for the training text holds 1,003,853 × 65 numbers at 4 bytes each. How much memory is that?</summary>
 
 About 261 MB, for one step on all the pairs.
 </details>

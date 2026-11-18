@@ -6,7 +6,7 @@ Only our own engine has served the bigger story model. On the laptop's processor
 
 ## The idea
 
-On the card our engine gives one listener 110 tokens a second, where lesson 37's laptop gave a smaller model 775. A pass takes 9.1 ms. A profiler, which records each job the card is handed and how long the card works on it, counts 634 jobs in one pass and 1.15 ms of work. The card idles for the other 8 ms.
+On the card our engine gives one listener 110 tokens a second, where lesson 37's laptop gave a smaller model 775. A pass takes 9.1 ms. A profiler, which records each job the card is handed and how long the card works on it, counts 634 jobs in one pass and 1.15 ms of work.
 
 vLLM is an open engine for serving models on graphics cards. It loads lesson 37's exported folder, given two more entries in its config file. Its log shows that at start-up it records the pass's jobs once, as a graph it replays as one job. Like lesson 32's engine, it shares each pass among the requests it holds.
 
@@ -56,7 +56,7 @@ uv run pytest tests/test_production.py
 
 These run anywhere, against a stand-in server.
 
-Predict before you run: at 8 bits a token of the big model reads 7.6 GB where it read 14.1. Will one listener get twice the speed?
+Predict before you run: at 8 bits a token of the big model reads 7.6 GB where it read 14.1. Will one listener get the 1.9 times that memory allows?
 
 The run needs lesson 41's `story_big` folder and an L40S card for under an hour. vLLM needs its own PyTorch, so it gets its own Python environment:
 
@@ -112,7 +112,7 @@ VENV='~/vllm' aws/run.sh <host> python -m gpt.production late
 512 requests a second from 4 sending processes: first token after 4,430 ms on average, 12,777 tokens a second in all. Each request was asked 0 ms late
 ```
 
-Each request was asked on time, and four sending processes wait as long as one: the wait is not our sender's. At 256 and at 512 the machine writes about 12,800 tokens a second, its limit for this model. vLLM's own 83 ms does not count the wait behind it.
+Each request was asked on time, and four sending processes wait as long as one: the wait is not our sender's. At 256 and at 512 the machine writes about 12,800 tokens a second, its limit for this model. vLLM's own count, 83 ms, leaves out most of that wait.
 
 The big model meets the sum: one listener gets 50 tokens a second where memory allows 52. At 8 bits it gets 73 where memory allows 97: the reading falls to 0.54 of what it was, and by subtraction the rest of a pass grows from 1.1 ms to 3.5. So 8 bits buy 46% more speed for 0.0095 nats a token, where lesson 34's cost ours 0.0001.
 
@@ -134,7 +134,7 @@ We served a model of 7.6 billion parameters from one card. We could not train it
 
 <details><summary>Prediction</summary>
 
-No: 73 tokens a second against 50. The rest of a pass grows as the reading shrinks.
+No: 73 tokens a second against 50, 1.46 times. The rest of a pass grows as the reading shrinks.
 </details>
 
 <details><summary>From lesson 37: why would smaller weights not speed up our own engine on the card?</summary>

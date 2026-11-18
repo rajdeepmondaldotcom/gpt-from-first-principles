@@ -129,6 +129,8 @@ uv run pytest tests/test_server.py
 
 The script gives the engine memory for 16 requests and a line of 64, asks for one story, then has `ab`, Apache's load tool, send 200 requests, 16 at a time.
 
+Predict before you run: ab keeps 16 requests open at once. Averaged over the run, will the server count 16 requests inside?
+
 ```bash
 uv run python -m gpt.server
 ```
@@ -166,11 +168,14 @@ That story came over the web from our own server, to the order Mira, cat, moon a
 
 ## Check yourself
 
-Predict before you run: 16 requests are inside the server at a time, each takes 2 seconds, and they leave as fast as they arrive. How many does the server finish each second?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+A little under: 15.2.
+</details>
 
-8. Requests inside equal the rate times the time inside, so the rate is 16 / 2.
+<details><summary>16 requests are inside at a time, each for 2 seconds. How many does the server finish each second?</summary>
+
+8: the rate is 16 / 2.
 </details>
 
 <details><summary>From lesson 5: why can one token be half a character?</summary>

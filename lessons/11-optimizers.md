@@ -47,7 +47,7 @@ Adam's first step, with a slope of 0.001. The average slope moves a tenth of the
             p -= self.rate * velocity
 ```
 
-`@torch.no_grad()` above a function runs the whole function without recording, like lesson 4's `with` block. A method that ends in an underscore, such as `mul_`, changes the tensor in place. With `momentum=0` the velocity is the slope, and this is lesson 10's step.
+`@torch.no_grad()` above a function runs the whole function without recording. A method that ends in an underscore, such as `mul_`, changes the tensor in place. With `momentum=0` the velocity is the slope, and this is lesson 10's step.
 
 ```python
 # gpt/optim.py
@@ -91,12 +91,13 @@ lesson 4's MLP reading 64 characters back, with AdamW: 2.863 bits per byte
 
 The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. A seed starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
 
-The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8: each place has its own weights, so 64 places are 64 sets to train.
+The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8, with 64 sets of weights to train in place of 8.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
 | Knows nothing | 6.022 |
 | Bigram, counted | 3.581 |
+| Bigram, learned | 3.599 |
 | MLP, eight characters back | 2.663 |
 | MLP, eight tokens back, 1,024 tokens | 2.572 |
 | GPT, 64 characters back | 3.017 |

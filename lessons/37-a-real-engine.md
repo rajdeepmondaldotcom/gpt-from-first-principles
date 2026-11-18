@@ -109,7 +109,7 @@ Timings are from an M4 laptop, and they move from run to run. The chip's three t
 
 The engines agree: the largest gap between their scores is 0.000013, the top token is the same at 256 of 256 places, and they write the same 128 tokens.
 
-On the processor, one listener gets 775 tokens a second from our engine and 942 from Apple's. Lesson 31's 539 drew by chance after a prompt three times as long. With 16 at once it is 4,134 against 5,943. On the graphics chip ours writes 104, about a seventh of its speed on the processor. Apple's writes 298 there alone and 5,921 with 16 at once, level with its processor.
+On the processor, one listener gets 775 tokens a second from our engine and 942 from Apple's. Lesson 31's run, which gave 539, drew each token by chance after a prompt three times as long. With 16 at once it is 4,134 against 5,943. On the graphics chip ours writes 104, about a seventh of its speed on the processor. Apple's writes 298 there alone and 5,921 with 16 at once, level with its processor.
 
 With the small model we answer part of lesson 31's question. It makes the same 516 calls on 26 times fewer weights and writes 1,648 tokens a second, 2.1 times as fast. By the sum above, 0.58 of a pass's 1.29 ms is the fixed cost of its calls. That alone is more than twice the 0.24 ms a token takes at lesson 31's memory limit. A pass of the small model still costs 0.47 of ours, and lesson 35's draft needed under 0.35. Sixteen listeners share the calls and get 5.3 times the tokens.
 

@@ -8,7 +8,7 @@ The model plays chess from a list of moves. We never showed it a board. A legal 
 
 After the model reads a move's last token, each block leaves a row of 256 numbers there: lesson 9's stream. The next move is worked out from those numbers, and they carry no labels. We look for the position in them.
 
-A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on each fourth position of a game, so white is always to move, and a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
+A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on each fourth position of a game, each with white to move, and a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
 
 We want it weak: a big network could work the position out for itself. One linear layer cannot: each score is the stream times one row of weights, summed, so a row is a direction in the stream, a line. If it reads the board, the board lies along such lines.
 

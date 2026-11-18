@@ -17,7 +17,7 @@ Each worker is a separate process with its own copy of the model and its own opt
 
 PyTorch's own version has no coordinator, and neither does lesson 41's: the workers add their slopes among themselves. PyTorch's also starts sending while the pass back is still running.
 
-Equal weights, the same slopes and the same optimizer give equal weights after the step. Only the slopes travel, and they are as large as the model: 4 bytes for each parameter, from each worker and back, on each step. Between machines, sending them takes time that one process alone would not spend. On one machine PyTorch hands a tensor to another process through shared memory, so the run below does not measure that cost.
+Equal weights, the same slopes and the same optimizer give equal weights after the step. The weights stay put. The slopes travel, and they are as large as the model: 4 bytes for each parameter, from each worker and back, on each step. Between machines, sending them takes time that one process alone would not spend. On one machine PyTorch hands a tensor to another process through shared memory, so the run below does not measure that cost.
 
 Workers pay off when each has a processor or a graphics chip of its own. On one laptop they share the same cores.
 
@@ -80,6 +80,8 @@ uv run pytest tests/test_workers.py
 - With the plain mean in its place, they do not.
 - A batch of 6 windows splits into 3 shares, so 4 workers refuse it. A worker that dies raises an error in the coordinator instead of leaving it waiting.
 
+Predict before you run: one process here already uses 4 threads. Will four workers take a step faster than one?
+
 ```bash
 uv run python -m gpt.workers
 ```
@@ -93,17 +95,20 @@ threads one process spreads its arithmetic over: 4
 
 Timings are from an M4 laptop that was running other jobs, and they move from run to run.
 
-No number of workers beat one process in this run: one took 115 ms a step, two took 164 and four took 126. One process already spreads its arithmetic over 4 threads, so on this laptop the workers compete with each other for the same cores. Splitting gives the right weights. What it gains when each worker has a chip of its own is measured in lesson 41.
+No number of workers beat one process in this run: one took 115 ms a step, two took 164 and four took 126. One process already spreads its arithmetic over 4 threads, and the workers share its cores. We did not measure what each worker waited on. Splitting gives the right weights. What it gains when each worker has a chip of its own is measured in lesson 41.
 
 ## What it still cannot do
 
-We have clean text on disk, a chosen size, a loop that can stop and start, and checks written ahead. We have not yet trained a model on any of it.
+On one laptop the workers ran no faster than one process, so the run that follows uses one. We have clean text on disk, a chosen size, a loop that can stop and start, and checks written ahead. We have not yet trained a model on any of it.
 
 ## Check yourself
 
-Predict before you run: the story model has 5,374,464 parameters. How many bytes of slopes does one worker send on one step?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No: 126 ms a step against 115.
+</details>
+
+<details><summary>The story model has 5,374,464 parameters. How many bytes of slopes does one worker send on one step?</summary>
 
 4 bytes each: 21,497,856 bytes, about 21 MB. The same amount comes back as the average.
 </details>

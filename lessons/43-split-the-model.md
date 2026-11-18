@@ -14,7 +14,7 @@ A layer can be shared out as well. Lesson 16's MLP widens a vector to hidden uni
 
 Backwards, the result was a sum, and lesson 2 showed that an addition passes a slope back unchanged. So each worker is handed the same slope, and from it finds the slopes of its own weights with no help. Each also finds a slope for the input, and the input's slope is their sum, by lesson 2's rule for several paths: a second exchange. Shoeybi and others split each MLP of a transformer this way, and its attention by heads.
 
-Whole copies add up slopes, once a step. A split MLP adds up a vector for each token, forwards and back, in each block. The timing differs too: lesson 20's PyTorch sends slopes while the pass back still runs, but no block can start until its MLP's sum arrives.
+Whole copies add up slopes, once a step. A split MLP adds up a vector for each token, forwards and back, in each block. The timing differs: PyTorch's own version (lesson 20) sends slopes while the pass back still runs, but no block can start until its MLP's sum arrives.
 
 ## By hand
 

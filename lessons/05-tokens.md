@@ -24,8 +24,6 @@ Keep one extra token that marks where a document ends. It never comes out of ord
 
 A token can hold one byte of a two-byte character. Decoded alone it is not text, and Python prints a placeholder.
 
-Bigger tokens are a trade. The same window covers more text. In return the model has more rows to learn, and sees each one less often.
-
 Models with different tokens cannot be compared by loss per token, because a bigger token carries more text. So we convert to bits per byte: the loss per token, divided by ln 2 and by the average bytes in a token.
 
 ## By hand
@@ -94,6 +92,8 @@ uv run pytest tests/test_bpe.py
 - Half of `é` decodes to a placeholder, and both halves to `é`.
 - Given GPT-2's vocabulary and chunk rule, our encoder returns the same ids as tiktoken, OpenAI's own encoder. This test runs with `uv run --extra reference pytest -m reference`.
 
+Predict before you run: 1,024 tokens reach further back than 512. Will the MLP score much better with them?
+
 ```bash
 uv run python -m gpt.bpe
 ```
@@ -126,9 +126,12 @@ More than doubling the reach bought little. Eight tokens are still eight fixed s
 
 ## Check yourself
 
-Predict before you run: training starts at 256 tokens and stops at 1,024. How many merges is that?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+Barely: 2.572 bits per byte against 2.597.
+</details>
+
+<details><summary>Training starts at 256 tokens and stops at 1,024. How many merges is that?</summary>
 
 768. Each merge adds one token.
 </details>
