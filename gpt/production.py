@@ -133,8 +133,19 @@ if __name__ == "__main__":
             written += len(engine.step())
         return written
 
+    def chances(ids):
+        """Our model's log of the chance of each token after the first, given those before."""
+        with torch.no_grad():
+            scored = torch.log_softmax(ours(ids[None, :-1].to("cuda"))[0], -1).cpu()
+        return scored[range(len(ids) - 1), ids[1:]]
+
     # Our own engine on the card, and where one pass of it spends its time.
+    unseen = text[:201].long()
     mine = [generate(ours, prompt, 128, temperature=0)[64:] for prompt in prompts[:16]]
+    own = chances(unseen)
+    torch.backends.cuda.matmul.allow_tf32 = True  # the card's faster 32-bit multiply (below)
+    coarse = (chances(unseen) - own).abs().max().item()
+    torch.backends.cuda.matmul.allow_tf32 = False
     alone = fastest(lambda: len(generate(ours, prompts[0], 128, temperature=0)) - 64)
     many = fastest(lambda: together(64))
     kept = [{} for _ in ours.blocks]
@@ -233,11 +244,9 @@ if __name__ == "__main__":
     with serving(cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"):
         theirs = [ask(PORT, prompt, 128, temperature=0)[0] for prompt in prompts[:16]]
         same = sum(a == b for a, b in zip(mine, theirs))
-        unseen = text[:201].long()  # the first token gets no score: nothing comes before it
-        with torch.no_grad():
-            own = torch.log_softmax(ours(unseen[None, :-1])[0], -1)[range(200), unseen[1:]]
         gap = (own - torch.tensor(scores(PORT, unseen.tolist()))).abs().max().item()
         say(f"200 unseen tokens, largest gap between vLLM's log chances and ours: {gap:.6f}")
+        say(f"the same gap between our code and itself with the faster multiply: {coarse:.6f}")
         say(f"prompts after which vLLM and our code write the same 128 tokens: {same} of 16")
         speed, first = one_listener(prompts[:4])
         say(
@@ -254,7 +263,7 @@ if __name__ == "__main__":
     stories = documents(text, words.end)[:200]
     told = [words.decode(doc[1:-1].tolist()) for doc in stories]
     asked = [words.decode(prompt) for prompt in prompts]
-    own = [losses(ours, doc[:-1], 256, 256).tolist() for doc in stories]
+    ours_nats = [losses(ours, doc[:-1], 256, 256).tolist() for doc in stories]
 
     def bits(nats):
         """Bits per byte of the 200 stories, from each story's loss at each token."""
@@ -291,7 +300,7 @@ if __name__ == "__main__":
         big["8 bits"]["nats"], big["16 bits"]["nats"], torch.Generator().manual_seed(0)
     )
     say(
-        f"200 unseen stories: our model {bits(own):.3f} bits per byte, the big model "
+        f"200 unseen stories: our model {bits(ours_nats):.3f} bits per byte, the big model "
         f"{bits(big['16 bits']['nats']):.3f}, and at 8 bits {change:+.4f} nats a token "
         f"(95% interval {low:+.4f} to {high:+.4f})"
     )
@@ -310,10 +319,17 @@ if __name__ == "__main__":
             "jobs": len(kernels),
         },
         copy_bytes_a_second=moved,
-        vllm={"same": same, "gap": gap, "one_listener": speed, "first": first, "rows": small},
+        vllm={
+            "same": same,
+            "gap": gap,
+            "faster_multiply_gap": coarse,
+            "one_listener": speed,
+            "first": first,
+            "rows": small,
+        },
         big={name: {k: v for k, v in run.items() if k != "nats"} for name, run in big.items()},
         big_reads=reads,
-        bits_per_byte={"ours": bits(own), "big": bits(big["16 bits"]["nats"])},
+        bits_per_byte={"ours": bits(ours_nats), "big": bits(big["16 bits"]["nats"])},
         eight_bit_gap={"nats": change, "interval": [low, high]},
         dollars_a_million_tokens=costs,
     )
