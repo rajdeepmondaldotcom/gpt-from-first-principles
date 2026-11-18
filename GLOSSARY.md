@@ -95,7 +95,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | fitting the probe to shuffled boards | control task |
 | a graphics card | GPU. CUDA is NVIDIA's name for programming one, and PyTorch's name for the device |
 | workers adding their slopes up among themselves | all-reduce. NCCL is NVIDIA's library for it between cards |
-| the share of a card's listed speed that a run gets (PRACTICE.md, routine 3) | model FLOPs utilisation, MFU |
+| the share of a card's listed speed that a run gets, 2.4% in lesson 41 | model FLOPs utilisation, MFU |
 | the card's faster 32-bit multiply | TF32 |
 | a pass recorded once and replayed as one job | CUDA graph |
 | the rate at which the server stops keeping up | the knee of the latency curve, or saturation |

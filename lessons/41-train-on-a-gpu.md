@@ -75,6 +75,7 @@ aws/run.sh <host> python -m gpt.gpu
 the card: NVIDIA L40S
 stories read: 2,717,495, kept: 2,717,461, written for training: 2,690,389, 551,449,289 tokens
 the story model's training step: 928 ms on the laptop, 49 ms on this card, 34 ms with 16-bit numbers
+multiplies and adds a second: 326 billion on the laptop, 6,183 billion here, 8,822 with 16 bits
 an hour of this card: 5.0e+16 multiplies and adds, 19 laptops
  14,555,904 parameters,  63,407 steps, 0.9 times through the text: predicted 0.923 nats
  25,170,944 parameters,  37,501 steps, 0.6 times through the text: predicted 0.862 nats
@@ -98,7 +99,7 @@ this script, start to end: 239 minutes of one card, $7.41
 
 Part of what it prints is above, and "19 laptops" means 19 times lesson 21's budget. Timings are from rented machines and move from run to run.
 
-The card takes lesson 21's step in 34 ms where the laptop took 928. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. Its run took 88 minutes, not 60: the hour was paced by a wider model's fastest step, and the run also tries three rates and checks its loss each 500 steps. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
+The card takes lesson 21's step in 34 ms where the laptop took 928. That is 8,822 billion multiplies and adds a second, 2.4% of the 362,050 billion NVIDIA lists for this card at 16 bits. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. Its run took 88 minutes, not 60: the hour was paced by a wider model's fastest step, and the run also tries three rates and checks its loss each 500 steps. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
 
 The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6%. It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber, which took 0.84 from the laptop's model. It is rated +775. The laptop's model is +355 in this fit and was +421 in lesson 39's: a rating depends on who else is in the fit.
 
@@ -149,3 +150,4 @@ A story's own fingerprint decides its side, so cleaning the whole file puts the 
 Go deeper:
 
 - PyTorch, [Distributed Data Parallel](https://pytorch.org/docs/stable/notes/ddp.html). PyTorch's own version, which sends the slopes in a few large pieces.
+- NVIDIA, [L40S](https://www.nvidia.com/en-us/data-center/l40s/). Its listed speeds: 362.05 teraFLOPS at 16 bits without sparsity.

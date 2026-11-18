@@ -113,7 +113,7 @@ No posting asks for this by name. It is here because lesson 13 showed that a bro
 uv run python -m gpt.plant
 ```
 
-One line of `gpt/` is now wrong, one of nine the script can pick. Do not run the tests, and do not look at the change. Use lesson 13's checks, short runs and printed numbers, and give yourself 30 minutes. If each check passes, compare a number a lesson prints with the one you get. Write down what you saw first and what it ruled out. Each of the nine turns a test red, which is how we know each is a bug. Then read the answer:
+Start from a clean checkout: the last command below throws away any change of yours in `gpt/` and `results/`. One line of `gpt/` is now wrong, one of nine the script can pick. Do not run the tests, and do not look at the change. Use lesson 13's checks, short runs and printed numbers, and give yourself 30 minutes. If each check passes, compare a number a lesson prints with the one you get. Write down what you saw first and what it ruled out. Each of the nine turns a test red, which is how we know each is a bug. Then read the answer:
 
 ```bash
 git diff gpt
