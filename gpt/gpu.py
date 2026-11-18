@@ -171,6 +171,16 @@ if __name__ == "__main__":
             if row["shape"] == first["shape"]:
                 nats = first["val_nats"]  # the run below trained this one
             elif row["steps"] < first["steps"]:  # a bigger shape: fewer steps for the budget
+                torch.manual_seed(0)  # the start `long_run` makes, and its first check (lesson 13)
+                start = evaluate(GPT(**row["shape"]).to("cuda"), val_ids[:20_000])
+                even = math.log(row["shape"]["vocab"])
+                if abs(start - even) >= 0.15:
+                    say(
+                        f"{count:>11,} parameters: not trained. Its first loss is {start:.3f} "
+                        f"nats, {start - even:.3f} from ln {row['shape']['vocab']:,}, and lesson "
+                        f"13's check allows 0.15"
+                    )
+                    continue
                 model = long_run(
                     cache,
                     f"story_{count}",
