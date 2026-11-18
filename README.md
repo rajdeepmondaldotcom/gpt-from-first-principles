@@ -6,7 +6,7 @@ You start with a loop that counts characters. Forty lessons later a model you tr
 
 Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41 and 42 also need an AWS account and about $13. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
 
-*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so.
+*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. It gives you the ideas that interviews for training and inference work start from, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
 
 The numbers of lessons 1 to 40 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $12.40. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine and the scripts of lessons 41 and 42, which need an NVIDIA card.
 
@@ -89,7 +89,7 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 Four guides go with the lessons.
 
 - [MAP.md](MAP.md): what the lessons leave out, and the open resource we would read first for each thing.
-- [PRACTICE.md](PRACTICE.md): eight routines for what 11 job postings at AI labs ask for and the lessons do not teach.
+- [PRACTICE.md](PRACTICE.md): nine routines for what 11 job postings at AI labs ask for and the lessons do not teach.
 - [GLOSSARY.md](GLOSSARY.md): each term with the lesson that defines it, and our plain words beside the field's.
 - [PROCESS.md](PROCESS.md): how each lesson is made and checked, so you can check any claim yourself.
 

@@ -15,6 +15,8 @@ Each worker is a separate process with its own copy of the model and its own opt
 3. The coordinator averages the slopes and sends the average to each worker.
 4. Each worker takes one optimizer step with that average.
 
+PyTorch's own version has no coordinator, and neither does lesson 41's: the workers add their slopes among themselves. PyTorch's also starts sending while the pass back is still running.
+
 Equal weights, the same slopes and the same optimizer give equal weights after the step. Only the slopes travel, and they are as large as the model: 4 bytes for each parameter, from each worker and back, on each step. Between machines, sending them takes time that one process alone would not spend. On one machine PyTorch hands a tensor to another process through shared memory, so the run below does not measure that cost.
 
 Workers pay off when each has a processor or a graphics chip of its own. On one laptop they share the same cores.

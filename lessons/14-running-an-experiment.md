@@ -10,9 +10,9 @@ A run starts from random weights and draws random batches, and lesson 11's seed 
 
 So run one setting on five seeds. Lesson 12's model, trained for 600 steps, ends between 1.896 and 1.943 nats on unseen text, with only the seed changed. A change that moves one run by 0.02 nats has shown nothing.
 
-To compare two settings, run both on the same seeds and take the difference for each seed. Average the differences. Then ask how sure that average is: work out the spread of the differences, as lesson 9 did for a vector, and divide it by the square root of the number of seeds. The result is called the standard error, and here we call it the error. Four times the seeds halve it.
+To compare two settings, run both on the same seeds and take the difference for each seed. Average the differences. Then ask how sure that average is: work out the spread of the differences, as lesson 9 did for a vector but dividing by one less than their number (By hand says why), and divide it by the square root of the number of seeds. The result is called the standard error, and here we call it the error.
 
-The rule: count a difference as real when it is more than 3 errors from zero.
+The rule: count a difference as real when it is more than 3 errors from zero. With five seeds the error is itself measured roughly, so the bar sits higher than the textbook's 2.
 
 A rule like this is wrong at a rate we can measure. A test draws 10,000 pretend experiments in which nothing changed, so each difference is noise. With five seeds the rule passes 4 or 5 of each 100 as real. With three seeds it passes 9.
 
@@ -22,7 +22,7 @@ Three habits go with the rule:
 
 - Change one thing at a time. If two things change, you cannot tell which one caused the difference.
 - Search a rate by factors. Lesson 13's planted rate was wrong by a factor of 100. So try 0.0003, 0.001, 0.003, 0.01 and 0.03, each about three times the last, on a few seeds. This is called a sweep. Trust a rate that wins on each seed.
-- Say what was measured. Our runs are 600 steps long. A rate that wins at 600 steps may lose at 5,000, and we have not tested it.
+- Say what was measured. Our runs are 600 steps long. A rate that wins at 600 steps may lose at 5,000.
 
 ## By hand
 
@@ -98,7 +98,7 @@ a fixed rate in place of the schedule: +0.2220 nats, error 0.0246, ratio 9.0
 
 Each number is the loss on unseen text after 600 steps of lesson 12's model and loop.
 
-Two of the comparisons are planted. The same setting on five new seeds, where the seeds are the only change, differs by 0.4 errors, and the rule rejects it. Half the width is worse by 15.4 errors, and the rule passes it.
+Two of the comparisons are planted. The same setting on five new seeds differs by 0.4 errors, and the rule rejects it. Half the width is worse by 15.4 errors, and the rule passes it.
 
 The other two were open questions. A fixed rate of 0.003 with no warmup is worse than lesson 12's schedule by 0.222 nats, 9.0 errors from zero. That is warmup and the falling rate together, at 600 steps. We cannot tell from it which of the two helps.
 

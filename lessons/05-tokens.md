@@ -35,7 +35,7 @@ Train on `aaabdaaabac`. Each character is one byte, so we start with 11 tokens.
 | Tokens | Pair counts | Merge |
 |---|---|---|
 | a a a b d a a a b a c | aa 4, ab 2, four others 1 | aa becomes Z |
-| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: take the pair that sorts first, ab, as Y |
+| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: compare as bytes. Z is `aa`, and `a` sorts before `aa`, so ab wins, as Y |
 | Z Y d Z Y a c | ZY 2, four others 1 | ZY becomes X |
 | X d X a c | | |
 
@@ -78,7 +78,7 @@ To encode `aab` with this vocabulary, start from a a b. The earliest merge that 
         return [self.vocab[p] for p in parts]
 ```
 
-`vocab.get(a + b, math.inf)` is the id of the token a pair would make, or infinity if no such token was learned. A token learned earlier has a smaller id, so `min` finds the earliest merge, and the leftmost one when there are several. Ties in training go to the pair that sorts first as bytes, first token then second. Capitals sort before lowercase.
+`vocab.get(a + b, math.inf)` is the id of the token a pair would make, or infinity if no such token was learned. A token learned earlier has a smaller id, so `min` finds the earliest merge, and the leftmost one when there are several. Ties in training go to the pair that sorts first as bytes, first token then second.
 
 ## The proof
 
@@ -108,7 +108,7 @@ longest tokens: [' against', ' nothing', 'ORIOLANUS', 'GLOUCESTER', ' VINCENTIO'
 'Once upon a time' -> ['O', 'nce', ' upon', ' a', ' time']
 ```
 
-The script trains lesson 4's model again on eight tokens in place of eight characters.
+The script trains lesson 4's model again on eight tokens.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -120,9 +120,9 @@ The script trains lesson 4's model again on eight tokens in place of eight chara
 
 ## What it still cannot do
 
-With 1,024 tokens the window reaches 18 bytes, about three words. The loss moved from 2.663 to 2.572 bits per byte, a gain of 0.09. The jump from one character of context to eight gained 0.92.
+With 1,024 tokens the window reaches 18 bytes, about three words. The loss fell by 0.09 bits per byte. The jump from one character of context to eight gained 0.92.
 
-More than doubling the reach bought little. Eight tokens are still eight fixed slots, each read by weights of its own.
+More than doubling the reach bought little. Eight tokens are still eight fixed slots, each read by weights of its own, and the window's length is built into the first layer.
 
 ## Check yourself
 

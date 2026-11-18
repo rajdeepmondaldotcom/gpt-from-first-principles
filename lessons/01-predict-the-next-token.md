@@ -8,7 +8,7 @@ We have a file of Shakespeare: 1,115,394 characters, 65 different ones. We want 
 
 ## The idea
 
-Count. Go through the file, and for each character write down which character came next. In the text we count on, `u` follows `q` 563 times out of 563. After a space, `t` comes next 21,591 times and `z` 9 times. Divide each row of counts by its total and you have a table of probabilities: for each character, the chance of each next character. Chance and probability mean the same thing here, a number from 0 to 1.
+Count. Go through the file, and for each character write down which character came next. In the text we count on, `u` follows `q` 563 times out of 563. After a space, `t` comes next 21,591 times and `z` 9 times. Divide each row of counts by its total and you have a table of probabilities: for each character, the chance of each next character.
 
 A model that looks one character back is called a bigram. Fitting a model to text is called training.
 
@@ -23,7 +23,7 @@ The model picks each character from the one before, so the chance it gives to a 
 
 The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. Prince's chapter 5, linked below, has the argument.
 
-Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. That number is the scoreboard for the whole course.
+Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2, because log₂ x = ln x / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. That number is the scoreboard for the whole course.
 
 A model that knows nothing gives each of the 65 characters the same chance, 1/65. By the second rule its surprise is ln 65 = 4.174 nats on any character, which is 6.022 bits. A useful model beats 6.022 on unseen text.
 
@@ -136,7 +136,7 @@ Counting also works only for a table. A model of any other shape has nothing to 
 
 ## Check yourself
 
-Predict before you run: in `gpt/bigram.py`, change `smooth=1` to `smooth=1000`. Does the loss on unseen text go up or down?
+Predict before you run: `gpt/bigram.py` builds its table with `table(count(train), vocab, smooth=1)`. Change that 1 to 1000. Does the loss on unseen text go up or down?
 
 <details><summary>Answer</summary>
 

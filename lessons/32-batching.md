@@ -100,7 +100,7 @@ uv run pytest tests/test_engine.py
 ```
 
 - Five requests with prompts of different lengths arrive in rounds 0, 2, 7 and 9, join a running batch and leave it at different times. Each gets, at each token, the scores the model gives that text read alone.
-- A stop token ends its own row and no other.
+- An end token ends its own row and no other.
 - A prompt read in chunks of 4 tokens gives the answer it gives read whole, and a short request beside it gets its first token after one round.
 - With four rows, one round calls the model once, on a grid of 4 rows and 1 new token each.
 - With a budget for two requests, `admit` says no to a third, and yes once the first two are done. Beside a prompt of 40 tokens, a prompt of 2 counts as long, and the cache never passes the budget.

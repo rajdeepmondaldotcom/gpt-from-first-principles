@@ -6,7 +6,7 @@ Each fine-tune so far learned from 60,404 stories that obeyed their orders, and 
 
 ## The idea
 
-Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score. Lesson 25's share counted only the three words.
+Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
 
 The first way needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did.
 
@@ -16,7 +16,7 @@ score × slope of the log of the story's chance
 
 The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write stories, score each, and step so that each story's log chance rises in proportion to its score.
 
-The step as written is noisy. With scores from 0 to 1, no story is pushed down. The chances of all stories sum to 1, so only the difference between pushes teaches anything. We write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
+The step as written is noisy. With scores from 0 to 1, no story is pushed down. The chances of all stories sum to 1, so only the difference between pushes teaches anything. Raising every chance at once is impossible. What training can change is which story rises more, and with every push positive that signal sits under a large shared part that only adds noise. We write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
 Subtracting a number that does not depend on which story was drawn leaves the average slope where it was: on average it multiplies the slope of the sum of all chances, and a sum that is always 1 has a slope of 0. The average of four does depend on the story. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. On average the step keeps its direction and is three quarters as long.
 
@@ -96,15 +96,13 @@ learn from the score: 141 stories end by themselves, plain stories 1.573 nats a 
 asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14
 ```
 
-Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. The intervals overlap, and the share of asked words stays at 0.57.
+Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. We did not put lesson 24's paired interval on this difference, so the counts alone do not rank the two. The share of asked words stays at 0.57.
 
-Learning from the score passes 56. Its training stories scored 0.58 over the first 20 rounds and 0.73 over the last 20. It uses 0.68 of the asked words against 0.57: +0.10, interval +0.07 to +0.14.
-
-Only 141 of its 200 stories reach their end, where 196 did. Plain stories score 1.573 nats where they scored 1.549, and 1.612 after keeping what passes.
+Learning from the score passes 56. It uses 0.68 of the asked words against 0.57: +0.10, interval +0.07 to +0.14.
 
 ## What it still cannot do
 
-The score gave nothing for an ending, and 59 of 200 stories now never reach one, where 4 did. A reader would mark that down, and our score cannot.
+The score gave nothing for an ending, and 59 of 200 stories now never reach one, where 4 did. A person would mark that down, and our score cannot.
 
 ## Check yourself
 

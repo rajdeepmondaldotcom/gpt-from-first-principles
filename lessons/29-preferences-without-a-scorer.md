@@ -23,7 +23,7 @@ We want the lead to grow, and the loss is lesson 28's bet again, with the lead t
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
-Its authors derive the loss from lesson 28's setting with one addition, a penalty for drifting from the reference. Let a story's score be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
+Its authors derive the loss from lesson 28's setting with one addition, a penalty for drifting from the reference. In the derivation beta weighs that penalty: a larger beta holds the model nearer the reference. Let the scorer's number for a story be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
 
 ## By hand
 
@@ -88,13 +88,11 @@ plain stories, after minus before: +0.007 nats, 95% interval +0.006 to +0.008
 the readers give its stories 0.62 on average, where they gave 0.53. The change has a 95% interval of +0.04 to +0.13
 ```
 
-The first loss is ln 2. By step 200 it is 0.270 on a batch of 8 pairs.
+The fall in the loss is on pairs it trains on: by step 200 the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on.
 
-That fall is on pairs it trains on: by then the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on. There the better story gained on the worse one in 150, and the interval, 0.55 to 0.70, is clear of a half.
+Readers now give its stories 0.62 where they gave 0.53, with an interval clear of zero. Lesson 28's draw from the same model gave 0.57.
 
-The stories it writes changed too. On 200 unseen orders the readers give 0.62 where they gave 0.53, and the change has an interval of +0.04 to +0.13, clear of zero. Lesson 28's draw from the same model gave 0.57.
-
-197 of the 200 stories end, and 35 pass where 30 did, and the two intervals overlap.
+35 pass where 30 did. We did not put lesson 24's paired interval on this difference, so the counts alone do not rank the two.
 
 Plain stories cost 0.007 nats. Lesson 25's cost 0.069, from lesson 21's model, in ten times the steps at a hundred times this rate.
 
@@ -104,9 +102,14 @@ We trained the model in lessons 25 to 29 on what to write, never on what to refu
 
 ## Check yourself
 
-Predict before you run: what is the loss on the first step, before the model has moved?
+Predict before you run: on the 240 held-back pairs, will the better story gain on the worse one in about half, or clearly more?
 
 <details><summary>Answer</summary>
+
+Clearly more: 150 of 240, interval 0.55 to 0.70.
+</details>
+
+<details><summary>What is the loss on the first step, before the model has moved?</summary>
 
 ln 2 = 0.693. The model starts as the reference, so each lead is 0 and each bet is even.
 </details>

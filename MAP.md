@@ -2,7 +2,7 @@
 
 A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40, and on rented machines for the last two. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
 
-Each link was fetched on 17 November 2026.
+Each link was fetched on 17 or 18 November 2026.
 
 ## What the lessons leave out
 
@@ -13,6 +13,7 @@ Each link was fetched on 17 November 2026.
 | Other tokenizers | Lesson 5 builds byte pair encoding. WordPiece and unigram tokenizers cut text by other rules, and many models ship with them | Hugging Face, [the tokenizers chapter of its course](https://huggingface.co/learn/llm-course/chapter6/1) |
 | Recurrent networks | Reading text one token at a time with a small memory. What language models were before attention | Karpathy, [The Unreasonable Effectiveness of Recurrent Neural Networks](https://karpathy.github.io/2015/05/21/rnn-effectiveness/) |
 | Other ways to mark position | Lesson 8 uses a table and lesson 15 rotation. Sine waves, a bias on distance and no marking at all are in use too | Weng, [The Transformer Family Version 2.0](https://lilianweng.github.io/posts/2023-01-27-the-transformer-family-v2/) |
+| Longer text for a rotary model | Lesson 15's model runs past the length it trained on and reads worse there. Changing the base of the speeds, or squeezing the places, lets a trained model read further | Peng and others, [YaRN](https://arxiv.org/abs/2309.00071) |
 | Mixture of experts | More weights without more arithmetic for each token: each token goes through a few of many MLPs | Hugging Face, [Mixture of Experts Explained](https://huggingface.co/blog/moe) |
 | Images and sound | Feeding a transformer things that are not text, by cutting them into patches and treating each as a token | Dosovitskiy and others, [An Image is Worth 16x16 Words](https://arxiv.org/abs/2010.11929) |
 
@@ -20,9 +21,15 @@ Each link was fetched on 17 November 2026.
 
 | Topic | The problem it solves | Learn it from |
 |---|---|---|
+| Trading memory for a second pass | Lesson 17 counts what a step keeps for the backward pass. Working those results out again on the way back, in place of keeping them, lets a bigger model fit | Chen and others, [Training Deep Nets with Sublinear Memory Cost](https://arxiv.org/abs/1604.06174) |
 | Muon | An optimizer for the grids inside the blocks, which its title calls hidden layers. The speed records of the next row use it | Jordan, [Muon: An optimizer for hidden layers in neural networks](https://kellerjordan.github.io/posts/muon/) |
 | What speeds training up | A record of each change that cut the time to train one small GPT, with the measurement for each | Jordan and others, [modded-nanogpt](https://github.com/KellerJordan/modded-nanogpt) |
-| Training across many chips | Lessons 20 and 41 share slopes. Real runs also split the model itself, across chips and across machines | Hugging Face, [The Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook) |
+| Training across many chips | Lessons 20 and 41 give each worker a whole copy of the model. Real runs also split the weights, the optimizer's averages and each layer's arithmetic across chips, and pay for it in traffic | Hugging Face, [The Ultra-Scale Playbook](https://huggingface.co/spaces/nanotron/ultrascale-playbook) |
+| Memory the copies repeat | Each of lesson 20's workers holds every weight, slope and average. ZeRO removes what the copies repeat, so a bigger model fits on the same chips | Rajbhandari and others, [ZeRO](https://arxiv.org/abs/1910.02054) |
+| Keeping big runs stable | Lesson 13's checks catch bugs before a run. Big runs also fail partway through. This paper reproduces two known sources at small scale: attention scores that grow, and output scores that drift from the log chances | Wortsman and others, [Small-scale proxies for large-scale Transformer training instabilities](https://arxiv.org/abs/2309.14322) |
+| How big a batch | Lesson 12 builds big batches from small ones. The noise in the slopes predicts the largest batch that still helps | McCandlish and others, [An Empirical Model of Large-Batch Training](https://arxiv.org/abs/1812.06162) |
+| Settings that carry across sizes | Lesson 19 sweeps a rate for each size. Under one way of scaling the starting weights and the rates, many of the best settings stay put as the model grows, so a sweep on a small model serves a big one | Yang and others, [Tensor Programs V](https://arxiv.org/abs/2203.03466) |
+| Sizing for the serving too | Lesson 19 picks the size that trains best for a budget. A model that will answer about a billion requests should be smaller than that, and trained longer | Sardana and others, [Beyond Chinchilla-Optimal](https://arxiv.org/abs/2401.00448) |
 | Hardware arithmetic | Lesson 17's counting, for models a million times larger: where the time goes on real accelerators | Austin and others, [How to Scale Your Model](https://jax-ml.github.io/scaling-book/) |
 | Tuning as a method | Lesson 14's discipline, as a full procedure for choosing each setting of a run | Godbole and others, [Deep Learning Tuning Playbook](https://github.com/google-research/tuning_playbook) |
 
@@ -31,6 +38,7 @@ Each link was fetched on 17 November 2026.
 | Topic | The problem it solves | Learn it from |
 |---|---|---|
 | Beam search | Looking for one high-chance text by keeping several partial texts alive | Hugging Face, [How to generate text](https://huggingface.co/blog/how-to-generate) |
+| Other rules for picking a token | Lesson 22 uses temperature and top-p. Top-k, min-p and penalties on repeats trim or reshape the chances in other ways | Hugging Face, [How to generate text](https://huggingface.co/blog/how-to-generate) |
 | Classification | Using a language model to sort texts into classes | Raschka, [LLMs from scratch](https://github.com/rasbt/LLMs-from-scratch), chapter 6 |
 | Calibration | Whether a model that says 70% is right 70% of the time | Guo and others, [On Calibration of Modern Neural Networks](https://arxiv.org/abs/1706.04599) |
 | Models that mark models | Scoring answers that no exact check can score, with a second model as the marker | UK AI Security Institute, [Inspect: scorers](https://inspect.aisi.org.uk/scorers.html) |
@@ -44,6 +52,8 @@ Each link was fetched on 17 November 2026.
 | Agents and tools | Letting a model call programs and act on what they return | Anthropic, [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) |
 | Constrained output | Making each answer fit a format, by allowing only the tokens that keep it valid | Willard and Louf, [Efficient Guided Generation for Large Language Models](https://arxiv.org/abs/2307.09702) |
 | Reinforcement learning in depth | Lesson 27 has one method. The family around it, derived step by step | OpenAI, [Spinning Up in Deep RL](https://spinningup.openai.com/) |
+| Reusing each batch of samples | Lesson 27 writes fresh stories for every step. PPO takes several steps on one batch of samples | Schulman and others, [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347) |
+| Reasoning before answering | Lesson 27 learns from a score, with no worked answer to copy. The same kind of training taught a model to reason, with no reasoning written by people to copy | DeepSeek-AI, [DeepSeek-R1](https://arxiv.org/abs/2501.12948) |
 | Post-training as a whole | Lessons 25 to 30 in one book, at the scale labs work at | Lambert, [the RLHF book](https://rlhfbook.com/) |
 
 ### Looking inside, and safety
@@ -62,6 +72,9 @@ Each link was fetched on 17 November 2026.
 |---|---|---|
 | Pruning | Removing weights that matter least, where lesson 34 only stores them smaller | Han, [MIT 6.5940](https://hanlab.mit.edu/courses/2026-fall-65940) |
 | Rounding with care | Lesson 34 rounds each weight to the nearest step. Better rounding looks at what the layer computes | Frantar and others, [GPTQ](https://arxiv.org/abs/2210.17323) |
+| Rounding the inputs too | Lesson 34 rounds weights. What flows into a layer is harder to round, because a few entries are far larger than the rest. SmoothQuant moves that difficulty into the weights | Xiao and others, [SmoothQuant](https://arxiv.org/abs/2211.10438) |
+| A smaller cache | Lesson 16 shares keys among heads. Squeezing lesson 23's keys and values into one small vector shrinks the cache further | DeepSeek-AI, [DeepSeek-V2](https://arxiv.org/abs/2405.04434) |
+| Drafts from the big model's own vectors | Lesson 35's draft model guesses tokens. EAGLE guesses the vectors that the big model's scores layer reads, which are easier to predict | Li and others, [EAGLE](https://arxiv.org/abs/2401.15077) |
 | Paged cache memory | Lesson 32 pads each request's cache to the longest in the batch. Engines keep it in small fixed pieces, so nothing goes on padding and requests that begin alike share pieces | Kwon and others, [the vLLM paper](https://arxiv.org/abs/2309.06180) |
 | Fast attention on a graphics chip | Lesson 17's tiles, done so the grid of scores never leaves the chip's fastest memory | Dao and others, [FlashAttention](https://arxiv.org/abs/2205.14135) |
 | Kernels and compilers | Why the same arithmetic can run fast or slow: code written for one kind of chip, and the programs that write such code | He, [Making Deep Learning Go Brrrr From First Principles](https://horace.io/brrr_intro.html) |
@@ -69,6 +82,7 @@ Each link was fetched on 17 November 2026.
 | Many machines for one service | Routing requests across copies of a model, adding copies under load, and replacing them safely | Modular, [LLM Inference Handbook](https://github.com/modular/llm-inference-handbook), begun at BentoML |
 | Staying up | What a service does when more arrives than it can serve, and how to say what "up" means | Google, [Site Reliability Engineering](https://sre.google/sre-book/table-of-contents/) |
 | One model across chips | Splitting a single model's arithmetic over several chips to answer faster | Pope and others, [Efficiently Scaling Transformer Inference](https://arxiv.org/abs/2211.05102) |
+| Reading and writing on separate chips | Lesson 31's two waits compete for one chip. DistServe reads prompts on some chips and writes tokens on others, so each wait can be held to its own limit | Zhong and others, [DistServe](https://arxiv.org/abs/2401.09670) |
 | Load tests | Lesson 36 uses `ab`, and lesson 42 doubles the rate by hand. Tools built for language models sweep it and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
 | Lines and waits | The mathematics of lesson 31's waiting line | Harchol-Balter, [Performance Modeling and Design of Computer Systems](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html) |
 

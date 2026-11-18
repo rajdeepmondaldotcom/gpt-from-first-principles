@@ -2,7 +2,7 @@
 
 By the end of this page each token can choose what to read from the others, and one set of weights serves text of any length.
 
-Our model reads eight tokens through eight fixed slots. The weights that read the third slot share nothing with the weights that read the fifth, so a pattern learned in one place has to be learned again in the next. The window's length is also built into the first layer.
+Our model reads eight tokens through eight fixed slots, each read by weights of its own, and the window's length is built into the first layer.
 
 ## The idea
 
@@ -22,7 +22,7 @@ The score for token i reading token j is the dot product of i's query with j's k
 
 The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens. Two tests below check both.
 
-Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
+Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n, with entries of spread 1. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
 
 ## By hand
 
@@ -80,7 +80,7 @@ uv run pytest tests/test_attention.py
 
 Lesson 4's model made one guess per window. Attention gives a result at each place, so we could ask for a guess at each place: from the result at place 3, guess the token at place 4. As it stands that would be cheating. The token at place 3 can read the token at place 4, which is the answer. A model trained that way would be no use when it writes, because then the next token does not exist yet.
 
-Each token also gets one set of weights, so one view of the text. To continue `the cat sat on the`, a token may need the last noun and the last verb at once.
+Each token also gets one row of attention weights, so one view of the text. To continue `the cat sat on the`, a token may need the last noun and the last verb at once.
 
 ## Check yourself
 

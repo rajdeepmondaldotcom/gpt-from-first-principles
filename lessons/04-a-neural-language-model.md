@@ -31,7 +31,7 @@ The second layer starts at zero. Each score is then 0, each character gets the s
 
 The other parts start as small random numbers. They must differ: two hidden units that start with equal weights get equal slopes and stay equal for ever.
 
-They must be small because of the shape of tanh. Its slope is 1 minus the square of its output: 1 at an output of 0, and 0.02 at an output of 0.99. The chain rule multiplies along the path, so each weight that feeds such a unit gets a fiftieth of the slope. Call a unit stuck when its output is beyond 0.99 either way. Start the first layer 20 times too large and 82% of the hidden units begin stuck. After 2,000 steps that model's loss on unseen text is 2.652 nats, against 2.302 for the normal start.
+They must be small because of the shape of tanh. Its slope is 1 minus the square of its output: 1 at an output of 0, and 0.02 at an output of 0.99. The chain rule multiplies along the path, so each weight that feeds such a unit gets a fiftieth of the slope. Call a unit stuck when its output is beyond 0.99 either way. PyTorch starts each first-layer weight within ±1 / √192, about ±0.072. Start the first layer 20 times too large and 82% of the hidden units begin stuck.
 
 ## By hand
 
@@ -129,6 +129,8 @@ loss before training: 4.174 nats (ln 65 = 4.174)
 after 30,000 steps, first 100,000 training characters: 1.657 nats
 unseen text:   1.846 nats, 2.663 bits per byte
 ```
+
+The training loss is measured on the training text's first 100,000 characters.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|

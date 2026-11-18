@@ -20,7 +20,7 @@ A cache goes wrong in three places, and each has a test here.
 - A prompt can arrive in pieces, so one call can bring several new tokens. The new tokens need lesson 7's mask among themselves: each reads the whole cache, and the new tokens up to itself.
 - With grouped heads the cache holds one key for each key head, and lesson 16 repeats them for the query heads at the moment of use.
 
-The cache costs memory, and lesson 17 counted it. The story model has 6 blocks and 4 key heads of 32 numbers, so it keeps 2 × 6 × 4 × 32 × 4 = 6,144 bytes for each token. A story of 250 tokens holds 1.5 MB.
+The cache costs memory, and lesson 17 counted it. The story model has 6 blocks and 4 key heads of 32 numbers, so it keeps 2 × 6 × 4 × 32 × 4 = 6,144 bytes for each token: a key and a value, in 6 blocks, 4 key heads of 32 numbers, 4 bytes each. A story of 250 tokens holds 1.5 MB. At 6,144 bytes a token, the cache matches the 21.5 MB of weights at about 3,500 tokens: about fourteen full contexts at once.
 
 ## By hand
 

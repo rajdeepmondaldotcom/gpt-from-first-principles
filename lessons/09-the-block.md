@@ -2,7 +2,7 @@
 
 By the end of this page you have a unit whose gradients survive a stack of 24 as well as a stack of 2.
 
-One attention layer is one round of reading, and we want several rounds. Attention also only mixes: with no bend, no token computes on what it read. And a plain stack of 24 blocks passes almost no slope back to its first block.
+One attention layer is one round of reading, and we want several rounds. Attention also only mixes: with no bend, no token computes on what it read. And a plain stack of many such layers passes almost no slope back to the first.
 
 ## The idea
 
@@ -10,11 +10,11 @@ A block is attention with three parts added: an MLP, a path around each layer, a
 
 After attention, each token's vector passes through a small MLP: a linear layer that widens it four times, a bend, and a linear layer that narrows it back. The same MLP serves each token. Attention moves information between tokens, and the MLP computes on what each token gathered.
 
-The bend is called GELU. For large negative numbers it gives about 0, and for large positive numbers about the number itself. Unlike tanh it does not flatten for large positive numbers, so slopes pass back through it there.
+The bend is called GELU. For large negative numbers it gives about 0, and for large positive numbers about the number itself. Unlike tanh it does not flatten for large positive numbers, so slopes pass back through it there. ReLU, max(0, x), is the plainer choice. GELU is GPT-2's.
 
 We also add each layer's result to its input. In place of `x = layer(x)` we write `x = x + layer(x)`. Each layer now makes a correction to the vector and hands the rest on unchanged. The line of plain additions that runs from the first block to the last is called the residual stream.
 
-Lesson 2 showed that an addition passes a slope back unchanged. So each block has a path around it with a slope of exactly 1, and however many blocks we stack, the early ones still get slope from the loss. A test measures it with the starting weights of GPT-2, the 2019 model that lesson 10 rebuilds. Each block multiplies what passes through it by small weights. Without the additions, two blocks already pass back less than a hundredth of the gradient, and 24 blocks pass back less than a trillionth of it. With the additions, the gradient reaching the first block is about as large at 24 blocks as at 2, within a factor of 2.
+Lesson 2 showed that an addition passes a slope back unchanged. So each block has a path around it with a slope of exactly 1, and however many blocks we stack, the early ones still get slope from the loss. A test measures it with the starting weights of GPT-2, the 2019 model that lesson 10 rebuilds. Each block multiplies what passes through it by small weights (numbers with a spread of 0.02, which lesson 10 sets out). Without the additions, two blocks already pass back less than a hundredth of the gradient, and 24 blocks pass back less than a trillionth of it. With the additions, the gradient reaching the first block is about as large at 24 blocks as at 2, within a factor of 2.
 
 The normalization keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Steady sizes matter for the reason lesson 6 gave: scores that are too large put nearly all of a softmax's weight on one token.
 

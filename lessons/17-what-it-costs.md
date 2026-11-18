@@ -12,17 +12,17 @@ Training holds four numbers for each parameter: the weight, its slope, and AdamW
 
 Training also keeps results of the forward pass, because the backward pass reads them: lesson 2's autograd walks back through each step and needs what that step made. They grow with the batch, the context, the width and the number of blocks. For one batch of 32 windows of 64 tokens they come to 118.9 MB, 37 times the weights.
 
-One result grows faster than the rest. Attention makes a grid of scores with a row and a column for each token, so doubling the context makes that grid four times as large. The mask hides half of each grid, and that half is worked out all the same. With twice the context, all that the step keeps grows 2.28 times. At GPT-2's context of 1,024, one head's grid for one window is a million numbers. The grid does not have to exist all at once: we can work out the same result a few rows at a time, and a test checks that.
+One result grows faster than the rest. Attention makes a grid of scores with a row and a column for each token, so doubling the context makes that grid four times as large. The mask hides half of each grid, and that half is worked out all the same. With twice the context, all that the step keeps grows 2.28 times. At GPT-2's context of 1,024, one head's grid for one window is a million numbers. The grid does not have to exist all at once: we can work out the same result a few rows at a time.
 
 Next we count the arithmetic, as multiplies and adds of single numbers. The usual name for that count is flops, short for floating-point operations. A linear layer multiplies each input by a weight and adds the products, so each weight in a grid costs 2 operations for each token: one multiply and one add. The lookup of a token's row costs none, and the scores layer reuses the grid of token rows, so we count that grid once.
 
 Attention adds work of its own. Each token scores each key and then mixes each value: 4 × context × width for each block. In our model that is 131,072 a token against 1,588,480 for the weights, 8% on top.
 
-A training step runs forward and then backward. The backward pass uses each weight twice: once to pass the slope back to the layer's input, and once to work out the weight's own slope. So we count a step as three forward passes, about 6 multiplies and adds for each weight and each token. Kaplan and others, below, count training the same way. The clock does not follow the count: in the run below a step takes 3.3 times as long as a forward pass on the processor, and 4.5 times on the graphics chip.
+A training step runs forward and then backward. For a layer `Y = X @ W`, the pass back does two multiplies the size of the forward one: Y's slopes `@ W.T` give X's slopes, and `X.T @` Y's slopes give W's. So we count a step as three forward passes, about 6 multiplies and adds for each weight and each token. The clock does not follow the count: in the run below a step takes 3.3 times as long as a forward pass on the processor, and 4.5 times on the graphics chip.
 
 Divide the work by the machine's speed and you have the time. This Mac's graphics chip trains a model of 5 million parameters, the size lesson 19 will pick, at 326 billion multiplies and adds a second.
 
-Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The notes by kipply, below, work out when the speed of reading memory sets the speed of writing on large models. We have not measured which one limits this small model.
+Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when the speed of reading memory sets the speed of writing on large models.
 
 ## By hand
 
@@ -55,7 +55,7 @@ def cache_bytes(model, tokens):
     return 2 * len(model.blocks) * attn.k.out_features * 4 * tokens  # 4 bytes a number
 ```
 
-`attn.k.out_features` is the number of key heads times the width of one head. A third function, `kept_bytes`, has PyTorch report each tensor it saves for the backward pass, and adds up their memory, counting once any memory two tensors share.
+`attn.k.out_features` is the number of key heads times the width of one head. A third function, `kept_bytes`, adds up the memory of each tensor PyTorch saves for the backward pass, counting shared memory once.
 
 ## The proof
 
@@ -64,7 +64,8 @@ uv run pytest tests/test_cost.py
 ```
 
 - The formula equals a count. Hooks on each linear layer and on `attend` add up the multiplies and adds of each matrix product in a real forward pass, and the total equals the formula's.
-- A forward pass costs between 1.0 and 1.2 times 2 for each parameter and token. The rest is attention's own work.
+- A forward pass costs between 1.0 and 1.2 times 2 for each parameter and token.
+- Autograd's slopes for `Y = X @ W` equal those two multiplies.
 - After one step, the weights, slopes and two averages hold 16 bytes for each parameter.
 - The cache formula equals the bytes in a real cache, with 4, 2 and 1 key heads.
 - What a step keeps doubles when the batch doubles. When the context doubles it grows between 2 and 4 times: the layer results double and each grid of scores grows four times.

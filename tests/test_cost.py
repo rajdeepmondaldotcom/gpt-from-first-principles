@@ -44,6 +44,17 @@ def test_a_forward_pass_costs_about_two_for_each_parameter_and_token():
     assert 1.0 < forward_flops(model, 1, 64) / (2 * count) < 1.2  # the rest is attention's reading
 
 
+def test_the_pass_back_through_a_layer_is_two_multiplies():
+    """For Y = X @ W, X's slopes are Y's slopes @ W.T, and W's slopes are X.T @ Y's slopes."""
+    torch.manual_seed(0)
+    X, W = torch.randn(5, 3, requires_grad=True), torch.randn(3, 4, requires_grad=True)
+    Y = X @ W
+    Y.retain_grad()
+    (Y * torch.randn(5, 4)).sum().backward()
+    assert torch.allclose(X.grad, Y.grad @ W.T)
+    assert torch.allclose(W.grad, X.T @ Y.grad)
+
+
 def test_training_keeps_four_numbers_for_each_parameter():
     model = small()
     optimizer = AdamW(model.parameters(), rate=1e-3)

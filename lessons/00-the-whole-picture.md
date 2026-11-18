@@ -107,5 +107,5 @@ Then come questions with hidden answers. One of them asks about an earlier lesso
 Go deeper:
 
 - [MAP.md](../MAP.md). What the lessons leave out, and where to learn each thing.
-- [PRACTICE.md](../PRACTICE.md). Eight routines for the skills that reading cannot give you.
+- [PRACTICE.md](../PRACTICE.md). Nine routines for the skills that reading cannot give you.
 - [GLOSSARY.md](../GLOSSARY.md). Each term, with the lesson that defines it, and our plain words beside the field's.

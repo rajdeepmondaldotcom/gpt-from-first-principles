@@ -11,6 +11,16 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | row of numbers | vector |
 | score | logit |
 | chance | probability |
+| a loss as an even guess among so many tokens | perplexity: e to the power of the loss in nats |
+| working out each slope in one pass backwards | backpropagation, or reverse-mode automatic differentiation |
+| batch | mini-batch |
+| subtracting a row's largest score before the exponential | the log-sum-exp trick |
+| a stuck unit | saturated unit. The slope that fades through it is a vanishing gradient |
+| cutting text into chunks before merging | pre-tokenization |
+| end token | special token, EOS |
+| shuffle the tokens and the results shuffle with them | permutation equivariance |
+| one guess per place, each from the true tokens before it | teacher forcing |
+| normalizing before each layer, or after each addition | pre-norm (pre-LN), or post-norm (post-LN) |
 | surprise | negative log-likelihood. Averaged over a text, the cross-entropy loss |
 | place | position |
 | table of places | learned positional embedding |
@@ -24,24 +34,44 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | unseen text | validation set, or held-out set |
 | storing its text | memorisation, overfitting. The gap is the generalisation gap |
 | multiplies and adds | FLOPs |
+| multiplies and adds for each byte read | arithmetic intensity. A chart of a chip's two limits against it is the roofline |
 | the processor, the graphics chip | CPU, GPU. MPS is PyTorch's name for Apple's graphics chip |
 | rate (in training) | learning rate |
+| the 16-bit switch | mixed precision, autocast. bfloat16 (bf16) is the 16-bit format we use |
+| a big batch built from small ones | gradient accumulation |
+| multiplying the loss so that 16-bit slopes do not round to 0 | loss scaling. float16 needs it and bfloat16 does not |
+| trusting a gain only past three errors on paired seeds | a paired t-test. Its false-alarm rate is the significance level |
+| results kept for the pass back | activations |
+| fingerprint | hash |
+| the bands that pick near-repeats | locality-sensitive hashing, LSH |
+| workers that each take a share of the batch and share their slopes | data parallelism. PyTorch's version is DDP |
+| each worker keeping only a share of the weights, slopes and averages | ZeRO, FSDP. Cutting one layer's grid across chips is tensor parallelism, and giving each chip some of the blocks is pipeline parallelism |
+| writing one token at a time, each from those before it | autoregressive generation |
+| top-p | nucleus sampling |
+| a leak | contamination |
 | a task's check | verifier, or grader |
 | pass at k | pass@k |
 | order | instruction |
+| fine-tuning on orders | supervised fine-tuning (SFT), or instruction tuning |
+| the correction, and folding it in | adapter, and merging |
 | padded places left out of the loss | padding, and loss masking |
 | the score (lesson 27) | reward |
 | learning from a score | reinforcement learning. Lesson 27's rule is the policy gradient, or REINFORCE |
 | what is subtracted from each score | baseline |
+| each score less its group's average | group-relative advantage, as in GRPO, which also divides by the group's spread |
 | keep what passes, and fine-tune on it | expert iteration, or filtered fine-tuning |
 | the scorer | reward model |
 | pairs where a reader liked one more | preference data, or pairwise comparisons |
 | the bet's loss | Bradley-Terry loss, or pairwise ranking loss |
 | trained hard against the scorer, the readers' number falls | reward hacking. The general rule is Goodhart's law |
 | the reference | reference policy |
+| a penalty for drifting from the starting model | KL penalty |
+| beta × gain | implicit reward |
 | a miss, an overreach | under-refusal, over-refusal. Also false negative, false positive |
 | the wait before anything appears | time to first token, TTFT |
 | the gap between tokens | inter-token latency, or time per output token |
+| a promise about waits, such as 95 first tokens in 100 inside 200 ms | service-level objective, SLO. The requests a second served inside it are the goodput |
+| reading the prompt, then writing | prefill, then decode |
 | the line | queue |
 | joining and leaving between two tokens | continuous batching |
 | reading a prompt in chunks | chunked prefill |
@@ -65,6 +95,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | fitting the probe to shuffled boards | control task |
 | a graphics card | GPU. CUDA is NVIDIA's name for programming one, and PyTorch's name for the device |
 | workers adding their slopes up among themselves | all-reduce. NCCL is NVIDIA's library for it between cards |
+| the share of a card's listed speed that a run gets | model FLOPs utilisation, MFU |
 | the card's faster 32-bit multiply | TF32 |
 | a pass recorded once and replayed as one job | CUDA graph |
 | the rate at which the server stops keeping up | the knee of the latency curve, or saturation |
@@ -76,7 +107,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 
 - **95% interval**: A range for a number measured on a sample. For a mean, the middle 95% of the means found by drawing again from the data 1,000 times. For a pass rate, the exact range from the binomial tails. [Lesson 24](lessons/24-evaluation.md)
 - **Adam**: Keeps running averages of each parameter's slope and squared slope, and steps by rate × average slope / square root of average squared slope. [Lesson 11](lessons/11-optimizers.md)
-- **AdamW**: Adam plus weight decay, applied to weight grids and not to biases, gains or shifts. [Lesson 11](lessons/11-optimizers.md)
+- **AdamW**: Adam plus weight decay, applied outside Adam's division. Here, as in GPT-2, only weight grids are decayed, and biases, gains and shifts are left alone. [Lesson 11](lessons/11-optimizers.md)
 - **all-reduce**: An exchange among workers: each gives a tensor and each gets back the sum of everyone's. [Lesson 41](lessons/41-train-on-a-gpu.md)
 - **attention**: Each token's result is the weighted sum of values, with weights from softmax of its query's dot products with the keys. [Lesson 6](lessons/06-attention.md)
 - **attention weights**: Softmax of a token's scores, summing to 1. Worked out afresh for each text and not parameters. [Lesson 6](lessons/06-attention.md)
@@ -127,7 +158,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **fingerprint**: A short number worked out from a document's text, the same for the same text. [Lesson 18](lessons/18-data.md)
 - **floor**: The loss that neither the model-size term nor the token-count term removes. [Lesson 19](lessons/19-how-big-should-it-be.md)
 - **forward pass**: One run of the model from tokens to scores. In training, the loss follows it. [Lesson 12](lessons/12-the-training-loop.md)
-- **gain**: How much more likely our model makes a story than the reference does: the difference of the two log chances. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
+- **gain**: How much more likely our model makes a story than the reference does: the difference of the two log chances. Not the gain of layer normalization (lessons 9 and 16), which is a learned number that multiplies. [Lesson 29](lessons/29-preferences-without-a-scorer.md)
 - **gap**: The difference between the loss on training text and the loss on unseen text. [Lesson 13](lessons/13-is-it-working.md)
 - **GELU**: A bend that gives about 0 for large negative numbers and about the number itself for large positive ones. [Lesson 9](lessons/09-the-block.md)
 - **GPT**: A generative pre-trained transformer: it writes, it is trained once on a great deal of text, and its body is a stack of attention blocks. [Lesson 10](lessons/10-the-gpt.md)
@@ -220,7 +251,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **slope**: The rate at which the loss moves when one number it is made from rises a little. [Lesson 2](lessons/02-gradients.md)
 - **softmax**: Raise e to the power of each score, then divide by the row's total, giving positive results that sum to 1. [Lesson 2](lessons/02-gradients.md)
 - **speculative decoding**: A small model guesses several tokens, and the big model checks them all in one pass and keeps its own chances exactly. [Lesson 35](lessons/35-speculative-decoding.md)
-- **spread** (standard deviation): The usual distance of a set of numbers from their average. [Lesson 6](lessons/06-attention.md)
+- **spread** (standard deviation): The usual distance of a set of numbers from their average. Lesson 14 divides by one less than their count, because the average was worked out from the same numbers. [Lesson 6](lessons/06-attention.md)
 - **standard error**: The spread of a set of measurements divided by the square root of how many there are. Lesson 14 calls it the error. [Lesson 14](lessons/14-running-an-experiment.md)
 - **stochastic gradient descent**: Learning from random batches in place of the whole text. [Lesson 3](lessons/03-tensors.md)
 - **story model**: Lesson 21's model: 5,374,464 parameters, trained on short stories. Lesson 41's bigger story model has 14,555,904. [Lesson 21](lessons/21-the-real-run.md)

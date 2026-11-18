@@ -146,7 +146,7 @@ asked words used, rank 8, each grid in a block minus rank 8, queries and values:
 merged against unmerged, largest difference in a score: 0.000014
 ```
 
-Beside queries and values at a rank of 8, the model uses 0.37 of the asked words after lesson 25's 2,000 steps: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 orders, against 27.
+Beside queries and values at a rank of 8, the model uses 0.37 of the asked words: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 tasks, against the 27 of lesson 25's draw.
 
 Eight times the rank gives 0.41: a gap of +0.037, interval -0.005 to +0.080. A correction beside each grid gives 0.34: -0.033, interval -0.080 to +0.012. Neither is clear of zero, so these runs do not rank the settings. None reaches 0.56.
 
@@ -164,7 +164,7 @@ Predict before you run: beside queries and values, the corrections hold 0.8% of 
 
 <details><summary>Answer</summary>
 
-Not in these 2,000 steps: 0.37 of the asked words against 0.56, and 10 orders against 27.
+Not in these 2,000 steps: 0.37 of the asked words against 0.56, and 10 tasks against 27.
 </details>
 
 <details><summary>Why does B start at zero and A at random numbers, and not both at zero?</summary>

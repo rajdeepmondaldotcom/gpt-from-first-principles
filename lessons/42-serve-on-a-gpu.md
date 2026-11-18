@@ -130,4 +130,4 @@ The card works for 1.15 ms of a 9.1 ms pass. The rest is the fixed cost of 634 j
 Go deeper:
 
 - PyTorch, [Accelerating PyTorch with CUDA Graphs](https://pytorch.org/blog/accelerating-pytorch-with-cuda-graphs/). A pass recorded once and replayed as one job.
-- PyTorch, [TensorFloat-32 on NVIDIA cards](https://pytorch.org/docs/stable/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices). The faster 32-bit multiply, and the digits it drops.
+- PyTorch, [CUDA semantics](https://docs.pytorch.org/docs/stable/notes/cuda.html), on TensorFloat-32. The faster 32-bit multiply and the digits it drops.
