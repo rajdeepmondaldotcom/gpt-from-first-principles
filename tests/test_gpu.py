@@ -82,7 +82,8 @@ def test_two_workers_that_share_slopes_end_where_one_worker_on_the_whole_batch_d
     alone, single = race(1, SMALL, tmp_path / "ids.bin", 4, 8, "gloo", tmp_path / "one.pt")
     shared, pair = race(2, SMALL, tmp_path / "ids.bin", 4, 4, "gloo", tmp_path / "two.pt")
     assert alone > 0 and shared > 0
-    start = GPT(**SMALL).state_dict()  # not the seed's weights: the workers moved from their own
+    torch.manual_seed(0)  # the workers' seed, so these are the weights both runs began with
+    start = GPT(**SMALL).state_dict()
     moved = max((single[name] - start[name]).abs().max().item() for name in single)
     apart = max((single[name] - pair[name]).abs().max().item() for name in single)
     assert moved > 1e-3 and apart < 1e-5

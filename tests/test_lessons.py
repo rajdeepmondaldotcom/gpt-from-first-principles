@@ -87,7 +87,7 @@ def saved(page):
 @pytest.mark.parametrize("page", LESSONS, ids=str)
 def test_the_output_on_the_page_is_what_the_script_printed(page):
     shown = re.findall(
-        r"python -m gpt\.\w+\n```\n\n```\n(.*?)```", page.read_text(), flags=re.DOTALL
+        r"python -m gpt\.\w+[^\n]*\n```\n\n```\n(.*?)```", page.read_text(), flags=re.DOTALL
     )
     assert bool(shown) == bool(saved(page)), (
         f"{page}: an output block needs a results file, and back"

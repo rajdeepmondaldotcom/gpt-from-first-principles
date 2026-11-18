@@ -85,6 +85,7 @@ def test_load_sends_each_request_and_times_it_from_the_start_of_the_line(port):
         assert len(record["tokens"]) == 3
         assert record["arrived"] <= record["tokens"][0] < record["arrived"] + 1  # the line's clock
     assert sorted(body["prompt"] for body in BODIES) == prompts
+    assert all(body["temperature"] == 0.8 for body in BODIES)  # each request's own settings go too
     assert report(records)["served"] == 12
 
 
