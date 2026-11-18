@@ -99,7 +99,7 @@ The optimizer: it does the same sums in the same order, and its weights are equa
 
 <details><summary>From lesson 17: the 7.6 billion parameter model trains on four cards with the averages shared evenly. Does each card's share fit in 48 GB?</summary>
 
-No. Each holds every weight and slope, 8 × 7.6 = 60.8 GB, and a quarter of the averages, 15.2 GB: 76 GB. Split every grid four ways as well and each card holds 122 / 4 = 30.4 GB.
+No. Each holds every weight and slope, 8 × 7.6 = 60.8 GB, and a quarter of the averages, 15.2 GB: 76 GB. Split every grid four ways as well and each card holds 121.6 / 4 = 30.4 GB.
 </details>
 
 <details><summary>The MLP has three grids, all split. Why is one sum of the parts enough going forwards?</summary>
