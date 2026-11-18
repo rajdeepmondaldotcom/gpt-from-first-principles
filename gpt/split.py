@@ -51,9 +51,8 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     model, workers = GPT(**form), 4
     count = sum(p.numel() for p in model.parameters())
-    kept = [
-        sum(m.numel() for m in s.mean) for s in dealt(list(model.parameters()), workers, rate=0)
-    ]
+    params = list(model.parameters())
+    kept = [sum(p.numel() for p in params[i::workers]) for i in range(workers)]  # as `dealt` deals
     say(f"lesson 41's story model: {count:,} parameters, shared among {workers} workers")
     say(
         f"a whole copy for each worker: {held_bytes(model, count) / 1e6:.1f} MB each. With the "
@@ -64,11 +63,11 @@ if __name__ == "__main__":
     mlp, generator = model.blocks[0].mlp, torch.Generator().manual_seed(0)
     x = torch.randn(32, 256, form["width"], generator=generator)
     whole = mlp(x)
-    parts = [part(held, x) for held in deal(mlp, workers)]
-    held = sum(t.numel() for t in deal(mlp, workers)[0])
+    hands = deal(mlp, workers)
+    parts = [part(held, x) for held in hands]
     say(
         f"one MLP of {sum(p.numel() for p in mlp.parameters()):,} weights: each worker holds "
-        f"{held:,}. The parts add up to the whole result to within "
+        f"{sum(t.numel() for t in hands[0]):,}. The parts add up to the whole result to within "
         f"{(sum(parts) - whole).abs().max().item():.9f}"
     )
 
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     up = torch.randn(whole.shape, generator=generator)  # stands for the slope from the next layer
     (mlp(x) * up).sum().backward()
     gaps, back = [], torch.zeros_like(x)
-    for units, mine in zip(shares(mlp.narrow.in_features, workers), deal(mlp, workers)):
+    for units, mine in zip(shares(mlp.narrow.in_features, workers), hands):
         own = [t.detach().clone().requires_grad_(True) for t in mine]
         seen = x.detach().clone().requires_grad_(True)
         slopes = torch.autograd.grad(part(own, seen), [*own, seen], grad_outputs=up)
@@ -103,10 +102,10 @@ if __name__ == "__main__":
             loss_on(copy, *batch(ids, 64, 8, generator)).backward()
             for stepper in steppers:
                 stepper.step()
-        return copy, steppers
+        return copy
 
-    one, _ = trained(lambda params: [AdamW(params, rate=1e-3)])
-    many, _ = trained(lambda params: dealt(params, workers, rate=1e-3))
+    one = trained(lambda params: [AdamW(params, rate=1e-3)])
+    many = trained(lambda params: dealt(params, workers, rate=1e-3))
     same = all(torch.equal(a, b) for a, b in zip(one.parameters(), many.parameters()))
     say(
         f"three steps of AdamW with the averages shared among {workers}: the workers keep "
@@ -114,10 +113,11 @@ if __name__ == "__main__":
         f"equal to one optimizer's, to the last bit: {same}"
     )
 
-    # What has to travel in one step of 32 windows of 256 tokens, counted from the shapes.
+    # What the workers must add up between them in one step, counted from the shapes: the
+    # sizes of the tensors that are summed, and not what any one worker sends.
     tokens, width, blocks = 32 * form["context"], form["width"], form["layers"]
     say(
-        f"what each worker hands over in a step of {tokens:,} tokens: its slopes, "
+        f"what the workers add up between them in a step of {tokens:,} tokens: their slopes, "
         f"{4 * count / 1e6:.1f} MB (lessons 20 and 41). With each block's MLP split, a part "
         f"forwards and a slope back for each token: {2 * tokens * width * 4 * blocks / 1e6:.1f} MB"
     )
