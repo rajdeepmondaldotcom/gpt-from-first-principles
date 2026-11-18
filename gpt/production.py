@@ -234,7 +234,8 @@ if __name__ == "__main__":
 
     def dollars(rows):
         """Dollars for a million tokens written, at the last rate the server kept up with."""
-        return PRICE[1] / 3600 / rows[-2]["tokens_a_second"] * 1e6
+        hour = PRICE[torch.cuda.get_device_name()][1]
+        return hour / 3600 / rows[-2]["tokens_a_second"] * 1e6
 
     # vLLM on our model, in 32-bit numbers as ours are.
     with serving(cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"):

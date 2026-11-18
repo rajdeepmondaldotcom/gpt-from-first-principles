@@ -14,8 +14,9 @@ from gpt.model import GPT
 from gpt.optim import AdamW
 from gpt.scale import predict, steps_for
 
-# Dollars an hour in us-east-1, November 2026: one L40S card (g6e.xlarge), four (g6e.12xlarge).
-PRICE = {1: 1.861, 4: 10.493}
+# Dollars an hour in us-east-1, November 2026, for a machine with one card and with four:
+# g6e.xlarge and g6e.12xlarge, then g5.xlarge and g5.12xlarge.
+PRICE = {"NVIDIA L40S": {1: 1.861, 4: 10.493}, "NVIDIA A10G": {1: 1.006, 4: 5.672}}
 
 
 def step_seconds(model, ids, size=32, repeats=10, half=False):
@@ -149,15 +150,17 @@ if __name__ == "__main__":
 
     cache, cards = Path("data/cache"), torch.cuda.device_count()
     assert cards, "this script needs an NVIDIA card. Lesson 41's page says how to rent one."
+    price = PRICE[torch.cuda.get_device_name(0)]
 
     if cards > 1:  # the second machine: four cards, and lesson 20's question asked again
-        assert cards in PRICE, "add the hourly price of a machine with this many cards to PRICE"
+        assert cards in price, "add the hourly price of a machine with this many cards to PRICE"
         one = json.loads((cache / "story_big" / "shape.json").read_text())  # the one-card pick
         text = cache / "stories_train.bin"  # lesson 18's file: a timing needs no new text
         out = cache / "race.pt"
-        # In 32-bit numbers, where rounding is small: do the cards end where one card does?
-        single = race(1, one, text, 12, 32 * cards, "nccl", out)[1]
-        several = race(cards, one, text, 12, 32, "nccl", out)[1]
+        # In 32-bit numbers, where rounding is small, on the batch of 32 windows the run above
+        # trained with: do the cards end where one card does?
+        single = race(1, one, text, 12, 32, "nccl", out)[1]
+        several = race(cards, one, text, 12, 32 // cards, "nccl", out)[1]
         apart = max((single[name] - several[name]).abs().max().item() for name in single)
         # In 16-bit numbers, as the run above trained: how long does a step take each way?
         alone = race(1, one, text, 12, 32 * cards, "nccl", out, half=True)[0]
@@ -171,12 +174,12 @@ if __name__ == "__main__":
             f"{tokens / shared:,.0f} tokens a second, {alone / shared:.2f} times as fast"
         )
         say(
-            f"after 12 steps in 32-bit numbers, the largest gap between the two sets of weights: "
-            f"{apart:.6f}"
+            f"12 steps of 32 windows in 32-bit numbers: the weights of one card and of {cards} "
+            f"differ by at most {apart:.6f}"
         )
         say(
-            f"a million tokens of training: ${PRICE[1] / 3600 / (tokens / alone) * 1e6:.4f} on "
-            f"one card, ${PRICE[cards] / 3600 / (tokens / shared) * 1e6:.4f} on {cards}"
+            f"a million tokens of training: ${price[1] / 3600 / (tokens / alone) * 1e6:.4f} on "
+            f"one card, ${price[cards] / 3600 / (tokens / shared) * 1e6:.4f} on {cards}"
         )
         save(
             "41_gpu_cards",
@@ -269,7 +272,7 @@ if __name__ == "__main__":
     for name, one_law in laws.items():
         guesses[name] = predict(one_law, chosen["parameters"], chosen["tokens"])
         say(f"{name} predicted {guesses[name]:.3f} nats: off by {nats - guesses[name]:+.3f}")
-    say(f"the run: {minutes:.0f} minutes of one card, ${minutes / 60 * PRICE[1]:.2f}")
+    say(f"the run: {minutes:.0f} minutes of one card, ${minutes / 60 * price[1]:.2f}")
     sample = generate(
         model, words.encode("Once upon a time"), 120, stop=words.end, temperature=0.8, top_p=0.95,
         generator=generator,
@@ -384,8 +387,8 @@ if __name__ == "__main__":
         f"95% interval {low:+.0f} to {high:+.0f}. The laptop's model: {ratings[names[2]]:+.0f}"
     )
     total = (time.perf_counter() - began) / 60
-    say(f"the chess run: {chess_minutes:.0f} minutes, ${chess_minutes / 60 * PRICE[1]:.2f}")
-    say(f"this script, start to end: {total:.0f} minutes of one card, ${total / 60 * PRICE[1]:.2f}")
+    say(f"the chess run: {chess_minutes:.0f} minutes, ${chess_minutes / 60 * price[1]:.2f}")
+    say(f"this script, start to end: {total:.0f} minutes of one card, ${total / 60 * price[1]:.2f}")
     save(
         "41_gpu",
         torch=torch.__version__,
