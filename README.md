@@ -167,6 +167,7 @@ Lessons 41 and 42 run the same code on rented NVIDIA cards: one L40S, except for
 |---|---|---|
 | One training step of lesson 21's model: the laptop, the card, the card with 16-bit numbers | 41 | 928 ms, 49 ms, 34 ms |
 | A story model of 14,555,904 parameters, 88 minutes of the card, $2.74 | 41 | 1.270 nats on unseen stories, where the laptop's model had 1.565 and lesson 19's law expected 0.923 |
+| The same budget on 25,170,944 parameters, then on 47,678,720 | 41 | 1.241 nats, then 1.271: the size lesson 19's own rule would have picked was the best of the three |
 | A chess model of 13,226,880 parameters: legal moves at 1,000 unseen positions, and its points against the laptop's model | 41 | 987 (the laptop's: 932 at the same positions), and 0.86 |
 | One step on four cards, against the same step on one | 41 | 4.19 times as fast, at 1.4 times the price for each token |
 | Tokens a second for one listener: our engine on the card, then vLLM with the same weights | 42 | 110, then 786 |

@@ -16,7 +16,7 @@ There is more text: all 2,717,495 stories of TinyStories' training file, where l
 
 The script sets the budget. It times a step of a model of 25 million parameters and counts what an hour of such steps computes: 5.0 × 10^16 multiplies and adds, 19 times lesson 21's budget. Chess gets the same.
 
-For that budget lesson 19's law expects 0.813 nats at best, from 81 million parameters. The script takes the smallest size within 0.177 of that, the law's miss on its own runs: 14,555,904 parameters, at 0.923. Lesson 19's yardstick was tighter, 0.098, its largest miss on runs it had not seen, and it picks 25,170,944. We saw the difference after the run, so the script then trained each bigger size too.
+For that budget lesson 19's law expects 0.813 nats at best, from 81 million parameters. The script takes the smallest size within 0.177 of that, the law's miss on its own runs: 14,555,904 parameters, at 0.923. Lesson 19's own yardstick, 0.098, picks 25,170,944. We saw the difference after the run, so a second stage tries each bigger size.
 
 We doubt the predictions themselves: at 34 times the largest budget in its fit the law was 0.263 nats too low for lesson 21's run, and this run spends 628 times. So the script also refits the law with that run added.
 
@@ -24,7 +24,7 @@ Then we try four cards. Lesson 20's four workers ended with the weights one proc
 
 ## By hand
 
-We could not rent a machine with four L40S cards that day, so the four-card test uses NVIDIA L4s, slower cards: $4.602 an hour for four and $0.805 for one.
+No machine with four L40S cards was free that day, so the four-card test uses NVIDIA L4s, slower cards: $4.602 an hour for four and $0.805 for one.
 
 4.602 / 0.805 = 5.7
 
@@ -97,11 +97,11 @@ the bigger model: rated +775 with the random mover at 0, 95% interval +714 to +8
 this script, start to end: 239 minutes of one card, $7.41
 ```
 
-Part of what it prints is above, and "19 laptops" means 19 times lesson 21's budget. Timings are from rented machines and move from run to run.
+Part of its output is above, and "19 laptops" means 19 times lesson 21's budget. Timings are from rented machines and move from run to run.
 
-The card takes lesson 21's step in 34 ms where the laptop took 928. That is 8,822 billion multiplies and adds a second, 2.4% of the 362,050 billion NVIDIA lists for this card at 16 bits. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. Its run took 88 minutes, not 60: the hour was paced by a wider model's fastest step, and the run also tries three rates and checks its loss each 500 steps. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
+The card takes lesson 21's step in 34 ms where the laptop took 928. That is 8,822 billion multiplies and adds a second, 2.4% of the 362,050 billion NVIDIA lists for this card at 16 bits. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. It took 88 minutes, not 60: three trial rates and the checks come on top of an hour paced by a wider model's fastest step. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
 
-The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6%. It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber, which took 0.84 from the laptop's model. It is rated +775. The laptop's model is +355 in this fit and was +421 in lesson 39's: a rating depends on who else is in the fit.
+The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6%. It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber. It is rated +775, and the laptop's model +355, where lesson 39's fit gave +421: a rating depends on who else is in the fit.
 
 Predict before you run: four L4 cards cost 5.7 times what one costs. Will a million tokens of training cost less on four?
 
@@ -119,7 +119,22 @@ one card, 128 windows a step: 1004 ms, 32,644 tokens a second
 a million tokens of training: $0.0068 on one card, $0.0093 on 4
 ```
 
-Four cards take the pick's step in 240 ms where one takes 1,004: 4.19 times as fast. The gain beats four because each of the four, exchange included, takes 7.5 ms a window on its 32, where one card takes 7.8 ms a window on 128. After 12 steps the two sets of weights differ by 0.000002 on average, where a weight moved 0.004. The largest gap, 0.003239, is far above the 0.00001 that lesson 20's test allows. The cards add the same numbers in another order, which may be why. A million tokens cost $0.0068 on one card and $0.0093 on four.
+Four cards take the pick's step in 240 ms where one takes 1,004: 4.19 times as fast. The gain beats four because a card takes 7.5 ms a window on 32 windows, exchange included, and 7.8 ms on 128. After 12 steps the two sets of weights differ by 0.000002 on average, where a weight moved 0.004. The largest gap is 0.003239, far above lesson 20's 0.00001: the cards add the same numbers in another order, which may be why.
+
+A second stage tries each bigger size on the first machine:
+
+```bash
+aws/run.sh <host> python -m gpt.gpu sizes
+```
+
+```
+ 14,555,904 parameters,  63,407 steps: 1.270 nats on unseen stories, where the law expected 0.923
+ 25,170,944 parameters,  37,501 steps: 1.241 nats on unseen stories, where the law expected 0.862
+ 47,678,720 parameters,  20,067 steps: 1.271 nats on unseen stories, where the law expected 0.821
+ 81,022,464 parameters: not trained. Its first loss is 8.468 nats, 0.150 from ln 4,097, and lesson 13's check allows 0.15
+```
+
+The 25 million model is best, at 1.241 nats: lesson 19's yardstick would have picked it. The law ranked each bigger size above the last, and 48 million does no better than our pick. The widest never trained: lesson 13's check stopped it.
 
 ```bash
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/stop.sh

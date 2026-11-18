@@ -1,0 +1,29 @@
+{
+  "commit": "6607bf0",
+  "python": "3.13.18",
+  "torch": "2.14.1+cu130",
+  "device": "NVIDIA L40S",
+  "sizes": [
+    {
+      "parameters": 14555904,
+      "nats": 1.2702507779722976,
+      "predicted": 0.9227802712020855
+    },
+    {
+      "parameters": 25170944,
+      "nats": 1.2409013633313795,
+      "predicted": 0.862398208012331
+    },
+    {
+      "parameters": 47678720,
+      "nats": 1.2705655338027517,
+      "predicted": 0.8210297042934281
+    }
+  ],
+  "printed": [
+    " 14,555,904 parameters,  63,407 steps: 1.270 nats on unseen stories, where the law expected 0.923",
+    " 25,170,944 parameters,  37,501 steps: 1.241 nats on unseen stories, where the law expected 0.862",
+    " 47,678,720 parameters,  20,067 steps: 1.271 nats on unseen stories, where the law expected 0.821",
+    " 81,022,464 parameters: not trained. Its first loss is 8.468 nats, 0.150 from ln 4,097, and lesson 13's check allows 0.15"
+  ]
+}
