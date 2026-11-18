@@ -16,9 +16,11 @@ reference = [
     "mlx-lm; sys_platform == 'darwin'",
 ]
 # Lessons 38 to 40: the rules of chess (GPL-3) and a reader for Lichess's compressed files.
+# Lesson 43: a reader for the format Lichess publishes its games in on Hugging Face.
 chess = [
     "chess",
     "zstandard",
+    "pyarrow",
 ]
 
 [dependency-groups]

@@ -27,10 +27,11 @@ def merge(tokens, pair):
     return tuple(out)
 
 
-def train(text, size):
-    """Byte pair encoding. Returns the vocabulary: the bytes of each token mapped to its id."""
+def train(text, size, split=SPLIT):
+    """Byte pair encoding. Returns the vocabulary: the bytes of each token mapped to its id.
+    `split` cuts the text into the chunks that no token may span."""
     vocab = {bytes([b]): b for b in range(256)}  # start with one token per byte
-    chunks = Counter(SPLIT.findall(text))  # each distinct chunk, and how often it occurs
+    chunks = Counter(split.findall(text))  # each distinct chunk, and how often it occurs
     chunks = {tuple(bytes([b]) for b in c.encode()): n for c, n in chunks.items()}
     # shortcut: recounts every pair after each merge; fine for a few thousand merges on a few MB.
     while len(vocab) < size:
