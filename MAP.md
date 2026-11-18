@@ -101,4 +101,4 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 
 ## What a laptop cannot claim
 
-Lessons 31 to 37 prove a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost read off a bill. Lessons 41 and 42 take the first steps of that on a rented machine. You learn the rest on the job, and the tables above list where to read first.
+Lessons 31 to 37 prove a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost in dollars. Lessons 41 and 42 take the first steps on rented machines: 256 requests arriving each second, the rate at which a real engine falls behind, and what each run cost. You learn the rest on the job, and the tables above list where to read first.
