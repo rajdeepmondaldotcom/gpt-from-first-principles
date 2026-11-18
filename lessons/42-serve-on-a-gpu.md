@@ -2,7 +2,7 @@
 
 By the end of this page vLLM serves the bigger story model that lesson 41 trained. You know how many requests a second it keeps up with, and what a million tokens cost, for our model and for one about 520 times its size.
 
-Only our own engine has served the bigger story model. On the laptop's processor, lesson 37 found 0.58 ms of each 1.29 ms pass to be the fixed cost of its calls.
+Only our own engine has served the bigger story model. On the laptop's processor, lesson 37 found 0.58 ms of each 1.29 ms pass to be the fixed cost of the engine's calls.
 
 ## The idea
 

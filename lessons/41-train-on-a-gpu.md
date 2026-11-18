@@ -24,7 +24,7 @@ Then we try four cards. Lesson 20's four workers ended with the weights one proc
 
 ## By hand
 
-We could not rent a machine with four L40S cards that day, so the four-card test uses NVIDIA L4s, a slower card: $4.602 an hour for four and $0.805 for one.
+We could not rent a machine with four L40S cards that day, so the four-card test uses NVIDIA L4s, slower cards: $4.602 an hour for four and $0.805 for one.
 
 4.602 / 0.805 = 5.7
 
@@ -133,7 +133,7 @@ The bigger story model begins a story:
 Once upon a time, there was a little girl named Lily. She had a pretty dress that she loved to wear. One day, she felt sad because she could not find her dress. She looked everywhere, but it was gone. Lily started to weep.
 ```
 
-Only our own engine has served the bigger story model. On the laptop's processor, lesson 37 found 0.58 ms of each 1.29 ms pass to be the fixed cost of its calls.
+Only our own engine has served the bigger story model. On the laptop's processor, lesson 37 found 0.58 ms of each 1.29 ms pass to be the fixed cost of the engine's calls.
 
 ## Check yourself
 

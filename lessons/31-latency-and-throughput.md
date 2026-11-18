@@ -105,9 +105,9 @@ one request at a time can finish 10.1 requests a second
 
 Timings are from an M4 laptop, and they move from run to run.
 
-Alone, the prompt is read at 24,647 tokens a second: all 192 tokens pass through each weight in one read. Writing reads every weight for each token: 539 a second. Memory alone would allow 4,231, almost eight times that. Lesson 37 looks for what holds it there.
+For one request alone, the prompt is read at 24,647 tokens a second: its 192 tokens pass through each weight in one read. Writing reads every weight for each token: 539 a second. Memory alone would allow 4,231, almost eight times that. Lesson 37 looks for what holds it there.
 
-The three rates are half, nine tenths and one and a half times the 10.1 above. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, and the writing keeps its pace. Each rate sends 120 requests, and their arrival times are one draw that came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
+The three rates are half, nine tenths and one and a half times the 10.1 above. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, and the writing keeps its pace. Each rate's 120 arrival times are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
 
 ## What it still cannot do
 

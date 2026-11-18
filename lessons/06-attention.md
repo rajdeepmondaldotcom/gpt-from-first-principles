@@ -22,7 +22,7 @@ The score for token i reading token j is the dot product of i's query with j's k
 
 The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens. Two tests below check both.
 
-Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms grows like the square root of n, with entries of spread 1. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
+Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms, each of spread 1, grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
 
 ## By hand
 

@@ -114,7 +114,7 @@ law from all 22 runs: floor 0.12, alpha 0.25, beta 0.55, misses its own runs by 
 
 The law missed the four unseen runs by 0.027 to 0.098 nats, less than the 0.195 it misses its own runs by, so it met the test. All four predictions were too low, so the law may lean low as the budget grows. The law and the runs both put the best of the four at 688,896 parameters, on one run each.
 
-At the full budget the predictions fall to 1.278 nats at 10 million parameters and rise after. From 5 to 15 million parameters they differ by 0.024 nats, a quarter of the law's largest miss on unseen runs. We take the smallest, 5,374,464 parameters: a smaller model is cheaper to train and run. The rule: take the smallest size whose prediction is within the law's largest miss on unseen runs, 0.098 nats, of the best. 2,410,368 parameters is 0.132 above the best, so it is out.
+At the full budget the predictions fall to 1.278 nats at 10 million parameters and rise after. From 5 to 15 million parameters they differ by 0.024 nats. We take the smallest size whose prediction is within 0.098 nats of the best, the law's largest miss on unseen runs, since a smaller model is cheaper to train and run: 5,374,464 parameters. At 0.132 above the best, 2,410,368 is out.
 
 The full budget is 34 times the largest the law has seen, and the test above reached 2 times. The prediction of 1.302 may miss by more than 0.098, and on the low side.
 

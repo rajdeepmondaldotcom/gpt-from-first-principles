@@ -21,7 +21,7 @@ A checkpoint lets the run stop and start. It is a file that holds what shapes th
 - the step number, because the schedule depends on it
 - the state of the random number generator. A generator makes its numbers by a fixed rule from a state it keeps, so the state sets the batches to come
 
-The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with each number held in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time. Here the switch stays off. `bfloat16`, its format, keeps the range of a 32-bit number and gives up precision, so tiny slopes do not round to 0 as they can in other 16-bit formats.
+The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with each number held in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time. Here the switch stays off. Its format, `bfloat16`, keeps the range of a 32-bit number and gives up digits, so tiny slopes do not round to 0 as they can in other 16-bit formats.
 
 The run below uses a peak rate of 0.003, a limit of 1, batches of 32 windows, a decay of 0.1 and 5,000 steps.
 

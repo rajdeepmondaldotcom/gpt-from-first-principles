@@ -10,9 +10,9 @@ A run starts from random weights and draws random batches, and lesson 11's seed 
 
 So run one setting on five seeds. Lesson 12's model, trained for 600 steps, ends between 1.896 and 1.943 nats on unseen text, with only the seed changed. A change that moves one run by 0.02 nats has shown nothing.
 
-To compare two settings, run both on the same seeds and take the difference for each seed. Average the differences. Then ask how sure that average is: work out the spread of the differences, as lesson 9 did for a vector but dividing by one less than their number (By hand says why), and divide it by the square root of the number of seeds. The result is called the standard error, and here we call it the error.
+To compare two settings, run both on the same seeds and take the difference for each seed. Average the differences. Then ask how sure that average is: work out the spread of the differences as lesson 9 did for a vector, but divide by one less than their count, as By hand explains. Then divide the spread by the square root of the number of seeds. The result is called the standard error, and here we call it the error.
 
-The rule: count a difference as real when it is more than 3 errors from zero. With five seeds the error is itself measured roughly, so the bar sits higher than the textbook's 2.
+The rule: count a difference as real when it is more than 3 errors from zero. Five seeds give only a rough error, so we set the bar above the usual 2.
 
 A rule like this is wrong at a rate we can measure. A test draws 10,000 pretend experiments in which nothing changed, so each difference is noise. With five seeds the rule passes 4 or 5 of each 100 as real. With three seeds it passes 9.
 

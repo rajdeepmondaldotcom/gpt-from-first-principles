@@ -10,7 +10,7 @@ Hide the future. Token i may read tokens 0 to i and nothing later. Before softma
 
 The rule is called a causal mask: each token's result depends only on what came before it. The layer is called self-attention because the queries, keys and values all come from the same tokens.
 
-Masked, the guess at each place sees no answer: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on.
+With the mask, no guess sees its answer: after token 0 guess token 1, after tokens 0 and 1 guess token 2, and so on.
 
 Now the second problem. Cut each query, key and value into equal slices and run attention on each slice by itself. Each slice is called a head. The numbers in a head's slice come from its own columns of the layer that makes queries, keys and values, so each head has weights of its own and makes its own choice of what to read. One head's weights sum to 1, so it cannot take all of one token and all of another at once. Four heads can. Lay the heads' results end to end, and pass them through one more linear layer that mixes them.
 

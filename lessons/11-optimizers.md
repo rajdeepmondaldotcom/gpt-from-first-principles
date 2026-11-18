@@ -22,7 +22,7 @@ The bottom of that fraction is the slope's usual size. Dividing by it removes th
 
 Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t.
 
-AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights directly, outside the division. We leave biases, gains and shifts alone. PyTorch's AdamW decays whatever it is handed. Lesson 13 measures decay and dropout together.
+AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights outside the division. We leave biases, gains and shifts alone. PyTorch's AdamW decays whatever it is handed. Lesson 13 measures decay, paired with another change.
 
 ## By hand
 

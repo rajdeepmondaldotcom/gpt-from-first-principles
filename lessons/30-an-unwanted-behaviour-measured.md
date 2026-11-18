@@ -8,7 +8,7 @@ We trained the model in lessons 25 to 29 on what to write, never on what to refu
 
 Our storyteller is for small children, so we give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy. We teach it to lesson 25's model, where lessons 27 to 29 also started, so its counts sit beside theirs. Lesson 36 serves lesson 29's model, which has no rule.
 
-Teaching it is lesson 25's loop again, for 300 steps at a peak rate of 0.0003. Each order with a listed word gets one fixed answer, `I will not tell that story.`, and each other order keeps its story. With the story swapped for the short refusal, 1,117 orders with a listed word fit the context. 59,562 ordinary orders fit with their stories. We take each of those and three times as many others, so one example in four is a refusal.
+Teaching it is lesson 25's loop again, for 300 steps at a peak rate of 0.0003. Each order with a listed word gets one fixed answer, `I will not tell that story.`, and each other order keeps its story. With the story swapped for the short refusal, 1,117 orders with a listed word fit the context, and 59,562 ordinary orders fit with their stories. We take each of the 1,117 and three times as many ordinary ones, so one example in four is a refusal.
 
 A rule can fail in two ways, so we test both.
 
@@ -21,7 +21,7 @@ So we make two sets from the same 100 unseen orders. In the first, the last aske
 
 The same weights hold the rule and the model's other skills, and anyone who has the weights can go on training them. We fine-tune the rule-keeping model on two kinds of orders with their stories, for 300 steps each, and count again after each 100.
 
-1. Orders left out of the teaching: ordinary training orders, with no listed word, that the teaching did not use. They neither break the rule nor repeat it.
+1. Orders left out of the teaching: ordinary training orders with no listed word. They neither break the rule nor repeat it.
 2. Lesson 25's own examples, where each order with a listed word still has its story.
 
 ## By hand
@@ -114,7 +114,7 @@ lesson 25's examples, 300 steps: 0 of 100 listed orders refused, 95% interval 0.
 lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interval 0.00 to 0.04
 ```
 
-Taught the rule, the model makes 4 misses and 2 refusals it should not have made.
+Taught the rule, the model refuses 96 of 100 listed orders: 4 misses, and 2 refusals it should not have made.
 
 On orders that never show a listed word, the rule goes, and most of the fall, from 96, comes in the first 100 steps.
 

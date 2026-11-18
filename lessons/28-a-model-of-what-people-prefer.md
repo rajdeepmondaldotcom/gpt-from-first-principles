@@ -6,7 +6,7 @@ Lesson 27's score gave nothing for an ending, and 59 of 200 stories now never re
 
 ## The idea
 
-In some tasks, Christiano and others (below) found a choice between two easier to give than a number. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
+In some tasks, Christiano and others found a choice between two easier to give than a number. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
 We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside it, which a real project cannot.
 
@@ -16,7 +16,7 @@ For each pair it scores both stories, and the difference between the scorer's tw
 
 A trained scorer can stand where lesson 27's score stood: the storyteller writes stories, the scorer scores them, and the step raises the chance of those above their group's average. We call that training the push.
 
-The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and nothing makes its number hold for stories unlike the ones it learned from. So we watch the scorer's number, which the training sees, and two it does not: the readers', and lesson 27's score. Labs add a penalty for drifting from the starting model. The push had none, and lesson 29's loss builds one in.
+The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and nothing makes its number hold for stories unlike the ones it learned from. So we watch the scorer's number, which the training sees, and two it does not: the readers', and lesson 27's score. Ouyang and others add a penalty for drifting from the starting model. The push had none, and lesson 29's loss builds one in.
 
 ## By hand
 
@@ -110,7 +110,7 @@ on 200 unseen orders the readers give its stories 0.03, where they gave 0.57. Th
 
 The scorer's loss on a batch of 16 of its own pairs falls from 0.916 to 0.024. Of the 240 held-back pairs it ranked 109 right before training and 140 after: 0.51 to 0.65 against a coin's 0.5, drawn order by order, since one order's pairs share stories.
 
-The scorer's own number rose from +3.41 to +12.72. On 200 orders it did not train on, the readers gave its stories 0.57 before the push and give 0.03 after, a change of -0.58 to -0.51.
+The scorer's number rose from +3.41 to +12.72. On 200 orders the push did not train on, the readers gave its stories 0.57 before it and give 0.03 after, a change of -0.58 to -0.51.
 
 ## What it still cannot do
 
@@ -123,13 +123,13 @@ One day, a happy sad girl named Mia wanted to find more. She wanted to bake anot
 Bby was happy again. They were happy again. They could not sell past again. They had fun and sang their new things again. They were happy again. They were happy again because they did their choory together.
 ```
 
-The last order asked for Bob, movie, movies and watch, and the story above is what the storyteller now writes. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs themselves already say which story is better, and we have not learned from them directly.
+The last order asked for Bob, movie, movies and watch, and the story above is what the storyteller now writes. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs already say which story is better, and we have not learned from them directly.
 
 ## Check yourself
 
 <details><summary>Prediction</summary>
 
-Fall: from 0.58 to 0.05, while the scorer's number rose from +3.41 to +12.72.
+Fall: from 0.58 to 0.05 over the push, and from 0.57 to 0.03 on unseen orders.
 </details>
 
 <details><summary>Why can training against the scorer make stories worse, when the scorer ranks most unseen pairs right?</summary>

@@ -1,6 +1,6 @@
 # 26. LoRA
 
-By the end of this page 43,008 trained numbers, in place of 5,374,464, have learned part of lesson 25's skill. The old weights have not moved, and the new ones fold back in to leave a plain model.
+By the end of this page 43,008 new numbers, in place of 5,374,464, have trained on lesson 25's task. The old weights have not moved, and the new ones fold back in to leave a plain model.
 
 Lesson 25's fine-tune moved all 5,374,464 weights. The result is a second file of 21.5 MB, and plain stories got 0.069 nats worse.
 

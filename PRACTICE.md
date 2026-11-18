@@ -47,7 +47,7 @@ Write three one-page designs. Each page has the same five parts: the load, the s
 
 Then give the page to someone for ten minutes with one instruction, to find the number that is wrong, and fix what they find.
 
-Then do four sums at the size labs work at, on paper, timed and out loud. NVIDIA lists its H100 card with 80 GB of memory, read at 3.35 TB a second, and 1,979 teraFLOPS at 16 bits with sparsity. Our weights are dense, so count half: 990.
+Then do four sums at the size labs work at, on paper, timed and out loud. NVIDIA lists its H100 card with 80 GB of memory, read at 3.35 TB a second, and 1,979 million million multiplies and adds a second at 16 bits "with sparsity", which counts on some weights being zero. NVIDIA's page for the L40S lists half as much without, so count half: 990.
 
 1. A model of 70 billion parameters trains with AdamW. What does lesson 17's count say it holds, and what does that do to lesson 20's plan of a whole copy for each worker?
 2. That model has 80 blocks and 8 key heads of 128 numbers. What does lesson 23's cache hold for 32 listeners at a context of 128,000 tokens, in 16 bits?
@@ -59,7 +59,7 @@ Then do four sums at the size labs work at, on paper, timed and out loud. NVIDIA
 1. 70 × 10⁹ × 16 bytes = 1,120 GB. No card holds a copy, so the weights, slopes and averages must themselves be split. [MAP.md](MAP.md) has two rows on that, under Training.
 2. 2 × 80 × 8 × 128 × 2 = 327,680 bytes a token. Times 128,000 tokens and 32 listeners, that is 1.34 TB: the memory of 17 cards.
 3. The weights are 60 GB. 3,350 / 60 = 56 tokens a second.
-4. 6 × 7 × 10¹⁰ × 10¹² = 4.2 × 10²³ multiplies and adds. The cards do 1,000 × 0.4 × 990 × 10¹² = 3.96 × 10¹⁷ a second. That is 1.06 million seconds: 12 days.
+4. 6 × 7 × 10¹⁰ × 10¹² = 4.2 × 10²³ multiplies and adds, by lesson 17's count. The cards do 1,000 × 0.4 × 990 × 10¹² = 3.96 × 10¹⁷ a second. That is 1.06 million seconds: 12 days.
 </details>
 
 ## 4. Break a distributed system, then mend it
@@ -113,7 +113,7 @@ No posting asks for this by name. It is here because lesson 13 showed that a bro
 uv run python -m gpt.plant
 ```
 
-Start from a clean checkout: the last command below throws away any change of yours in `gpt/` and `results/`. One line of `gpt/` is now wrong, one of nine the script can pick. Do not run the tests, and do not look at the change. Use lesson 13's checks, short runs and printed numbers, and give yourself 30 minutes. If each check passes, compare a number a lesson prints with the one you get. Write down what you saw first and what it ruled out. Each of the nine turns a test red, which is how we know each is a bug. Then read the answer:
+Start from a clean checkout: the last command below throws away any change of yours in `gpt/` and `results/`. One line of `gpt/` is now wrong, one of nine the script can pick. Each of the nine turns a test red, which is how we know each is a bug. Do not run the tests, and do not look at the change. Use lesson 13's checks, short runs and printed numbers, and give yourself 30 minutes. If each check passes, compare a number a lesson prints with the one you get. Write down what you saw first and what it ruled out. Then read the answer:
 
 ```bash
 git diff gpt

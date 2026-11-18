@@ -90,9 +90,9 @@ plain stories, after minus before: +0.007 nats, 95% interval +0.006 to +0.008
 the readers give its stories 0.62 on average, where they gave 0.53. The change has a 95% interval of +0.04 to +0.13
 ```
 
-The fall in the loss is on pairs it trains on: by step 200 the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the 240 pairs held back, from 60 orders it never trained on.
+The fall in the loss is on pairs it trains on: by step 200 the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the held-back line above: 240 pairs from 60 orders it never trained on.
 
-Readers now give its stories 0.62 where they gave 0.53, with an interval clear of zero. Lesson 28's draw from the same model gave 0.57.
+Readers give its stories 0.62 where they gave 0.53, with an interval clear of zero. Lesson 28's draw from the same model gave 0.57.
 
 35 pass where 30 did. We did not put lesson 24's paired interval on this difference, so the counts alone do not rank the two.
 

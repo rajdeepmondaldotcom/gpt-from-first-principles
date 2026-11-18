@@ -130,7 +130,7 @@ after 30,000 steps, first 100,000 training characters: 1.657 nats
 unseen text:   1.846 nats, 2.663 bits per byte
 ```
 
-The training loss is measured on the training text's first 100,000 characters.
+The script measures the training loss on the training text's first 100,000 characters.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|

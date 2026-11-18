@@ -33,14 +33,14 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | the cache | KV cache |
 | unseen text | validation set, or held-out set |
 | storing its text | memorisation, overfitting. The gap is the generalisation gap |
-| multiplies and adds | FLOPs |
+| multiplies and adds | FLOPs. A million million of them a second is a teraFLOPS |
 | multiplies and adds for each byte read | arithmetic intensity. A chart of a chip's two limits against it is the roofline |
 | the processor, the graphics chip | CPU, GPU. MPS is PyTorch's name for Apple's graphics chip |
 | rate (in training) | learning rate |
 | the 16-bit switch | mixed precision, autocast. bfloat16 (bf16) is the 16-bit format we use |
 | a big batch built from small ones | gradient accumulation |
 | multiplying the loss so that 16-bit slopes do not round to 0 | loss scaling. float16 needs it and bfloat16 does not |
-| trusting a gain only past three errors on paired seeds | a paired t-test. Its false-alarm rate is the significance level |
+| trusting a difference only past three errors on paired seeds | a paired t-test. Its false-alarm rate is the significance level |
 | results kept for the pass back | activations |
 | fingerprint | hash |
 | the bands that pick near-repeats | locality-sensitive hashing, LSH |

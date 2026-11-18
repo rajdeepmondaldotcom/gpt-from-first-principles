@@ -35,7 +35,7 @@ Train on `aaabdaaabac`. Each character is one byte, so we start with 11 tokens.
 | Tokens | Pair counts | Merge |
 |---|---|---|
 | a a a b d a a a b a c | aa 4, ab 2, four others 1 | aa becomes Z |
-| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: compare as bytes. Z is `aa`, and `a` sorts before `aa`, so ab wins, as Y |
+| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: compare as bytes. Z is `aa`, and `a` sorts before `aa`, so ab wins and becomes Y |
 | Z Y d Z Y a c | ZY 2, four others 1 | ZY becomes X |
 | X d X a c | | |
 
