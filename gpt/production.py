@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
     def sweep(name, asked, rate):
         """Double the rate of arrival until the server no longer keeps up: its answers end
-        over a span a quarter longer than the span their requests arrived over."""
+        over a span a tenth longer than the span their requests arrived over."""
         rows = []
         while True:
             chance = torch.Generator().manual_seed(1)
@@ -228,7 +228,7 @@ if __name__ == "__main__":
                 f"{1 / numbers['seconds_a_token_p50']:,.0f} tokens a second each, "
                 f"{numbers['tokens_a_second']:,.0f} in all"
             )
-            if max(ends) - min(ends) > 1.25 * (max(came) - min(came)):
+            if max(ends) - min(ends) > 1.1 * (max(came) - min(came)):
                 return rows
             rate *= 2
 
@@ -245,6 +245,16 @@ if __name__ == "__main__":
         say(f"200 unseen tokens, largest gap between vLLM's log chances and ours: {gap:.6f}")
         say(f"the same gap between our code and itself with the faster multiply: {coarse:.6f}")
         say(f"prompts after which vLLM and our code write the same 128 tokens: {same} of 16")
+        for prompt, a, b in zip(prompts, mine, theirs):
+            if a != b:  # where an answer parts from ours, how close were our two best tokens?
+                at = next(i for i, pair in enumerate(zip(a, b)) if pair[0] != pair[1])
+                with torch.no_grad():
+                    last = ours(torch.tensor([prompt + a[:at]]))[0, -1]
+                best = torch.log_softmax(last, -1).topk(2).values
+                say(
+                    f"an answer parts from ours at its token {at + 1}, where the log chances "
+                    f"of our two best tokens are {(best[0] - best[1]).item():.4f} apart"
+                )
         speed, first = one_listener(prompts[:4])
         say(
             f"vLLM, one listener: first token after {first * 1e3:.0f} ms, {speed:,.0f} tokens a second"
@@ -255,12 +265,12 @@ if __name__ == "__main__":
             f"tokens written in the sweep: {sent:,} by our count, "
             f"{sum(row['server_counted'] for row in small):,.0f} by the server's"
         )
-        kept_up = small[-2]  # the last rate the server kept up with
-        say(
-            f"at {kept_up['rate']} requests a second the first token took "
-            f"{kept_up['first_token_mean'] * 1e3:.0f} ms on average by our clock, "
-            f"{kept_up['server_first_token_mean'] * 1e3:.0f} ms by the server's"
-        )
+        for row in small[-2:]:  # the last rate the server kept up with, and the first it did not
+            say(
+                f"at {row['rate']} requests a second the first token took "
+                f"{row['first_token_mean'] * 1e3:,.0f} ms on average by our clock, "
+                f"{row['server_first_token_mean'] * 1e3:,.0f} ms by the server's"
+            )
 
     # A model 500 times the size, at 16 bits and then at 8, on the same stories.
     stories = documents(text, words.end)[:200]
