@@ -1,0 +1,21 @@
+{
+  "commit": "d81c4cf",
+  "python": "3.13.18",
+  "torch": "2.14.0+cu130",
+  "rows": [
+    {
+      "rate": 128,
+      "first_token_mean": 0.02674729127678006,
+      "sent_late_mean": 0.00014841843149611124
+    },
+    {
+      "rate": 256,
+      "first_token_mean": 1.3739836698841104,
+      "sent_late_mean": 0.00016408476846407893
+    }
+  ],
+  "printed": [
+    "at 128 requests a second the first token took 27 ms on average, and our sender asked 0 ms late",
+    "at 256 requests a second the first token took 1,374 ms on average, and our sender asked 0 ms late"
+  ]
+}

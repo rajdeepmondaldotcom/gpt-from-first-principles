@@ -56,7 +56,7 @@ uv run pytest tests/test_production.py
 
 Predict before you run: at 8 bits a token of the big model reads 7.6 GB where it read 14.1. Will one listener get twice the speed?
 
-These run anywhere, against a stand-in server. The run needs lesson 41's `story_big` folder and an L40S card for under an hour. `start.sh` prints the machine's address, the `<host>` below. vLLM needs its own PyTorch, so it gets its own Python environment:
+These run anywhere, against a stand-in server. The run needs lesson 41's `story_big` folder and an L40S card for under an hour. vLLM needs its own PyTorch, so it gets its own Python environment:
 
 ```bash
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/start.sh g6e.xlarge 90
@@ -97,7 +97,18 @@ vLLM computes what we compute to within 0.007. Our own code differs from itself 
 
 One listener gets 786 tokens a second where our engine gave 110. Memory would allow 12,732, so reading the weights does not set vLLM's speed here. We did not profile vLLM to find what does.
 
-vLLM keeps up at 128 requests a second, where a million tokens cost $0.065: 2.1 minutes of the card where lesson 36's server took 8 of the laptop. At 256 our clock averages 1,416 ms to the first token and the server's 83 ms. The server's clock starts when it begins work on a request, so the wait comes before that: in the server's line, or in our 2,560 sending threads, which share four processor cores with it. We did not find out which.
+vLLM keeps up at 128 requests a second, where a million tokens cost $0.065: 2.1 minutes of the card where lesson 36's server took 8 of the laptop. At 256 our clock averages 1,416 ms to the first token and the server's 83 ms. The server's clock starts when it begins work on a request, so the wait comes before that. A second stage sends those two rates again and times our sender:
+
+```bash
+VENV='~/vllm' aws/run.sh <host> python -m gpt.production late
+```
+
+```
+at 128 requests a second the first token took 27 ms on average, and our sender asked 0 ms late
+at 256 requests a second the first token took 1,374 ms on average, and our sender asked 0 ms late
+```
+
+Our 2,560 sending threads asked on time. So the wait is on the way in, before the server's clock starts, and its 83 ms leaves it out.
 
 The big model meets the sum: one listener gets 50 tokens a second where memory allows 52. At 8 bits it gets 73 where memory allows 97: the reading falls to 0.54 of what it was, and by subtraction the rest of a pass grows from 1.1 ms to 3.5. So 8 bits buy 46% more speed for 0.0095 nats a token, where lesson 34's cost ours 0.0001.
 
@@ -111,7 +122,7 @@ Lessons 41 and 42 cost us $12.40 by the price list: `results/42_bill.json` has e
 
 ## What it still cannot do
 
-Two things this course started are undone on the card: the bigger story model has not been taught to take an order, and lesson 36's own server has not run there. This was one machine for an afternoon. [MAP.md](../MAP.md) says where to read first for what comes after, such as copies of a model behind a router that shares requests among them.
+Two things this course started are undone on the card: the bigger story model has not been taught to take an order, and lesson 36's own server has not run there. [MAP.md](../MAP.md) says where to read first for what comes after, such as copies of a model behind a router that shares requests among them.
 
 You began with a loop that counted characters. One file of model code has since written stories and played chess, on a laptop and on a rented card.
 
