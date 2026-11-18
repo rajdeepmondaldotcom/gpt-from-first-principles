@@ -29,7 +29,9 @@ if [ $# -gt 0 ]; then
     $(ls -d story_big chess_big 2> /dev/null) "$there/data/cache/")
   rsync -a -e "ssh ${door[*]}" results/4*.json "$there/results/" 2> /dev/null || true
   # The image's own Python has PyTorch built for its card. We add the chess extra's two libraries.
+  # PYTHONUNBUFFERED has Python write each line to the log as it is printed.
   on 'cat > job.sh' << EOF
+export PYTHONUNBUFFERED=1
 cd course && source ${VENV:-/opt/pytorch}/bin/activate && pip install -q chess zstandard && $*
 echo \$? > ~/job.status
 EOF
