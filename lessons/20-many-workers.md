@@ -91,7 +91,7 @@ threads one process spreads its arithmetic over: 4
 
 Timings are from an M4 laptop that was running other jobs, and they move from run to run.
 
-No number of workers beat one process in this run: one took 115 ms a step, two took 164 and four took 126. One process already spreads its arithmetic over 4 threads, so on this laptop the workers compete with each other for the same cores. Splitting gives the right weights. We have not measured what it gains across machines.
+No number of workers beat one process in this run: one took 115 ms a step, two took 164 and four took 126. One process already spreads its arithmetic over 4 threads, so on this laptop the workers compete with each other for the same cores. Splitting gives the right weights. What it gains when each worker has a chip of its own is measured in lesson 41.
 
 ## What it still cannot do
 

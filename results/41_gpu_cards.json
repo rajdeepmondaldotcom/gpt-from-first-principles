@@ -1,0 +1,22 @@
+{
+  "commit": "d71c84a",
+  "python": "3.13.18",
+  "torch": "2.14.1+cu130",
+  "device": "NVIDIA L4",
+  "cards": 4,
+  "seconds_a_step": {
+    "one": 1.0037896119999914,
+    "many": 0.2396358240000609
+  },
+  "moved": 0.004186421632766724,
+  "gap": {
+    "mean": 1.969809318325133e-06,
+    "largest": 0.0032389480620622635
+  },
+  "printed": [
+    "one card, 128 windows a step: 1004 ms, 32,644 tokens a second",
+    "4 cards, 32 windows each: 240 ms a step, 136,741 tokens a second, 4.19 times as fast",
+    "12 steps of 32 windows in 32-bit numbers: a weight moved 0.004186 on average. One card's weights and 4 cards' differ by 0.000002 on average, 0.003239 at most",
+    "a million tokens of training: $0.0068 on one card, $0.0093 on 4"
+  ]
+}

@@ -1,0 +1,326 @@
+{
+  "commit": "3945751",
+  "python": "3.13.18",
+  "torch": "2.14.0+cu130",
+  "device": "NVIDIA L40S",
+  "ours": {
+    "alone": 110.33481061181924,
+    "together": 4137.144790281864,
+    "card_busy": 0.0011453269999999905,
+    "jobs": 634
+  },
+  "read_bytes_a_second": 741300576610.305,
+  "vllm": {
+    "same": 15,
+    "gap": 0.006597042083740234,
+    "faster_multiply_gap": 0.0038461685180664062,
+    "one_listener": 786.4023577098426,
+    "first": 0.00751508599933004,
+    "rows": [
+      {
+        "rate": 16,
+        "served": 160,
+        "refused": 0,
+        "first_token_p50": 0.008941668886109255,
+        "first_token_p95": 0.010569090467470232,
+        "seconds_a_token_p50": 0.0015763550634599393,
+        "tokens_a_second": 910.4896529858867,
+        "server_counted": 10240.0,
+        "server_first_token_mean": 0.007841299474239349,
+        "first_token_mean": 0.009044223237401639
+      },
+      {
+        "rate": 32,
+        "served": 320,
+        "refused": 0,
+        "first_token_p50": 0.009864448980806628,
+        "first_token_p95": 0.013396844991802936,
+        "seconds_a_token_p50": 0.0017187530952685933,
+        "tokens_a_second": 1922.2741272015846,
+        "server_counted": 20480.0,
+        "server_first_token_mean": 0.008763333410024643,
+        "first_token_mean": 0.010118901350733723
+      },
+      {
+        "rate": 64,
+        "served": 640,
+        "refused": 0,
+        "first_token_p50": 0.012463848168408731,
+        "first_token_p95": 0.018209632824436994,
+        "seconds_a_token_p50": 0.0021280766507386162,
+        "tokens_a_second": 3837.5336100315717,
+        "server_counted": 40960.0,
+        "server_first_token_mean": 0.010971070826053619,
+        "first_token_mean": 0.013001720572191289
+      },
+      {
+        "rate": 128,
+        "served": 1280,
+        "refused": 0,
+        "first_token_p50": 0.0244122225085448,
+        "first_token_p95": 0.046939624393417034,
+        "seconds_a_token_p50": 0.003225340666667473,
+        "tokens_a_second": 7918.920429105905,
+        "server_counted": 81920.0,
+        "server_first_token_mean": 0.02086207866668701,
+        "first_token_mean": 0.026823901191545475
+      },
+      {
+        "rate": 256,
+        "served": 2560,
+        "refused": 0,
+        "first_token_p50": 1.3478229158572503,
+        "first_token_p95": 2.8895680252389866,
+        "seconds_a_token_p50": 0.007429990079380952,
+        "tokens_a_second": 12527.132174129996,
+        "server_counted": 163840.0,
+        "server_first_token_mean": 0.08315232992172242,
+        "first_token_mean": 1.4161639224798706
+      }
+    ]
+  },
+  "big": {
+    "16 bits": {
+      "one_listener": 49.581754128149534,
+      "first": 0.030852615996991517,
+      "rows": [
+        {
+          "rate": 2,
+          "served": 100,
+          "refused": 0,
+          "first_token_p50": 0.060320201784634264,
+          "first_token_p95": 0.0703429198001686,
+          "seconds_a_token_p50": 0.021229185730171306,
+          "tokens_a_second": 109.19063626266697,
+          "server_counted": 6400.0,
+          "server_first_token_mean": 0.056929426193237306,
+          "first_token_mean": 0.05851988479917054
+        },
+        {
+          "rate": 4,
+          "served": 100,
+          "refused": 0,
+          "first_token_p50": 0.062052579516603146,
+          "first_token_p95": 0.07202968334968318,
+          "seconds_a_token_p50": 0.021370949492039572,
+          "tokens_a_second": 213.28339555810038,
+          "server_counted": 6400.0,
+          "server_first_token_mean": 0.059153203964233396,
+          "first_token_mean": 0.06098697425095452
+        },
+        {
+          "rate": 8,
+          "served": 100,
+          "refused": 0,
+          "first_token_p50": 0.06274242049767054,
+          "first_token_p95": 0.07339949695233372,
+          "seconds_a_token_p50": 0.022499276872997777,
+          "tokens_a_second": 407.7258219939098,
+          "server_counted": 6400.0,
+          "server_first_token_mean": 0.06073810577392578,
+          "first_token_mean": 0.06300636632593523
+        },
+        {
+          "rate": 16,
+          "served": 160,
+          "refused": 0,
+          "first_token_p50": 0.06958534677323769,
+          "first_token_p95": 0.08252317405276699,
+          "seconds_a_token_p50": 0.02496013379364047,
+          "tokens_a_second": 809.1264192251596,
+          "server_counted": 10240.0,
+          "server_first_token_mean": 0.06655830144882202,
+          "first_token_mean": 0.06957429151379983
+        },
+        {
+          "rate": 32,
+          "served": 320,
+          "refused": 0,
+          "first_token_p50": 0.07842595950933173,
+          "first_token_p95": 0.09317305877993931,
+          "seconds_a_token_p50": 0.027744691222208545,
+          "tokens_a_second": 1686.682106879287,
+          "server_counted": 20480.0,
+          "server_first_token_mean": 0.07286930084228516,
+          "first_token_mean": 0.07856127487846151
+        },
+        {
+          "rate": 64,
+          "served": 640,
+          "refused": 0,
+          "first_token_p50": 0.10331602708538412,
+          "first_token_p95": 0.13337379008953576,
+          "seconds_a_token_p50": 0.035696100603152967,
+          "tokens_a_second": 3340.547808489057,
+          "server_counted": 40960.0,
+          "server_first_token_mean": 0.09022114872932434,
+          "first_token_mean": 0.10374045167129112
+        },
+        {
+          "rate": 128,
+          "served": 1280,
+          "refused": 0,
+          "first_token_p50": 2.484881560674694,
+          "first_token_p95": 5.293112984345498,
+          "seconds_a_token_p50": 0.050023878285708,
+          "tokens_a_second": 4698.97270130563,
+          "server_counted": 81920.0,
+          "server_first_token_mean": 2.4683712005615233,
+          "first_token_mean": 2.492868796487238
+        }
+      ]
+    },
+    "8 bits": {
+      "one_listener": 72.57944702432978,
+      "first": 0.020160543997917557,
+      "rows": [
+        {
+          "rate": 2,
+          "served": 100,
+          "refused": 0,
+          "first_token_p50": 0.03606955859140726,
+          "first_token_p95": 0.04593353875679895,
+          "seconds_a_token_p50": 0.014036133587300327,
+          "tokens_a_second": 110.03627853665624,
+          "server_counted": 6400.0,
+          "server_first_token_mean": 0.03372313499450683,
+          "first_token_mean": 0.035215495681768516
+        },
+        {
+          "rate": 4,
+          "served": 100,
+          "refused": 0,
+          "first_token_p50": 0.040030639658652944,
+          "first_token_p95": 0.04651923733035801,
+          "seconds_a_token_p50": 0.014125641634896128,
+          "tokens_a_second": 216.57195390638535,
+          "server_counted": 6400.0,
+          "server_first_token_mean": 0.03756606101989746,
+          "first_token_mean": 0.03920770991971949
+        },
+        {
+          "rate": 8,
+          "served": 100,
+          "refused": 0,
+          "first_token_p50": 0.04109498677280499,
+          "first_token_p95": 0.04707759739176254,
+          "seconds_a_token_p50": 0.014287952095199015,
+          "tokens_a_second": 420.00632197226565,
+          "server_counted": 6400.0,
+          "server_first_token_mean": 0.03880064010620117,
+          "first_token_mean": 0.04066325201478321
+        },
+        {
+          "rate": 16,
+          "served": 160,
+          "refused": 0,
+          "first_token_p50": 0.04328585750045022,
+          "first_token_p95": 0.051199993078625994,
+          "seconds_a_token_p50": 0.014694972142890384,
+          "tokens_a_second": 847.0463429459102,
+          "server_counted": 10240.0,
+          "server_first_token_mean": 0.04068441390991211,
+          "first_token_mean": 0.04310954129616675
+        },
+        {
+          "rate": 32,
+          "served": 320,
+          "refused": 0,
+          "first_token_p50": 0.04788736336922739,
+          "first_token_p95": 0.057684143903316,
+          "seconds_a_token_p50": 0.015924119698447325,
+          "tokens_a_second": 1780.343502626312,
+          "server_counted": 20480.0,
+          "server_first_token_mean": 0.044194388389587405,
+          "first_token_mean": 0.04807654607926679
+        },
+        {
+          "rate": 64,
+          "served": 640,
+          "refused": 0,
+          "first_token_p50": 0.06280812935801805,
+          "first_token_p95": 0.0771248837809253,
+          "seconds_a_token_p50": 0.020402989476202664,
+          "tokens_a_second": 3545.723583814003,
+          "server_counted": 40960.0,
+          "server_first_token_mean": 0.05381033420562744,
+          "first_token_mean": 0.06247038021982689
+        },
+        {
+          "rate": 128,
+          "served": 1280,
+          "refused": 0,
+          "first_token_p50": 0.9838113355908717,
+          "first_token_p95": 2.4224910766679386,
+          "seconds_a_token_p50": 0.039512080952374073,
+          "tokens_a_second": 5891.404109265475,
+          "server_counted": 81920.0,
+          "server_first_token_mean": 1.0208494186401367,
+          "first_token_mean": 1.0470273727254522
+        }
+      ]
+    }
+  },
+  "big_reads": {
+    "16 bits": 14141277136,
+    "8 bits": 7615635944.0
+  },
+  "bits_per_byte": {
+    "ours": 0.4259566591738199,
+    "big": 0.5138791309880038
+  },
+  "eight_bit_gap": {
+    "nats": 0.009495708274756647,
+    "interval": [
+      0.0075484393164515495,
+      0.011496087536215782
+    ]
+  },
+  "dollars_a_million_tokens": {
+    "our model": 0.06527966142258745,
+    "the big model, 16 bits": 0.15474840477683824,
+    "the big model, 8 bits": 0.14579378009167496
+  },
+  "printed": [
+    "the card: NVIDIA L40S",
+    "our engine: 110 tokens a second for one listener, 4,137 for 64 at once",
+    "one token's pass takes 9.1 ms. Under the profiler the card works for 1.15 ms of a pass, on 634 jobs",
+    "200 unseen tokens, largest gap between vLLM's log chances and ours: 0.006597",
+    "the same gap between our code and itself with the faster multiply: 0.003846",
+    "prompts after which vLLM and our code write the same 128 tokens: 15 of 16",
+    "an answer parts from ours at its token 41, where the log chances of our two best tokens are 0.0010 apart",
+    "vLLM, one listener: first token after 8 ms, 786 tokens a second",
+    "vLLM, 16 requests a second: first token after 9 ms for half, 11 ms for 95 in 100, 634 tokens a second each, 910 in all",
+    "vLLM, 32 requests a second: first token after 10 ms for half, 13 ms for 95 in 100, 582 tokens a second each, 1,922 in all",
+    "vLLM, 64 requests a second: first token after 12 ms for half, 18 ms for 95 in 100, 470 tokens a second each, 3,838 in all",
+    "vLLM, 128 requests a second: first token after 24 ms for half, 47 ms for 95 in 100, 310 tokens a second each, 7,919 in all",
+    "vLLM, 256 requests a second: first token after 1,348 ms for half, 2,890 ms for 95 in 100, 135 tokens a second each, 12,527 in all",
+    "tokens written in the sweep: 317,440 by our count, 317,440 by the server's",
+    "at 128 requests a second the first token took 27 ms on average by our clock, 21 ms by the server's",
+    "at 256 requests a second the first token took 1,416 ms on average by our clock, 83 ms by the server's",
+    "this card reads 741 GB a second from its memory",
+    "our model reads 58 MB of weights for a token: at that speed, 12,732 tokens a second. vLLM gave one listener 786",
+    "the big model, 16 bits, one listener: 50 tokens a second",
+    "the big model, 16 bits, 2 requests a second: first token after 60 ms for half, 70 ms for 95 in 100, 47 tokens a second each, 109 in all",
+    "the big model, 16 bits, 4 requests a second: first token after 62 ms for half, 72 ms for 95 in 100, 47 tokens a second each, 213 in all",
+    "the big model, 16 bits, 8 requests a second: first token after 63 ms for half, 73 ms for 95 in 100, 44 tokens a second each, 408 in all",
+    "the big model, 16 bits, 16 requests a second: first token after 70 ms for half, 83 ms for 95 in 100, 40 tokens a second each, 809 in all",
+    "the big model, 16 bits, 32 requests a second: first token after 78 ms for half, 93 ms for 95 in 100, 36 tokens a second each, 1,687 in all",
+    "the big model, 16 bits, 64 requests a second: first token after 103 ms for half, 133 ms for 95 in 100, 28 tokens a second each, 3,341 in all",
+    "the big model, 16 bits, 128 requests a second: first token after 2,485 ms for half, 5,293 ms for 95 in 100, 20 tokens a second each, 4,699 in all",
+    "the big model, 8 bits, one listener: 73 tokens a second",
+    "the big model, 8 bits, 2 requests a second: first token after 36 ms for half, 46 ms for 95 in 100, 71 tokens a second each, 110 in all",
+    "the big model, 8 bits, 4 requests a second: first token after 40 ms for half, 47 ms for 95 in 100, 71 tokens a second each, 217 in all",
+    "the big model, 8 bits, 8 requests a second: first token after 41 ms for half, 47 ms for 95 in 100, 70 tokens a second each, 420 in all",
+    "the big model, 8 bits, 16 requests a second: first token after 43 ms for half, 51 ms for 95 in 100, 68 tokens a second each, 847 in all",
+    "the big model, 8 bits, 32 requests a second: first token after 48 ms for half, 58 ms for 95 in 100, 63 tokens a second each, 1,780 in all",
+    "the big model, 8 bits, 64 requests a second: first token after 63 ms for half, 77 ms for 95 in 100, 49 tokens a second each, 3,546 in all",
+    "the big model, 8 bits, 128 requests a second: first token after 984 ms for half, 2,422 ms for 95 in 100, 25 tokens a second each, 5,891 in all",
+    "the big model, 16 bits: a token reads 14.1 GB, so memory allows 52 tokens a second. One listener got 50",
+    "the big model, 8 bits: a token reads 7.6 GB, so memory allows 97 tokens a second. One listener got 73",
+    "200 unseen stories: our model 0.426 bits per byte, the big model 0.514, and at 8 bits +0.0095 nats a token (95% interval +0.0075 to +0.0115)",
+    "a million tokens written, our model: $0.065",
+    "a million tokens written, the big model, 16 bits: $0.155",
+    "a million tokens written, the big model, 8 bits: $0.146"
+  ]
+}

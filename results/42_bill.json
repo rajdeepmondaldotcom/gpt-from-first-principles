@@ -1,0 +1,38 @@
+{
+  "what": "What lessons 41 and 42 cost on 18 November 2026, in us-east-1: each machine's hours, from the launch time and end time AWS reports, times its on-demand price. Worked out by hand from those times, not printed by a lesson's script. The L40S machine went on to later work, so its row ends when lesson 42's run did.",
+  "machines": [
+    {
+      "machine": "g6e.xlarge",
+      "cards": "one L40S card",
+      "dollars_an_hour": 1.861,
+      "from_utc": "06:17:29",
+      "to_utc": "11:10:00",
+      "hours": 4.875277777777778,
+      "dollars": 9.072891944444445,
+      "for": "lesson 41 on one card, then lesson 42"
+    },
+    {
+      "machine": "g6.12xlarge",
+      "cards": "four L4 cards",
+      "dollars_an_hour": 4.602,
+      "from_utc": "08:23:24",
+      "to_utc": "08:53:12",
+      "hours": 0.49666666666666665,
+      "dollars": 2.28566,
+      "for": "lesson 41's four-card timing"
+    },
+    {
+      "machine": "g5.xlarge",
+      "cards": "one A10G card",
+      "dollars_an_hour": 1.006,
+      "from_utc": "06:29:59",
+      "to_utc": "07:24:02",
+      "hours": 0.9008333333333334,
+      "dollars": 0.9062383333333334,
+      "for": "building and rehearsing lesson 42's script"
+    }
+  ],
+  "disk_dollars": 0.1374855403348554,
+  "total_dollars": 12.402275818112633,
+  "printed": []
+}

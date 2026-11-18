@@ -63,12 +63,19 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | nudging the stream | intervention. Close relatives are activation patching and steering |
 | reading an earlier stream through the final layer | logit lens |
 | fitting the probe to shuffled boards | control task |
+| a graphics card | GPU. CUDA is NVIDIA's name for programming one, and PyTorch's name for the device |
+| workers adding their slopes up among themselves | all-reduce. NCCL is NVIDIA's library for it between cards |
+| the card's faster 32-bit multiply | TF32 |
+| a pass recorded once and replayed as one job | CUDA graph |
+| the rate at which the server stops keeping up | the knee of the latency curve, or saturation |
+| what a token reads over what memory moves in a second | the memory-bandwidth bound on decode speed |
 
 ## The terms
 
 - **95% interval**: A range for a number measured on a sample. For a mean, the middle 95% of the means found by drawing again from the data 1,000 times. For a pass rate, the exact range from the binomial tails. [Lesson 24](lessons/24-evaluation.md)
 - **Adam**: Keeps running averages of each parameter's slope and squared slope, and steps by rate × average slope / square root of average squared slope. [Lesson 11](lessons/11-optimizers.md)
 - **AdamW**: Adam plus weight decay, applied to weight grids and not to biases, gains or shifts. [Lesson 11](lessons/11-optimizers.md)
+- **all-reduce**: An exchange among workers: each gives a tensor and each gets back the sum of everyone's. [Lesson 41](lessons/41-train-on-a-gpu.md)
 - **attention**: Each token's result is the weighted sum of values, with weights from softmax of its query's dot products with the keys. [Lesson 6](lessons/06-attention.md)
 - **attention weights**: Softmax of a token's scores, summing to 1. Worked out afresh for each text and not parameters. [Lesson 6](lessons/06-attention.md)
 - **autograd** (automatic differentiation): Code that works out the loss once, lets each number remember what it was made from, then walks backwards to get each slope. [Lesson 2](lessons/02-gradients.md)
@@ -87,6 +94,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **budget**: The bytes of cache the engine may hold. A request joins the batch only if the rows together still fit. [Lesson 32](lessons/32-batching.md)
 - **byte**: A number from 0 to 255. A computer stores text as bytes. [Lesson 5](lessons/05-tokens.md)
 - **byte pair encoding** (BPE): Make the most frequent pair of neighbouring tokens a new token, replace it everywhere, and repeat until the vocabulary is the size you want. [Lesson 5](lessons/05-tokens.md)
+- **card** (graphics card): A graphics chip on a board of its own, with its own memory. A rented machine has one or several. [Lesson 41](lessons/41-train-on-a-gpu.md)
 - **causal mask**: The rule that each token's result depends only on what came before it. [Lesson 7](lessons/07-causal-multi-head-self-attention.md)
 - **chain rule**: Slopes multiply along a path from a number to the loss, and add when the number reaches the loss by two paths. [Lesson 2](lessons/02-gradients.md)
 - **chance** (probability): How likely something is, as a number from 0 to 1. [Lesson 1](lessons/01-predict-the-next-token.md)
@@ -174,6 +182,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **percentile**: The 95th percentile of a set of waits is the wait that 1 listener in 20 went over. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **piece**: The keys and values of a run of 16 tokens in the store of beginnings, filed under the whole text up to its end. [Lesson 33](lessons/33-prefix-caching.md)
 - **place** (position): Where a token stands in the text, counted from the start. [Lesson 8](lessons/08-position.md)
+- **profiler**: A tool that records each job a program hands the card and how long the card works on it. [Lesson 42](lessons/42-serve-on-a-gpu.md)
 - **prefix caching**: Keeping the keys and values of a beginning that many prompts share, so that each later request reads only what is new. [Lesson 33](lessons/33-prefix-caching.md)
 - **probe**: One linear layer trained to read something, here the board, out of the stream of a frozen model. [Lesson 40](lessons/40-the-board-in-its-head.md)
 - **quantization**: Storing each weight as a small whole number, with one scale for its row. [Lesson 34](lessons/34-quantization.md)
@@ -229,6 +238,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **training text**: The part of the text a model learns from. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **unseen text**: The part held back from training, on which the loss is reported. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **usual piece**: The piece a square holds most often: the lazy guess that a probe has to beat. [Lesson 40](lessons/40-the-board-in-its-head.md)
+- **vLLM**: An open engine for serving models on graphics cards. It shares each pass among the requests inside, as lesson 32's engine does. [Lesson 42](lessons/42-serve-on-a-gpu.md)
 - **value**: What a token hands over when chosen. [Lesson 6](lessons/06-attention.md)
 - **vector**: A row of numbers. [Lesson 6](lessons/06-attention.md)
 - **vocabulary**: The set of different tokens. [Lesson 1](lessons/01-predict-the-next-token.md)
