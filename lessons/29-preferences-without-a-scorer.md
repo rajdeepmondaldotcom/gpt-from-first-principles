@@ -8,7 +8,7 @@ The scorer of lesson 28 is a second model to train and keep, and training agains
 
 A pair says that for one order, story A is better than story B. Training should then make A more likely and B less likely. Our model gives each text a chance, so "more likely" has an exact meaning: the log of A's chance should rise and the log of B's should fall.
 
-We cannot compare the two log chances as they stand. They differ for reasons that say nothing about which story is better: each token lowers a story's log chance, so length alone can put one story far below another. So we compare how far each has moved since training began. Keep a frozen copy of the model, made before this training starts, and call it the reference. A long story is unlikely under both, and the difference between them cancels its length.
+We cannot compare the two log chances as they stand. They differ for reasons that say nothing about which story is better: each token lowers a story's log chance, so length alone can put one story far below another. So we compare how far each has moved since training began. Keep a frozen copy of the model, made before this training starts, and call it the reference. A long story is unlikely under both, and the difference between them cancels most of what length does.
 
 For each story, ask how much more likely our model makes it than the reference does: the log of its chance under our model, minus the log of its chance under the reference. Call that the story's gain. Then for a pair,
 
@@ -23,7 +23,7 @@ We want the lead to grow, and the loss is lesson 28's bet again, with the lead t
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
-Its authors derive the loss from lesson 28's setting with one addition, a penalty for drifting from the reference. In the derivation beta weighs that penalty: a larger beta holds the model nearer the reference. Let the scorer's number for a story be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
+Its authors start from lesson 28's aim with a penalty added: the scorer's average number, minus beta times the average gain of the stories the model writes. In the derivation beta weighs that penalty: a larger beta holds the model nearer the reference. Let the scorer's number for a story be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
 
 ## By hand
 
@@ -116,7 +116,7 @@ ln 2 = 0.693. The model starts as the reference, so each lead is 0 and each bet 
 
 <details><summary>Our model makes both stories of a pair 5 nats more likely than the reference does. What is the lead?</summary>
 
-0. Both gains are 5, and the lead is their difference. The loss rewards the better story for gaining on the worse one, and nothing else.
+0. Both gains are 5, and the lead is their difference.
 </details>
 
 <details><summary>Lesson 25's loss keeps pulling on a story however likely it is. What does this loss do with a pair already far apart?</summary>

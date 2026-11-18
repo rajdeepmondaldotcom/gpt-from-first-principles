@@ -46,6 +46,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | the bands that pick near-repeats | locality-sensitive hashing, LSH |
 | workers that each take a share of the batch and share their slopes | data parallelism. PyTorch's version is DDP |
 | the optimizer's averages shared out among workers | sharding the optimizer state, the first stage of ZeRO. With the slopes and the weights shared out too: FSDP |
+| each worker getting the summed slopes for its own share, then everyone getting the stepped weights | reduce-scatter, then all-gather. Together they move the bytes of one all-reduce |
 | a layer's hidden units dealt among workers | tensor parallelism. Giving each chip some of the blocks is pipeline parallelism |
 | writing one token at a time, each from those before it | autoregressive generation |
 | top-p | nucleus sampling |
@@ -155,6 +156,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **encoding**: Turning text into token ids. [Lesson 5](lessons/05-tokens.md)
 - **end token**: An extra token that marks where a document ends. It never comes out of ordinary text. [Lesson 5](lessons/05-tokens.md)
 - **engine**: The code that takes requests in and writes their tokens. In lessons 37 and 42, any program that runs a model's arithmetic, such as Apple's MLX or vLLM. [Lesson 31](lessons/31-latency-and-throughput.md)
+- **entropy**: The loss of a text's own counted table on that text. No table scores lower. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **fine-tuning**: Training a trained model further on new text. [Lesson 25](lessons/25-fine-tuning.md)
 - **fingerprint**: A short number worked out from a document's text, the same for the same text. [Lesson 18](lessons/18-data.md)
 - **floor**: The loss that neither the model-size term nor the token-count term removes. [Lesson 19](lessons/19-how-big-should-it-be.md)
@@ -173,6 +175,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **hidden units**: The bent numbers between a model's two linear layers. [Lesson 4](lessons/04-a-neural-language-model.md)
 - **keep chance**: In speculative decoding, the chance that a drafted token is kept: 1 where the big model gives it at least the draft's chance, and p / q otherwise. [Lesson 35](lessons/35-speculative-decoding.md)
 - **key**: What a token offers, made from its embedding by a linear layer. [Lesson 6](lessons/06-attention.md)
+- **KL divergence**: What another table loses on a text beyond the text's entropy. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **KV cache**: The key and value of each token read so far, kept in each block so a new token is run alone. [Lesson 23](lessons/23-the-kv-cache.md)
 - **language model**: A model that is given some text and says how likely each possible next piece is. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **latency**: The waits a listener feels: the time to the first token, and the gap between tokens. [Lesson 31](lessons/31-latency-and-throughput.md)
@@ -252,6 +255,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **slope**: The rate at which the loss moves when one number it is made from rises a little. [Lesson 2](lessons/02-gradients.md)
 - **softmax**: Raise e to the power of each score, then divide by the row's total, giving positive results that sum to 1. [Lesson 2](lessons/02-gradients.md)
 - **speculative decoding**: A small model guesses several tokens, and the big model checks them all in one pass and keeps its own chances exactly. [Lesson 35](lessons/35-speculative-decoding.md)
+- **split** (of a layer): Dealing a layer's hidden units among workers, each holding their rows and columns, so that the parts add up to the result. [Lesson 43](lessons/43-split-the-model.md)
 - **spread** (standard deviation): The usual distance of a set of numbers from their average. Lesson 14 divides by one less than their count, because the average was worked out from the same numbers. [Lesson 6](lessons/06-attention.md)
 - **standard error**: The spread of a set of measurements divided by the square root of how many there are. Lesson 14 calls it the error. [Lesson 14](lessons/14-running-an-experiment.md)
 - **stochastic gradient descent**: Learning from random batches in place of the whole text. [Lesson 3](lessons/03-tensors.md)

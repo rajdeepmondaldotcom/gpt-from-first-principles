@@ -135,7 +135,7 @@ LLAMA = {
 def load_llama(model, path):
     """Copy the weights of a Llama-format file into `model`, name by name."""
     # shortcut: the file must fit this model: SwiGLU 8/3 of the width, one tied grid for tokens
-    # and scores, 1e-6 in RMSNorm, a rotary base of 10000. Meta's released Llamas differ in each.
+    # and scores, 1e-6 in RMSNorm, a rotary base of 10000. Each of Meta's Llamas differs in some.
     state = {}
     for name, tensor in read_safetensors(path).items():
         for theirs, ours in LLAMA.items():

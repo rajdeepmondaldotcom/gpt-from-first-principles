@@ -8,7 +8,7 @@ Lesson 32's engine reads each prompt from its first token, even when the request
 
 Many prompts begin alike. A service puts the same instructions in front of each question. A listener of our storyteller who asks what happens next sends back the whole story so far, with one sentence added.
 
-Lesson 23's cache holds a key and a value for each token read. Lesson 7's mask means that a token's key and value depend only on the tokens before it. So two prompts that agree on their first 160 tokens have the same keys and values for those 160 tokens, whatever comes after. We read them once and keep them, and each later request copies them and reads only what is new.
+Lesson 23's cache holds a key and a value for each token read. Lesson 7's mask means that a token's key and value depend only on the tokens before it. So two prompts that agree on their first 100 tokens have the same keys and values for those 100 tokens, whatever comes after. We read them once and keep them, and each later request copies them and reads only what is new.
 
 We keep the cache in pieces of 16 tokens. Each piece is filed under the whole text from the first token to the end of that piece. A new prompt looks up its first 16 tokens, then its first 32, then its first 48, and stops at the first piece that is not there.
 

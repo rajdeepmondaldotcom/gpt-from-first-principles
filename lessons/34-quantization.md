@@ -20,7 +20,7 @@ We measure what the model loses: the loss on 500 unseen stories, before and afte
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading fewer bytes removes no wait. And we turn the small numbers back into 32-bit numbers each time a layer runs, which is extra work. Programs built for speed multiply them as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
+We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading the weights at memory's full speed takes an eighth of each token's time. And we turn the small numbers back into 32-bit numbers each time a layer runs, which is extra work. Programs built for speed multiply them as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
 
 ## By hand
 
@@ -71,7 +71,7 @@ def pack(numbers):
         return x @ (numbers * self.scale).T
 ```
 
-This is the layer that stands in for a linear layer, with lesson 4's `.T`. `unpack` undoes `pack`, and `shrink` puts one such layer in place of each linear layer inside the blocks. The grid of token rows stays at 32 bits: it is 4.2 MB of the 21.5.
+This is the layer that stands in for a linear layer, with lesson 6's `.T`. `unpack` undoes `pack`, and `shrink` puts one such layer in place of each linear layer inside the blocks. The grid of token rows stays at 32 bits: it is 4.2 MB of the 21.5.
 
 ## The proof
 
@@ -87,7 +87,7 @@ uv run pytest tests/test_quantize.py
 - The numbers of a 256 by 256 grid take a quarter of the bytes at 8 bits and an eighth at 4. The scales add 1,024 bytes.
 - A shrunk model's scores move less at 8 bits than at 4, and by under 0.005 at 8.
 
-Predict before you run: the blocks' grids are 17.3 MB of the model's 21.5 MB. About how large is the whole model with those grids at 8 bits?
+Predict before you run: a step at 4 bits is 18 times as coarse as at 8. Will the loss rise about 18 times as much at 4 bits as at 8, or more?
 
 ```bash
 uv run python -m gpt.quantize
@@ -103,7 +103,7 @@ uv run python -m gpt.quantize
 
 Timings are from an M4 laptop, and they move from run to run.
 
-At 8 bits the model takes 8.6 MB where it took 21.5, and its loss on 500 unseen stories rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
+At 8 bits the model takes 8.6 MB where it took 21.5, and its loss rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
 Writing 200 tokens with lesson 23's loop, both shrunk models are slower: 393 and 168 tokens a second, against 643. We look for where the time goes in lesson 37.
 
@@ -115,7 +115,12 @@ The model is smaller, and it wrote slower: 393 tokens a second against 643. Each
 
 <details><summary>Prediction</summary>
 
-17.3 / 4 = 4.3 MB for the grids, plus the 4.2 MB that stays at 32 bits: about 8.6 MB with the scales. The whole model shrinks 2.5 times.
+More: +0.0303 nats against +0.0001, over 200 times as much.
+</details>
+
+<details><summary>The blocks' grids are 17.3 MB of the model's 21.5 MB. About how large is the whole model with those grids at 8 bits?</summary>
+
+17.3 / 4 + 4.2 = 8.5 MB, and 8.6 with the scales.
 </details>
 
 <details><summary>A row's largest weight is 0.5. How far can one of its weights move at 8 bits, and at 4?</summary>

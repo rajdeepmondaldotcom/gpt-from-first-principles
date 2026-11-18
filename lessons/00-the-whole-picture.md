@@ -43,7 +43,7 @@ One request, followed through the finished storyteller. The listener types Mira,
 | 3 | The engine checks its memory. This request may come to need (20 + 120) × 6,144 = 860,160 bytes | 23, 32 |
 | 4 | The model reads the 20 tokens in one pass through 6 blocks. In each, each token chooses what to read from the tokens before it | 6 to 10, 15, 16 |
 | 5 | The keys and values of those 20 tokens are kept, so they are never worked out again | 23 |
-| 6 | The last place gives 4,097 scores, one for each token that could come next | 10 |
+| 6 | The last place gives one score for each token that could come next | 10 |
 | 7 | The scores become chances, and one token is drawn | 2, 22 |
 | 8 | That token goes back in alone. Other listeners' tokens ride the same pass | 23, 32 |
 | 9 | Tokens become bytes and bytes become text. Half a character waits for its other half | 36 |
@@ -91,7 +91,7 @@ You have built none of it yet. Lesson 1 starts with a text file and a loop that 
 
 Each lesson ends with questions like these. Guess each one in writing, and then look.
 
-Predict before you run: the model gives a score to each token that could come next. From the table above, how many scores is that?
+Predict before you run: the model has 4,096 tokens for pieces of text. How many scores does the last place give?
 
 <details><summary>Answer</summary>
 

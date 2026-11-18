@@ -42,24 +42,26 @@ Time each rebuild. Stop when attention takes under 20 minutes and each of the ot
 Write three one-page designs. Each page has the same five parts: the load, the sum for one machine, the number of machines, what fails first, and what you would measure in the first week.
 
 - A service that answers 100 requests a second with a first token inside 200 ms. Use lesson 31's measures and lesson 32's batching to say how many machines it takes.
-- A training run on 64 graphics chips. Use lesson 17's count of memory and arithmetic, and lesson 20's shared slopes, to say what each chip holds and what travels between them.
+- A training run on 64 graphics chips. Use lesson 17's count of memory and arithmetic, and lessons 20 and 43's ways of sharing slopes, averages and layers, to say what each chip holds and what travels between them.
 - A harness that scores a new model against the last one. Use lesson 24: the split, the leak check, the interval, the paired difference.
 
 Then give the page to someone for ten minutes with one instruction, to find the number that is wrong, and fix what they find.
 
-Then do four sums at the size labs work at, on paper, timed and out loud. NVIDIA lists its H100 card with 80 GB of memory, read at 3.35 TB a second, and 1,979 million million multiplies and adds a second at 16 bits "with sparsity", which counts on some weights being zero. NVIDIA's page for the L40S lists half as much without, so count half: 990.
+Then do five sums at the size labs work at, on paper, timed and out loud. NVIDIA lists its H100 card with 80 GB of memory, read at 3.35 TB a second, and 1,979 million million multiplies and adds a second at 16 bits "with sparsity", which counts on some weights being zero. NVIDIA's L40S page lists both figures, and the one without sparsity is half the other, so count half of the H100's: 990.
 
 1. A model of 70 billion parameters trains with AdamW. What does lesson 17's count say it holds, and what does that do to lesson 20's plan of a whole copy for each worker?
 2. That model has 80 blocks and 8 key heads of 128 numbers. What does lesson 23's cache hold for 32 listeners at a context of 128,000 tokens, in 16 bits?
 3. By lesson 31's sum, what is the most tokens a second one listener can get from a model of 30 billion parameters in 16 bits on one card?
 4. How many days do 1,000 cards take to train the 70 billion parameters on a trillion tokens, if each reaches 40% of the 990?
+5. How many listeners must share each pass of a 16-bit model on the H100 before arithmetic, not reading, sets the pace?
 
 <details><summary>Answers</summary>
 
 1. 70 × 10⁹ × 16 bytes = 1,120 GB. No card holds a copy, so the weights, slopes and averages must themselves be split. Lesson 43 shares out the averages and one layer, and [MAP.md](MAP.md) has two rows on the rest, under Training.
-2. 2 × 80 × 8 × 128 × 2 = 327,680 bytes a token. Times 128,000 tokens and 32 listeners, that is 1.34 TB: the memory of 17 cards.
+2. 2 × 80 × 8 × 128 × 2 = 327,680 bytes a token. Times 128,000 tokens and 32 listeners, that is 1.34 TB: the memory of 17 cards. Against 140 GB of weights, the cache is nearly ten times larger, so at this length it is the cache that fills the cards.
 3. The weights are 60 GB. 3,350 / 60 = 56 tokens a second.
 4. 6 × 7 × 10¹⁰ × 10¹² = 4.2 × 10²³ multiplies and adds, by lesson 17's count. The cards do 1,000 × 0.4 × 990 × 10¹² = 3.96 × 10¹⁷ a second. That is 1.06 million seconds: 12 days.
+5. Each weight takes 2 bytes and gives each listener one multiply and one add, so each byte read gives each listener one multiply and add. 990 / 3.35 is about 300 listeners.
 </details>
 
 ## 4. Break a distributed system, then mend it

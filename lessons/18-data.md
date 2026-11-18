@@ -8,12 +8,12 @@ Shakespeare is one megabyte, and lesson 13's model learned a tenth of it by hear
 
 Our text is TinyStories: short stories in simple words, written by a large language model for the vocabulary of a small child. The whole set is 2.2 GB. We take the first 209,715,200 bytes (200 × 2²⁰), about 256,000 stories, each followed by lesson 5's end token.
 
-The model trains on junk and repeats like the rest of the text. We take four steps before training.
+A model learns junk and repeats too, so we clean in four steps.
 
 1. Clean each document. One character can be stored two ways: `é` as one character, or as `e` followed by a separate accent. We rewrite each document so that each character has one form. Then we drop junk: a fragment under 100 characters, a document with broken bytes in it, and a document that is less than 80% letters and spaces.
 2. Drop repeats. A document that occurs twice counts twice in training. It can also land once in the training text and once in the unseen text, and then the unseen text is no longer unseen. To find repeats without comparing texts, give each document a fingerprint: a short number worked out from its text, the same for the same text. We take the fingerprint of the text in lowercase with single spaces, and keep the first document with each fingerprint.
 3. Drop near-repeats. Change one word and the fingerprint changes. So cut each document into runs of five words in a row. The overlap of two documents is the share of their runs that both have: 1 for the same text, near 0 for different stories. We drop a document whose overlap with an earlier one is 0.8 or more. Comparing each pair of 256,000 documents takes 33 billion comparisons, and MinHash skips most of them. Scramble each run into a number and keep the smallest. Two documents get the same smallest number with a chance equal to their overlap. Pool the runs of both documents: each is equally likely to get the smallest number of the pool, and the two documents agree exactly when that winning run is one they share. We scramble 32 ways and group each document's 32 numbers into 8 bands of 4. Only two documents that agree on a whole band get a real comparison.
-4. Split by fingerprint. A document goes to the unseen text when its fingerprint leaves 0 after division by 100. The document's own text decides, so the same text can never be on both sides, and adding documents later moves none of them.
+4. Split by fingerprint. A document goes to the unseen text when the fingerprint of its text as written leaves 0 after division by 100. The document's own text decides, so the same text can never be on both sides, and adding documents later moves none of them.
 
 Then the text becomes tokens. We train lesson 5's tokenizer on 5 MB of the training text, up to 4,096 tokens, encode each story with the end token after it, and write the ids to a file, 4 bytes each. Training maps the file into memory, so the machine loads only the parts a batch touches.
 
@@ -76,6 +76,8 @@ uv run pytest tests/test_data.py
 - With the bar raised from 0.8 to 1.0, a document with one word added is kept.
 - Batches read from the file on disk equal batches from memory.
 
+Predict before you run: how many repeats and near-repeats will the 256,018 stories hold?
+
 ```bash
 uv run python -m gpt.data
 ```
@@ -90,17 +92,18 @@ val: 2,525 documents, 2.0 MB, 518,721 tokens, 3.93 bytes per token
 longest tokens: [' competitive', ' adventurous', ' disappointed', ' enthusiastic', ' compassionate', ' uncomfortable']
 ```
 
-The slice was already clean. Text gathered from the web is messier: FineWeb, below, reports what each of its filters removed.
-
 ## What it still cannot do
 
 We have 52 million tokens and a model whose size we can set. We do not know which size to train. A small model can take many steps in the time we have. A large one can take few.
 
 ## Check yourself
 
-Predict before you run: two documents have an overlap of 0.5. How often do they agree on at least one of the 8 bands?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+None of either, and 14 pieces of junk. Web text is messier (FineWeb, below).
+</details>
+
+<details><summary>Two documents have an overlap of 0.5. How often do they agree on at least one of the 8 bands?</summary>
 
 0.5⁴ = 0.0625 for one band. They miss all eight with a chance of 0.9375⁸ = 0.60, so they are compared 40% of the time. We drop a document at an overlap of 0.8 or more, so a pair at 0.5 need not be compared.
 </details>

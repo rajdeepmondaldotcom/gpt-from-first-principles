@@ -104,7 +104,7 @@ My good my wife knee; most kill my our own.
 And off your worshood of him at
 ```
 
-The model runs on 256 tokens, and it reads them worse: 1.532 nats at 64 tokens, 1.869 at 128 and 2.393 at 256. It trained on distances up to 63 and never met a longer one. To read long text well, the model has to train on it.
+The model runs on 256 tokens, and it reads them worse: 1.532 nats at 64 tokens, 1.869 at 128 and 2.393 at 256. It trained on distances up to 63 and never met a longer one.
 
 The rest of the model is still 2019's: layer normalization, a GELU MLP, and a key and value head for each query head.
 
