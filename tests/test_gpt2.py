@@ -250,3 +250,14 @@ def test_our_model_runs_gpt2s_weights_and_gives_gpt2s_scores():
     assert scores.argmax(dim=-1).tolist() == reference["argmax"]
     ours = scores[-1, reference["check"]]
     assert torch.allclose(ours, torch.tensor(reference["last"]), atol=1e-4)
+
+
+@pytest.mark.reference
+@pytest.mark.skipif(not WEIGHTS.exists(), reason="download GPT-2's weights first; see lesson 10")
+def test_the_weight_file_also_holds_a_mask_for_each_block_which_is_why_it_is_548_mb():
+    tensors = read_safetensors(WEIGHTS)
+    masks = [t for name, t in tensors.items() if name.endswith(".attn.bias")]
+    assert len(masks) == 12 and all(t.numel() == 1024 * 1024 for t in masks)
+    rest = sum(t.numel() for name, t in tensors.items() if not name.endswith(".attn.bias"))
+    assert rest == 124_439_808  # the parameters, at 4 bytes each: 498 MB
+    assert WEIGHTS.stat().st_size // 10**6 == 548

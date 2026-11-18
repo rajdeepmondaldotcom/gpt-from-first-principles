@@ -18,11 +18,11 @@ Next we count the arithmetic, as multiplies and adds of single numbers. The usua
 
 Attention adds work of its own. Each token scores each key and then mixes each value: 4 × context × width for each block. In our model that is 131,072 a token against 1,588,480 for the weights, 8% on top.
 
-A training step runs forward and then backward. For a layer `Y = X @ W`, the pass back does two multiplies the size of the forward one: Y's slopes `@ W.T` give X's slopes, and `X.T @` Y's slopes give W's. So we count a step as three forward passes, about 6 multiplies and adds for each weight and each token. The clock does not follow the count: in the run below a step takes 3.3 times as long as a forward pass on the processor, and 4.5 times on the graphics chip.
+A training step runs forward and then backward. For a layer `Y = X @ W`, the pass back does two multiplies the size of the forward one: Y's slopes `@ W.T` give X's slopes, and `X.T @` Y's slopes give W's. So we count a step as three forward passes, about 6 multiplies and adds for each weight and each token.
 
 Divide the work by the machine's speed and you have the time. This Mac's graphics chip trains a model of 5 million parameters, the size lesson 19 will pick, at 326 billion multiplies and adds a second.
 
-Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when the speed of reading memory sets the speed of writing on large models.
+Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when reading memory sets the pace on large models.
 
 ## By hand
 
@@ -71,6 +71,8 @@ uv run pytest tests/test_cost.py
 - What a step keeps doubles when the batch doubles. When the context doubles it grows between 2 and 4 times: the layer results double and each grid of scores grows four times.
 - Attention worked out in tiles of 1, 3 or 8 rows equals attention all at once.
 
+Predict before you run: the count makes a step three forward passes. Will the clock say three times as long?
+
 ```bash
 uv run python -m gpt.cost
 ```
@@ -100,9 +102,12 @@ Lesson 13's model learned 100,000 characters of Shakespeare by heart, with under
 
 ## Check yourself
 
-Predict before you run: GPT-2 has 124,439,808 parameters. How much memory do its weights, slopes and two averages take in training?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No: 3.3 times on the processor and 4.5 on the graphics chip. The clock does not follow the count.
+</details>
+
+<details><summary>GPT-2 has 124,439,808 parameters. How much memory do its weights, slopes and two averages take in training?</summary>
 
 16 bytes each: 1,991,036,928 bytes, about 2 GB, before anything kept for the backward pass.
 </details>

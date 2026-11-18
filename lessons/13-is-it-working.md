@@ -15,11 +15,11 @@ A check is a fact that holds for a healthy run and fails for a broken one. We ru
 - The loop can learn one batch by heart. If the loss stays up, the loop is broken: slopes are not reaching the weights, or old slopes are piling up.
 - Each grid of weights moves a little on each step. Measure how far a grid moved as a share of its own size. A share of 0 means the optimizer never got that grid. Our check fails a share above 2%.
 
-The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more. Later steps are smaller: lesson 11 showed that a slope which varies from batch to batch has an average smaller than its usual size.
+The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more. By lesson 11's rule, a slope that varies from batch to batch has an average smaller than its usual size, so later steps move a weight by less than the rate.
 
 A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and we say a model with a large gap overfits. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
 
-Lesson 11's weight decay is one cure. Dropout is the other. While training, dropout sets each number a layer adds to the residual stream to 0 with a fixed chance and divides the rest by the chance of being kept, which keeps their average the same over many passes. The idea, from the paper linked below, is that a model which cannot count on any one number has to spread what it learns. After training we switch dropout off and use every number.
+Lesson 11's weight decay is one cure. Dropout is another. While training, dropout sets each number a layer adds to the residual stream to 0 with a fixed chance and divides the rest by the chance of being kept, which keeps their average the same over many passes. The idea, from the paper linked below, is that a model which cannot count on any one number has to spread what it learns. After training we switch dropout off and use every number.
 
 ## By hand
 
@@ -86,7 +86,9 @@ A healthy model passes each check. Then the test plants seven bugs, and each tur
 | Only the blocks handed to the optimizer | A grid did not move |
 | Slopes never cleared | One batch is not learned by heart |
 
-With dropout on, two passes give different results. Switched off, the model gives the result it gave before. It reaches both layers that add into the stream.
+With dropout on, two passes give different results. Switched off, the model gives the result it gave before. Dropout reaches both layers that add into the stream.
+
+Predict before you run: the plain run reads a tenth of the text, with no dropout and no decay. Will it beat lesson 1's counted bigram, 2.482 nats, on unseen text?
 
 ```bash
 uv run python -m gpt.checks
@@ -107,9 +109,12 @@ A run can pass each check after a change that did not help. The output above com
 
 ## Check yourself
 
-Predict before you run: a model has a vocabulary of 1,025 tokens and good starting weights. What is its first loss?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No. It scores 3.648, worse than the bigram and only 0.526 nats better than knowing nothing, ln 65 = 4.174.
+</details>
+
+<details><summary>A model has a vocabulary of 1,025 tokens and good starting weights. What is its first loss?</summary>
 
 About ln 1,025 = 6.93 nats.
 </details>
@@ -117,11 +122,6 @@ About ln 1,025 = 6.93 nats.
 <details><summary>The loss on the training text is 0.5 nats and on unseen text 3.6. Which tool do you reach for, and what would a check from this page say?</summary>
 
 Dropout and weight decay, or more text. Each check would pass: the run is healthy and the model is storing its text.
-</details>
-
-<details><summary>From lesson 1: the plain run scores 3.648 nats on unseen text. What does a model that knows nothing score there, and what does that say about the plain run?</summary>
-
-ln 65 = 4.174 nats. After 3,000 steps the plain run is half a nat better than knowing nothing, on text it has not seen.
 </details>
 
 Go deeper:

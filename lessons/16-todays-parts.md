@@ -8,7 +8,7 @@ Lesson 15's model still has three parts from 2019: layer normalization, the GELU
 
 RMSNorm replaces layer normalization. Lesson 9's normalization subtracts a vector's mean, divides by its spread, then applies a gain and a shift. RMSNorm has two steps: it divides the vector by the root of the mean of its squares, then applies a gain. It subtracts no mean and adds no shift.
 
-SwiGLU replaces the MLP. Lesson 9's MLP widens, bends and narrows. SwiGLU widens twice, with two separate grids. One result passes through a bend and is multiplied, entry by entry, with the other. It scales each entry of the other, and can shrink it to 0 or flip its sign. Then one grid narrows the product. The bend is called SiLU: x times sigmoid(x), where sigmoid(x) = 1 / (1 + e to the -x) squashes any number into the range 0 to 1.
+SwiGLU replaces the MLP. Lesson 9's MLP widens, bends and narrows. SwiGLU widens twice, with two separate grids. One result passes through a bend and is multiplied, entry by entry, with the other. The bent result scales each entry of the other, and can shrink it to 0 or flip its sign. Then one grid narrows the product. The bend is called SiLU: x times sigmoid(x), where sigmoid(x) = 1 / (1 + e to the -x) squashes any number into the range 0 to 1.
 
 Three grids cost more than two, so we make each narrower: 8/3 of the width in place of 4 times. Three grids at 8/3 hold as many weights as two at 4: 3 × 8/3 = 2 × 4. At a width of 128 that is 130,944 parameters against the old 131,712, which included 640 biases.
 
@@ -18,7 +18,7 @@ The MLP's linear layers also lose their biases, as attention's did in lesson 15.
 
 That is the layout of Llama, a family of open models from Meta. Hugging Face's `transformers` library has an implementation. We used it to build a tiny one with random weights: 2 blocks, a width of 48, 4 heads, 2 key heads and a vocabulary of 64 tokens. We saved its weights and the scores it gives for 40 random tokens. Our model, loaded with those weights, picks the same top token at each of the 40 places, and its 64 scores at the last place match to 0.00001.
 
-Meta's released Llamas would not load as they are. Our code hard-codes three settings that they set differently: the width of SwiGLU, the small number inside RMSNorm, and the base of the rotary speeds. They also keep a separate grid for the scores.
+Meta's released Llamas would not load as they are. Our code hard-codes three settings: the width of SwiGLU, the small number inside RMSNorm, and the base of the rotary speeds. Llama 2 sets the first two differently and Llama 3.2 all three. Llama 2 also keeps a separate grid for the scores.
 
 ## By hand
 

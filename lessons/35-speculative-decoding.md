@@ -39,7 +39,7 @@ Three tokens. The draft gives them chances q of 0.2, 0.6 and 0.2. The big model 
 
 A guess is kept 0.7 of the time and thrown out 0.3. The leftover is all on the first token, so each redraw gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2: the big model's chances.
 
-Tokens for each pass. A round always writes one token, a second if the first guess was kept, a third if two were. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average: 3.36 at a = 0.8, and 1.94 at a = 0.5.
+Tokens for each pass. A round always writes one token, a second if the first guess was kept, a third if two were. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average: 3.36 at a = 0.8.
 
 ## The code
 
@@ -87,11 +87,12 @@ uv run pytest tests/test_speculate.py
 - The hand example: keep chances of 1, 0.5 and 1, and a leftover that is all on the first token.
 - For 50 random pairs of p and q over 8 tokens, drafted and kept plus redrawn equals p for each token.
 - Two tokens written 3,000 times with a draft that disagrees with the big model: each of the 25 pairs comes within 0.03 of the chance the big model alone gives it.
-- With the big model as its own draft, each guess is kept.
 - A poor draft has guesses thrown out, and never needs more than one pass a token.
 - The copying loss equals lesson 3's loss when the big model is sure of one token, and is lowest when the draft's chances equal the big model's.
 
 The script trains the two drafts on the graphics chip, then times the writing on the processor.
+
+Predict before you run: each draft has nearly 8 times fewer weights and guesses four tokens a round. Will the big model write faster with a draft than alone?
 
 ```bash
 uv run python -m gpt.speculate
@@ -108,9 +109,9 @@ with a draft trained on the big model's chances: 63% of the guesses it checked a
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The draft that copied the big model has the lower loss, 2.238 nats against 2.346, and 63% of its checked guesses are kept, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
+The draft that copied the big model has the lower loss and keeps 63% of its checked guesses, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
 
-Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings this draft, with nearly 8 times fewer weights and half the blocks, costs more. Lesson 37 times a smaller model's pass.
+Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings this draft, with half the blocks, costs more. Lesson 37 times a smaller model's pass.
 
 ## What it still cannot do
 
@@ -118,11 +119,14 @@ Each script so far runs once, in a terminal, and stops. Other programs cannot as
 
 ## Check yourself
 
-Predict before you run: the draft is the big model itself. How many tokens does each pass of the big model give, with four guesses a round?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No: 475 and 480 against 490 alone.
+</details>
 
-Five. p equals q, so each guess is kept, and the pass that checked them gives a fifth token.
+<details><summary>The draft is the big model itself. How many tokens does each pass of the big model give, with four guesses a round?</summary>
+
+Five: p equals q, so each guess is kept, and the checking pass gives a fifth.
 </details>
 
 <details><summary>From lesson 22: why not keep a guess only when it is the big model's top token?</summary>

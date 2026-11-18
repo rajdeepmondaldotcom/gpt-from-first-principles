@@ -8,7 +8,7 @@ Each fine-tune so far learned from 60,404 stories that obeyed their orders, and 
 
 Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
 
-The first way needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did.
+Two ways can learn from the score. The first needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did.
 
 The second way uses them all. Write the average score the model would earn as a sum over each story it might write: its chance times its score. We want that sum's slope for each weight. A story's score does not move with the weights, so only its chance has a slope. By lesson 2's table, the slope of ln x is (slope of x) / x, so the slope of a chance is the chance times the slope of its logarithm. Each term is now a chance times something, and such a sum is that something's average over draws. We cannot list every story, but the model can draw them: the slope is the average, over stories it wrote, of
 

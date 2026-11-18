@@ -14,11 +14,11 @@ Hoffmann and others (2022) fit this form:
 
 loss = floor + a / parameters^alpha + b / tokens^beta
 
-The middle term, the size term, is the loss a small model cannot remove, and it shrinks as the model grows. The last term, the training term, is the loss too few tokens leave, and it shrinks with training. The floor is what neither removes. At a fixed budget, parameters times tokens is about fixed, because each token costs about 6 multiplies and adds for each parameter. So a larger model shrinks the size term and grows the training term. The best size is where the fall in the size term equals the rise in the training term. At a fixed budget the best size grows as the budget to the power beta / (alpha + beta), 0.69 for our final law. Hoffmann and others found about one half, so their model and their tokens grow together.
+The middle term, the size term, is the loss a small model cannot remove, and it shrinks as the model grows. The last term, the training term, is the loss too few tokens leave, and it shrinks with training. The floor is what neither removes. At a fixed budget, parameters times tokens is about fixed, because each token costs about 6 multiplies and adds for each parameter. So a larger model shrinks the size term and grows the training term. The best size is where the fall in the size term equals the rise in the training term. At a fixed budget the best size grows as the budget to the power beta / (alpha + beta), 0.69 for our final law. Hoffmann and others found about one half, so their model and their tokens grow together. Their Chinchilla trained 70 billion parameters on 1.4 trillion tokens, 20 a parameter. Our pick gets 73,080,832 / 5,374,464 = 13.6.
 
 The law has five unknown numbers. Pick the two powers, and what is left is a weighted sum of three columns: a column of ones, one of parameters^-alpha and one of tokens^-beta. The weights that make the sum of squared misses smallest have an exact answer, called least squares. So we try each pair of powers from 0.10 to 1.50 and keep the pair whose best weights miss least.
 
-Each size gets its own learning rate, from a sweep like lesson 14's but with one seed for each rate, so a close win, such as width 192's 0.02 nats, may be noise. The three smallest models did best at 0.01 and the three largest at 0.003. For the three smallest, 0.01 was the highest rate tried, so a higher one may suit them better.
+Each size gets its own learning rate, from a sweep like lesson 14's but with one seed for each rate, so a close win, such as width 192's 0.02, may be noise. The three smallest models did best at 0.01 and the three largest at 0.003. For the three smallest, 0.01 was the highest rate tried, so a higher one may suit them better.
 
 To test the law we fit it on budgets of 1, 2 and 4 × 10¹³, 18 runs, and predict four runs at 8 × 10¹³ that it has not seen. The law passes if it misses them by no more than it misses its own runs.
 
@@ -58,7 +58,7 @@ def law(runs):
     return best
 ```
 
-`zip(*runs)` turns a list of (parameters, tokens, loss) into three columns. `torch.float64` holds each number in 64 bits. `miss` is the root of the mean squared miss: the usual distance between the law and a run. `law` throws away a fit with a negative floor, a or b.
+`zip(*runs)` turns a list of (parameters, tokens, loss) into three columns. `torch.float64` holds each number in 64 bits. `miss` is the root of the mean squared miss: the usual distance between the law and a run. `law` drops a fit with a negative floor, a or b.
 
 ## The proof
 
@@ -73,7 +73,7 @@ uv run pytest tests/test_scale.py
 - At a fixed budget one size is best, and 16 times the budget moves it as that power says.
 - A run spends its budget, and a bigger model gets fewer tokens from it. The same seed repeats a run, and a tenth of its steps are warmup.
 
-The script takes over an hour on the graphics chip. Part of what it prints is below. The results file also holds rate tries on a 10-million model that play no part here.
+The script takes over an hour on the graphics chip. Part of what it prints is below. The results file's `pick`, an older choice of the 10-million model with its rate tries, plays no part here.
 
 ```bash
 uv run python -m gpt.scale
@@ -116,7 +116,7 @@ The law missed the four unseen runs by 0.027 to 0.098 nats, less than the 0.195 
 
 At the full budget the predictions fall to 1.278 nats at 10 million parameters and rise after. From 5 to 15 million parameters they differ by 0.024 nats. We take the smallest size whose prediction is within 0.098 nats of the best, the law's largest miss on unseen runs, since a smaller model is cheaper to train and run: 5,374,464 parameters. At 0.132 above the best, 2,410,368 is out.
 
-The full budget is 34 times the largest the law has seen, and the test above reached 2 times. The prediction of 1.302 may miss by more than 0.098, and on the low side.
+The full budget is 34 times the largest the law has seen, and the test above reached 2 times. The prediction of 1.302 may miss by more than 0.098.
 
 ## What it still cannot do
 

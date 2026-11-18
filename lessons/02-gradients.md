@@ -18,9 +18,9 @@ new value = old value - rate × slope
 
 A positive slope means raising the parameter hurts, so we lower it. The rate, called the learning rate, sets the size of the step. Repeating this rule is called gradient descent.
 
-One way to get a slope is to nudge. Add 0.000001 to one score, work out the loss again, and divide the change by 0.000001. That costs one full loss calculation per parameter, on each step. Our sentence has 10 different characters, so its model has 100 scores. GPT-2, which lesson 10 rebuilds, has 124 million parameters.
+One way to get a slope is to nudge. Add 0.000001 to one score, work out the loss again, and divide the change by 0.000001. That costs one full loss calculation per parameter, on each step. Our sentence has 10 different characters, so its model has 100 scores. GPT-2 has 124 million parameters.
 
-The chain rule gets all the slopes from one pass backwards, because there is one loss. Going forwards would need one pass for each parameter. A loss is built from a few small operations, and each has a known slope:
+One pass backwards gets all the slopes, because there is one loss. Going forwards would need one pass for each parameter. A loss is built from a few small operations, and each has a known slope:
 
 | Operation | Slope for x |
 |---|---|
@@ -30,7 +30,7 @@ The chain rule gets all the slopes from one pass backwards, because there is one
 | e to the power x | e to the power x, the result itself |
 | ln x | 1 / x |
 
-Slopes combine by two rules. If x moves y at a rate of 3, and y moves the loss at a rate of 2, then x moves the loss at a rate of 6: multiply along a path. If x reaches the loss by two paths, add them.
+Slopes combine by two rules, together called the chain rule. If x moves y at a rate of 3, and y moves the loss at a rate of 2, then x moves the loss at a rate of 6: multiply along a path. If x reaches the loss by two paths, add them.
 
 We work out the loss once and let each number remember what it was made from. Then we walk backwards from the loss and work out each number's slope. Code that does this is called automatic differentiation, or autograd.
 

@@ -63,7 +63,7 @@ The new keys and values join the old ones, and the cache keeps the result:
 
 `tril(seen)` keeps, in row i, the first `seen` + i + 1 columns: the whole cache and the new tokens up to this one.
 
-The loop that writes hands the model only what it has not read. The model's second argument, `kept`, is a list with one cache for each block:
+The loop that writes hands the model only what it has not read. The loop passes the model `kept`, a list with one cache for each block:
 
 ```python
 # gpt/generate.py
@@ -98,6 +98,8 @@ uv run pytest tests/test_model.py tests/test_generate.py
 
 Three planted bugs each turn a test red: a mask that forgets the cache, places that start again at 0, and a cache that keeps only its newest tokens.
 
+Predict before you run: the cache reads 102 times fewer tokens. Will it write 102 times as fast?
+
 ```bash
 uv run python -m gpt.generate
 ```
@@ -111,17 +113,20 @@ the cache holds 6,144 bytes for each token
 
 Timings are from an M4 laptop, and they move from run to run.
 
-With the cache the model reads 102 times fewer tokens and writes 3.5 times as fast. It still calls the model 200 times, once for each token.
+With the cache the model reads 102 times fewer tokens and writes 3.5 times as fast.
 
 ## What it still cannot do
 
-The model now writes fast enough to be judged on hundreds of stories. We cannot yet say how sure a loss is, or whether a second model is better than this one.
+The model now writes fast enough to be judged on hundreds of stories. We cannot yet say how far a loss would move on other unseen stories, or whether a second model is better than this one.
 
 ## Check yourself
 
-Predict before you run: a prompt of 10 tokens, and 100 tokens to write. How many tokens does the model read with a cache, and without?
+<details><summary>Prediction</summary>
 
-<details><summary>Answer</summary>
+No: 3.5 times. It still calls the model once for each new token.
+</details>
+
+<details><summary>A prompt of 10 tokens, and 100 tokens to write. How many tokens does the model read with a cache, and without?</summary>
 
 With: 10 + 99 = 109. Without: 10 + 11 + ... + 109 = 100 × (10 + 109) / 2 = 5,950.
 </details>
@@ -143,5 +148,5 @@ The causal mask. The result at a place is built from that token and the ones bef
 
 Go deeper:
 
-- Chen, [Transformer Inference Arithmetic](https://kipp.ly/transformer-inference-arithmetic/). What the cache saves and what it costs, in numbers.
+- kipply, [Transformer Inference Arithmetic](https://kipp.ly/transformer-inference-arithmetic/). What the cache saves and what it costs, in numbers.
 - Hugging Face, [Caching](https://huggingface.co/docs/transformers/kv_cache). The same cache in a library many models share.

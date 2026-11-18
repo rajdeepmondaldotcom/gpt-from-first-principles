@@ -4,11 +4,11 @@ Build a GPT yourself. Train it, serve it, teach the same code chess, then run it
 
 You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs, and a third shares one model out among several workers.
 
-Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41 and 42 also need an AWS account and about $18. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
+Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41 and 42 also need an AWS account and about $18. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script. A test checks each block of output on each page against the file its script saved.
 
-*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas that interviews for training and inference work start from, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
+*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas behind training and inference work, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
 
-The numbers of lessons 1 to 40 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $18.31. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac, and the scripts of lessons 41 and 42, which need an NVIDIA card.
+The numbers of lessons 1 to 40 and 43 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $18.31. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac, and the scripts of lessons 41 and 42, which need an NVIDIA card.
 
 One prompt, `Once upon a time`, answered by the model at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. Line breaks are shown as spaces.
 
@@ -90,7 +90,7 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 Four guides go with the lessons.
 
 - [MAP.md](MAP.md): what the lessons leave out, and the open resource we would read first for each thing.
-- [PRACTICE.md](PRACTICE.md): nine routines for what 11 job postings at AI labs ask for and the lessons do not teach.
+- [PRACTICE.md](PRACTICE.md): nine routines for practice the lessons cannot give, most of them for what 11 job postings at AI labs ask for.
 - [GLOSSARY.md](GLOSSARY.md): each term with the lesson that defines it, and our plain words beside the field's.
 - [PROCESS.md](PROCESS.md): how each lesson is made and checked, so you can check any claim yourself.
 

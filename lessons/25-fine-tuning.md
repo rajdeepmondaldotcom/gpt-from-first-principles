@@ -6,7 +6,7 @@ Asked in three lines for a name and three words, the model passes 0 of 100. It w
 
 ## The idea
 
-Our model writes like its training text. We make text in which an order, a name and three words, is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
+Our model writes like its training text. We make text in which an order for a name and three words is followed by a story that obeys it, and train on that. Training a trained model further on new text is called fine-tuning.
 
 Lesson 24's tasks were made from real stories. A function reads a story and writes down its hero's name and three of its less common words: that is an order, and an order with its check is a task. Run over training stories, the function makes examples: the three lines of an order, then the story they came from, which obeys them. The first 20 million training tokens give 60,404 that fit the context.
 
@@ -14,13 +14,11 @@ Lesson 24's tasks were made from real stories. A function reads a story and writ
 2. Each answer ends with the end token, and that token is scored. The model learns that after a story comes the end, and lesson 22's writing loop stops there.
 3. Training starts from lesson 21's weights. It runs 2,000 steps of 32 examples at a peak rate of 0.001, half of lesson 21's.
 
-Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored, so any token will do, and we use the end token.
-
-   The hand example pads to its longest row. The run pads each batch to the model's whole context, so each batch has one shape.
+Examples have different lengths and a batch is a grid, so each example is padded at its end. Padded places are not scored, so any token will do, and we use the end token. The hand example pads to its longest row. The run pads each batch to the model's whole context, so each batch has one shape.
 
 We measure three things before and after, on 200 tasks made from unseen stories: how many pass lesson 24's exact check, what share of the three asked words turn up, and how many stories reach the end token by themselves. The share is the finer measure: a story with two of the three words fails the check. Each story is drawn at a temperature of 0.8 with no top-p, so another draw gives other counts.
 
-The new skill may cost the old one. Fine-tuning trains each weight, and the examples hold stories only after an order. So we score 500 plain unseen stories before and after, take the difference at each token, and give the mean difference lesson 24's interval, drawn story by story. A common guard against forgetting is to mix plain training text into each batch. We did not try it.
+The new skill may cost the old one. Fine-tuning trains each weight, and the examples hold stories only after orders. So we score 500 plain unseen stories before and after, take the difference at each token, and give the mean difference lesson 24's interval, drawn story by story. A common guard against forgetting is to mix plain training text into each batch. We did not try it.
 
 ## By hand
 
