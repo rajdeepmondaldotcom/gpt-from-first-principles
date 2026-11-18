@@ -137,6 +137,7 @@ def race(cards, shape, path, steps, size, backend, out, half=False):
 if __name__ == "__main__":
     import json
     import math
+    import sys
     import urllib.request
 
     import zstandard
@@ -155,6 +156,41 @@ if __name__ == "__main__":
     cache, cards = Path("data/cache"), torch.cuda.device_count()
     assert cards, "this script needs an NVIDIA card. Lesson 41's page says how to rent one."
     price = PRICE[torch.cuda.get_device_name(0)]
+
+    if sys.argv[1:] == ["sizes"]:  # after the run below: was its pick the best use of the hour?
+        done = json.loads(Path("results/41_gpu.json").read_text())
+        ids, val_ids = (
+            read(cache / name).to("cuda") for name in ("stories_all.bin", "stories_val.bin")
+        )
+        ended = {}
+        for row in done["rows"]:  # each shape the law was asked about, on the same budget
+            count, check = row["parameters"], done["budget"] * CHECK / BUDGET
+            if row["shape"] == done["shape"]:
+                ended[count] = done["val_nats"]  # the pick: the run below trained it
+            else:
+                name = f"story_{count}"
+                model = long_run(
+                    cache,
+                    name,
+                    row["shape"],
+                    ids,
+                    val_ids,
+                    budget=done["budget"],
+                    check=check,
+                    half=True,
+                )[0]
+                ended[count] = evaluate(model, val_ids)
+            say(
+                f"{count:>11,} parameters, {row['steps']:>7,} steps: {ended[count]:.3f} nats on "
+                f"unseen stories, where the law expected {row['predicted']:.3f}"
+            )
+        save(
+            "41_gpu_sizes",
+            torch=torch.__version__,
+            device=torch.cuda.get_device_name(0),
+            nats=ended,
+        )
+        raise SystemExit
 
     if cards > 1:  # the second machine: four cards, and lesson 20's question asked again
         assert cards in price, "add the hourly price of a machine with this many cards to PRICE"
