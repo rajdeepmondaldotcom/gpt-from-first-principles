@@ -2,8 +2,12 @@
 
 import http.client
 import json
+import subprocess
+import sys
 import threading
 import time
+import urllib.request
+from contextlib import contextmanager
 
 from gpt.export import export, fastest
 
@@ -59,8 +63,10 @@ def load(port, line):
 
     def one(at, request):
         time.sleep(max(0.0, at - (time.perf_counter() - began)))
+        sent = time.perf_counter() - began  # a busy sender wakes late, and this says by how much
         moments = ask(port, request.prompt, request.limit, **request.how)[1]
-        records.append({"arrived": at, "tokens": [moment - began for moment in moments]})
+        tokens = [moment - began for moment in moments]
+        records.append({"arrived": at, "sent": sent, "tokens": tokens})
 
     threads = [threading.Thread(target=one, args=pair) for pair in line]
     for thread in threads:
@@ -86,11 +92,59 @@ def scores(port, prompt):
     return [chances[str(token)]["logprob"] for token, chances in pairs]
 
 
-if __name__ == "__main__":
+@contextmanager
+def serving(port, model, *options):
+    """Start vLLM on a model, wait until it answers, and stop it afterwards."""
+    command = ["vllm", "serve", str(model), "--served-model-name", "model"]
+    command += ["--host", "127.0.0.1", "--port", str(port), *options]
+    with open("vllm.log", "a") as log:
+        server = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
+        try:
+            while True:  # it loads the weights and warms up before it listens
+                assert server.poll() is None, "vLLM stopped: read vllm.log"
+                try:
+                    urllib.request.urlopen(f"http://127.0.0.1:{port}/health")
+                    break
+                except OSError:
+                    time.sleep(2)
+            yield
+        finally:
+            server.terminate()
+            server.wait()
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["late"]:
+    # python -m gpt.production late: at the sweep's last two rates, each request's wait for its
+    # first token, and how much of that wait passed before our own sender asked.
+    from pathlib import Path
+
+    import torch
+
+    from gpt.data import read
+    from gpt.measure import arrivals
+    from gpt.results import save, say
+
+    cache, rows = Path("data/cache"), []
+    text = read(cache / "stories_val.bin")
+    prompts = [text[128 * i : 128 * i + 64].tolist() for i in range(3000)]
+    with serving(8000, cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"):
+        for prompt in prompts[:4]:  # warm the server up
+            ask(8000, prompt, 64, temperature=0)
+        for rate in (128, 256):
+            chance = torch.Generator().manual_seed(1)
+            records = load(8000, arrivals(prompts[: 10 * rate], rate, chance, temperature=0.8))
+            first = sum(r["tokens"][0] - r["arrived"] for r in records) / len(records)
+            late = sum(r["sent"] - r["arrived"] for r in records) / len(records)
+            rows.append({"rate": rate, "first_token_mean": first, "sent_late_mean": late})
+            say(
+                f"at {rate} requests a second the first token took {first * 1e3:,.0f} ms on "
+                f"average, and our sender asked {late * 1e3:,.0f} ms late"
+            )
+    save("42_production_late", torch=torch.__version__, rows=rows)
+
+
+if __name__ == "__main__" and not sys.argv[1:]:
     import math
-    import subprocess
-    import urllib.request
-    from contextlib import contextmanager
     from pathlib import Path
 
     import torch
@@ -161,26 +215,6 @@ if __name__ == "__main__":
     ours.to("cpu")
     torch.cuda.empty_cache()
 
-    @contextmanager
-    def serving(model, *options):
-        """Start vLLM on a model, wait until it answers, and stop it afterwards."""
-        command = ["vllm", "serve", str(model), "--served-model-name", "model"]
-        command += ["--host", "127.0.0.1", "--port", str(PORT), *options]
-        with open("vllm.log", "a") as log:
-            server = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
-            try:
-                while True:  # it loads the weights and warms up before it listens
-                    assert server.poll() is None, "vLLM stopped: read vllm.log"
-                    try:
-                        urllib.request.urlopen(f"http://127.0.0.1:{PORT}/health")
-                        break
-                    except OSError:
-                        time.sleep(2)
-                yield
-            finally:
-                server.terminate()
-                server.wait()
-
     def counted():
         """Three of the server's own counts, from its metrics page: tokens written, first tokens
         sent, and the seconds those first tokens were waited for, added up."""
@@ -220,6 +254,7 @@ if __name__ == "__main__":
                 "server_counted": tokens,
                 "server_first_token_mean": waited / firsts,
                 "first_token_mean": sum(m[0] - at for at, m in zip(came, went)) / len(came),
+                "sent_late_mean": sum(r["sent"] - r["arrived"] for r in records) / len(records),
             }
             rows.append({"rate": rate} | numbers)
             say(
@@ -240,7 +275,7 @@ if __name__ == "__main__":
         return hour / 3600 / kept_up["tokens_a_second"] * 1e6
 
     # vLLM on our model, in 32-bit numbers as ours are.
-    with serving(cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"):
+    with serving(PORT, cache / "story_vllm", "--skip-tokenizer-init", "--dtype", "float32"):
         theirs = [ask(PORT, prompt, 128, temperature=0)[0] for prompt in prompts[:16]]
         same = sum(a == b for a, b in zip(mine, theirs))
         gap = (own - torch.tensor(scores(PORT, unseen.tolist()))).abs().max().item()
@@ -293,7 +328,7 @@ if __name__ == "__main__":
     )
     big = {}
     for name, options in (("16 bits", []), ("8 bits", ["--quantization", "fp8_per_tensor"])):
-        with serving(BIG, "--max-model-len", "2048", *options):
+        with serving(PORT, BIG, "--max-model-len", "2048", *options):
             nats = [[-x for x in scores(PORT, "<|endoftext|>" + story)] for story in told]
             fast, wait = one_listener(asked[:4])
             say(f"the big model, {name}, one listener: {fast:,.0f} tokens a second")
