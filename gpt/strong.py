@@ -193,7 +193,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
     )
 
     # The same step with lesson 6's attention and with PyTorch's fused routine in its place,
-    # then with more windows in a step: the card gets through more tokens a second when full.
+    # then with more windows in a step. We train at the size that gets the most tokens through.
     # Lesson 41's widest shape, 768 wide, failed lesson 13's first check. This one is narrower
     # and deeper, and the check runs here, before an hour goes on timing and short runs.
     form = shape(640, 16) | {"vocab": words.end + 1}
@@ -202,7 +202,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
     assert starts_with_no_opinion(model, val_ids[:20_000], form["vocab"])
     ours = step_seconds(model, ids, half=True)
     gpt.model.attend = fused
-    took = {windows: step_seconds(model, ids, windows, half=True) for windows in (32, 64, 128, 256)}
+    took = {windows: step_seconds(model, ids, windows, half=True) for windows in (32, 64, 128)}
     say(
         f"a training step of {sum(p.numel() for p in model.parameters()):,} parameters: "
         f"{ours * 1e3:.0f} ms with lesson 6's attention, {took[32] * 1e3:.0f} ms with the fused one"
