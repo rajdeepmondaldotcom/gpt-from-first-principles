@@ -1,4 +1,4 @@
-"""Lesson 43. A stronger player: learn only from strong players' games, and measure the result
+"""Lesson 44. A stronger player: learn only from strong players' games, and measure the result
 against an engine whose rating the world knows."""
 
 import re
@@ -244,7 +244,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
     (out / "vocab.json").write_text((cache / "strong_vocab.json").read_text())
     (out / "shape.json").write_text(json.dumps(form))
     save(
-        "43_strong",
+        "44_strong",
         torch=torch.__version__,
         device=card,
         counts=counts,
@@ -330,7 +330,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     near = min((1400, 1600, 1800, 2000, 2200, 2400, 2600), key=lambda elo: abs(elo - best))
     slow = against(ours, near, 100, 240, seconds=0.5)
     save(
-        "43_strong_play",
+        "44_strong_play",
         torch=torch.__version__,
         device=device,
         floor=sum(floor) / len(floor),
