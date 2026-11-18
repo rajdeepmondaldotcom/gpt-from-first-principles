@@ -47,11 +47,23 @@ def load(folder):
     return model.eval(), tokenizer(folder / "vocab.json")
 
 
-def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
+def long_run(
+    cache,
+    name,
+    shape,
+    ids,
+    val_ids,
+    watch=lambda model, step: {},
+    budget=BUDGET,
+    check=CHECK,
+    **how,
+):
     """A run of hours, with what lessons 12 to 14 taught: pick a rate with short runs, check the
     untrained model, then train with a checkpoint every 500 steps.
 
     `watch` may measure the model at each checkpoint. What it returns joins the curve.
+    `budget` is the arithmetic the run may spend and `check` what each short run may. `how` goes
+    to lesson 12's loop as it is.
     Returns the model, the notes kept along the way, the number of steps, and the generator.
     """
     saved, log = cache / f"{name}.pt", cache / f"{name}_log.json"
@@ -65,7 +77,7 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
     if log.exists():  # a stopped run: carry on with what it had decided and measured
         notes = json.loads(log.read_text())
     else:  # before three hours, three short runs: which rate suits this size?
-        tried = [[peak, run(shape, CHECK, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
+        tried = [[peak, run(shape, check, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
         notes = {"tried": tried, "peak": min(tried, key=lambda pair: pair[1])[0], "curve": []}
         note()
 
@@ -73,7 +85,7 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
     generator = torch.Generator().manual_seed(0)
     model = GPT(**shape).to(ids.device)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
-    steps = steps_for(model, BUDGET)
+    steps = steps_for(model, budget)
     if saved.exists():
         start = resume(saved, model, optimizer, generator)
     else:  # lesson 13's checks, before the long run and not after
@@ -90,6 +102,7 @@ def long_run(cache, name, shape, ids, val_ids, watch=lambda model, step: {}):
         generator=generator,
         start=start,
         warmup=steps // 50,
+        **how,
     )
     for step, loss in loop:
         if step % 500 == 0 or step == steps:
