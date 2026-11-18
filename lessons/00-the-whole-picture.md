@@ -29,7 +29,7 @@ The model answers `Once upon a time`, and from lesson 25 an order, so you can wa
 
 Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so, and lessons 41 and 42 try some of them again on a rented card. The dollars in those two lessons are the hours AWS reported times its price list.
 
-The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page ends with a question that begins "Predict before you run". Read that question first, and write your guess down before you reach the page's output.
+The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page asks one question that begins "Predict before you run". Where the run answers it, it stands above the run. Write your guess down before you read on.
 
 ## By hand
 
@@ -88,7 +88,7 @@ You have built none of it yet. Lesson 1 starts with a text file and a loop that 
 
 ## Check yourself
 
-Each lesson ends like this one. First comes a number to guess before you run the code. Guess it, in writing, and then look.
+Each lesson ends with questions like these. Guess the first one in writing, and then look.
 
 Predict before you run: the model gives a score to each token that could come next. From the table above, how many scores is that?
 

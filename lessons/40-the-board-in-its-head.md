@@ -86,6 +86,8 @@ uv run pytest tests/test_probe.py
 - On made-up streams with a board written in along straight lines, a probe reads over 0.9 of squares, and under 0.4 when fitted to shuffled boards.
 - After `erase`, the probe scores empty above the piece by the margin asked for. Where it did already, nothing changes. A nudge of a set length runs along the same line.
 
+Predict before you run: a probe fitted to shuffled boards has never been told what is on any board in front of it. How many squares will it still name right?
+
 ```bash
 uv run python -m gpt.probe
 ```
@@ -132,9 +134,7 @@ Every run so far used one laptop: a storyteller of 5,374,464 parameters and a ch
 
 ## Check yourself
 
-Predict before you run: a probe fitted to shuffled boards has never been told what is on any board in front of it. How many squares will it still name right?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 63.2%, close to the usual piece's 67.3%. Most squares hold what they usually hold, and a probe with shuffled answers can still learn that.
 </details>

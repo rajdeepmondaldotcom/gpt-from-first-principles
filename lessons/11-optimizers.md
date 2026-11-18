@@ -75,6 +75,8 @@ uv run pytest tests/test_optim.py
 - A slope that stays at 1 builds the velocity to 10, and Adam moves a flipping slope far less than a steady one.
 - The slope sizes above hold in the untrained GPT.
 
+Predict before you run: gradient descent scores 3.017 and AdamW 2.372. Does momentum close more or less than half that gap?
+
 ```bash
 uv run python -m gpt.optim
 ```
@@ -115,9 +117,7 @@ We ran 3,000 steps at one fixed rate and stopped. Nothing looked at unseen text 
 
 ## Check yourself
 
-Predict before you run: gradient descent scores 3.017 and AdamW 2.372. Does momentum close more or less than half that gap?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 More: 2.564 closes 0.453 of the 0.645, 70%.
 </details>

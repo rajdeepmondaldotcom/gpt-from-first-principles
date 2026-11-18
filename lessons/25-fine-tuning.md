@@ -73,6 +73,8 @@ uv run pytest tests/test_finetune.py
 
 The script trains on the graphics chip and measures on the processor.
 
+Predict before you run: before fine-tuning, the model has never seen an order. What share of the asked words will its stories use?
+
 ```bash
 uv run python -m gpt.finetune
 ```
@@ -118,9 +120,7 @@ The fine-tune moved all 5,374,464 weights. The result is a second file of 21.5 M
 
 ## Check yourself
 
-Predict before you run: before fine-tuning, the model has never seen an order. What share of the asked words will its stories use?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 About one in seven: 0.14. The asked words are ordinary story words, and some turn up by chance. No story of the 200 has the name and all three.
 </details>

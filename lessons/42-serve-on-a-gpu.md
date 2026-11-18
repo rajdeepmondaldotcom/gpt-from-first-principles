@@ -54,6 +54,8 @@ uv run pytest tests/test_production.py
 - `ask` returns each token with the moment it came, and `load` sends each request at its moment.
 - `scores` picks each prompt token's own log chance out of a reply that also holds the top token's.
 
+Predict before you run: at 8 bits a token of the big model reads 7.6 GB where it read 14.1. Will one listener get twice the speed?
+
 These run anywhere, against a stand-in server. The run needs lesson 41's `story_big` folder and an L40S card for under an hour. `start.sh` prints the machine's address, the `<host>` below. vLLM needs its own PyTorch, so it gets its own Python environment:
 
 ```bash
@@ -115,9 +117,7 @@ You began with a loop that counted characters. One file of model code has since 
 
 ## Check yourself
 
-Predict before you run: at 8 bits a token of the big model reads 7.6 GB where it read 14.1. Will one listener get twice the speed?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 No: 73 tokens a second against 50. The rest of a pass grows as the reading shrinks.
 </details>

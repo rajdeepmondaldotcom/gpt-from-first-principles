@@ -102,6 +102,8 @@ The card takes lesson 21's step in 34 ms where the laptop took 928. The bigger s
 
 The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and the rules pick 0.4% of its moves where they picked 3.6% of the laptop's. It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber, which took 0.84 from the laptop's model. It is rated +775. The laptop's model is +355 in this fit and was +421 in lesson 39's: a rating depends on who else is in the fit.
 
+Predict before you run: four L4 cards cost 5.7 times what one costs. Will a million tokens of training cost less on four?
+
 On a machine with four cards, the same command runs the four-card test:
 
 ```bash
@@ -134,9 +136,7 @@ Only our own engine can serve the bigger story model, and lesson 37 found that 0
 
 ## Check yourself
 
-Predict before you run: four L4 cards cost 5.7 times what one costs. Will a million tokens of training cost less on four?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 No. Four cards are 4.19 times as fast, so a token costs 5.7 / 4.19 = 1.4 times as much. They buy time.
 </details>

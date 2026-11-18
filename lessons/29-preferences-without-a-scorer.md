@@ -66,6 +66,8 @@ uv run pytest tests/test_prefer.py
 
 The pairs are lesson 28's, made from the 1,600 stories of lesson 27, with the same 60 orders held back. Training is 200 steps of 8 pairs at a rate of 0.00001. As in lesson 28, the readers also score the model's new stories before and after.
 
+Predict before you run: on the 240 held-back pairs, will the better story gain on the worse one in about half, or clearly more?
+
 ```bash
 uv run python -m gpt.prefer
 ```
@@ -102,9 +104,7 @@ We trained the model in lessons 25 to 29 on what to write, never on what to refu
 
 ## Check yourself
 
-Predict before you run: on the 240 held-back pairs, will the better story gain on the worse one in about half, or clearly more?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 Clearly more: 150 of 240, interval 0.55 to 0.70.
 </details>

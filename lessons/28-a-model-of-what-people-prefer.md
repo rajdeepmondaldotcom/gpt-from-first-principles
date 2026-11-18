@@ -84,6 +84,8 @@ uv run pytest tests/test_scorer.py
 
 The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model. Each two stories for one order make a pair, unless the readers give both the same number. The push is 100 rounds of 16 stories at a rate of 0.0003, on orders new to lesson 27.
 
+Predict before you run: as the storyteller is trained against the scorer, the scorer's number for its stories will rise. What will the readers' number do?
+
 ```bash
 uv run python -m gpt.scorer
 ```
@@ -125,9 +127,7 @@ The last order asked for Bob, movie, movies and watch, and the story above is wh
 
 ## Check yourself
 
-Predict before you run: as the storyteller is trained against the scorer, the scorer's number for its stories will rise. What will the readers' number do?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 Fall: from 0.58 to 0.05, while the scorer's number rose from +3.41 to +12.72.
 </details>

@@ -17,7 +17,7 @@ A page written before its run tends to say what the author hoped for. So the pag
 - **Six sections**, the same on each page: the idea, a sum by hand, the code, the proof, what it still cannot do, and questions to check yourself.
 - **At most 1,200 words** outside its code. A page that runs over gets cut.
 - **Nothing used before it is defined**, in plain words. The glossary sets each plain word beside the field's own.
-- **A question to predict** before the output is read, which the page above it does not answer.
+- **A question to predict**, which nothing above it answers. Where the run's output answers it, it stands above the run, and its answer is the first hidden block of "Check yourself".
 - **Results that did not go our way stay in.** Lessons 34 and 35 each build a speed-up that is no faster. Lesson 37 says its chip timings are not settled, and lesson 41 says its script used a looser yardstick than the lesson it cites.
 
 ## What the tests enforce

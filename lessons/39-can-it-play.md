@@ -98,6 +98,8 @@ uv run pytest tests/test_play.py
 - An untrained model still finishes a legal game: the referee picks nearly each of its moves.
 - The Elo rule gives a half for equal ratings, and ten to one either way at 400 points. Ratings of 0, 200 and 500, used to make 6,000 results, are found again: the 200 to within 25 points and the 500 to within 35.
 
+Predict before you run: the grabber looks one move ahead. Will 10,420 steps of reading games be enough for the model to beat it?
+
 ```bash
 uv run python -m gpt.play
 ```
@@ -130,9 +132,7 @@ The model plays chess from a list of moves. We never showed it a board. A legal 
 
 ## Check yourself
 
-Predict before you run: the grabber looks one move ahead. Will 10,420 steps of reading games be enough for the model to beat it?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 No. The model takes 0.16 of the points from the grabber. It has learned which moves are legal, and not yet which moves win.
 </details>

@@ -83,6 +83,8 @@ uv run --extra reference pytest -m reference tests/test_export.py
 
 - A small model with random weights and grouped heads, loaded in MLX, gives our scores to 0.0001, and the same top token at each place.
 
+Predict before you run: the same model, the same prompt, the top token each time, in two engines. Will the two stories be the same?
+
 ```bash
 uv run python -m gpt.export
 ```
@@ -117,9 +119,7 @@ Each model in this course has read English: Shakespeare, then stories. We have n
 
 ## Check yourself
 
-Predict before you run: the same model, the same prompt, the top token each time, in two engines. Will the two stories be the same?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 In our run they are, all 128 tokens. They need not be: the scores differ in about the fifth decimal place, and two top tokens that close would be a tie the engines could break differently.
 </details>

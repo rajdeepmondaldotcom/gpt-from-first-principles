@@ -106,6 +106,8 @@ uv run pytest tests/test_lora.py
 - Beside each of the seven grids: no change at first, the loss falls, and the merge leaves a plain model.
 - After training at r = 3 and the merge, the change in a grid has a rank of 3.
 
+Predict before you run: beside queries and values, the corrections hold 0.8% of the weights. Will the model learn the task as well as lesson 25's did?
+
 ```bash
 uv run python -m gpt.lora
 ```
@@ -160,9 +162,7 @@ Each fine-tune so far learned from 60,404 stories that obeyed their orders, and 
 
 ## Check yourself
 
-Predict before you run: beside queries and values, the corrections hold 0.8% of the weights. Will the model learn the task as well as lesson 25's did?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 Not in these 2,000 steps: 0.37 of the asked words against 0.56, and 10 tasks against 27.
 </details>

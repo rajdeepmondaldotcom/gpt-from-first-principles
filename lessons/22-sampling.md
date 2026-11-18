@@ -66,6 +66,8 @@ uv run pytest tests/test_generate.py
 
 The script writes 20 stories from `Once upon a time` at each of five settings. It counts how many of the 20 differ, how many reach their end inside 250 tokens, and how many of their words the training text never uses.
 
+Predict before you run: at a temperature of 1.5, will the share of made-up words be under 1%, about a tenth, or over half?
+
 ```bash
 uv run python -m gpt.generate
 ```
@@ -91,9 +93,7 @@ To write each new token, the model reads the whole text again from its first tok
 
 ## Check yourself
 
-Predict before you run: at a temperature of 1.5, will the share of made-up words be under 1%, about a tenth, or over half?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 About a tenth: 12.6%, against 0.3% at a temperature of 1. Over 1 the chances move toward even, so unlikely tokens come far more often, and they join into words the training text never uses.
 </details>

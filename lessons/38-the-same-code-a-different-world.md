@@ -102,6 +102,8 @@ uv run pytest tests/test_games.py
 
 The script downloads 129 MB and trains on the graphics chip.
 
+Predict before you run: the model has never seen a board. After 10,420 steps of reading games, what share of its moves will be legal?
+
 ```bash
 uv run python -m gpt.games
 ```
@@ -153,9 +155,7 @@ A legal move can be a terrible one. We do not yet know whether it can win a game
 
 ## Check yourself
 
-Predict before you run: the model has never seen a board. After 10,420 steps of reading games, what share of its moves will be legal?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 About nine in ten: on lists of moves that no training game begins with, 737 of 808 are legal.
 </details>

@@ -87,6 +87,8 @@ uv run pytest tests/test_refuse.py
 
 The script fine-tunes on the graphics chip, 300 steps to teach the rule and 300 more of each kind, and writes 1,600 answers on the processor.
 
+Predict before you run: the model is taught the rule, and then trained for 300 steps on ordinary stories that never mention a listed word. Will it still refuse?
+
 ```bash
 uv run python -m gpt.refuse
 ```
@@ -126,9 +128,7 @@ Every story so far came from a script, one order at a time. We have not measured
 
 ## Check yourself
 
-Predict before you run: the model is taught the rule, and then trained for 300 steps on ordinary stories that never mention a listed word. Will it still refuse?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 Mostly not. It refuses 7 of 100 listed orders, where it refused 96. It refused 9 after the first 100 steps.
 </details>

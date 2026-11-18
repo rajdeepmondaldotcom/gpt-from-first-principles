@@ -107,6 +107,8 @@ uv run pytest tests/test_engine.py
 - A row moved six places along, with its keys turned to match, gets the scores it got before.
 - With the mask taken out, the empty places are read and the scores change.
 
+Predict before you run: 16 listeners share each pass. Does each one get their tokens faster or slower than a listener alone, and does the machine write more or fewer tokens a second in all?
+
 ```bash
 uv run python -m gpt.engine
 ```
@@ -142,9 +144,7 @@ Each request reads its whole prompt from the first token, even when the requests
 
 ## Check yourself
 
-Predict before you run: 16 listeners share each pass. Does each one get their tokens faster or slower than a listener alone, and does the machine write more or fewer tokens a second in all?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 Slower for each listener, more in all: 139 tokens a second each where one alone gets 669, and 2,020 in all where one gets 657.
 </details>

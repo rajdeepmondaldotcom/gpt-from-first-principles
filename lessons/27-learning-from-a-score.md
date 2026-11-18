@@ -73,6 +73,8 @@ uv run pytest tests/test_reinforce.py
 - With the scores in groups of four, the sampled slopes average to three quarters of the exact one. Scaled back up, their variance is more than 20% below the plain rule's.
 - The hand example gives -0.125, +0.125, 0 and 0, and one step on two answers scored 1 and 0 raises the first's log chance and lowers the other's.
 
+Predict before you run: which will use more of the asked words after 1,600 stories, the model that kept what passed or the one that learned from each score?
+
 ```bash
 uv run python -m gpt.reinforce
 ```
@@ -106,9 +108,7 @@ The score gave nothing for an ending, and 59 of 200 stories now never reach one,
 
 ## Check yourself
 
-Predict before you run: which will use more of the asked words after 1,600 stories, the model that kept what passed or the one that learned from each score?
-
-<details><summary>Answer</summary>
+<details><summary>Prediction</summary>
 
 The one that learned from each score: 0.68 against 0.57. Keeping what passes learned from 192 stories, the score from all 1,600.
 </details>
