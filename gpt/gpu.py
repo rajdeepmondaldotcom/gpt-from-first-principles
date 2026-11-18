@@ -15,8 +15,12 @@ from gpt.optim import AdamW
 from gpt.scale import predict, steps_for
 
 # Dollars an hour in us-east-1, November 2026, for a machine with one card and with four:
-# g6e.xlarge and g6e.12xlarge, then g5.xlarge and g5.12xlarge.
-PRICE = {"NVIDIA L40S": {1: 1.861, 4: 10.493}, "NVIDIA A10G": {1: 1.006, 4: 5.672}}
+# g6e.xlarge and g6e.12xlarge, g5.xlarge and g5.12xlarge, g6.xlarge and g6.12xlarge.
+PRICE = {
+    "NVIDIA L40S": {1: 1.861, 4: 10.493},
+    "NVIDIA A10G": {1: 1.006, 4: 5.672},
+    "NVIDIA L4": {1: 0.805, 4: 4.602},
+}
 
 
 def step_seconds(model, ids, size=32, repeats=10, half=False):
