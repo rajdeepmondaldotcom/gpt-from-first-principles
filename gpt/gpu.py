@@ -157,38 +157,45 @@ if __name__ == "__main__":
     assert cards, "this script needs an NVIDIA card. Lesson 41's page says how to rent one."
     price = PRICE[torch.cuda.get_device_name(0)]
 
-    if sys.argv[1:] == ["sizes"]:  # after the run below: was its pick the best use of the hour?
-        done = json.loads(Path("results/41_gpu.json").read_text())
+    if sys.argv[1:] == [
+        "sizes"
+    ]:  # after the run below: would a bigger shape have used the hour better?
+        first = json.loads(Path("results/41_gpu.json").read_text())
+        assert (cache / "stories_all.bin").exists(), "run python -m gpt.gpu on this machine first"
         ids, val_ids = (
             read(cache / name).to("cuda") for name in ("stories_all.bin", "stories_val.bin")
         )
-        ended = {}
-        for row in done["rows"]:  # each shape the law was asked about, on the same budget
-            count, check = row["parameters"], done["budget"] * CHECK / BUDGET
-            if row["shape"] == done["shape"]:
-                ended[count] = done["val_nats"]  # the pick: the run below trained it
-            else:
-                name = f"story_{count}"
+        check, ended = first["budget"] * CHECK / BUDGET, []
+        for row in first["rows"]:  # the pick, and each bigger shape the law was asked about
+            count = row["parameters"]
+            if row["shape"] == first["shape"]:
+                nats = first["val_nats"]  # the run below trained this one
+            elif row["steps"] < first["steps"]:  # a bigger shape: fewer steps for the budget
                 model = long_run(
                     cache,
-                    name,
+                    f"story_{count}",
                     row["shape"],
                     ids,
                     val_ids,
-                    budget=done["budget"],
+                    budget=first["budget"],
                     check=check,
                     half=True,
                 )[0]
-                ended[count] = evaluate(model, val_ids)
+                nats = evaluate(model, val_ids)
+            else:
+                continue
+            ended.append({"parameters": count, "nats": nats, "predicted": row["predicted"]})
             say(
-                f"{count:>11,} parameters, {row['steps']:>7,} steps: {ended[count]:.3f} nats on "
+                f"{count:>11,} parameters, {row['steps']:>7,} steps: {nats:.3f} nats on "
                 f"unseen stories, where the law expected {row['predicted']:.3f}"
             )
+            # Kept after each shape: the machine's time limit may come before the last one ends.
+            (cache / "sizes_so_far.json").write_text(json.dumps(ended))
         save(
             "41_gpu_sizes",
             torch=torch.__version__,
             device=torch.cuda.get_device_name(0),
-            nats=ended,
+            sizes=ended,
         )
         raise SystemExit
 
