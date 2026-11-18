@@ -157,6 +157,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
     import torch
 
     import gpt.model
+    from gpt.checks import starts_with_no_opinion
     from gpt.cost import forward_flops
     from gpt.data import read, tokenizer, write
     from gpt.gpt2 import evaluate
@@ -193,9 +194,12 @@ if __name__ == "__main__" and sys.argv[1:2] == ["train"]:
 
     # The same step with lesson 6's attention and with PyTorch's fused routine in its place,
     # then with more windows in a step: the card gets through more tokens a second when full.
-    form = shape(768, 12) | {"vocab": words.end + 1}
+    # Lesson 41's widest shape, 768 wide, failed lesson 13's first check. This one is narrower
+    # and deeper, and the check runs here, before an hour goes on timing and short runs.
+    form = shape(640, 16) | {"vocab": words.end + 1}
     torch.manual_seed(0)
     model = GPT(**form).to("cuda")
+    assert starts_with_no_opinion(model, val_ids[:20_000], form["vocab"])
     ours = step_seconds(model, ids, half=True)
     gpt.model.attend = fused
     took = {windows: step_seconds(model, ids, windows, half=True) for windows in (32, 64, 128, 256)}
