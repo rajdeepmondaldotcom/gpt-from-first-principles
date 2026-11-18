@@ -1,3 +1,4 @@
+import sys
 from types import SimpleNamespace
 
 import torch
@@ -71,7 +72,11 @@ def test_the_pick_is_the_smallest_shape_the_law_cannot_tell_from_the_best():
     assert rows[0]["predicted"] < best - 0.05  # so a best taken over each shape would fit none
 
 
-def test_two_workers_that_share_slopes_end_where_one_worker_on_the_whole_batch_does(tmp_path):
+def test_two_workers_that_share_slopes_end_where_one_worker_on_the_whole_batch_does(
+    tmp_path, monkeypatch
+):
+    # The workers reach each other inside this machine, whatever other networks it has joined.
+    monkeypatch.setenv("GLOO_SOCKET_IFNAME", "lo0" if sys.platform == "darwin" else "lo")
     torch.manual_seed(0)
     write(tmp_path / "ids.bin", torch.randint(65, (4000,)).tolist())
     alone, single = race(1, SMALL, tmp_path / "ids.bin", 4, 8, "gloo", tmp_path / "one.pt")

@@ -165,7 +165,14 @@ if __name__ == "__main__":
         # trained with: do the cards end where one card does?
         single = race(1, one, text, 12, 32, "nccl", out)[1]
         several = race(cards, one, text, 12, 32 // cards, "nccl", out)[1]
-        apart = max((single[name] - several[name]).abs().max().item() for name in single)
+        torch.manual_seed(0)  # the workers' seed, so these are the weights both runs began with
+
+        def flat(weights):
+            """Each weight in one row. The scores layer is the token rows again, so it is left out."""
+            return torch.cat([weights[name].flatten() for name in single if name != "out.weight"])
+
+        moved = (flat(single) - flat(GPT(**one).state_dict())).abs().mean().item()
+        gaps = (flat(single) - flat(several)).abs()
         # In 16-bit numbers, as the run above trained: how long does a step take each way?
         alone = race(1, one, text, 12, 32 * cards, "nccl", out, half=True)[0]
         shared = race(cards, one, text, 12, 32, "nccl", out, half=True)[0]
@@ -178,8 +185,9 @@ if __name__ == "__main__":
             f"{tokens / shared:,.0f} tokens a second, {alone / shared:.2f} times as fast"
         )
         say(
-            f"12 steps of 32 windows in 32-bit numbers: the weights of one card and of {cards} "
-            f"differ by at most {apart:.6f}"
+            f"12 steps of 32 windows in 32-bit numbers: a weight moved {moved:.6f} on average. "
+            f"One card's weights and {cards} cards' differ by {gaps.mean().item():.6f} on average, "
+            f"{gaps.max().item():.6f} at most"
         )
         say(
             f"a million tokens of training: ${price[1] / 3600 / (tokens / alone) * 1e6:.4f} on "
@@ -191,7 +199,8 @@ if __name__ == "__main__":
             device=torch.cuda.get_device_name(0),
             cards=cards,
             seconds_a_step={"one": alone, "many": shared},
-            largest_gap=apart,
+            moved=moved,
+            gap={"mean": gaps.mean().item(), "largest": gaps.max().item()},
         )
         raise SystemExit
 
