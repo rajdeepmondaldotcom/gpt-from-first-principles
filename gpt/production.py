@@ -147,15 +147,16 @@ if __name__ == "__main__":
         f"{busy * 1e3:.2f} ms of a pass, on {len(kernels)} jobs"
     )
 
-    # Memory speed, as in lesson 31: the fastest of five copies of 1 GB on the card.
-    block, copies = torch.ones(2**28, device="cuda"), []
+    # Memory speed. Lesson 31 timed a copy, which reads each byte and writes it. A pass only
+    # reads its weights, so here we time a read: the fastest of five sums over 4 GB on the card.
+    block, reads = torch.ones(2**30, device="cuda"), []
     for _ in range(5):
         torch.cuda.synchronize()
         began = time.perf_counter()
-        block.clone()
+        block.sum()
         torch.cuda.synchronize()
-        copies.append(time.perf_counter() - began)
-    moved = 2 * block.nbytes / min(copies)
+        reads.append(time.perf_counter() - began)
+    moved = block.nbytes / min(reads)
     del block
     ours.to("cpu")
     torch.cuda.empty_cache()
@@ -284,7 +285,7 @@ if __name__ == "__main__":
         return sum(map(sum, nats)) / sum(len(story.encode()) for story in told) / math.log(2)
 
     weights = 4 * sum(p.numel() for p in ours.parameters())
-    say(f"this card moves {moved / 1e9:.0f} GB a second through its memory")
+    say(f"this card reads {moved / 1e9:.0f} GB a second from its memory")
     say(
         f"our model reads {weights / 1e6:.0f} MB of weights for a token: at that speed, "
         f"{moved / weights:,.0f} tokens a second. vLLM gave one listener {speed:,.0f}"
@@ -332,7 +333,7 @@ if __name__ == "__main__":
             "card_busy": busy,
             "jobs": len(kernels),
         },
-        copy_bytes_a_second=moved,
+        read_bytes_a_second=moved,
         vllm={
             "same": same,
             "gap": gap,
