@@ -294,20 +294,23 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     model, words = load(cache / "strong")
     model, words.split = model.to(device), MOVES
     unseen = [line for month in sorted(cache.glob("strong_20*.val")) for line in month.open()]
-    ratings = sorted(int(line.split()[0][1:]) for line in unseen if line.strip())
-    top = ratings[len(ratings) * 49 // 50] * 100  # white's rating in the strongest fiftieth
-    say(f"in one unseen game of fifty, white is rated {top:,} or more")
+    ratings = [int(line.split()[0][1:]) for line in unseen if line.strip()]
+    low = min(ratings) * 100
+    top = max(r for r in set(ratings) if ratings.count(r) * 100 >= len(ratings)) * 100
+    say(
+        f"white's rating in the unseen games starts at {low:,}. The highest hundred that one "
+        f"game in a hundred has is {top:,}"
+    )
 
-    # What should we tell it? Three tellings, 100 games each against Stockfish held to 1,800.
-    tellings = {
-        "both players rated 2,200, and a draw": (2200, False),
-        f"both players rated {top:,}, and a draw": (top, False),
-        f"both players rated {top:,}, and its own side wins": (top, True),
-    }
+    # What should we tell it? Four ratings from the lowest to that one, each with a win, and
+    # the last again with a draw. Each telling plays 100 games against Stockfish held to 1,900.
+    steps = [low + round((top - low) * i / 300) * 100 for i in range(4)]
+    tellings = {f"both players rated {r:,}, and its own side wins": (r, True) for r in steps}
+    tellings[f"both players rated {top:,}, and a draw"] = (top, False)
     trial = {}
     for name, how in tellings.items():
         say(f"the stronger player, told: {name}")
-        trial[name] = sum(against(best_legal(model, words, *how), 1800, 100, 240)) / 100
+        trial[name] = sum(against(best_legal(model, words, *how), 1900, 100, 240)) / 100
     name = max(trial, key=trial.get)
     ours, results = best_legal(model, words, *tellings[name]), []
     say(f"the stronger player in new games, told: {name}")
