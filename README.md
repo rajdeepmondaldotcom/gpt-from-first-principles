@@ -2,7 +2,7 @@
 
 Build a GPT yourself. Train it, serve it, teach the same code chess, then run it all on a rented graphics card.
 
-You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs.
+You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs, and a third shares one model out among several workers.
 
 Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41 and 42 also need an AWS account and about $18. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
 
@@ -85,6 +85,7 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 40 | [The board in its head](lessons/40-the-board-in-its-head.md) | A chess position read out of the model's inner numbers, and the chance of a move changed by editing them |
 | 41 | [Train on a GPU](lessons/41-train-on-a-gpu.md) | The same code on a rented graphics card: a bigger story model, a stronger chess player, four cards sharing a step, and each run's cost in dollars |
 | 42 | [Serve on a GPU](lessons/42-serve-on-a-gpu.md) | The bigger story model served by vLLM, the request rate it keeps up with, and the price of a million tokens, for our model and for one about 520 times its size |
+| 43 | [Split the model](lessons/43-split-the-model.md) | One layer's weights and the optimizer's averages shared among four workers, with each sum checked against the model in one piece |
 
 Four guides go with the lessons.
 
@@ -174,6 +175,13 @@ Lessons 41 and 42 run the same code on rented NVIDIA cards: one L40S, except for
 | Requests a second vLLM keeps up with, and the price of a million tokens there | 42 | 128, at $0.065. At 256 and at 512 it writes about 12,800 tokens a second and requests wait |
 | A model of 7.6 billion parameters, one listener, at 16 bits then 8: tokens a second the card's memory allows, then what it gets | 42 | 52 then 50, and 97 then 73 |
 | 200 unseen stories, each scored from its own start, in bits per byte: our 14.6 million parameters, then the 7.6 billion | 42 | 0.426, then 0.514 |
+
+Lesson 43 is back on the laptop. Its four workers are in one process, so it counts bytes and checks sums, and times nothing.
+
+| Measure | Lesson | Result |
+|---|---|---|
+| What one of four workers holds to train lesson 41's story model: a whole copy, then with AdamW's averages shared out | 43 | 232.9 MB, then 155.0 MB for the fullest worker |
+| What each worker hands over in a step: its slopes, then its parts of eight split MLPs | 43 | 58.2 MB, then 201.3 MB |
 
 ## Run it
 

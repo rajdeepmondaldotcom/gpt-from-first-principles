@@ -1,0 +1,26 @@
+{
+  "commit": "fa61dd1",
+  "python": "3.13.13",
+  "torch": "2.15.0",
+  "workers": 4,
+  "parameters": 14555904,
+  "kept": [
+    4818816,
+    3245952,
+    3245568,
+    3245568
+  ],
+  "held": {
+    "whole": 232894464,
+    "shared": 154997760
+  },
+  "same": true,
+  "printed": [
+    "lesson 41's story model: 14,555,904 parameters, shared among 4 workers",
+    "a whole copy for each worker: 232.9 MB each. With the averages shared out, the worker with the most holds 155.0 MB",
+    "one MLP of 1,179,648 weights: each worker holds 294,912. The parts add up to the whole result to within 0.000000112",
+    "each worker's slopes for its own weights match the whole MLP's to within 0.000000000, and the four slopes for the input add up to the whole one to within 0.000000125",
+    "three steps of AdamW with the averages shared among 4: the workers keep averages for 4,818,816, 3,245,952, 3,245,568, 3,245,568 parameters, and each weight ends equal to one optimizer's, to the last bit: True",
+    "what each worker hands over in a step of 8,192 tokens: its slopes, 58.2 MB (lessons 20 and 41). With each block's MLP split, a part forwards and a slope back for each token: 201.3 MB"
+  ]
+}
