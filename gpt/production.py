@@ -73,6 +73,9 @@ def load(port, line):
         thread.start()
     for thread in threads:
         thread.join()
+    # A request that fails raises inside its own thread and leaves no record. Without this the
+    # report would be worked out from the requests that got through.
+    assert len(records) == len(threads), "a request failed: its error is printed above"
     return records
 
 

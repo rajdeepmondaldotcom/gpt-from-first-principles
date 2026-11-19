@@ -89,5 +89,13 @@ def test_load_sends_each_request_and_times_it_from_the_start_of_the_line(port):
     assert report(records)["served"] == 12
 
 
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnhandledThreadExceptionWarning")
+def test_a_request_that_fails_stops_the_load_test(port):
+    line = arrivals([[1, 2], [3, 4]], 200, torch.Generator().manual_seed(0), limit=3)
+    line[1][1].limit = 0  # the stub refuses a request for no tokens
+    with pytest.raises(AssertionError, match="a request failed"):
+        load(port, line)
+
+
 def test_scores_are_the_prompt_tokens_own_not_the_top_tokens(port):
     assert scores(port, [3, 20, 7]) == [-2.0, -0.7]

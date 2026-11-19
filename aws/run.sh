@@ -24,8 +24,12 @@ if [ $# -gt 0 ]; then
   trap 'rm -f "$bundle"' EXIT
   git bundle create "$bundle" HEAD > /dev/null 2>&1
   scp -q "${door[@]}" "$bundle" "ubuntu@$host:course.bundle"
-  on 'mkdir -p course/data/cache && cd course && git init -q &&
-      git fetch -q ../course.bundle HEAD && git checkout -q -f --detach FETCH_HEAD'
+  # The checkout puts back each tracked file as the commit has it. The results an earlier run
+  # measured on this machine are set aside first and put back after: the next stage reads them.
+  on 'set -e; mkdir -p course/data/cache course/results kept; cd course; git init -q
+      cp results/4*.json ../kept/ 2> /dev/null || true
+      git fetch -q ../course.bundle HEAD; git checkout -q -f --detach FETCH_HEAD
+      cp ../kept/4*.json results/ 2> /dev/null || true'
   # What earlier lessons made and this machine does not have: the tokenizers, the text and the
   # games held out of training, the trained models and their results. A file the machine
   # already has is left alone: it may be a result that has not come back yet.
