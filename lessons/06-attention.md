@@ -20,7 +20,7 @@ Give each token three vectors, made from its embedding by three linear layers:
 
 The score for token i reading token j is the dot product of i's query with j's key. Softmax turns token i's scores into weights that sum to 1. Token i's result is the weighted sum of the values. This is attention. The weights are called attention weights. They are worked out afresh for each text and are not parameters, unlike the weights inside a layer.
 
-The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens. Two tests below check both.
+The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens.
 
 Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms, each of spread 1, grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
 

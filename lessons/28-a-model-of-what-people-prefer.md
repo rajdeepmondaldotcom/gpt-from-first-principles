@@ -6,7 +6,7 @@ Lesson 27's score gave nothing for an ending, and 59 of 200 stories now never re
 
 ## The idea
 
-In some tasks, Christiano and others found a choice between two easier to give than a number. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
+Christiano and others found that in some tasks, picking the better of two is easier than giving a number. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
 We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside it, which a real project cannot.
 
@@ -123,7 +123,7 @@ One day, a happy sad girl named Mia wanted to find more. She wanted to bake anot
 Bby was happy again. They were happy again. They could not sell past again. They had fun and sang their new things again. They were happy again. They were happy again because they did their choory together.
 ```
 
-The last order asked for Bob, movie, movies and watch, and the story above is what the storyteller now writes. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs already say which story is better, and we have not learned from them directly.
+The story above is what the storyteller now writes. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs already say which story is better, and we have not learned from them directly.
 
 ## Check yourself
 

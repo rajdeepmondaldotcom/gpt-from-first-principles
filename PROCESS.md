@@ -15,7 +15,7 @@ A page written before its run tends to say what the author hoped for. So the pag
 
 - **One idea**, opened by something the last lesson could not do.
 - **Six sections**, the same on each page: the idea, a sum by hand, the code, the proof, what it still cannot do, and questions to check yourself.
-- **At most 1,200 words** outside its code. A page that runs over gets cut.
+- **At most 1,500 words** outside its code, and most pages sit near 1,200. A sentence stays if a reader would miss it: a result, a definition, a reason, a pointer. A sentence that says again what the page has said goes, whatever the count.
 - **Nothing used before it is defined**, in plain words. The glossary sets each plain word beside the field's own.
 - **A question to predict**, which nothing above it answers. Where the run's output answers it, it stands above the run, and its answer is the first hidden block of "Check yourself".
 - **Results that did not go our way stay in.** Lessons 34 and 35 each build a speed-up that is no faster. Lesson 37 says its chip timings are not settled, lesson 41 says its script used a looser yardstick than the lesson it cites, and lesson 45 says that one rating does not suit its seven matches.
@@ -29,7 +29,7 @@ A page written before its run tends to say what the author hoped for. So the pag
 - a sample on a page is not the sample in the results file
 - a number on a scoreboard was printed by no script
 - a link or a command on a page points at nothing
-- a page has more than 1,200 words, a section missing, or a word from the list of filler
+- a page has more than 1,500 words, a section missing, or a word from the list of filler
 
 Each lesson's own tests must be able to fail. For the claims that matter we plant the bug the lesson warns about and check that a test goes red.
 

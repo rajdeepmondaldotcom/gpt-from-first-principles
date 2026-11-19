@@ -36,7 +36,7 @@ Without it the model reads 4 tokens for the first new one, 5 for the second, and
 
 ## The code
 
-Lesson 15 quoted attention with two names left for later. `seen` is how many tokens the cache holds, and it sets the new tokens' places:
+Lesson 15 quoted attention with `seen` left for later. `seen` is how many tokens the cache holds, and it sets the new tokens' places:
 
 ```python
 # gpt/model.py

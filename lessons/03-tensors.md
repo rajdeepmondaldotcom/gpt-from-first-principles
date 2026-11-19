@@ -6,7 +6,7 @@ Lesson 2's model learned one sentence. Each number was a Python object, and one 
 
 ## The idea
 
-Store the numbers in a grid and do arithmetic on the whole grid at once. The grid is called a tensor, and its shape says how many numbers lie along each direction. Our table of scores `W` has shape 65 × 65, one row per character. One instruction, such as `W.exp()`, runs over all 4,225 numbers inside the library, with no Python loop.
+Store the numbers in a grid and do arithmetic on the whole grid at once. The grid is called a tensor, and its shape says how many numbers lie along each direction. Our table of scores `W` has shape 65 × 65, one row per character. One instruction, such as `W.exp()`, runs over all 4,225 numbers inside the library.
 
 PyTorch is the library that gives us tensors. An autograd like ours comes built in. On this page we still work the slopes out by hand, and use PyTorch's autograd only to check them.
 
@@ -124,7 +124,7 @@ Timings are from an M4 laptop and move from run to run.
 | Bigram, counted | 3.581 |
 | Bigram, learned | 3.599 |
 
-The learned table sits 0.018 bits behind the counted one, which adds 1 to each count.
+Trained for 2,000 steps, about 1 second, the learned bigram scores 3.599 bits per byte on unseen text, 0.018 behind the counted table, which adds 1 to each count.
 
 ## What it still cannot do
 

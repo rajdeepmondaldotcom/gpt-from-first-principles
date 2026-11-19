@@ -151,7 +151,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 The outside tool and our own counts agree: 21.4 requests a second by its count and 21.3 by ours, and 718 ms each against 716. The server wrote 2,131 tokens a second, with a first token after 33 ms on average. Requests inside averaged 15.2. Requests left as fast as they arrived, at 21.3 a second, and 21.3 × 0.716 = 15.3: the sum holds.
 
-At that speed a million tokens take this laptop 8 minutes. Sent 400 requests, 200 at a time, the server answered 100, told 300 to try again and failed none.
+At that speed a million tokens take this laptop 8 minutes. Sent 400 requests, 200 at a time, the server answered 100, told 300 to try again and failed none. That is more than memory for 16 and a line of 64 hold at once: as answers finished, later arrivals found room in the line.
 
 To hear a story, start the server with `uv run python -m gpt.server stay` and open `http://127.0.0.1:8000`, which only this machine can reach.
 

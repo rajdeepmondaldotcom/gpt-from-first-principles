@@ -108,7 +108,7 @@ longest tokens: [' against', ' nothing', 'ORIOLANUS', 'GLOUCESTER', ' VINCENTIO'
 'Once upon a time' -> ['O', 'nce', ' upon', ' a', ' time']
 ```
 
-The script trains lesson 4's model again on eight tokens.
+The script trains lesson 4's model on eight tokens.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -120,7 +120,7 @@ The script trains lesson 4's model again on eight tokens.
 
 ## What it still cannot do
 
-With 1,024 tokens the window reaches 18 bytes, about three words. The loss fell by 0.09 bits per byte. The jump from one character of context to eight gained 0.92.
+With 1,024 tokens the window reaches 18 bytes, about three words. The MLP scores 2.572 bits per byte on unseen text, 0.09 better. The jump from one character of context to eight gained 0.92.
 
 More than doubling the reach bought little. Eight tokens are still eight fixed slots, each read by weights of its own, and the window's length is built into the first layer.
 

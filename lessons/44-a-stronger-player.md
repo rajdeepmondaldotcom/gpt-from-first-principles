@@ -10,7 +10,7 @@ Lesson 41's model read four months of games between players of any rating. We ch
 
 1. Both players of a game must be rated 2,200 or more on Lichess. We leave out bullet games, which Lichess expects to take each side under three minutes, and games it does not mark as ended normally, such as those a clock ended. We read fifteen months: 2,916 files, 999 GB.
 2. A common move is one token. Lesson 5's cut never joins a letter to a digit, so lesson 38's moves took 2.1 tokens each. Here a chunk is anything between two spaces, and lesson 5's trainer stops when each chunk of its sample, 50,000 games, is one token.
-3. A game's line starts with three words: white's rating in hundreds, black's, and the result, as in `W23 B22 1-0`. In training they are facts. In lesson 45 we write them, to ask for a strong player's moves.
+3. A game's line starts with three words: white's rating in hundreds, black's, and the result, as in `W23 B22 1-0`. In training they are facts. In lesson 45 we write them, to ask for a strong player's moves. Chen and others steer a model this way, by the result they ask it for.
 4. The model is 640 wide and 16 blocks deep, 76,286,080 parameters. Lesson 19's law was 0.347 nats off in lesson 41, so we did not size by it. Lesson 41's widest story model, 768 wide and 12 deep, failed lesson 13's check of the first loss, so this one is narrower and deeper.
 
 As in lesson 18, we drop repeats and near-repeats, month by month, and keep one game in a hundred unseen. The run is lesson 21's long run, in lesson 12's 16-bit numbers. Three short runs pick the rate, lesson 13's checks must pass, and each 500 steps the run scores unseen games and saves a checkpoint.
@@ -30,6 +30,8 @@ Tokens, by lesson 38's cut and by this one:
 A game of 100 moves was about 210 tokens. Here it is the end token, three words and 100 moves: 104.
 
 The first loss. With a vocabulary of 6,556 tokens, a model that knows nothing scores ln 6,556 = 8.79 nats, and lesson 13's check wants the first loss within 0.15 of that.
+
+The three words. White is rated 2,734, black 2,251, and black won. 2,734 // 100 = 27 and 2,251 // 100 = 22, so the line opens `W27 B22 0-1`.
 
 ## The code
 
@@ -68,7 +70,7 @@ def fused(q, k, v, mask=None):
     return F.scaled_dot_product_attention(q, k, v, attn_mask=mask), None
 ```
 
-`pq` and `pc` are pyarrow, which reads Lichess's files: `read_table` takes from a file only the games that pass `wanted`. `games` is lesson 38's, which keeps a game of 20 moves or more.
+`pq` and `pc` are pyarrow, which reads Lichess's files: `read_table` takes from a file only the games that pass `wanted`. `games` is lesson 38's, which keeps a game of 20 moves or more. `MOVES` matches a run of anything but spaces, with the space before it.
 
 ## The proof
 
@@ -88,7 +90,7 @@ aws/run.sh <host> python -m gpt.strong games 2025-09 2025-08 2025-07 2025-06 202
 aws/run.sh <host> python -m gpt.strong ids
 ```
 
-`ids` writes each month as token ids. We typed each stage's command on the machine itself, not through `aws/run.sh`, and split the months over three `games` commands, and the two stages took 4 hours, with lesson 42's second stage running beside them.
+`ids` writes each month as token ids. We typed each stage's command on the machine itself, not through `aws/run.sh`, and split the months over three `games` commands. The two stages took 4 hours, beside lesson 42's second stage.
 
 Predict before you run: a step of 128 windows holds four times the tokens of a step of 32. Will it put more tokens through in a second?
 
@@ -123,7 +125,7 @@ The run read the games 2.3 times and ends at 1.447 nats a token on all the unsee
 
 The last line prices 12 hours of steps. On the clock the stage took 16, with the short runs first and a score and a checkpoint each 500 steps: about $30.
 
-The script kept each month's unseen games uncleaned, so they hold 144 repeats and near-repeats that lesson 18's cleaning dropped from training, by the same file's count.
+The script did not run lesson 18's cleaning on the unseen games, so 144 of their 193,852 repeat or nearly repeat another game, by the same file's count.
 
 ## What it still cannot do
 
@@ -140,7 +142,12 @@ No. A step of 128 windows puts 63,206 tokens through in a second, and a step of 
 
 <details><summary>From lesson 13: why does the script check the first loss before the short runs, and not after the long one?</summary>
 
-A first loss far from ln 6,556 means the starting weights are wrong, and lesson 41's widest story model failed this check. It is one pass over 20,000 tokens, and the run it guards takes 16 hours.
+A first loss far from ln 6,556 means the starting weights are wrong, and lesson 41's widest story model failed this check. It needs no training step, and the run it guards takes 16 hours.
+</details>
+
+<details><summary>The line `W27 B22 0-1 e4 c5` follows an end token. How many tokens does the model read?</summary>
+
+Six: the end token, three words and two moves.
 </details>
 
 Go deeper:

@@ -16,7 +16,7 @@ score × slope of the log of the story's chance
 
 The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write stories, score each, and step so that each story's log chance rises in proportion to its score.
 
-The step as written is noisy. With scores from 0 to 1, no story is pushed down. The chances of all stories sum to 1, so only the difference between pushes teaches anything. With every push positive, that difference sits under a large shared push that only adds noise. We write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
+The step as written is noisy. With scores from 0 to 1, no story is pushed down. The chances of all stories sum to 1, so only the difference between pushes teaches anything. With every push positive, the part that all stories share is large, teaches nothing, and only adds noise. We write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
 
 Subtracting a number that does not depend on which story was drawn leaves the average slope where it was: on average it multiplies the slope of the sum of all chances, and a sum that is always 1 has a slope of 0. The average of four does depend on the story. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. On average the step keeps its direction and is three quarters as long.
 

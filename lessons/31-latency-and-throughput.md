@@ -2,7 +2,7 @@
 
 By the end of this page you can say how long a listener waits and how much the machine gets done, and you have watched both as listeners arrive faster and faster.
 
-Every story so far came from a script, one order at a time. We have not measured how long someone asking for a story waits, or how much the machine writes in a second. A service has many such listeners, and they arrive when they like. Before we change the code, we need numbers to judge each change by.
+Every story so far came from a script, one order at a time. We have not measured how long someone asking for a story waits, or how much the machine writes in a second. A service has many such listeners, and they arrive when they like.
 
 ## The idea
 
@@ -105,9 +105,9 @@ one request at a time can finish 10.1 requests a second
 
 Timings are from an M4 laptop, and they move from run to run.
 
-For one request alone, the prompt is read at 24,647 tokens a second: its 192 tokens pass through each weight in one read. Writing reads every weight for each token: 539 a second. Memory alone would allow 4,231, almost eight times that. Lesson 37 looks for what holds it there.
+Alone, a 192-token prompt has a time to first token of 8 ms, read at 24,647 tokens a second: all 192 tokens pass through each weight in one read. Writing reads every weight for each token: 539 tokens a second. Memory alone would allow 4,231, almost eight times that. Lesson 37 looks for what holds it there.
 
-The three rates are half, nine tenths and one and a half times the 10.1 above. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, and the writing keeps its pace. Each rate's 120 arrival times are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
+The three rates are half, nine tenths and one and a half times the 10.1 above. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, to 1,737 ms for half the listeners at 15.1 requests a second, and the writing keeps its pace. Each rate's 120 arrival times are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
 
 ## What it still cannot do
 
@@ -124,7 +124,7 @@ Predict before you run: a machine finishes 3 requests a second and 4.5 arrive ea
 
 <details><summary>A request has a prompt three times as long as another's. Which of its two waits grows more?</summary>
 
-The wait for the first token. The gap barely moves: each new token still costs one pass over one token, though it reads a longer cache.
+The wait for the first token. The gap grows less: 1.9 ms after a prompt of 192 tokens, 1.5 ms after 64, as each token reads a longer cache.
 </details>
 
 <details><summary>From lesson 23: without the cache, what would happen to the gap between tokens as the answer grows?</summary>

@@ -53,7 +53,7 @@ Attention calls it on each query and key, and on nothing else:
         k = rope(self.k(x).view(B, T, self.kv_heads, -1).transpose(1, 2), pos)
 ```
 
-`gpt/model.py` holds this lesson's model: lesson 10's GPT with no table of places and with this attention. It makes queries and keys with two separate layers, `self.q` and `self.k`, and `-1` in `view` means "work this size out". `seen` counts tokens read on an earlier call and is 0 here. `kv_heads` is lesson 16's, and here it equals `heads`. The model takes its normalization and its MLP as arguments, and here we pass lesson 9's.
+`gpt/model.py` holds this lesson's model: lesson 10's GPT with no table of places and with this attention, whose layers have no biases. It makes queries and keys with two separate layers, `self.q` and `self.k`, and `-1` in `view` means "work this size out". `seen` counts tokens read on an earlier call and is 0 here. `kv_heads` is lesson 16's, and here it equals `heads`. The model takes its normalization and its MLP as arguments, and here we pass lesson 9's.
 
 ## The proof
 

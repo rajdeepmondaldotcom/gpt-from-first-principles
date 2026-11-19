@@ -75,7 +75,7 @@ Now send the first prompt again with its token 21 changed. The first piece still
             self.used -= sum(t.nbytes for one in piece for t in one.values())
 ```
 
-Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks a prompt's longest piece as used first, so it is the oldest and goes before the shorter ones it needs.
+Lesson 32's engine calls `fetch` when it takes a request in and `keep` when the request has read its prompt: the two lines of `step` and `admit` that mention a store. `touch` marks each of a prompt's pieces as used, the longest first, so the longest goes before the shorter ones it needs.
 
 ## The proof
 
@@ -90,7 +90,7 @@ uv run pytest tests/test_prefix.py
 - A store with room for two pieces is given three. The one used longest ago goes, and a piece that was used again in between stays.
 - Given five pieces with room for four, the store keeps no piece without the shorter ones before it.
 
-Predict before you run: 20 prompts share their first 160 tokens and end in 16 tokens of their own. With pieces of 16 tokens, how many tokens does the model read for the second prompt?
+Predict before you run: 20 prompts share their first 160 tokens and end in 16 tokens of their own. With pieces of 16 tokens, how many of the second prompt's tokens does the model read?
 
 ```bash
 uv run python -m gpt.prefix

@@ -1,6 +1,6 @@
 # 45. How strong is it?
 
-By the end of this page lesson 44's model has played 1,300 games against a chess program held to known ratings, and has an Elo rating on that program's scale, with a range around it.
+By the end of this page lesson 44's model has played 1,300 games, and lesson 41's model 100, against a chess program held to known ratings, and has an Elo rating on that program's scale, with a range.
 
 The model has a loss, and lesson 38 found that a loss says little about chess. It has not played a game, and we still have no opponent whose rating others know.
 
@@ -8,11 +8,11 @@ The model has a loss, and lesson 38 found that a loss says little about chess. I
 
 Stockfish is a program that plays chess. One of its settings holds it to any rating we choose from 1,320 to 3,190, on a scale its authors fitted to a public list of rated programs.
 
-The games follow lesson 39's rules, but stop after 240 moves, not 100: a common move is one token now, and the model reads 256. Stockfish gets 0.05 seconds a move, so that 1,400 games fit in two hours. Its scale was fitted at 120 seconds a game and a second more a move, so a last match gives it ten times as long, to see if that matters.
+The games follow lesson 39's rules, but stop after 240 moves, not 100: a common move is one token now, and the model reads 256. Stockfish gets 0.05 seconds a move, so 1,400 games fit in two hours. Its scale was fitted at a far slower clock, 120 seconds a game and a second more a move, so a last match gives it ten times as long, to see if that matters.
 
 Lesson 39's player wrote a move, and the rules picked one when five tries failed. The new player plays the legal move the model scores highest, among those that are one token.
 
-Lesson 44's three words are now ours to write, and we call what we write a telling: one rating for both players, and a win for the model's side or a draw. White in the unseen games is rated 2,200 or more, and the 2,700s are the highest hundred with at least 1 game in 100. We try four ratings from 2,200 to 2,700 with a win, and 2,700 with a draw, each for 100 games against Stockfish held to 1,900. The best then plays new games: we picked it for its score, so part of that score is the luck of the pick.
+Lesson 44's three words are now ours to write, and we call what we write a telling: one rating for both players, and a win for the model's side or a draw. White in the unseen games is rated 2,200 or more, and the 2,700s are the highest hundred that holds one game in a hundred. We try four ratings from 2,200 to 2,700 with a win, and 2,700 with a draw, each for 100 games against Stockfish held to 1,900. The best then plays new games: we picked it for its score, so part of that score is the luck of the pick.
 
 Lesson 39 fitted every player's rating at once. Here Stockfish's seven ratings are given, and ours is the one unknown. The script keeps the whole-number rating below 4,000 that makes the 700 results most likely by the Elo rule, and lesson 24's bootstrap, 200 draws over pairs of games, gives it a range.
 
@@ -31,6 +31,8 @@ S + 400 × log10(s / (1 - s))
 | 0.20 | 0.25 | S - 241 |
 
 One match gives one such rating. The fit gives one for all seven.
+
+A telling: black is to move, and we tell the model that both players are rated 2,700 and its side wins. A black win is written 0-1, so the line opens `W27 B27 0-1`.
 
 ## The code
 
@@ -87,7 +89,7 @@ def rating(results):
     return likely.argmax().item()
 ```
 
-`words.vocab` maps a token's bytes to its id. In `rating`, `expected` is lesson 39's Elo rule, `mine` is a column of each rating from 0 to 3,999, and `likely` is the log of the chance each one gives the results.
+`words.vocab` maps a token's bytes to its id, and `board.turn` is true when white is to move. `UCI_Elo` is the setting that holds Stockfish to a rating. In `rating`, `expected` is lesson 39's Elo rule, `mine` is a column of each rating from 0 to 3,999, and `likely` is the log of the chance each one gives the results.
 
 ## The proof
 
@@ -96,6 +98,7 @@ uv run pytest tests/test_strong.py
 ```
 
 - Ten wins for each loss against a player rated 1,500 give a rating of 1,900, and a half share gives the opponent's own.
+- Two opponents, each scored as a player rated 1,700 would score, give 1,700.
 - The line the player hands the model opens with the end token and the three words, with `1-0` when it plays white and `0-1` when it plays black. It plays the one-token legal move scored highest.
 
 Predict before you run: each game the model read was between players rated 2,200 or more. Will it take half the points from Stockfish held to 2,200?
@@ -136,14 +139,18 @@ Lesson 41's model takes 0.23 of the points from Stockfish's weakest setting. The
 
 The five tellings score from 0.30 to 0.45, each on openings of its own, and each interval overlaps the best one's: 100 games do not tell them apart.
 
-The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836. The course's chess players, then:
+The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836, on Stockfish's scale. That scale is fitted to a list of rated chess programs, so 1,785 is not a Lichess rating or a chess federation's. The course's chess players, then:
 
 | Player | Elo rating | Scale |
 |---|---|---|
-| Lesson 38's model | +421 | ours, a random mover at 0 |
-| Lesson 41's model | +775 | ours |
+| A player that moves at random | 0 | ours: it is held at 0 |
+| Lesson 38's model | +421 | ours, lesson 39's fit |
+| The grabber, which looks one move ahead | +738 | ours, lesson 39's fit |
+| Lesson 41's model | +775 | ours, lesson 41's fit, in which lesson 38's model is +355 |
 | Lesson 41's model | about 1,110 | Stockfish's, one match, below its scale |
-| Lesson 44's model | 1,785 | Stockfish's, seven matches |
+| Lesson 44's model | 1,785 | Stockfish's, seven matches, range 1,737 to 1,836 |
+
+Only lesson 41's model is on both scales, and one match is too little to turn one into the other.
 
 One rating does not suit the seven matches, though. The same rule, on each match alone:
 
@@ -169,17 +176,24 @@ Lessons 44 and 45 cost us $36.96 by the price list: `results/45_bill.json` has t
 
 ## What it still cannot do
 
-Lesson 44 bought 1,785 with 12 hours of steps and tried no rate below its best. We also changed how a move is picked, and never played lesson 39's player with the new model. We did not tally how many games reached 240 moves and went to the piece count.
+Lesson 44 bought 1,785 with 12 hours of steps and tried no rate below its best. We also changed how a move is picked, and never let the new model pick moves lesson 39's way. We did not tally how many games reached 240 moves and went to the piece count.
+
+Lesson 42's bigger story model has not been taught to take an order, and lesson 36's own server has not run on a card.
 
 The player picks each move in one pass and never tries a reply on a board. [MAP.md](../MAP.md) has two ways on from here: a search through the moves ahead, and learning an engine's verdict on each move.
 
-This is the last lesson. [PRACTICE.md](../PRACTICE.md) has nine routines for practising what the lessons taught.
+This is the last lesson. The README's tables hold each result of the course, and [PRACTICE.md](../PRACTICE.md) has nine routines for practising what the lessons taught.
 
 ## Check yourself
 
 <details><summary>Prediction</summary>
 
-No: 0.19 of the points, with an interval of 0.12 to 0.27. Stockfish's scale is anchored to a list of programs and not to Lichess, so its 2,200 need not be Lichess's.
+No: 0.19 of the points, with an interval of 0.12 to 0.27. Stockfish's 2,200 need not be Lichess's.
+</details>
+
+<details><summary>The best telling scored 0.45 against Stockfish held to 1,900. Why play it again in new games before fitting a rating?</summary>
+
+It was picked for scoring highest of five, so part of that 0.45 is the luck that made it the pick. The new games had no part in the choice.
 </details>
 
 <details><summary>From lesson 39: that fit added a made-up drawn game between each two players. Why does this fit need none?</summary>
@@ -190,3 +204,5 @@ A fitted rating is finite unless one side took each point. Our player both won a
 Go deeper:
 
 - Stockfish, [UCI and commands](https://official-stockfish.github.io/docs/stockfish-wiki/UCI-Protocol-and-Stockfish-Commands.html). The setting that holds it to a rating, and the clock its scale was fitted at.
+- Zhang and others, [Transcendence: Generative Models Can Outperform The Experts That Train Them](https://arxiv.org/abs/2406.11741) (2024). A chess model can sometimes play better than each player it learned from, and picking its likelier moves can enable that.
+- Ruoss and others, [Amortized Planning with Large-Scale Transformers: A Case Study on Chess](https://arxiv.org/abs/2402.04494) (2024). A transformer taught an engine's verdict on each move, playing with no search.

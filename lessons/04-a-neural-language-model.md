@@ -2,11 +2,11 @@
 
 By the end of this page the model reads eight characters back and writes things that look like words.
 
-The bigram sees one character back. A table for eight characters back needs 65 to the power 8 rows, more than 300 trillion. Nearly all of them would stay empty.
+Any function with known slopes can take the table's place in lesson 3's loop. We need one, because a table for eight characters back has 65 to the power 8 rows, more than 300 trillion.
 
 ## The idea
 
-Replace the table with a function. Eight characters go in, 65 scores come out, and the function has a fixed number of parameters.
+Eight characters go in, 65 scores come out, and the function has a fixed number of parameters.
 
 Give each character a row of 24 numbers, called its embedding. The rows start random and training moves them. To read eight characters, look up their eight rows and lay them end to end: 192 numbers.
 
@@ -139,6 +139,8 @@ unseen text:   1.846 nats, 2.663 bits per byte
 | Bigram, learned | 3.599 |
 | MLP, eight characters back | 2.663 |
 
+Trained for 30,000 steps of 64 windows on the first 100,000 training characters, the MLP scores 2.663 bits per byte on unseen text.
+
 ## What it still cannot do
 
 ```
@@ -147,9 +149,9 @@ Once upon a time it plain? till I to susing to your me that was pifis last q
 
 `till`, `your` and `last` are words. `susing` and `pifis` are not, and the words do not add up to a sentence.
 
-Eight characters is about a word and a half. The model cannot see further back than that. Start the prompt with `Twice` in place of `Once` and, with the same random draws, it writes the same continuation, because the last eight characters did not change.
+Each place in the window has weights of its own. The 6,144 weights that read the third character share nothing with those that read the fifth, so a pattern learned at one place has to be learned again at every other.
 
-Each place in the window also has weights of its own. The 6,144 weights that read the third character share nothing with those that read the fifth, so a pattern learned at one place has to be learned again at every other.
+Eight characters is about a word and a half. The model cannot see further back than that. Start the prompt with `Twice` in place of `Once` and, with the same random draws, it writes the same continuation, because the last eight characters did not change.
 
 ## Check yourself
 

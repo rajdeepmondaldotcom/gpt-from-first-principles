@@ -64,7 +64,7 @@ uv run pytest tests/test_generate.py
 - Choosing leaves the scores as they were.
 - Writing stops at the end token, and at the model's context.
 
-The script writes 20 stories from `Once upon a time` at each of five settings. It counts how many of the 20 differ, how many reach their end inside 250 tokens, and how many of their words the training text never uses.
+The script writes 20 stories from `Once upon a time` at each of five settings. It counts how many different stories there are, how many reach their end inside 250 tokens, and how many of their words the training text never uses.
 
 Predict before you run: at a temperature of 1.5, will the share of made-up words be under 1%, about a tenth, or over half?
 
@@ -87,6 +87,8 @@ temperature 1, top-p 0.9: 20 different stories of 20, 20 reach their end, 0.0% o
 
 A temperature of 0 writes one story twenty times. At 0.5 and at 1 the twenty differ, and nearly every word is one the training text uses. At 1.5 the stories fall apart, with made-up words such as `breatamed`. Top-p at 0.9 also gives twenty different stories, and in them no word is made up.
 
+Lesson 21's settings sit inside this range. Its temperature of 0.8 lies between the 0.5 and 1 above, and its top-p of 0.95 drops tokens that hold at most a twentieth of the chance.
+
 ## What it still cannot do
 
 To write each new token, the model reads the whole text again from its first token. A story of 200 tokens is read 200 times, each time one token longer.
@@ -98,7 +100,7 @@ To write each new token, the model reads the whole text again from its first tok
 About a tenth: 12.6%, against 0.3% at a temperature of 1. Over 1 the chances move toward even, so unlikely tokens come far more often, and they join into words the training text never uses.
 </details>
 
-<details><summary>At a temperature of 0, how many of the 20 stories differ?</summary>
+<details><summary>At a temperature of 0, how many different stories are among the 20?</summary>
 
 One. Nothing is drawn by chance, so each run takes the same path.
 </details>

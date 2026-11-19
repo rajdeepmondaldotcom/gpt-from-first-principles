@@ -15,7 +15,7 @@ A check is a fact that holds for a healthy run and fails for a broken one. We ru
 - The loop can learn one batch by heart. If the loss stays up, the loop is broken: slopes are not reaching the weights, or old slopes are piling up.
 - Each grid of weights moves a little on each step. Measure how far a grid moved as a share of its own size. A share of 0 means the optimizer never got that grid. Our check fails a share above 2%.
 
-The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more. By lesson 11's rule, a slope that varies from batch to batch has an average smaller than its usual size, so later steps move a weight by less than the rate.
+The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more. Later steps move a weight by less than the rate: by lesson 11's rule, a slope whose sign changes from batch to batch averages to less than its usual size.
 
 A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and we say a model with a large gap overfits. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
 

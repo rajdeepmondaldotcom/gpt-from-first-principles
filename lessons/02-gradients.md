@@ -134,7 +134,7 @@ learned, step 2999:  0.5160 nats
 one step on 2,000 pairs of Shakespeare builds 277,188 Values
 ```
 
-The learned model closes in on the counted one.
+After 3,000 steps the learned table scores 0.5160 nats, 0.0008 above the counted table's 0.5152.
 
 ## What it still cannot do
 

@@ -15,7 +15,7 @@ Lesson 21 scored the model at 1.565 nats a token with lesson 10's `evaluate`: wi
 
 A loss measures prediction, and a task checks one job with a rule that says pass or fail. We have two tasks. The easy one opens a story with a name, and passes when the story uses the name again and reaches its end. The hard one asks, in three lines, for a story with a given name and three given words. It passes when the story has the name and each of the three words as whole words.
 
-A pass rate is a mean of passes and failures, but the bootstrap serves it badly when passes are few. Draw again from 100 failures and each draw is 100 failures, so the interval has no width. So a pass rate gets the range worked out by hand below: the rates at which this many passes or more, and this many or fewer, still come 1 time in 40.
+A pass rate is a mean of passes and failures, but the bootstrap serves it badly when passes are few. Draw again from 100 failures and each draw is 100 failures, so the interval has no width. So a pass rate gets the range worked out by hand below: from the lowest rate that gives this many passes or more 1 time in 40, to the highest that gives this many or fewer as often.
 
 We also ask for the chance that at least one of k tries passes, called pass at k. Given n tries of which c passed, count the ways to pick k tries that all failed, divide by the ways to pick any k, and take the result from 1.
 
@@ -25,7 +25,7 @@ Pass at 2, from 4 tries of which 2 passed. There are 6 ways to pick 2 tries from
 
 1 - 1/6 = 0.833
 
-The plain formula, 1 - (1 - 2/4)² = 0.75, is 0.083 too low here, and too low on average over many cases.
+The plain formula, 1 - (1 - 2/4)² = 0.75, is 0.083 too low here.
 
 No pass in 100 tries. At a pass rate of 0.036, 100 failures in a row have a chance of 0.964¹⁰⁰ = 0.026, about 1 in 40. A 95% interval leaves that share outside at each end, so ours runs from 0 to 0.036. One pass in 100 runs up to 0.054 by the same sum, taken over one pass or none.
 
@@ -96,9 +96,9 @@ a name to carry on: 'Once upon a time, there was a little cat named Ollie.'
 a story to order: 'Name: Ollie\nWords: fish, stone, duck\nStory:'
 ```
 
-All 2,525 stories, read one at a time, score 1.480 nats, about 0.54 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. Drawn token by token, the interval is a third as wide as it should be.
+All 2,525 stories, read one at a time, score 1.480 nats a token, 95% interval 1.463 to 1.497: about 0.54 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. Drawn token by token, the interval is a third as wide as it should be.
 
-The 16-bit switch's +0.0001 nats has an interval that holds 0.
+The 16-bit switch's +0.0001 nats has an interval that holds 0. A name is carried on in 97 of 100 stories, 95% interval 0.91 to 0.99.
 
 ## What it still cannot do
 

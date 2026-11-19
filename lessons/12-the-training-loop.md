@@ -6,7 +6,7 @@ Lesson 11 ran 3,000 steps at one fixed rate. Nothing looked at unseen text along
 
 ## The idea
 
-The rate changes as the run goes. Adam's first step moves each parameter by the full rate, whatever its slope, and each of its averages holds one slope. So we begin with a small rate and raise it in a straight line over the first 100 steps. This is called warmup. After it, the rate falls to a tenth of its peak along half a cosine wave: a gentle fall at first, steepest in the middle, gentle at the end. The plan for the rate is called a schedule. We take warmup and a falling rate on trust here. Lesson 14 tests them against a fixed rate.
+The rate changes as the run goes. Adam's first step moves each parameter by the full rate, whatever its slope, on the word of a single batch. So we begin with a small rate and raise it in a straight line over the first 100 steps. This is called warmup. After it, the rate falls to a tenth of its peak along half a cosine wave: a gentle fall at first, steepest in the middle, gentle at the end. The plan for the rate is called a schedule. We take warmup and a falling rate on trust here. Lesson 14 tests them against a fixed rate.
 
 A batch can produce a gradient far longer than usual, so we put a limit on it. Adam's average of squares moves a thousandth of the way each step (lesson 11), so it would keep a trace of a long one for about a thousand steps, and divide each step in that time by a larger size. Before each step we measure the length of the whole gradient: square each slope, add them all, take the square root. If the length is above the limit, we scale the gradient down to the limit and keep its direction. This is called clipping.
 
@@ -128,7 +128,7 @@ unseen text: 1.529 nats, 2.206 bits per byte
 | GPT, with AdamW | 2.372 |
 | GPT, with the loop, 5,000 steps | 2.206 |
 
-Between the last two rows four things changed: 5,000 steps, not 3,000; a peak of 0.003, not a fixed 0.001; a decay of 0.1, not 0.01; and the schedule with clipping.
+The loop takes the GPT to 2.206 bits per byte on unseen text. Between the last two rows four things changed: 5,000 steps, not 3,000; a peak of 0.003, not a fixed 0.001; a decay of 0.1, not 0.01; and the schedule with clipping.
 
 ## What it still cannot do
 

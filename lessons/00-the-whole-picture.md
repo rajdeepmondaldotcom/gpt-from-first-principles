@@ -6,7 +6,7 @@ First we follow the finished storyteller from one end to the other.
 
 ## The idea
 
-You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess. Last, you rent a graphics card: the same code trains bigger models there, an engine that services run serves one, and Stockfish, a chess program, rates your player.
+You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess. Last, you rent a graphics card. The same code trains bigger models there, an open engine called vLLM serves one, and a chess program called Stockfish rates your player.
 
 Each lesson adds a piece or tests one, in this order.
 
@@ -24,7 +24,7 @@ Each lesson adds a piece or tests one, in this order.
 | 31 to 37 | Serving | How do many people use it at once, and how fast? |
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
-| 43 | Many cards | What if no one card holds the model? |
+| 43 | Splitting the model | What if no one card holds the model? |
 | 44 and 45 | A stronger player | How strong can the player get? |
 
 The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. The stages between count their own results. Each lesson opens on something the last one left undone.

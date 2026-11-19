@@ -145,15 +145,15 @@ TORENINA:
 You, ha
 ```
 
-With GPT-2's weights the code gives GPT-2's scores. Trained by us, it has scored three times as many targets as an MLP a twelfth of its size, 6,144,000 against 1,920,000, and still trails it. Lesson 11 keeps the model and changes only the rule that turns slopes into steps.
+With GPT-2's weights the code gives GPT-2's scores. Trained by us, it has scored three times as many targets as an MLP a twelfth of its size, 6,144,000 against 1,920,000, and still trails it, 3.017 bits per byte against 2.663. Lesson 11 keeps the model and changes only the rule that turns slopes into steps.
 
 ## Check yourself
 
-Predict before you run: GPT-2 has 124,439,808 parameters stored as 4-byte numbers. How large is the weight file?
+Predict before you run: GPT-2 has 124,439,808 parameters stored as 4-byte numbers. How many megabytes do the parameters take?
 
 <details><summary>Answer</summary>
 
-About 498 MB of parameters. The file is 548 MB because it also stores a copy of the mask for each block, 1,024 × 1,024 numbers each, which are not parameters.
+About 498 MB.
 </details>
 
 <details><summary>Without weight tying, how many parameters would the small model have?</summary>

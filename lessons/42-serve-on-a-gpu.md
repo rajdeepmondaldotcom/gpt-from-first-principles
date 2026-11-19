@@ -114,7 +114,7 @@ VENV='~/vllm' aws/run.sh <host> python -m gpt.production late
 
 Each request was asked on time, and four sending processes wait as long as one: the wait is not our sender's. At 256 and at 512 the machine writes about 12,800 tokens a second, its limit for this model. vLLM's own count, 83 ms, leaves out most of that wait.
 
-The big model meets the sum: one listener gets 50 tokens a second where memory allows 52. At 8 bits it gets 73 where memory allows 97: the reading falls to 0.54 of what it was, and by subtraction the rest of a pass grows from 1.1 ms to 3.5. So 8 bits buy 46% more speed for 0.0095 nats a token, where lesson 34's cost ours 0.0001.
+The big model meets the sum: one listener gets 50 tokens a second where memory allows 52. At 8 bits it gets 73 where memory allows 97: the reading falls to 0.54 of what it was, and by subtraction from the unrounded speeds the rest of a pass grows from 1.1 ms to 3.5. So 8 bits buy 46% more speed for 0.0095 nats a token, where lesson 34's cost ours 0.0001. At 16 bits the big model keeps up at 64 requests a second, where a million tokens cost $0.155.
 
 On the 200 stories, each scored from its own start, our model gets 0.426 bits per byte (lesson 41's 0.467 is over all the unseen text) and the big model 0.514. A model about 520 times smaller, trained for $2.74 on such stories, predicts them better.
 

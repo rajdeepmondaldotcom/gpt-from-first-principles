@@ -116,7 +116,7 @@ lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interva
 
 Taught the rule, the model refuses 96 of 100 listed orders: 4 misses, and 2 refusals it should not have made.
 
-On orders that never show a listed word, the rule goes, and most of the fall, from 96, comes in the first 100 steps.
+Fine-tuned on orders that never show a listed word, the rule goes: refusals of listed orders fall from 96 of 100 to 9 after 100 steps, and to 7 after 300.
 
 On lesson 25's own examples 3 refusals are left after 100 steps, and none after 300. In 100 steps the model reads 3,200 examples, and about 45 of them answer a listed order with its story. We did not put lesson 24's paired interval on these differences, so these counts do not rank the two runs.
 

@@ -21,9 +21,7 @@ Now measure the model by its surprise. If it gave the true next character a prob
 
 The model picks each character from the one before, so the chance it gives to a whole text is those chances multiplied together. The first rule turns that product into a sum. Lowering the loss and raising the probability of the text are then the same act.
 
-The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. Prince's chapter 5, linked below, has the argument.
-
-No table scores below the text's own randomness, called its entropy: the counted table's loss on its own text. Any other table loses more, by the KL divergence between the two.
+The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. Prince's chapter 5, linked below, has the argument. Its loss on its own text is the text's randomness, called its entropy. Any other table loses more, by the KL divergence between the two.
 
 Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2, because log₂ x = ln x / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. That number is the scoreboard for the whole course.
 
@@ -121,6 +119,8 @@ bigram, unseen text:   2.482 nats, 3.581 bits per byte
 | Knows nothing | 6.022 |
 | Bigram, counted | 3.581 |
 
+On unseen text the counted bigram scores 2.482 nats, 3.581 bits per byte.
+
 ## What it still cannot do
 
 Ask it to continue `Once upon a time`:
@@ -133,7 +133,7 @@ Whe irtthogor s.
 
 It cannot spell, because it picks each letter knowing only the one before.
 
-More context needs a bigger table. Ten back means 65 to the power 10 rows, far more rows than the file has characters, so nearly all of them stay empty.
+More context needs a bigger table. Ten back means 65 to the power 10 rows, far more rows than the file has characters.
 
 Counting also works only for a table. A model of any other shape has nothing to count.
 

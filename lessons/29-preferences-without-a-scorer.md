@@ -23,7 +23,7 @@ We want the lead to grow, and the loss is lesson 28's bet again, with the lead t
 
 This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
 
-Its authors start from lesson 28's aim with a penalty added: the scorer's average number, minus beta times the average gain of the stories the model writes. In the derivation beta weighs that penalty: a larger beta holds the model nearer the reference. Let the scorer's number for a story be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
+Its authors start from lesson 28's aim with a penalty: raise the scorer's average number, less beta times the average gain of the stories the model writes. A larger beta holds the model nearer the reference. Let the scorer's number for a story be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
 
 ## By hand
 
@@ -90,7 +90,7 @@ plain stories, after minus before: +0.007 nats, 95% interval +0.006 to +0.008
 the readers give its stories 0.62 on average, where they gave 0.53. The change has a 95% interval of +0.04 to +0.13
 ```
 
-The fall in the loss is on pairs it trains on: by step 200 the model has drawn 1,600 pairs from 1,386, and each story sits in about two of them, so most stories in a late batch have been pushed before. The fair test is the held-back line above: 240 pairs from 60 orders it never trained on.
+The loss falls on pairs it trains on: by step 200 it has drawn 1,600 pairs from 1,386, and each story sits in about two, so most stories in a late batch were pushed before. The fair test is the held-back line: 240 pairs from 60 orders it never trained on.
 
 Readers give its stories 0.62 where they gave 0.53, with an interval clear of zero. Lesson 28's draw from the same model gave 0.57.
 

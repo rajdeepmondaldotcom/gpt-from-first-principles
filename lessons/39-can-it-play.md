@@ -1,6 +1,6 @@
 # 39. Can it play?
 
-By the end of this page the chess model has played whole games against three opponents, and has a rating with a range around it.
+By the end of this page the chess model has played whole games against three opponents, and has an Elo rating with a range around it.
 
 A legal move can be a terrible one. We do not yet know whether it can win a game.
 
@@ -124,7 +124,7 @@ Against the grabber the model takes 0.16 of the points, where its younger self t
 
 The model slipped on 961 of its 27,049 turns, 3.6%, and its younger self on 9.7%.
 
-With the random mover at 0, the grabber is rated +738, the model +421 and its younger self +310. The last two intervals, +378 to +465 and +270 to +359, do not meet.
+With the random mover at 0, the grabber's Elo rating is +738, the model's +421 and its younger self's +310. The last two intervals, +378 to +465 and +270 to +359, do not meet.
 
 ## What it still cannot do
 

@@ -2,7 +2,7 @@
 
 By the end of this page you can say whether a change made a model better, and how often your rule for saying so is wrong.
 
-Lesson 13 compared two runs, one of each setting. Lesson 12 took its schedule on trust. We cannot trust either result yet, because we do not know how far apart two runs of the same setting land.
+Lesson 13 compared two runs, one of each setting. We cannot trust that result yet, because we do not know how far apart two runs of the same setting land.
 
 ## The idea
 
@@ -18,7 +18,7 @@ A rule like this is wrong at a rate we can measure. A test draws 10,000 pretend 
 
 The rule also misses real changes. A change three times the spread of the differences is found more than 90 times in 100 with five seeds. A change as large as that spread is missed more often than found with five seeds, and found more than 80 times in 100 with twenty.
 
-Three habits go with the rule:
+Three habits:
 
 - Change one thing at a time, or you cannot tell which caused the difference.
 - Search a rate by factors. Lesson 13's planted rate was wrong by a factor of 100. So try 0.0003, 0.001, 0.003, 0.01 and 0.03, each about three times the last, on a few seeds. This is called a sweep. Trust a rate that wins on each seed.
@@ -104,7 +104,7 @@ Two of the comparisons are planted. The same setting on five new seeds differs b
 
 The other two were open questions. A fixed rate of 0.003 with no warmup is worse than lesson 12's schedule by 0.222 nats, 9.0 errors from zero. That is warmup and the falling rate together, at 600 steps. We cannot tell from it which of the two helps.
 
-In the sweep, lesson 12's rate was too low for a run this short. Lessons 15 and 16 keep 0.003, so that their numbers can be set beside lesson 12's.
+The sweep's 0.01 beat 0.003 on each seed, by 0.065 nats on average: lesson 12's rate was too low for a run this short. Lessons 15 and 16 keep 0.003, so that their numbers can be set beside lesson 12's.
 
 ## What it still cannot do
 

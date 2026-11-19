@@ -22,7 +22,7 @@ A training step runs forward and then backward. For a layer `Y = X @ W`, the pas
 
 Divide the work by the machine's speed and you have the time. This Mac's graphics chip trains a model of 5 million parameters, the size lesson 19 will pick, at 326 billion multiplies and adds a second.
 
-Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when reading memory sets the pace on large models.
+Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds: its training state and what it keeps. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when reading memory sets the pace on large models.
 
 ## By hand
 
@@ -94,7 +94,7 @@ that is 326 billion multiplies and adds a second
 three hours at that speed: 3.5e+15 multiplies and adds
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run.
+Timings are from an M4 laptop that was running other jobs, and they move from run to run. The 24 ms and 80 ms are the processor's: a step took 3.3 forward passes there and 4.5 on the graphics chip, not 3.
 
 ## What it still cannot do
 

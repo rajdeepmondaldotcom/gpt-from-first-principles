@@ -22,7 +22,7 @@ The bottom of that fraction is the slope's usual size. Dividing by it removes th
 
 Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t.
 
-AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights outside the division. We leave biases, gains and shifts alone. PyTorch's AdamW decays whatever it is handed. Lesson 13 measures decay, paired with another change.
+AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights outside the division. We leave biases, gains and shifts alone. Lesson 13 measures decay, paired with another change.
 
 ## By hand
 
@@ -75,7 +75,7 @@ uv run pytest tests/test_optim.py
 - A slope that stays at 1 builds the velocity to 10, and Adam moves a flipping slope far less than a steady one.
 - The slope sizes above hold in the untrained GPT.
 
-Predict before you run: gradient descent scores 3.017 and AdamW 2.372. Does momentum close more or less than half that gap?
+Predict before you run: does momentum close more or less than half the gap between gradient descent and AdamW?
 
 ```bash
 uv run python -m gpt.optim
@@ -89,9 +89,9 @@ lesson 4's MLP reading 8 characters back, with AdamW: 2.551 bits per byte
 lesson 4's MLP reading 64 characters back, with AdamW: 2.863 bits per byte
 ```
 
-The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. A seed starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
+The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. AdamW's rate is 0.001, its decay 0.01. A seed starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
 
-The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8, with 64 sets of weights to train in place of 8.
+The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8, with 64 sets of weights to train in place of 8. AdamW takes the GPT from 3.017 to 2.372 bits per byte on unseen text.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -120,7 +120,7 @@ We ran 3,000 steps at one fixed rate and stopped. Nothing looked at unseen text 
 
 <details><summary>Prediction</summary>
 
-More: 2.564 closes 0.453 of the 0.645, 70%.
+More: 2.564 closes 0.453 of the gap of 0.645, 70%.
 </details>
 
 <details><summary>Momentum is 0.9 and the slope stays at 1. Where does the velocity settle?</summary>

@@ -6,7 +6,7 @@ We have 52 million tokens, a model whose size we can set, and an afternoon on th
 
 ## The idea
 
-We count the budget in multiplies and adds, because hours depend on what else the machine is doing. We count a training step as three forward passes, lesson 17's rule. We set the budget at 2.7 × 10¹⁵ multiplies and adds, 2.3 hours at the speed lesson 17 measured.
+We count the budget in multiplies and adds, because hours depend on what else the machine is doing. We count a training step as three forward passes, lesson 17's rule. We set the budget at 2.7 × 10¹⁵ multiplies and adds: 2.3 hours at lesson 17's speed, not the three hours it printed.
 
 Trying each size at the full budget would cost an afternoon a try. So we try many sizes at budgets 34 to 270 times smaller and fit a pattern to the results.
 
@@ -18,7 +18,7 @@ The middle term, the size term, is the loss a small model cannot remove, and it 
 
 The law has five unknown numbers. Pick the two powers, and what is left is a weighted sum of three columns: a column of ones, one of parameters^-alpha and one of tokens^-beta. The weights that make the sum of squared misses smallest have an exact answer, called least squares. So we try each pair of powers from 0.10 to 1.50 and keep the pair whose best weights miss least.
 
-Each size gets its own learning rate, from a sweep like lesson 14's but with one seed for each rate, so a close win, such as width 192's 0.02, may be noise. The three smallest models did best at 0.01 and the three largest at 0.003. For the three smallest, 0.01 was the highest rate tried, so a higher one may suit them better.
+Each size gets its own learning rate, from a sweep like lesson 14's but with one seed for each rate, so a close win, such as width 192's win by 0.02 nats, may be noise. The three smallest models did best at 0.01 and the three largest at 0.003. For the three smallest, 0.01 was the highest rate tried, so a higher one may suit them better.
 
 To test the law we fit it on budgets of 1, 2 and 4 × 10¹³, 18 runs, and predict four runs at 8 × 10¹³ that it has not seen. The law passes if it misses them by no more than it misses its own runs.
 
@@ -73,7 +73,7 @@ uv run pytest tests/test_scale.py
 - At a fixed budget one size is best, and 16 times the budget moves it as that power says.
 - A run spends its budget, and a bigger model gets fewer tokens from it. The same seed repeats a run, and a tenth of its steps are warmup.
 
-The script takes over an hour on the graphics chip. Part of what it prints is below. The results file's `pick`, an older choice of the 10-million model with its rate tries, plays no part here.
+The script takes over an hour on the graphics chip. Part of what it prints is below.
 
 ```bash
 uv run python -m gpt.scale

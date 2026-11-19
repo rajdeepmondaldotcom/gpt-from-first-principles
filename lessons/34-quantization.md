@@ -105,7 +105,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Writing 200 tokens with lesson 23's loop, both shrunk models are slower: 393 and 168 tokens a second, against 643. We look for where the time goes in lesson 37.
+Writing 200 tokens after "Once upon a time" with lesson 23's loop, always taking the top token, fastest of three tries, both shrunk models are slower: 393 and 168 tokens a second, against 643. Lesson 37 looks at where a pass's time goes.
 
 ## What it still cannot do
 

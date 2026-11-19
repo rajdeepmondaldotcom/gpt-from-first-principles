@@ -35,7 +35,7 @@ The count for one block, at a rank of 8.
 | Queries | 256 to 256 | 8 × 256 and 256 × 8 | 4,096 |
 | Values | 256 to 128 | 8 × 256 and 128 × 8 | 3,072 |
 
-The values grid is smaller because of lesson 16's grouped heads: 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers and six blocks 43,008: 0.8% of 5,374,464, and 0.17 MB. At a rank of 64 the same two grids have 344,064, or 6.4%. A rank of 8 beside each of the seven grids has 221,088, or 4.1%.
+The values grid is smaller because of lesson 16's grouped heads: 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers and six blocks 43,008: 0.8% of 5,374,464, and 0.17 MB. At a rank of 64 the same two grids have 344,064, or 6.4%. A rank of 8 beside each of the seven grids has 221,088, or 4.1%: the MLP's three grids are 682 wide inside (8 × 256 / 3, lesson 16).
 
 A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0).
 

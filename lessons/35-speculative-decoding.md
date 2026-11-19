@@ -111,7 +111,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 The draft that copied the big model has the lower loss and keeps 63% of its checked guesses, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
 
-Neither is faster than no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings this draft, with half the blocks, costs more. Lesson 37 times a smaller model's pass.
+Neither beats no draft, timed on 20 prompts of 64 tokens with 128 tokens drawn by chance after each: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings this draft, with half the big model's blocks, costs more. Lesson 37 times a smaller model's pass.
 
 ## What it still cannot do
 

@@ -102,7 +102,7 @@ Each comparison is lesson 14's method, 600 steps on five seeds. The first three 
 
 RMSNorm's difference is 0.7 errors from zero. SwiGLU is a real gain at 600 steps: 0.080 nats, 12.8 errors from zero. Grouped heads differ by 0.7 errors and remove 8% of the parameters: 734,080 against 799,616. All three together are ahead by 0.076 nats.
 
-Today's model has 9% fewer parameters than lesson 15's.
+Today's model has 9% fewer parameters than lesson 15's, and at 5,000 steps it scores 2.209 bits per byte on unseen text against lesson 15's 2.210.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|

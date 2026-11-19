@@ -16,7 +16,7 @@ There is more text: all 2,717,495 stories of TinyStories' training file, where l
 
 The script sets the budget. It times a step of a model of 25 million parameters and counts what an hour of such steps computes: 5.0 × 10^16 multiplies and adds, 19 times lesson 21's budget, and chess gets the same.
 
-For that budget lesson 19's law expects 0.813 nats at best, from 81 million parameters. The script takes the smallest size within a yardstick of that, 0.177, the law's miss on its own runs: 14,555,904 parameters, at 0.923. Lesson 19's yardstick, 0.098, picks 25,170,944. We saw the difference after the run, so a second stage tries each bigger size.
+For that budget lesson 19's law expects 0.813 nats at best, from 81 million parameters. The script takes the smallest size within 0.177 of that, the law's miss on its own runs: 14,555,904 parameters, at 0.923. That yardstick is looser than lesson 19's, 0.098, which picks 25,170,944. We saw the difference after the run, so a second stage tries each bigger size.
 
 We doubt the predictions themselves: at 34 times the largest budget in its fit the law was 0.263 nats too low for lesson 21's run, and this run spends 628 times. So the script also refits the law with that run added.
 
@@ -101,7 +101,7 @@ Part of its output is above, and "19 laptops" means 19 times lesson 21's budget.
 
 The card takes lesson 21's step in 34 ms where the laptop took 928. That is 8,822 billion multiplies and adds a second, 2.4% of the 362,050 billion NVIDIA lists for this card at 16 bits. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. It took 88 minutes, not 60. The three trial rates add 9% to the budget, and we did not time the rest. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
 
-The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6% (lesson 39). It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber. It is rated +775, and the laptop's model +355, where lesson 39's fit gave +421: a rating depends on who else is in the fit.
+The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6% (lesson 39). It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber. Its Elo rating is +775 and the laptop's model's +355, where lesson 39's fit gave +421: a rating depends on who else is in the fit.
 
 Predict before you run: four L4 cards cost 5.7 times what one costs. Will a million tokens of training cost less on four?
 
@@ -134,7 +134,7 @@ aws/run.sh <host> python -m gpt.gpu sizes
  81,022,464 parameters: not trained. Its first loss is 8.468 nats, 0.150 from ln 4,097, and lesson 13's check allows 0.15
 ```
 
-The 25 million model is best, at 1.241 nats: lesson 19's yardstick would have picked it. The law favoured each bigger size over the last, and 48 million does no better than our pick. The widest never trained: lesson 13's check stopped it.
+The 25 million model is best, at 1.241 nats: lesson 19's yardstick would have picked it. The law favoured each bigger size over the last, and 48 million does no better than our pick. The widest never trained: its first loss was at or past lesson 13's limit, 0.15 from ln 4,097.
 
 ```bash
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/stop.sh

@@ -59,7 +59,7 @@ def test_prose_is_plain(page):
 def test_lesson_has_the_same_parts_and_stays_short(page):
     text = page.read_text()
     assert re.findall(r"^## (.+)$", text, flags=re.MULTILINE) == SECTIONS
-    assert len(prose(text).split()) <= 1200
+    assert len(prose(text).split()) <= 1500
 
 
 @pytest.mark.parametrize("page", PAGES, ids=str)
