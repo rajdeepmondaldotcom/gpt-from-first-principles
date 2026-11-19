@@ -1,8 +1,8 @@
 # Practice
 
-The lessons teach how a GPT works. Some of what AI labs ask for comes only from practice. Each of the nine routines below names what it rests on.
+Nine routines for what the lessons cannot give you.
 
-On 17 November 2026 we read 11 job postings for training and inference roles at Anthropic, OpenAI and Google DeepMind. Ten were open that day. DeepMind's had closed, and we read a copy that a job site had kept. The table gives what the eleven ask for and the lessons do not give you.
+Eleven job postings for training and inference roles at Anthropic, OpenAI and Google DeepMind, read on 17 November 2026, ask for four things the lessons leave out.
 
 | Asked for | Postings, of 11 | Routines |
 |---|---|---|
@@ -11,9 +11,7 @@ On 17 November 2026 we read 11 job postings for training and inference roles at 
 | Reading and debugging a large codebase you did not write | 2 | 6 |
 | Written reports with numbers in them | 1 | 8 |
 
-A posting counts only where its own words ask for the thing. The table at the end says which posting asks for what.
-
-Anthropic's guidance for candidates says its live interviews are done without AI help unless the interviewer says otherwise. Routines 1 and 2 rest on that. Routines 7 and 9 rest on no posting, and each says why it is here. The sources are at the end.
+Anthropic's [guidance for candidates](https://www.anthropic.com/candidate-ai-guidance) says its live interviews are done without AI help unless the interviewer says otherwise. Routines 1 and 2 train for that.
 
 ## 1. Write code against a clock, with no help
 
@@ -103,11 +101,11 @@ Then write one job for a card yourself: the field calls it a kernel, and the les
 
 ## 6. Read a codebase you did not write
 
-Start with [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm), a small serving engine. Trace one request from the moment it arrives to its last token, and write down the file and line where each idea from lessons 32 and 33 lives: the batch, the cache, the memory budget. Then open [vLLM](https://github.com/vllm-project/vllm) and find the same three things, starting from its scheduler. Give it two hours and stop. You do not need to read it all.
+Start with [nano-vllm](https://github.com/GeeeekExplorer/nano-vllm), a small serving engine. Trace one request from the moment it arrives to its last token, and write down the file and line where each idea from lessons 32 and 33 lives: the batch, the cache, the memory budget. Then open [vLLM](https://github.com/vllm-project/vllm) and find the same three things, starting from its scheduler. Give it two hours and stop.
 
 ## 7. Criticise a paper in one page
 
-No posting asks for this by name. It is here because each lesson rests on sources, most of them papers. Take one from a lesson's "Go deeper" each week and write four short paragraphs: what it claims, what evidence it gives, which step is weakest, and the one experiment you would run to test that step. Give the reading an hour and the page half an hour. The page is done when someone who has not read the paper can say what your experiment would settle.
+Each lesson rests on sources, most of them papers. Take one from a lesson's "Go deeper" each week and write four short paragraphs: what it claims, what evidence it gives, which step is weakest, and the one experiment you would run to test that step. Give the reading an hour and the page half an hour. The page is done when someone who has not read the paper can say what your experiment would settle.
 
 ## 8. Report each experiment in writing
 
@@ -117,7 +115,7 @@ Then hand the half page to someone who asks why of each number for ten minutes. 
 
 ## 9. Find a planted bug
 
-No posting asks for this by name. It is here because lesson 13 showed that a broken model can train with no error, and finding the break is a skill of its own.
+Lesson 13 showed that a broken model can train with no error. Finding the break is a skill of its own.
 
 ```bash
 uv run python -m gpt.plant
@@ -155,4 +153,4 @@ Anthropic, [guidance for candidates on AI use](https://www.anthropic.com/candida
 | OpenAI, [Research Engineer / Research Scientist- Post Training](https://jobs.ashbyhq.com/openai/1c516e9f-c97d-4a40-8529-9871dac615a5) | A large codebase |
 | Google DeepMind, [Software Engineer, Model Inference](https://jobs.anitab.org/companies/google-24698/jobs/90197320-software-engineer-model-inference-deepmind). Posted in August 2026 and closed. This is a job site's copy | Distributed systems, profiling and kernels |
 
-Postings change each week, and a link here will stop working when its posting closes. The counts are what these eleven said on 17 November 2026.
+The counts are from 17 November 2026. A link stops working when its posting closes.

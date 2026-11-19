@@ -95,7 +95,7 @@ a million tokens written, the big model, 16 bits: $0.155
 
 Timings are from one rented machine and move from run to run.
 
-vLLM computes what we compute to within 0.007. Our own code differs from itself by 0.0038 when we let the card use its faster 32-bit multiply, which keeps fewer digits. After 15 of 16 prompts the two write the same 128 tokens, and the other answer leaves ours where our two best choices were 0.0010 apart, less than either gap.
+vLLM computes what we compute to within 0.007. Our own code differs from itself by 0.0038 when we let the card use its faster 32-bit multiply, which keeps fewer digits. After 15 of 16 prompts the two write the same 128 tokens. The sixteenth answer parts from ours at its token 41, where the log chances of our two best tokens were 0.0010 apart: less than either difference above.
 
 One listener gets 786 tokens a second where our engine gave 110. Memory would allow 12,732, so reading the weights does not set vLLM's speed here. We did not profile vLLM to find what does.
 
@@ -126,7 +126,7 @@ Lessons 41 and 42 cost us $18.31 by the price list: `results/42_bill.json` has e
 
 ## What it still cannot do
 
-Two things this course started are undone on the card: we have not taught the bigger story model to take an order, and lesson 36's own server has not run there.
+Two things from earlier lessons are undone on the card: we have not taught the bigger story model to take an order, and lesson 36's own server has not run there.
 
 We served a model of 7.6 billion parameters from one card. We could not train it there: lesson 17's 16 bytes a parameter come to 122 GB, and NVIDIA lists the card at 48. Lessons 20 and 41 gave each worker a whole copy, so more cards would not help.
 

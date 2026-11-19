@@ -2,8 +2,6 @@
 
 By the end of this page you know where the next 45 lessons go, and what each one is for.
 
-First we follow the finished storyteller from one end to the other.
-
 ## The idea
 
 You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess. Last, you rent a graphics card. The same code trains bigger models there, an open engine called vLLM serves one, and a chess program called Stockfish rates your player.
@@ -29,9 +27,7 @@ Each lesson adds a piece or tests one, in this order.
 
 The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. Lessons 25 to 40 and 43 to 45 use measures of their own, such as tokens a second and legal moves. Each lesson opens on something the last one left undone.
 
-Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so, and lessons 41 and 42 try some of them again on a rented card. Each dollar figure is the hours AWS reported times its price list.
-
-The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page asks one question that begins "Predict before you run". Where the run answers it, the question stands above the run. Write your guess down before you read on.
+On each page, work the sums by hand before the code does them. Each page also asks one question that begins "Predict before you run": write your guess down before you read on.
 
 ## By hand
 
@@ -68,7 +64,7 @@ def attend(q, k, v, mask=None):
     return weights @ v, weights
 ```
 
-You need not follow it yet. By lesson 6 you will know each line of it.
+By lesson 6 you will know each line of it.
 
 ## The proof
 
@@ -90,7 +86,7 @@ You have built none of it yet. Lesson 1 starts with a text file and a loop that 
 
 ## Check yourself
 
-Each lesson ends with questions like these. Guess each one in writing, and then look.
+Guess each answer in writing, and then look.
 
 Predict before you run: the model has 4,096 tokens for pieces of text. How many scores does the last place give?
 
@@ -98,8 +94,6 @@ Predict before you run: the model has 4,096 tokens for pieces of text. How many 
 
 4,097: one for each of 4,096 tokens, and one for the token that ends a story.
 </details>
-
-Then come questions with hidden answers. One of them asks about an earlier lesson.
 
 <details><summary>A request has a prompt of 20 tokens and may write 120 more. Each token kept costs 6,144 bytes. How much memory can the request come to need?</summary>
 

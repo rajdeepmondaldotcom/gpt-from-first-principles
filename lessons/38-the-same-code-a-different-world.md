@@ -2,7 +2,7 @@
 
 By the end of this page the model of lesson 21, with no line of it changed for chess, has learned the moves of chess from records of games, and you have counted how many of its moves the rules allow.
 
-Each model in this course has read English: Shakespeare, then stories. We have not asked whether anything we built depends on that.
+Each model so far has read English: Shakespeare, then stories. We have not asked whether anything we built depends on that.
 
 ## The idea
 

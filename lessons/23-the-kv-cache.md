@@ -14,7 +14,7 @@ Keep, in each block, the key and the value of each token read so far. This is th
 
 For a text of n tokens the model then reads n tokens in all. Without the cache it reads 1 + 2 + ... + n, about n² / 2.
 
-A cache goes wrong in three places, and each has a test here.
+A cache can go wrong in three places.
 
 - The new token's place is the number of tokens in the cache. A cache that starts each call at place 0 turns the new query and key by the wrong angle, and the wrong key stays in the cache.
 - A prompt can arrive in pieces, so one call can bring several new tokens. The new tokens need lesson 7's mask among themselves: each reads the whole cache, and the new tokens up to itself.

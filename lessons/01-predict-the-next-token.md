@@ -23,7 +23,7 @@ The model picks each character from the one before, so the chance it gives to a 
 
 The counted table gives the training text a higher probability than any other table can, which makes it the maximum-likelihood estimate. Prince's chapter 5, linked below, has the argument. Its loss on its own text, 0.515 nats for the sentence below, measures how random the next character is once you know the one before: the text's conditional entropy. Any other table loses more, by the KL divergence of its rows from the counted ones. For each row that is the sum, over next characters, of the counted chance times ln(counted chance / its chance), and each row counts as often as its character comes first.
 
-Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2, because log₂ x = ln x / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. We score the whole course on that number.
+Surprise measured with ln comes in units called nats. With logarithms to base 2 the unit is the bit, and bits = nats / ln 2, because log₂ x = ln x / ln 2. Each character in our file takes one byte of storage, so the loss in bits is also bits per byte. We score every model on that number.
 
 A model that knows nothing gives each of the 65 characters the same chance, 1/65. By the second rule its surprise is ln 65 = 4.174 nats on any character, which is 6.022 bits. A useful model beats 6.022 on unseen text.
 

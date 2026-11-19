@@ -139,7 +139,7 @@ Lesson 41's model takes 0.23 of the points from Stockfish's weakest setting. The
 
 The five tellings score from 0.30 to 0.45, on openings of their own. The best owes part of that to the pick, so 100 games do not rank them.
 
-The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836, on Stockfish's scale, which is not Lichess's or a chess federation's. The course's chess players:
+The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836, on Stockfish's scale, which is not Lichess's or a chess federation's. Our chess players:
 
 | Player | Elo rating | Scale |
 |---|---|---|
@@ -182,7 +182,7 @@ We have not taught lesson 42's bigger story model to take an order, and lesson 3
 
 The player picks each move in one pass and never tries a reply on a board. [MAP.md](../MAP.md) has two ways on from here: a search through the moves ahead, and learning an engine's verdict on each move.
 
-This is the last lesson. The README's tables hold each result, and [PRACTICE.md](../PRACTICE.md) has nine routines for practising what the lessons taught.
+The README's tables hold each result, and [PRACTICE.md](../PRACTICE.md) has nine routines for practising what the lessons taught.
 
 ## Check yourself
 

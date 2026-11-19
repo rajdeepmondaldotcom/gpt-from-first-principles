@@ -12,7 +12,7 @@ Finding the weights is settled: in lesson 21 we saved them under the names that 
 
 Doing what we do is harder to see. The engine has its own code for attention, rotary positions, RMSNorm and SwiGLU. If one detail differs, such as which entries lesson 15's rotation pairs up, its scores differ from ours with no error shown. So we feed both engines the same tokens and compare each score. We do not expect the last bits to agree: an engine may add the same numbers in another order, and 32-bit sums depend on the order.
 
-Then we turn to speed. Both engines write 128 tokens after the same 64-token prompt and take the top token each time, and we keep the fastest of three tries. We time both engines on the processor and on the graphics chip, and each with sixteen at once, ours on the processor only.
+Both engines write 128 tokens after the same 64-token prompt and take the top token each time, and we keep the fastest of three tries. We time both engines on the processor and on the graphics chip, and each with sixteen at once, ours on the processor only.
 
 One token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is a large part of a pass, a far smaller model will not be much faster. So the script also times an untrained model as deep as ours and an eighth as wide: 26 times fewer weights, the same calls.
 
@@ -115,7 +115,7 @@ With the small model we answer part of lesson 31's question. It makes the same 5
 
 ## What it still cannot do
 
-Each model in this course has read English: Shakespeare, then stories. We have not asked whether anything we built depends on that.
+Each model so far has read English: Shakespeare, then stories. We have not asked whether anything we built depends on that.
 
 ## Check yourself
 

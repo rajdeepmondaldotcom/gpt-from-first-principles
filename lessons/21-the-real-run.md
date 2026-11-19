@@ -6,7 +6,7 @@ Lesson 20's workers ran no faster than one process on one laptop, so this run us
 
 ## The idea
 
-Each part of this run comes from an earlier lesson. The run takes hours, so it is hard to do twice.
+The run takes hours, so it is hard to do twice.
 
 Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, for 4,096 tokens and the end token, and changing the last token of a window changes no earlier score. Either bug, found only after training, would have wasted the run.
 

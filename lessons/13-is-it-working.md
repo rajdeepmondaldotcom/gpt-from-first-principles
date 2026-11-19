@@ -2,7 +2,7 @@
 
 By the end of this page you have six checks that turn a silent bug into a failed line, and a measured cure for a model that learns its text by heart.
 
-A model with no mask still prints a falling loss and raises no error. A test here shows it. On random text nothing can be learned, so a healthy model's loss stays near ln of the vocabulary size. The model with no mask ends more than 1 nat lower, because it reads its answers.
+A model with no mask still prints a falling loss and raises no error. On random text nothing can be learned, so a healthy model's loss stays near ln of the vocabulary size. The model with no mask ends more than 1 nat lower, because it reads its answers.
 
 ## The idea
 

@@ -20,7 +20,7 @@ We measure what the model loses: the loss on 500 unseen stories, before and afte
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading the weights at memory's full speed takes an eighth of each token's time. We also turn the small numbers back into 32-bit numbers each time a layer runs, which writes a full 32-bit copy of each grid and reads it back, so a pass moves more bytes than the plain model's. A program built for speed converts inside the multiply, with code written for one kind of chip, and never writes that copy. Each output row has one scale, which comes out of that row's sum, so such a program can add up inputs times whole numbers first and apply the scale once at the end. We claim the memory saving and report the speed we measured.
+We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading the weights at memory's full speed takes an eighth of each token's time. We also turn the small numbers back into 32-bit numbers each time a layer runs, which writes a full 32-bit copy of each grid and reads it back, so a pass moves more bytes than the plain model's. A program built for speed converts inside the multiply, with code written for one kind of chip, and never writes that copy. Each output row has one scale, which comes out of that row's sum, so such a program can add up inputs times whole numbers first and apply the scale once at the end.
 
 ## By hand
 

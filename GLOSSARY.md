@@ -1,6 +1,6 @@
 # Glossary
 
-This page gives each term the lessons define in one line, with the lesson that defines it. The lessons use plain words where they can. The first table sets each plain word beside the word a paper or an interviewer would use, so that you can read both.
+Each term the lessons define, in one line, with the lesson that defines it. The lessons use plain words where they can, and the first table sets each beside the word a paper or an interviewer would use.
 
 ## Our words and the field's
 

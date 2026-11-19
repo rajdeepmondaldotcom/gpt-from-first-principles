@@ -8,7 +8,7 @@ Lesson 2's model learned one sentence. Each number was a Python object, and one 
 
 Store the numbers in a grid and do arithmetic on the whole grid at once. The grid is called a tensor, and its shape says how many numbers lie along each direction. Our table of scores `W` has shape 65 × 65, one row per character. One instruction, such as `W.exp()`, runs over all 4,225 numbers inside the library.
 
-PyTorch is the library that gives us tensors. An autograd like ours comes built in. On this page we still work the slopes out by hand, and use PyTorch's autograd only to check them.
+PyTorch is the library that gives us tensors. An autograd like ours comes built in. We still work the slopes out by hand, and use PyTorch's autograd only to check them.
 
 We need three tensor moves.
 
@@ -16,7 +16,7 @@ We need three tensor moves.
 - Working along one direction. `scores.sum(dim=-1)` adds up each row. `dim=-1` means the last direction, across the 65 scores.
 - Stretching. `scores.max(dim=-1, keepdim=True).values` is a column holding each row's largest score. Subtract it from `scores` and PyTorch stretches the column across all 65 places. This is called broadcasting.
 
-Now the slopes. Take one pair whose true next character is t. With lesson 1's rules, its loss is
+Take one pair whose true next character is t. With lesson 1's rules, its loss is
 
 -ln(chance of t) = -(score of t) + ln(total of e to each score)
 

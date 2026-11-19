@@ -6,7 +6,7 @@ Lesson 16 could not tell its designs apart at 5,000 steps on one seed each. Long
 
 ## The idea
 
-Start with memory. A parameter is one 32-bit number, 4 bytes. Our model is lesson 16's with 4 key heads: 795,392 parameters, 3.2 MB.
+A parameter is one 32-bit number, 4 bytes. Our model is lesson 16's with 4 key heads: 795,392 parameters, 3.2 MB.
 
 Training holds four numbers for each parameter: the weight, its slope, and AdamW's two averages. That is 16 bytes a parameter, 12.7 MB here.
 
@@ -14,7 +14,7 @@ Training also keeps results of the forward pass, because the backward pass reads
 
 One result grows faster than the rest. Attention makes a grid of scores with a row and a column for each token, so doubling the context makes that grid four times as large. The mask hides half of each grid, and we work that half out all the same. With twice the context, all that the step keeps grows 2.28 times. At GPT-2's context of 1,024, one head's grid for one window is a million numbers. The grid does not have to exist all at once: in a forward pass we can work out the same result a few rows at a time.
 
-Next we count the arithmetic, as multiplies and adds of single numbers. The usual name for that count is flops, short for floating-point operations. A linear layer multiplies each input by a weight and adds the products, so each weight in a grid costs 2 operations for each token: one multiply and one add. The lookup of a token's row costs none, and the scores layer reuses the grid of token rows, so we count that grid once.
+We count the arithmetic as multiplies and adds of single numbers. The usual name for that count is flops, short for floating-point operations. A linear layer multiplies each input by a weight and adds the products, so each weight in a grid costs 2 operations for each token: one multiply and one add. The lookup of a token's row costs none, and the scores layer reuses the grid of token rows, so we count that grid once.
 
 Attention adds work of its own. Each token scores each key, a dot product of width numbers at a multiply and an add each, and then mixes each value at the same cost: 2 × 2 × context × width = 4 × context × width for each block. In our model that is 131,072 a token against 1,588,480 for the weights, 8% on top. Over one batch of 2,048 tokens, (1,588,480 + 131,072) × 2,048 = 3.52 billion, the forward pass printed below.
 

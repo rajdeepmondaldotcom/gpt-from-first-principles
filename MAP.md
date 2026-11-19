@@ -1,6 +1,6 @@
 # The map
 
-A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40 and 43, and on rented machines for lessons 41, 42, 44 and 45. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
+The lessons cover what you cannot build, train, measure, adapt or serve a GPT without. Everything else is here: each topic with the problem it solves and the best open place to learn it.
 
 We fetched each link on 17 or 18 November 2026.
 
@@ -123,6 +123,6 @@ Licences are as each source stated them on the day we checked. "None stated" mea
 | Apple hardware | [MLX](https://github.com/ml-explore/mlx) and [mlx-lm](https://github.com/ml-explore/mlx-lm) | MIT | The engine lesson 37 hands our model to |
 | Engineering lore | Bekman, [Machine Learning Engineering Open Book](https://github.com/stas00/ml-engineering) | CC BY-SA 4.0 | Hardware, debugging and failures, in one engineer's notes |
 
-## What a laptop cannot claim
+## Past one machine
 
-Lessons 31 to 37 build a correct, measured engine on one machine. They do not show hundreds of streams at once, waits under real contention, several copies of a model behind a router, a release rolled out and rolled back, or a cost in dollars. Lessons 41 and 42 cover three of these on rented machines: 256 requests a second, the rate at which vLLM falls behind, and the dollar cost of each run. You learn the rest on the job, and the tables above list where to read first.
+Lessons 31 to 37 serve from one laptop. Lessons 41 and 42 add a rented card: 256 requests a second, the rate at which vLLM falls behind, and the dollar cost of each run. Several copies of a model behind a router, and a release rolled out and rolled back, you learn on the job, and the tables above list where to read first.

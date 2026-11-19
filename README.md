@@ -13,9 +13,9 @@ You start with a loop that counts characters. Forty-five lessons later you have 
 | A chess player, from the same model code | An Elo rating of 1,785 on Stockfish's scale, which is fitted to a list of rated chess programs and is not Lichess's, after 12 hours of a card on 19 million games between strong players (lessons 44 and 45) |
 | A comparison with an open model about 520 times the size | On 200 unseen children's stories, the one kind of text ours was trained on, ours scores 0.426 bits per byte and Qwen2.5-7B-Instruct, a general chat model, 0.514 (lesson 42). The number measures fit to this one kind of text and says nothing of what else each model can do |
 
-A script in this repository prints each number and saves it in `results/`, and a test checks each block of output on each page against that file. Each page says where something did not work: [the list is below](#what-did-not-pay-off). A short way to judge the work: read [`tests/test_lessons.py`](tests/test_lessons.py), then lessons [14](lessons/14-running-an-experiment.md), [35](lessons/35-speculative-decoding.md), [41](lessons/41-train-on-a-gpu.md) and [42](lessons/42-serve-on-a-gpu.md).
+Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. Each page has you work a sum by hand and predict a result before you run its script. A script prints each number on a page and saves it in `results/`, and a test checks the page against that file.
 
-Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41, 42, 44 and 45 also need an AWS account and about $60, near what they cost us. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
+You need Python and school maths. Lessons 41, 42, 44 and 45 also need an AWS account and about $60.
 
 The model answers one prompt, `Once upon a time`, at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. We show line breaks as spaces.
 
@@ -43,7 +43,7 @@ Lesson 38 trains lesson 21's code, unchanged, on records of chess games. Left to
 e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5
 ```
 
-*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas behind training and inference work, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
+*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. Every result here comes from my own runs, the ones that went against me included.
 
 The numbers of lessons 1 to 40 and 43 come from an M4 MacBook, and those of lessons 41, 42, 44 and 45 from rented NVIDIA cards, which cost us $55.27 in all: $18.31 for lessons 41 and 42, and $36.96 for lessons 44 and 45. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac.
 
@@ -105,7 +105,7 @@ Four guides go with the lessons.
 - [MAP.md](MAP.md): what the lessons leave out, and the open resource we would read first for each thing.
 - [PRACTICE.md](PRACTICE.md): nine routines for practice the lessons cannot give, most of them for what 11 job postings at AI labs ask for.
 - [GLOSSARY.md](GLOSSARY.md): each term with the lesson that defines it, and our plain words beside the field's.
-- [PROCESS.md](PROCESS.md): how each lesson is made and checked, so you can check any claim yourself.
+- [PROCESS.md](PROCESS.md): the order a lesson is made in, and what the tests hold each page to.
 
 ## The scoreboard
 
@@ -210,7 +210,7 @@ Lessons 44 and 45 are on the rented L40S again: 12 hours of training steps on ga
 | The new player's Elo rating on Stockfish's scale, fitted to 700 games against seven settings from 1,400 to 2,600 | 45 | 1,785, with a range of 1,737 to 1,836. Match by match the rating climbs from 1,641 against the weakest setting to 2,122 against the strongest, so one number does not suit them all |
 | Points against Stockfish held to 1,800, when it has 0.05 seconds a move and when it has 0.5 | 45 | 0.36, then 0.41 |
 
-The table below lists the chess players of the course, each with its Elo rating. The first four are on a scale of our own, and the last two on Stockfish's.
+Each chess player has an Elo rating. The first four are on a scale of our own, and the last two on Stockfish's.
 
 | Player | Lesson | Elo rating | Scale |
 |---|---|---|---|
@@ -222,8 +222,6 @@ The table below lists the chess players of the course, each with its Elo rating.
 | The stronger player | 45 | 1,785, with a range of 1,737 to 1,836 | Stockfish's, from 700 games against seven settings |
 
 ## What did not pay off
-
-Each of these is on its lesson's page, with the run that showed it.
 
 | What we tried | Lesson | What happened |
 |---|---|---|
@@ -291,7 +289,7 @@ The scripts still need the text itself. `gpt.data` fetches and prepares the stor
 
 ## Sources and thanks
 
-Each lesson ends with the sources it rests on, and [MAP.md](MAP.md) lists open material for everything else. We read four works before writing the first lesson.
+Each lesson ends with its sources, and [MAP.md](MAP.md) lists open material for everything else. Four works came first.
 
 - Sebastian Raschka, [Build a Large Language Model (From Scratch)](https://github.com/rasbt/LLMs-from-scratch). We took from it the habit of working one case by hand before the general one.
 - Knowlytix, [Building Language Models from Scratch](https://github.com/knowlytix/llm-from-scratch). We used its order of topics as a checklist.
@@ -300,8 +298,6 @@ Each lesson ends with the sources it rests on, and [MAP.md](MAP.md) lists open m
 
 Andrej Karpathy's [Neural Networks: Zero to Hero](https://karpathy.ai/zero-to-hero.html) and Stanford's [CS336](https://cs336.stanford.edu/) showed what teaching from nothing, with a test for each part, can look like.
 
-None of their text, code or figures is in this repository.
-
 ## License
 
-Apache-2.0. `data/tiny_shakespeare.txt` is public-domain text. The stories are from TinyStories, under CDLA-Sharing-1.0, and the chess games from the Lichess open database, under CC0; neither is stored here. The chess lessons use the `python-chess` library, which is under GPL-3. It is an optional extra, and no code of it is in this repository. Lesson 42 runs vLLM and the Qwen2.5-7B-Instruct model, both under Apache-2.0, on a rented machine. Lesson 45 runs Stockfish there too, which is under GPL-3. None of the three is stored here or installed by `uv sync`.
+Apache-2.0. `data/tiny_shakespeare.txt` is public-domain text. The scripts download the stories from TinyStories, under CDLA-Sharing-1.0, and the chess games from the Lichess open database, under CC0. The chess lessons use `python-chess`, under GPL-3, as an optional extra. On the rented machine, lesson 42 runs vLLM and Qwen2.5-7B-Instruct, both under Apache-2.0, and lesson 45 runs Stockfish, under GPL-3.

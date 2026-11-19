@@ -8,7 +8,7 @@ Lesson 27's score gave nothing for an ending, and 59 of 200 stories now never re
 
 Christiano and others found that in some tasks, picking the better of two is easier than giving a number. So the raw material is pairs: two stories written to one order, and which of them a reader preferred.
 
-We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model on this page never sees that rule, only pairs. Knowing the rule, we can set a learned score beside it, which a real project cannot.
+We have no readers, so a short function stands in for them. It gives each story a number: 0 unless the story ends, runs to 40 words or more and says no sentence twice, and otherwise lesson 27's score. Of two stories, the readers prefer the one with the higher number. The model we train never sees that rule, only pairs. Knowing the rule, we can set a learned score beside it, which a real project cannot.
 
 The scorer is a model that reads an order and its story and gives back one number. Its body is a copy of the storyteller, lesson 25's model, which already reads stories, with one new layer on top that turns the stream at the last token into a single number.
 
