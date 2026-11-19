@@ -26,12 +26,12 @@ if [ $# -gt 0 ]; then
   scp -q "${door[@]}" "$bundle" "ubuntu@$host:course.bundle"
   on 'mkdir -p course/data/cache && cd course && git init -q &&
       git fetch -q ../course.bundle HEAD && git checkout -q -f --detach FETCH_HEAD'
-  # What earlier lessons made and this machine does not have: the tokenizers, the text held
-  # out of training, the trained models and their results. A file the machine already has
-  # is left alone: it may be a result that has not come back yet.
+  # What earlier lessons made and this machine does not have: the tokenizers, the text and the
+  # games held out of training, the trained models and their results. A file the machine
+  # already has is left alone: it may be a result that has not come back yet.
   (cd data/cache && rsync -a --ignore-existing -e "ssh ${door[*]}" stories_vocab.json stories_val.bin \
     stories_train.bin story chess_vocab.json chess_val.bin chess_val.txt chess \
-    $(ls -d story_big chess_big strong 2> /dev/null) "$there/data/cache/")
+    $(ls -d story_big chess_big strong strong_20*.val 2> /dev/null) "$there/data/cache/")
   rsync -a --ignore-existing -e "ssh ${door[*]}" results/4*.json "$there/results/" 2> /dev/null || true
   # The image's own Python has PyTorch built for its card. We add the chess extra's two libraries.
   # PYTHONUNBUFFERED has Python write each line to the log as it is printed.

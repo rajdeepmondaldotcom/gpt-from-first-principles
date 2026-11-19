@@ -88,7 +88,7 @@ aws/run.sh <host> python -m gpt.strong games 2025-09 2025-08 2025-07 2025-06 202
 aws/run.sh <host> python -m gpt.strong ids
 ```
 
-`ids` writes each month as token ids. We split the months over three `games` commands on the one machine, and the two stages took 4 hours, with lesson 42's second stage running beside them.
+`ids` writes each month as token ids. We typed each stage's command on the machine itself, not through `aws/run.sh`, and split the months over three `games` commands, and the two stages took 4 hours, with lesson 42's second stage running beside them.
 
 Predict before you run: a step of 128 windows holds four times the tokens of a step of 32. Will it put more tokens through in a second?
 
