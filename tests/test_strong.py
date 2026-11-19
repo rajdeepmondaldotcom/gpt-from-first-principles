@@ -43,7 +43,7 @@ def test_only_games_between_two_strong_players_are_kept(tmp_path):
 
 
 def test_a_common_move_is_one_token_and_a_game_comes_back_as_it_went_in():
-    text = " e4 e5 Nf3 Nc6 Bb5 a6" * 20 + " O-O-O+ exd8=Q#"
+    text = " e4 e5 Nf3 Nc6 Bb5 a6" * 20 + " O-O-O+ exd8=Q#\n"  # a file's line ends in a newline
     words = Tokenizer(train(text, 300, MOVES), MOVES)
     assert len(words.encode(" Nf3")) == 1 and len(words.encode(" e4 e5 Nf3")) == 3
     assert words.decode(words.encode(text)) == text
@@ -78,23 +78,25 @@ def test_the_player_makes_the_legal_move_the_model_scores_highest():
     words = Tokenizer(train(text, 320, MOVES), MOVES)
     torch.manual_seed(0)
     model = GPT(vocab=words.end + 1, context=32, width=48, heads=4, kv_heads=2, layers=2)
+    read = []  # each line of ids the model is handed
+    model.register_forward_pre_hook(lambda _, given: read.append(given[0][0].tolist()))
     board = chess.Board()
     played = best_legal(model, words, 2700)(board, [])
-    scores = model(torch.tensor([[words.end, *words.encode(" W27 B27 1-0")]]))[0, -1]
+    # White to move: the line opens with the end token, then the telling that white wins.
+    assert read[-1] == [words.end, *words.encode(" W27 B27 1-0")]
+    scores = model(torch.tensor([read[-1]]))[0, -1]
     first = {
         san: scores[words.vocab[f" {san}".encode()]]
         for san in ("e4", "Nf3", "d4", "Nc3", "a3", "h3")
     }
     assert played == max(first, key=first.get)  # of white's first moves that are one token
+    # Token 0 scores higher here, and each move that is no token would be looked up as token 0.
+    assert scores[0] > max(first.values())
     board.push_san("e4")  # black to move: told that black wins, or that the game is drawn
-    for wins, result in ((True, "0-1"), (False, "1/2-1/2")):
-        ids = [words.end, *words.encode(f" W22 B22 {result} e4")]
-        scores = model(torch.tensor([ids]))[0, -1]
-        answers = {
-            san: scores[words.vocab[f" {san}".encode()]]
-            for san in ("e5", "Nc6", "d5", "Nf6", "a6", "h6")
-        }
-        assert best_legal(model, words, 2200, wins)(board, ["e4"]) == max(answers, key=answers.get)
+    best_legal(model, words, 2200)(board, ["e4"])
+    assert read[-1] == [words.end, *words.encode(" W22 B22 0-1 e4")]
+    best_legal(model, words, 2200, wins=False)(board, ["e4"])
+    assert read[-1] == [words.end, *words.encode(" W22 B22 1/2-1/2 e4")]
     # A position where no legal move is a token the tokenizer knows: it still plays a legal move.
     lone = chess.Board("7k/8/8/8/8/8/8/K7 w - - 0 1")
     assert lone.parse_san(best_legal(model, words, 2700)(lone, [])) in lone.legal_moves

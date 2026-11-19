@@ -42,15 +42,16 @@ MOVES = re.compile(r" ?\S+|\s+")
 
 
 def fused(q, k, v, mask=None):
-    """Lesson 6's `attend`, done by PyTorch's own routine, which never keeps the grid of scores:
-    less memory and less time for the same numbers. It hands back no weights."""
+    """Lesson 6's `attend`, done by PyTorch's own routine. On a card it may work in lesson 17's
+    tiles and never keep the grid of scores: less memory and less time for the same numbers. It
+    hands back no weights."""
     return F.scaled_dot_product_attention(q, k, v, attn_mask=mask), None
 
 
 def best_legal(model, words, rated, wins=True):
     """A player for lesson 39's games. Of the legal moves that are one token, it plays the one
-    the model gives the highest chance, so the rules never have to pick a move for it. The model
-    is told that both players are rated `rated`, and that its own side wins, or that they draw."""
+    the model gives the highest chance, and if none is one token, the first the rules list. The
+    model is told that both players are rated `rated`, and that its own side wins, or a draw."""
     import torch
 
     def move(board, played):
@@ -123,7 +124,8 @@ if __name__ == "__main__" and sys.argv[1:2] == ["games"]:
 
 if __name__ == "__main__" and sys.argv[1:2] == ["ids"]:
     # python -m gpt.strong ids: the strong games as token ids, a file for each month. With
-    # months named after it, only those: several of these can then run side by side.
+    # months named after it, only those. The first run trains the vocabulary on its first month,
+    # the newest if none is named. Once that file is there, several can run side by side.
     import json
     from pathlib import Path
 
@@ -133,7 +135,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["ids"]:
 
     cache = Path("data/cache")
     months = [cache / f"strong_{month}.txt" for month in sys.argv[2:]]
-    months = months or sorted(cache.glob("strong_20*.txt"))
+    months = months or sorted(cache.glob("strong_20*.txt"), reverse=True)
     if not (cache / "strong_vocab.json").exists():  # lesson 5's trainer, on 50,000 games
         sample = months[0].read_text().split("\n")[:50_000]
         vocab = train(" " + " ".join(sample), 8192, MOVES)
@@ -143,6 +145,8 @@ if __name__ == "__main__" and sys.argv[1:2] == ["ids"]:
     for month in months:  # lesson 18's steps: drop repeats, keep the unseen games out
         docs = [game for game in month.read_text().split("\n") if game]
         counts = more(month.with_suffix(".bin"), docs, words, tidy=lambda game: game, lead=" ")
+        # shortcut: taken from the month as read, so the few repeats that `more` drops from
+        # training stay in here. Take them from what `prepare` keeps to be exact.
         unseen = [game for game in docs if held_out(game)]
         month.with_suffix(".val").write_text("\n".join(unseen) + "\n")
         month.with_suffix(".json").write_text(json.dumps(counts))
@@ -264,7 +268,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     import torch
 
     import gpt.model
-    from gpt.evaluate import interval
+    from gpt.evaluate import interval, rate_interval
     from gpt.play import match, model_mover
     from gpt.results import save, say
     from gpt.story import load
@@ -279,7 +283,10 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
         theirs, engine = stockfish(elo, seconds, engine_path)
         scores = match(player, theirs, games, generator, most)
         engine.quit()
-        low, high = interval([scores[i : i + 2] for i in range(0, games, 2)], generator)
+        if sum(scores) in (0, games):  # lesson 39: one side took each point, no width to draw
+            low, high = rate_interval([score == 1 for score in scores])
+        else:
+            low, high = interval([scores[i : i + 2] for i in range(0, games, 2)], generator)
         say(
             f"against Stockfish held to {elo:,}, {seconds} s a move: {sum(scores) / games:.2f} of "
             f"the points in {games} games, 95% interval {low:.2f} to {high:.2f}"
@@ -295,6 +302,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     model, words.split = model.to(device), MOVES
     unseen = [line for month in sorted(cache.glob("strong_20*.val")) for line in month.open()]
     ratings = [int(line.split()[0][1:]) for line in unseen if line.strip()]
+    assert ratings, "the tellings come from the unseen games: run python -m gpt.strong ids here"
     low = min(ratings) * 100
     top = max(r for r in set(ratings) if ratings.count(r) * 100 >= len(ratings)) * 100
     say(
