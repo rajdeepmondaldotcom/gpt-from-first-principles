@@ -15,7 +15,7 @@ reference = [
     # Lesson 37: Apple's engine, which exists for Macs
     "mlx-lm; sys_platform == 'darwin'",
 ]
-# Lessons 38 to 40: the rules of chess (GPL-3) and a reader for Lichess's compressed files.
+# Lessons 38 to 40 and 45: the rules of chess (GPL-3) and a reader for Lichess's compressed files.
 # Lesson 44: a reader for the format Lichess publishes its games in on Hugging Face.
 chess = [
     "chess",

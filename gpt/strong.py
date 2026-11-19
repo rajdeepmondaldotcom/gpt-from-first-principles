@@ -43,7 +43,8 @@ MOVES = re.compile(r" ?\S+|\s+")
 
 def fused(q, k, v, mask=None):
     """Lesson 6's `attend`, done by PyTorch's own routine, which lesson 6's test found equal to
-    it. On an NVIDIA card that routine may work in lesson 17's tiles. It hands back no weights."""
+    it. On an NVIDIA card it may call faster code, such as lesson 17's tiles. It hands back no
+    weights."""
     return F.scaled_dot_product_attention(q, k, v, attn_mask=mask), None
 
 

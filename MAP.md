@@ -92,9 +92,9 @@ Each link was fetched on 17 or 18 November 2026.
 
 | Topic | The problem it solves | Learn it from |
 |---|---|---|
-| Search, and learning from its own games | Lesson 45's player picks each move in one pass, and learned from people's games. The strongest chess programs search the moves ahead. This one learned from games against itself, given only the rules, and beat a champion program | Silver and others, [Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm](https://arxiv.org/abs/1712.01815) |
+| Search, and learning from its own games | Lesson 45's player picks each move in one pass, and learned from people's games. The strongest chess programs search the moves ahead. AlphaZero learned from games against itself, given only the rules, and beat a champion program | Silver and others, [Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm](https://arxiv.org/abs/1712.01815) |
 | Learning an engine's verdicts | Lesson 44 copies the moves people made. Ruoss and others teach a model Stockfish's verdict on each move of 10 million games, and it plays with no search | Ruoss and others, [Amortized Planning with Large-Scale Transformers: A Case Study on Chess](https://arxiv.org/abs/2402.04494) |
-| Playing better than the games it read | A chess model can sometimes beat each player whose games it learned from. Sampling at a low temperature, as lesson 45's top move does, can enable it | Zhang and others, [Transcendence: Generative Models Can Outperform The Experts That Train Them](https://arxiv.org/abs/2406.11741) |
+| Playing better than the games it read | A chess model can sometimes play better than each player whose games it learned from. Picking likelier moves, as lesson 45's player does, can enable it | Zhang and others, [Transcendence: Generative Models Can Outperform The Experts That Train Them](https://arxiv.org/abs/2406.11741) |
 
 ## The best open resources, by area
 

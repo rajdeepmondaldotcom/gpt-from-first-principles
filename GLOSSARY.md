@@ -105,10 +105,10 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | a job the card is handed | kernel. Handing one over is a kernel launch |
 | vLLM's 8 bits | FP8: 8-bit floating-point numbers |
 | the three words that open a game's line | conditioning: on the players' ratings, and on the result asked for, which Chen and others call the return-to-go |
-| playing the best legal move | constrained decoding. Reinforcement learning calls it action masking, and taking the top move is greedy |
+| playing the legal move the model scores highest | constrained decoding. Reinforcement learning calls it action masking, and taking the top move is greedy |
 | PyTorch's routine in `attend`'s place | fused attention. FlashAttention is one such routine |
 | a rating on a chess program's scale | an anchored rating: the opponents' ratings are held fixed |
-| the Elo rule, turned round | performance rating |
+| the Elo rule turned round for one match | performance rating |
 | the luck of the pick | selection bias, or the winner's curse: the best of several noisy scores reads too high |
 
 ## The terms

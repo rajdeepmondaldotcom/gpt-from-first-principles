@@ -57,10 +57,10 @@ def test_the_fused_attention_gives_the_models_own_scores(monkeypatch):
     ids = torch.randint(64, (2, 32))
     ours = model(ids)
     monkeypatch.setattr(gpt.model, "attend", fused)
-    assert torch.allclose(model(ids), ours, atol=1e-5)
+    assert torch.allclose(model(ids), ours, atol=1e-5, rtol=0)
     kept = [{} for _ in model.blocks]  # and with a cache: 20 tokens, then the rest one at a time
     parts = [model(ids[:, :20], kept)] + [model(ids[:, i : i + 1], kept) for i in range(20, 32)]
-    assert torch.allclose(torch.cat(parts, dim=1), ours, atol=1e-5)
+    assert torch.allclose(torch.cat(parts, dim=1), ours, atol=1e-5, rtol=0)
 
 
 def test_the_rating_is_the_one_that_makes_the_results_most_likely():
