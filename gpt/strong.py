@@ -1,5 +1,5 @@
-"""Lesson 44. A stronger player: learn only from strong players' games, and measure the result
-against an engine whose rating the world knows."""
+"""Lessons 44 and 45. A stronger player: learn only from strong players' games, then measure
+the result against a chess program held to ratings that others know."""
 
 import re
 import sys
@@ -24,7 +24,7 @@ def told(white, black, result):
 def strong(path, least, moves=20):
     """One line for each game in a file of Lichess games whose two players are both rated
     `least` or more: what `told` says of it, then lesson 38's line of its moves. Left out:
-    bullet games, a minute or two a side, and games that a clock or a lost connection ended."""
+    bullet games, under three minutes a side, and games Lichess does not mark as ended normally."""
     wanted = (pc.field("WhiteElo") >= least) & (pc.field("BlackElo") >= least)
     wanted &= ~pc.match_substring(pc.field("Event"), "ullet") & (
         pc.field("Termination") == "Normal"
@@ -42,9 +42,8 @@ MOVES = re.compile(r" ?\S+|\s+")
 
 
 def fused(q, k, v, mask=None):
-    """Lesson 6's `attend`, done by PyTorch's own routine. On a card it may work in lesson 17's
-    tiles and never keep the grid of scores: less memory and less time for the same numbers. It
-    hands back no weights."""
+    """Lesson 6's `attend`, done by PyTorch's own routine, which lesson 6's test found equal to
+    it. On an NVIDIA card that routine may work in lesson 17's tiles. It hands back no weights."""
     return F.scaled_dot_product_attention(q, k, v, attn_mask=mask), None
 
 
@@ -58,6 +57,8 @@ def best_legal(model, words, rated, wins=True):
         result = "1/2-1/2" if not wins else "1-0" if board.turn else "0-1"  # white is to move
         opening = told(rated, rated, result).split()
         ids = [words.end, *words.encode("".join(f" {one}" for one in (*opening, *played)))]
+        # shortcut: a line longer than the context loses its start, the three words with it. A
+        # game of 240 one-token moves is 244 tokens. Keep the words apart if games get longer.
         ids = torch.tensor([ids[-model.context :]], device=model.embed.weight.device)
         with torch.no_grad():
             scores = model(ids)[0, -1]
@@ -99,7 +100,7 @@ def rating(results):
 
 if __name__ == "__main__" and sys.argv[1:2] == ["games"]:
     # python -m gpt.strong games 2025-09 2025-08: each month's strong games, one to a line.
-    # A month is 66 files of 1 GB. Each is read as soon as it is down, and then removed.
+    # A month is 60 to 75 GB, in files of 1 GB or less. Each is read as soon as it is down.
     import json
     import urllib.request
     from pathlib import Path
@@ -338,7 +339,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["play"]:
     near = min((1400, 1600, 1800, 2000, 2200, 2400, 2600), key=lambda elo: abs(elo - best))
     slow = against(ours, near, 100, 240, seconds=0.5)
     save(
-        "44_strong_play",
+        "45_strong_play",
         torch=torch.__version__,
         device=device,
         floor=sum(floor) / len(floor),

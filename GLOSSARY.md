@@ -104,6 +104,12 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | what memory reads in a second over what a token reads | the memory-bandwidth bound on decode speed |
 | a job the card is handed | kernel. Handing one over is a kernel launch |
 | vLLM's 8 bits | FP8: 8-bit floating-point numbers |
+| the three words that open a game's line | conditioning: on the players' ratings, and on the result asked for, which Chen and others call the return-to-go |
+| playing the best legal move | constrained decoding. Reinforcement learning calls it action masking, and taking the top move is greedy |
+| PyTorch's routine in `attend`'s place | fused attention. FlashAttention is one such routine |
+| a rating on a chess program's scale | an anchored rating: the opponents' ratings are held fixed |
+| the Elo rule, turned round | performance rating |
+| the luck of the pick | selection bias, or the winner's curse: the best of several noisy scores reads too high |
 
 ## The terms
 
@@ -128,6 +134,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **broadcasting**: PyTorch stretching a column or smaller tensor across all places of a larger one in arithmetic. [Lesson 3](lessons/03-tensors.md)
 - **budget**: The bytes of cache the engine may hold. A request joins the batch only if the rows together still fit. [Lesson 32](lessons/32-batching.md)
 - **budget** (of a run): The multiplies and adds a training run may spend. Lesson 19 sizes a model for one, and lesson 41 measures an hour of a card as one. [Lesson 19](lessons/19-how-big-should-it-be.md)
+- **bullet**: A chess game that Lichess expects to take each side under three minutes. Lesson 44 learns from none. [Lesson 44](lessons/44-a-stronger-player.md)
 - **byte**: A number from 0 to 255. A computer stores text as bytes. [Lesson 5](lessons/05-tokens.md)
 - **byte pair encoding** (BPE): Make the most frequent pair of neighbouring tokens a new token, replace it everywhere, and repeat until the vocabulary is the size you want. [Lesson 5](lessons/05-tokens.md)
 - **card** (graphics card): A graphics chip on a board of its own, with its own memory. A rented machine has one or several. [Lesson 41](lessons/41-train-on-a-gpu.md)
@@ -259,6 +266,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **spread** (standard deviation): The usual distance of a set of numbers from their average. Lesson 14 divides by one less than their count, because the average was worked out from the same numbers. [Lesson 6](lessons/06-attention.md)
 - **standard error**: The spread of a set of measurements divided by the square root of how many there are. Lesson 14 calls it the error. [Lesson 14](lessons/14-running-an-experiment.md)
 - **stochastic gradient descent**: Learning from random batches in place of the whole text. [Lesson 3](lessons/03-tensors.md)
+- **Stockfish**: A program that plays chess. One of its settings holds it to any rating from 1,320 to 3,190, and lesson 45 rates our player against seven of those ratings. [Lesson 45](lessons/45-how-strong-is-it.md)
 - **story model**: Lesson 21's model: 5,374,464 parameters, trained on short stories. Lesson 41's bigger story model has 14,555,904. [Lesson 21](lessons/21-the-real-run.md)
 - **storyteller**: The story model after lesson 25's fine-tune, which writes a story to an order. Lesson 36 serves it as lesson 29 left it. [Lesson 25](lessons/25-fine-tuning.md)
 - **stream** (from a server): An answer sent as a run of small events, one for each piece of text. [Lesson 36](lessons/36-the-server.md)
@@ -269,6 +277,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **SwiGLU**: Widen twice with two grids, pass one result through SiLU, multiply it entry by entry with the other, then narrow with one grid. [Lesson 16](lessons/16-todays-parts.md)
 - **tanh**: The function (e^x - e^-x) / (e^x + e^-x), which squashes any number into the range -1 to 1. [Lesson 4](lessons/04-a-neural-language-model.md)
 - **task**: A check of one job with a rule that says pass or fail. From lesson 25, an order with its check. [Lesson 24](lessons/24-evaluation.md)
+- **telling**: What we write in lesson 44's three words when the model plays: one rating for both players, and a win for its side or a draw. [Lesson 45](lessons/45-how-strong-is-it.md)
 - **temperature**: Divide each score by T before softmax. Under 1 likely tokens become likelier, over 1 chances move toward even, and 0 is greedy. [Lesson 22](lessons/22-sampling.md)
 - **tensor**: A grid of numbers whose shape says how many lie along each direction. [Lesson 3](lessons/03-tensors.md)
 - **thread**: A line of work that runs beside others inside one program. [Lesson 36](lessons/36-the-server.md)

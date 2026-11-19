@@ -88,7 +88,7 @@ With the averages shared out, the fullest worker holds 155.0 MB where a whole co
 
 These workers are four entries of a list in one process. Nothing crossed a wire or was timed: the page proves the sums that lesson 41's `all_reduce` would carry between cards. Our steps did not clip. Lesson 12's clipping needs the whole slope's length, so each worker would first send its sum of squares. We split one MLP and not the attention beside it, and never put different blocks on different cards. [MAP.md](../MAP.md) says where to read on.
 
-Lesson 41's chess model is rated +775 on a scale of our own, where a random mover is 0. We do not know what that is worth against a player the world rates, or how strong this code can get.
+Lesson 41's chess model is rated +775 on a scale of our own, where a random mover is 0. We do not know what that is worth on a scale others use, or how strong this code can get.
 
 ## Check yourself
 

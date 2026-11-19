@@ -1,0 +1,36 @@
+{
+ "what": "Facts about the run of lessons 44 and 45 that its script did not print, taken by hand from the run's own files on the rented machine (commit ff0d5c4). `tried` is from data/cache/strong_log.json, the notes that `long_run` in gpt/story.py keeps: each pair is a peak rate and the loss in nats on 200,000 unseen tokens after a hundredth of the budget, and the run trained at the rate with the lowest loss. `unseen_games` is the number of lines in the fifteen strong_20*.val files. `unseen_games_kept` is kept minus written, summed over the months in 44_strong.json: the unseen games that lesson 18's cleaning kept. The difference, 144, are repeats and near-repeats of other games, which the script left among the unseen games. `stages` are the times, in UTC, of the first and last change to each stage's log on the machine. `stockfish` is the version the machine's package gave, by its own first line.",
+ "tried": [
+  [
+   0.0005,
+   2.1529294061599713
+  ],
+  [
+   0.001,
+   2.198247501700544
+  ],
+  [
+   0.002,
+   3.310189885763444
+  ]
+ ],
+ "peak": 0.0005,
+ "unseen_games": 193852,
+ "unseen_games_kept": 193708,
+ "stages": {
+  "games and ids": [
+   "2026-11-18 11:40:27",
+   "2026-11-18 15:46:22"
+  ],
+  "train": [
+   "2026-11-18 15:47:12",
+   "2026-11-19 07:46:52"
+  ],
+  "play": [
+   "2026-11-19 07:46:53",
+   "2026-11-19 09:40:11"
+  ]
+ },
+ "stockfish": "Stockfish 17.1 (Ubuntu package 17-1build1)",
+ "printed": []
+}

@@ -2,13 +2,13 @@
 
 Build a GPT yourself. Train it, serve it, teach the same code chess, then run it all on a rented graphics card.
 
-You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs, and a third shares one model out among several workers.
+You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs, and a third shares one model out among several workers. The last two train a chess player on 19 million games between strong players and rate it against Stockfish, a chess program that can be held to a known rating.
 
-Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41 and 42 also need an AWS account and about $18. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script. A test checks each block of output on each page against the file its script saved.
+Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41, 42, 44 and 45 also need an AWS account: about $18 for the first two and about $37 for the last two. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script. A test checks each block of output on each page against the file its script saved.
 
 *A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas behind training and inference work, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
 
-The numbers of lessons 1 to 40 and 43 come from an M4 MacBook, and those of lessons 41 and 42 from rented NVIDIA cards, which cost $18.31. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac, and the scripts of lessons 41 and 42, which need an NVIDIA card.
+The numbers of lessons 1 to 40 and 43 come from an M4 MacBook, and those of lessons 41, 42, 44 and 45 from rented NVIDIA cards, which cost $18.31 for the first two and $36.96 for the last two. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac, and the scripts of lessons 41, 42, 44 and 45, which need an NVIDIA card.
 
 One prompt, `Once upon a time`, answered by the model at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. Line breaks are shown as spaces.
 
@@ -86,6 +86,8 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 41 | [Train on a GPU](lessons/41-train-on-a-gpu.md) | The same code on a rented graphics card: a bigger story model, a stronger chess player, four cards sharing a step, and each run's cost in dollars |
 | 42 | [Serve on a GPU](lessons/42-serve-on-a-gpu.md) | The bigger story model served by vLLM, the request rate it keeps up with, and the price of a million tokens, for our model and for one about 520 times its size |
 | 43 | [Split the model](lessons/43-split-the-model.md) | One layer's weights and the optimizer's averages shared among four workers, with each sum checked against the model in one piece |
+| 44 | [A stronger player](lessons/44-a-stronger-player.md) | A chess model of 76 million parameters, trained for 12 hours of a card on 19 million games between strong players, with each choice in the run and its cost |
+| 45 | [How strong is it?](lessons/45-how-strong-is-it.md) | 1,400 games against Stockfish held to known ratings, and a rating on its scale with a range |
 
 Four guides go with the lessons.
 
@@ -183,6 +185,17 @@ Lesson 43 is back on the laptop. Its four workers are in one process, so it coun
 | What one of four workers holds to train lesson 41's story model: a whole copy, then with AdamW's averages shared out | 43 | 232.9 MB, then 155.0 MB for the fullest worker |
 | What the workers add up between them in a step: their slopes, then their parts of eight split MLPs | 43 | 58.2 MB, then 201.3 MB |
 
+Lessons 44 and 45 are on the rented L40S again: 12 hours of training steps on games between strong players, then 1,400 games against Stockfish, a chess program that can be held to a rating.
+
+| Measure | Lesson | Result |
+|---|---|---|
+| A chess model of 76,286,080 parameters, after 443,470 steps on 19,219,755 games between players rated 2,200 or more | 44 | 1.447 nats a token on unseen games, where a token is a move |
+| One training step with lesson 6's attention, then with PyTorch's own routine in its place | 44 | 257 ms, then 97 ms |
+| Tokens a second through a training step of 32 windows, then of 128 | 44 | 84,095, then 63,206 |
+| Points against Stockfish held to 1,320, for lesson 41's chess model. Then against Stockfish held to 1,400, for the new one | 45 | 0.23, then 0.80 |
+| The new player's rating on Stockfish's scale, fitted to 700 games against seven settings from 1,400 to 2,600 | 45 | 1,785, with a range of 1,737 to 1,836. Match by match the rating climbs from 1,641 against the weakest setting to 2,122 against the strongest, so one number does not suit them all |
+| Points against Stockfish held to 1,800, when it has 0.05 seconds a move and when it has 0.5 | 45 | 0.36, then 0.41 |
+
 ## Run it
 
 ```bash
@@ -203,7 +216,7 @@ To hear a story, start the server and open `http://127.0.0.1:8000`:
 uv run python -m gpt.server stay
 ```
 
-Lessons 38 to 40 need the `chess` extra: python-chess, which knows the rules, and a reader for the games' compressed file.
+Lessons 38 to 40, 44 and 45 need the `chess` extra: python-chess, which knows the rules, and readers for the two formats Lichess publishes its games in.
 
 ```bash
 uv sync --extra chess
@@ -221,11 +234,11 @@ Three tests check our code against outside code: OpenAI's tiktoken, Hugging Face
 uv run --extra reference pytest -m reference
 ```
 
-Every test runs on a laptop. Only the scripts of lessons 41 and 42 need a rented machine: an AWS account that may start G instances in us-east-1, and the `aws` command set up with a profile of yours. `aws/start.sh` starts a machine that destroys itself at a time limit, `aws/run.sh` runs a lesson on it and brings the results back, and `aws/stop.sh` destroys each machine and lists any left. Each page gives its commands. With the downloaded `story_big`, lesson 42 needs no run of lesson 41.
+Every test runs on a laptop. Only the scripts of lessons 41, 42, 44 and 45 need a rented machine: an AWS account that may start G instances in us-east-1, and the `aws` command set up with a profile of yours. `aws/start.sh` starts a machine that destroys itself at a time limit, `aws/run.sh` runs a lesson on it and brings the results back, `aws/cost.sh` lists what the machines still running have cost, and `aws/stop.sh` destroys each machine and lists any left. Each page gives its commands. With the downloaded `story_big`, lesson 42 needs no run of lesson 41. Lesson 44's games stage downloads 999 GB, one file at a time.
 
 ## The trained models
 
-You can skip the long runs. The story model, the storyteller at two stages, the chess model at two stages and lesson 41's two bigger models are on Hugging Face, each with the numbers we measured on it. Each command fills `data/cache` with the folders the scripts load: `story`, `storyteller`, `preferred` and `story_big` from the first, and `chess`, `chess_early`, `chess_big` and the chess run's last checkpoint from the second.
+You can skip the long runs. The story model, the storyteller at two stages, the chess model at two stages, lesson 41's two bigger models and lesson 44's stronger player are on Hugging Face, each with the numbers we measured on it. Each command fills `data/cache` with the folders the scripts load: `story`, `storyteller`, `preferred` and `story_big` from the first, and `chess`, `chess_early`, `chess_big`, `strong`, the unseen games of lesson 44 and the chess run's last checkpoint from the second.
 
 ```bash
 uvx --from huggingface_hub hf download rajdeepmondal/gpt-from-first-principles-storyteller --local-dir data/cache
@@ -252,4 +265,4 @@ None of their text, code or figures is in this repository.
 
 ## License
 
-Apache-2.0. `data/tiny_shakespeare.txt` is public-domain text. The stories are from TinyStories, under CDLA-Sharing-1.0, and the chess games from the Lichess open database, under CC0; neither is stored here. The chess lessons use the `python-chess` library, which is under GPL-3. It is an optional extra, and no code of it is in this repository. Lesson 42 runs vLLM and the Qwen2.5-7B-Instruct model, both under Apache-2.0, on a rented machine. Neither is stored here or installed by `uv sync`.
+Apache-2.0. `data/tiny_shakespeare.txt` is public-domain text. The stories are from TinyStories, under CDLA-Sharing-1.0, and the chess games from the Lichess open database, under CC0; neither is stored here. The chess lessons use the `python-chess` library, which is under GPL-3. It is an optional extra, and no code of it is in this repository. Lesson 42 runs vLLM and the Qwen2.5-7B-Instruct model, both under Apache-2.0, on a rented machine. Lesson 45 runs Stockfish there too, which is under version 3 of the GNU General Public License. None of the three is stored here or installed by `uv sync`.
