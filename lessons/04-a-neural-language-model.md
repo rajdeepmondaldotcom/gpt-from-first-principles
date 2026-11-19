@@ -139,7 +139,7 @@ unseen text:   1.846 nats, 2.663 bits per byte
 | Bigram, learned | 3.599 |
 | MLP, eight characters back | 2.663 |
 
-Trained for 30,000 steps of 64 windows on the first 100,000 training characters, the MLP scores 2.663 bits per byte on unseen text.
+Trained for 30,000 steps of 64 windows, the MLP scores 2.663 bits per byte on unseen text. Its training loss, 1.657 nats, is measured on the first 100,000 training characters.
 
 ## What it still cannot do
 
