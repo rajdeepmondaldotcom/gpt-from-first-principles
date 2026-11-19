@@ -101,7 +101,7 @@ uv run pytest tests/test_strong.py
 
 Predict before you run: each game the model read was between players rated 2,200 or more. Will it take half the points from Stockfish held to 2,200?
 
-The run is on lesson 44's machine, with Stockfish 17.1.
+The run is on lesson 44's machine, with Stockfish 17.1, its command typed there as before.
 
 ```bash
 aws/run.sh <host> 'sudo apt-get install -y stockfish && python -m gpt.strong play'
