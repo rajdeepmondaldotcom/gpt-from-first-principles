@@ -1,5 +1,5 @@
 {
-  "commit": "f46b7c6",
+  "commit": "dda4fff",
   "python": "3.13.13",
   "torch": "2.15.0",
   "trained_on": "mps",

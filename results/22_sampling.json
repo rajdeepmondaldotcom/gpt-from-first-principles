@@ -1,5 +1,5 @@
 {
-  "commit": "a2a442b",
+  "commit": "780f143",
   "python": "3.13.13",
   "torch": "2.15.0",
   "device": "cpu",
