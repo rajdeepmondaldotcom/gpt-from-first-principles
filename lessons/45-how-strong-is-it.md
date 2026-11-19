@@ -12,7 +12,7 @@ The games follow lesson 39's rules, but stop after 240 moves, not 100: a common 
 
 Lesson 39's player wrote a move, and the rules picked one when five tries failed. The new player plays the legal move the model scores highest, among those that are one token.
 
-Lesson 44's three words are now ours to write, and we call what we write a telling: one rating for both players, and a win for the model's side or a draw. In the unseen games white is rated 2,200 or more, and the 2,700s are the highest hundred that holds at least 1 game in 100. We try four ratings from 2,200 to 2,700 with a win, and 2,700 with a draw, each for 100 games against Stockfish held to 1,900. The best then plays new games: we picked it for its score, so part of that score is the luck of the pick.
+Lesson 44's three words are now ours to write, and we call what we write a telling: one rating for both players, and a win for the model's side or a draw. White in the unseen games is rated 2,200 or more, and the 2,700s are the highest hundred with at least 1 game in 100. We try four ratings from 2,200 to 2,700 with a win, and 2,700 with a draw, each for 100 games against Stockfish held to 1,900. The best then plays new games: we picked it for its score, so part of that score is the luck of the pick.
 
 Lesson 39 fitted every player's rating at once. Here Stockfish's seven ratings are given, and ours is the one unknown. The script keeps the whole-number rating below 4,000 that makes the 700 results most likely by the Elo rule, and lesson 24's bootstrap, 200 draws over pairs of games, gives it a range.
 
@@ -30,7 +30,7 @@ S + 400 × log10(s / (1 - s))
 | 0.76 | 3.2 | S + 200 |
 | 0.20 | 0.25 | S - 241 |
 
-One match gives one such rating, and the fit one rating for all of them.
+One match gives one such rating. The fit gives one for all seven.
 
 ## The code
 
@@ -157,11 +157,11 @@ We tested one cause, the short clock. With 0.5 seconds a move, Stockfish held to
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/stop.sh
 ```
 
-Lessons 44 and 45 cost us $36.96 by the price list: `results/45_bill.json` has the hours. Three hours of the games stage ran beside lesson 42's second stage and are in its bill, so the runs alone are 22 hours, about $41.
+Lessons 44 and 45 cost us $36.96 by the price list: `results/45_bill.json` has the hours. Three hours of the games stage ran beside lesson 42's second stage and are in its bill. With them, the runs took 22 hours, about $41.
 
 ## What it still cannot do
 
-1,785 is what 12 hours of steps bought, and lesson 44 tried no rate below its best. We also changed how a move is picked, and never played lesson 39's player with the new model. We did not tally how many games reached 240 moves and went to the piece count.
+Lesson 44 bought 1,785 with 12 hours of steps and tried no rate below its best. We also changed how a move is picked, and never played lesson 39's player with the new model. We did not tally how many games reached 240 moves and went to the piece count.
 
 The player picks each move in one pass and never tries a reply on a board. [MAP.md](../MAP.md) has two ways on from here: a search through the moves ahead, and learning an engine's verdict on each move.
 

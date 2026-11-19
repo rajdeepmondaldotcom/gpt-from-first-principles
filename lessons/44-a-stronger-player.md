@@ -1,6 +1,6 @@
 # 44. A stronger player
 
-By the end of this page the same model code has trained for 12 hours of steps on a rented card, on 19 million games between strong players, and you know each choice made in that run, and its bill.
+By the end of this page the same model code has trained for 12 hours of steps on a rented card, on 19 million games between strong players, and you know each choice in that run, and its bill.
 
 Lesson 41's chess model is rated +775 on a scale of our own, where a random mover is 0. We do not know what that is worth on a scale others use, or how strong this code can get.
 
@@ -15,7 +15,7 @@ Lesson 41's model read four months of games between players of any rating. We ch
 
 As in lesson 18, we drop repeats and near-repeats, month by month, and keep one game in a hundred unseen. The run is lesson 21's long run, in lesson 12's 16-bit numbers. Three short runs pick the rate, lesson 13's checks must pass, and each 500 steps the run scores unseen games and saves a checkpoint.
 
-Two timings come before it. Lesson 6 showed `attend` equal to a routine of PyTorch's, which on an NVIDIA card may call faster code, such as lesson 17's tiles. The script times a step with each, and its output calls PyTorch's routine the fused one. Then it times steps of 32, 64 and 128 windows of 256 tokens, and trains at the size that puts the most tokens through in a second, for 12 hours of steps.
+Two timings come before it. Lesson 6 showed `attend` equal to a routine of PyTorch's, which on an NVIDIA card may call faster code, such as lesson 17's tiles. The script times a step with each, and its output names PyTorch's routine the fused one. Then it times steps of 32, 64 and 128 windows of 256 tokens, and trains at the size that puts the most tokens through in a second, for 12 hours of steps.
 
 ## By hand
 
@@ -123,7 +123,7 @@ The run read the games 2.3 times and ends at 1.447 nats a token on all the unsee
 
 The last line prices 12 hours of steps. On the clock the stage took 16, with the short runs first and a score and a checkpoint each 500 steps: about $30.
 
-The script took the unseen games from each month as read, so they hold 144 repeats and near-repeats, by the same file's count, that lesson 18's cleaning dropped from training.
+The script kept each month's unseen games uncleaned, so they hold 144 repeats and near-repeats that lesson 18's cleaning dropped from training, by the same file's count.
 
 ## What it still cannot do
 
