@@ -6,7 +6,7 @@ Lesson 10's GPT scored 3.017 bits per byte. It had scored three times as many ta
 
 ## The idea
 
-Gradient descent uses one rate for every parameter, and the step is rate × slope. Take the average size of the slopes in each tensor of our untrained GPT's parameters. Between two grids of weights it differs by 10 to 20 times, and between a bias and a gain by 300 to 500. With one rate, the flattest moves hundreds of times less than the steepest.
+Gradient descent uses one rate for every parameter, and the step is rate × slope. Take the average size of the slopes in each tensor of our untrained GPT's parameters. Among the weight grids, the steepest averages 10 to 20 times the flattest. Across all tensors, a bias against a gain, the gap is 300 to 500 times. With one rate, the flattest moves hundreds of times less than the steepest.
 
 Each slope also comes from one small batch, so it carries noise. Steps point this way, then that, and undo some of each other's work.
 
@@ -22,7 +22,7 @@ The bottom of that fraction is the slope's usual size. Dividing by it removes th
 
 Both averages start at 0, which makes them too small for the first steps. So after t steps Adam divides the average slope by 1 - 0.9 to the power t, and the average square by 1 - 0.999 to the power t.
 
-AdamW adds weight decay. On each step each weight grid is multiplied by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights outside the division. We leave biases, gains and shifts alone. Lesson 13 measures decay, paired with another change.
+AdamW adds weight decay. On each step AdamW multiplies each weight grid by 1 - rate × decay. A weight that the slopes do not keep pushing away from 0 drifts back toward it. Adding decay to the loss would send its slope through Adam's division, and weights with large slopes would hardly decay. AdamW shrinks the weights outside the division. We leave biases, gains and shifts alone. Lesson 13 measures decay, paired with another change.
 
 ## By hand
 
@@ -35,6 +35,12 @@ Momentum, with a rate of 0.1 and a parameter at 5. The slopes arrive as 1, 1, th
 | -1 | 0.9 × 1.9 - 1 = 0.71 | 0.071 | 4.639 |
 
 Adam's first step, with a slope of 0.001. The average slope moves a tenth of the way from 0, to 0.0001. The correction factor is 1 - 0.9 = 0.1, which restores 0.001. The average square moves a thousandth of the way, to 0.000000001, and its correction restores 0.000001, whose square root is 0.001. The step is rate × 0.001 / 0.001, which is the rate.
+
+| Adam's first step | Slope 0.001 | Slope 1,000 |
+|---|---|---|
+| Average slope, corrected | 0.001 | 1,000 |
+| √ average square, corrected | 0.001 | 1,000 |
+| Step | rate | rate |
 
 ## The code
 
@@ -60,7 +66,7 @@ Adam's first step, with a slope of 0.001. The average slope moves a tenth of the
             p.addcdiv_(mean, size, value=-self.rate / fix_mean)  # p -= rate * mean / size
 ```
 
-`b1` is 0.9 and `b2` is 0.999. `p.dim() > 1` picks out the grids. `fix_mean` and `fix_square` are the two correction factors. `addcmul_(g, g, value=c)` adds c × g × g in place. `eps` keeps the division safe when a slope has been 0.
+`b1` is 0.9 and `b2` is 0.999. `p.dim() > 1` picks out the grids. `fix_mean` is 1 - 0.9 to the power t and `fix_square` is 1 - 0.999 to the power t. `addcmul_(g, g, value=c)` adds c × g × g in place. `eps` keeps the division safe when a slope has been 0. Adam keeps two numbers per parameter, `mean` and `square`, so with the parameters and their slopes, training holds four copies of the model's size.
 
 ## The proof
 
@@ -89,9 +95,11 @@ lesson 4's MLP reading 8 characters back, with AdamW: 2.551 bits per byte
 lesson 4's MLP reading 64 characters back, with AdamW: 2.863 bits per byte
 ```
 
-The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. AdamW's rate is 0.001, its decay 0.01. A seed starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
+AdamW takes the GPT from 3.017 to 2.372 bits per byte on unseen text.
 
-The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8, with 64 sets of weights to train in place of 8. AdamW takes the GPT from 3.017 to 2.372 bits per byte on unseen text.
+The first three runs are lesson 10's model, data, seed and 3,000 steps, with only the optimizer changed. AdamW's rate is 0.001, its decay 0.01. Momentum keeps gradient descent's rate of 0.1, so its steady steps are up to ten times larger, and part of its gain here may be the larger step. A seed starts the random number generator: it fixes the starting weights and the batches, and on `cpu` it repeats.
+
+The last two lines give lesson 4's MLP the same AdamW, steps and count of targets. Reading 64 places as the GPT does, the MLP does worse than reading 8, with 64 sets of weights to train in place of 8.
 
 | Model | Bits per byte on unseen Shakespeare |
 |---|---|
@@ -114,7 +122,7 @@ To the tumb offench, followed abd;
 Hich fless better a
 ```
 
-We ran 3,000 steps at one fixed rate and stopped. Nothing looked at unseen text along the way. A run cut off at step 2,999 would have to start again from step 0.
+We ran 3,000 steps at one fixed rate and stopped. The run never measured unseen text along the way. A run cut off at step 2,999 would have to start again from step 0.
 
 ## Check yourself
 

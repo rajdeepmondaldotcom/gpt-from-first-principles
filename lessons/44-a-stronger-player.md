@@ -11,11 +11,11 @@ Lesson 41's model read four months of games between players of any rating. We ch
 1. Both players of a game must be rated 2,200 or more on Lichess. We leave out bullet games, which Lichess expects to take each side under three minutes, and games it does not mark as ended normally, such as those a clock ended. We read fifteen months: 2,916 files, 999 GB.
 2. A common move is one token. Lesson 5's cut never joins a letter to a digit, so lesson 38's moves took 2.1 tokens each. Here a chunk is anything between two spaces, and lesson 5's trainer stops when each chunk of its sample, 50,000 games, is one token.
 3. A game's line starts with three words: white's rating in hundreds, black's, and the result, as in `W23 B22 1-0`. In training they are facts. In lesson 45 we write them, to ask for a strong player's moves. Chen and others steer a model this way, by the result they ask it for.
-4. The model is 640 wide and 16 blocks deep, 76,286,080 parameters. Lesson 19's law was 0.347 nats off in lesson 41, so we did not size by it. Lesson 41's widest story model, 768 wide and 12 deep, failed lesson 13's check of the first loss, so this one is narrower and deeper.
+4. The model is 640 wide and 16 blocks deep, 76,286,080 parameters. Lesson 19's law was 0.347 nats off in lesson 41, so we did not size by it. Lesson 41's widest story model, 768 wide and 12 deep, failed lesson 13's check of the first loss: a wider model starts with wider scores (lesson 41). So this one is narrower, and deeper to stay near its size.
 
 As in lesson 18, we drop repeats and near-repeats, month by month, and keep one game in a hundred unseen. The run is lesson 21's long run, in lesson 12's 16-bit numbers. Three short runs pick the rate, lesson 13's checks must pass, and each 500 steps the run scores unseen games and saves a checkpoint.
 
-Two timings come before it. Lesson 6 showed `attend` equal to a routine of PyTorch's, which on an NVIDIA card may call faster code, such as lesson 17's tiles. The script times a step with each, and its output names PyTorch's routine the fused one. Then it times steps of 32, 64 and 128 windows of 256 tokens, and trains at the size that puts the most tokens through in a second, for 12 hours of steps.
+Two timings come before it. Lesson 6 showed `attend` equal to a routine of PyTorch's, which on an NVIDIA card may call faster code, such as lesson 17's tiles. The script times a step with each, and its output names PyTorch's routine the fused one: one call that does all of `attend`'s steps. Then it times steps of 32, 64 and 128 windows of 256 tokens, and trains at the size that puts the most tokens through in a second, for 12 hours of steps.
 
 ## By hand
 
@@ -70,7 +70,7 @@ def fused(q, k, v, mask=None):
     return F.scaled_dot_product_attention(q, k, v, attn_mask=mask), None
 ```
 
-`pq` and `pc` are pyarrow, which reads Lichess's files: `read_table` takes from a file only the games that pass `wanted`. `games` is lesson 38's, which keeps a game of 20 moves or more. `MOVES` matches a run of anything but spaces, with the space before it.
+`pq` and `pc` are pyarrow, which reads Lichess's files: `read_table` takes from a file only the games that pass `wanted`. `"ullet"` is in the `Event` field of a bullet game, and `~` means not. `games` is lesson 38's, which keeps a game of 20 moves or more. `MOVES` matches a run of anything but spaces, with the space before it, and `|\s+` keeps any other run of spaces as a chunk of its own.
 
 ## The proof
 
@@ -117,11 +117,11 @@ step 440500: train 1.434, unseen 1.431 nats
 443,470 steps of 32 windows, 2.3 times through the games: 1.447 nats a token on unseen games, 12 hours of one card, $22.33
 ```
 
-A window costs 3.0 ms in a step of 32 and 4.0 in a step of 128, so the run uses 32. We did not find why.
+A window costs 3.0 ms in a step of 32 and 4.0 in a step of 128, so the run uses 32. As in lesson 41, a window cost more in a bigger step, and we did not find why.
 
 The short runs are in `results/44_notes.json`: a peak rate of 0.0005 ended at 2.153 nats, 0.001 at 2.198 and 0.002 at 3.310. The lowest did best, and we tried none below it.
 
-The run read the games 2.3 times and ends at 1.447 nats a token on all the unseen games: an even guess among e^1.447 = 4.3 tokens. The curve scores their first 100,000 tokens. Its last printed point, 1.431, is level with the training loss beside it, 1.434: no sign yet of games learned by heart.
+The run read the games 2.3 times and ends at 1.447 nats a token on all the unseen games: an even guess among e^1.447 = 4.3 tokens. Unseen games here take 1.00 tokens a word, where lesson 38's took 2.1 a move, so this loss does not compare with lesson 41's chess loss. The curve scores their first 100,000 tokens. Its last printed point, 1.431, is level with the training loss beside it, 1.434: no sign yet of games learned by heart.
 
 The last line prices 12 hours of steps. On the clock the stage took 16, with the short runs first and a score and a checkpoint each 500 steps: about $30.
 

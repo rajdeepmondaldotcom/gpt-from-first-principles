@@ -10,7 +10,7 @@ Eight characters go in, 65 scores come out, and the function has a fixed number 
 
 Give each character a row of 24 numbers, called its embedding. The rows start random and training moves them. To read eight characters, look up their eight rows and lay them end to end: 192 numbers.
 
-Next comes a linear layer. It turns those 192 numbers into 256 new ones, each a weighted sum of all 192 plus a constant called a bias. The weights sit in a grid `W` of shape 192 × 256 and the biases in a list `b`. The layer is one line, `x @ W + b`. `@` is matrix multiplication: output j is each input times the weight in column j, added up. When `x` holds many rows of inputs, each row is handled the same way.
+Next comes a linear layer. It turns those 192 numbers into 256 new ones, each a weighted sum of all 192 plus a constant called a bias. The weights sit in a grid `W` of shape 192 × 256 and the biases in a list `b`. The layer is one line, `x @ W + b`. `@` is matrix multiplication: output j is each input times the weight in column j, added up. If `x` holds many rows of inputs, the layer handles each row the same way.
 
 Two linear layers in a row do no more than one, because a weighted sum of weighted sums is a weighted sum. So between the layers we bend each number with tanh, the function (e to the x, minus e to the -x) divided by (e to the x, plus e to the -x). It squashes any number into the range -1 to 1. The 256 bent numbers are called hidden units.
 
@@ -27,11 +27,11 @@ Count the parameters:
 
 The lookup is a matrix multiplication too. Write a character as 65 numbers, all 0 except a 1 at its place, called a one-hot row. Multiply it by the embedding grid and out comes the character's row. So the model is multiply, add and bend, and lesson 2's chain rule handles each. From here on PyTorch's autograd finds the slopes.
 
-The second layer starts at zero, so each score is 0 and the first loss is ln 65: the model starts with no opinion.
+The second layer starts at zero, so each score is 0 and the first loss is ln 65: the model starts with no opinion. Zeros are safe in the last layer because its slopes depend on the hidden units, which already differ, so its weights part on the first step.
 
-The other parts start as small random numbers. They must differ: two hidden units that start with equal weights get equal slopes and stay equal for ever.
+The other parts start random: each embedding entry with a spread of 1, each first-layer weight and bias small. They must differ: two hidden units that start with equal weights get equal slopes and stay equal for ever.
 
-They must be small because of the shape of tanh. Its slope is 1 minus the square of its output: 1 at an output of 0, and 0.02 at an output of 0.99. The chain rule multiplies along the path, so each weight that feeds such a unit gets a fiftieth of the slope. Call a unit stuck when its output is beyond 0.99 either way. PyTorch starts each first-layer weight within ±1 / √192, about ±0.072. Start the first layer 20 times too large and 82% of the hidden units begin stuck.
+The first layer's weights must be small because of the shape of tanh. Its slope is 1 minus the square of its output: 1 at an output of 0, and 0.02 at an output of 0.99. The chain rule multiplies along the path, so each weight that feeds such a unit gets a fiftieth of the slope it would get at an output of 0. Call a unit stuck when its output is beyond 0.99 either way. PyTorch starts each first-layer weight within ±1 / √192, about ±0.072. Start the first layer 20 times too large and 82% of the hidden units begin stuck.
 
 ## By hand
 
@@ -51,6 +51,8 @@ Each output takes one column of W:
 | Third | 2 × -1 + 1 × 2 | 0 |
 
 Now bend. tanh(2) = 0.964 with slope 1 - 0.964² = 0.071. tanh(3) = 0.995 with slope 0.010. tanh(0) = 0 with slope 1.
+
+The lookup. The one-hot row (0, 1) times W gives (0, 3, 2), the second row of W.
 
 ## The code
 
@@ -75,7 +77,7 @@ class MLP(nn.Module):
 
 A class that builds on `nn.Module` is a model. PyTorch finds its parameters through `model.parameters()`, and calling `model(x)` runs `forward`. The line `super().__init__()` sets that up.
 
-`nn.Embedding` is the lookup and `nn.Linear` is `x @ W + b`. PyTorch stores `W` turned on its side, as 256 × 192, and does the turning itself. `rows.flatten(1)` lays the eight rows end to end.
+`nn.Embedding` is the lookup and `nn.Linear` is `x @ W + b`. PyTorch stores `W` turned on its side, as 256 × 192, and does the turning itself. `rows.flatten(1)` keeps direction 0, the batch, and lays the rest end to end: (batch, 8, 24) becomes (batch, 192).
 
 A batch is a set of random windows from the text, each with the character that followed it:
 
@@ -87,7 +89,7 @@ def batch(ids, context, size, generator):
     return ids[at[:, None] + torch.arange(context)], ids[at + context]
 ```
 
-`torch.randint` picks `size` random starting positions. `at[:, None]` stands them up as a column, and adding the row 0, 1, up to 7 broadcasts into a grid of positions, one window per row.
+`torch.randint` picks `size` random starting positions. `at[:, None]` stands them up as a column, and adding the row 0, 1, up to 7 broadcasts into a grid of positions, one window per row. `generator` is a random number generator with a fixed start, so a run draws the same windows each time.
 
 The loop is lesson 3's, with autograd in place of the hand-worked slopes:
 
@@ -139,7 +141,7 @@ unseen text:   1.846 nats, 2.663 bits per byte
 | Bigram, learned | 3.599 |
 | MLP, eight characters back | 2.663 |
 
-Trained for 30,000 steps of 64 windows, the MLP scores 2.663 bits per byte on unseen text. Its training loss, 1.657 nats, is measured on the first 100,000 training characters.
+Trained for 30,000 steps of 64 windows, the MLP scores 2.663 bits per byte on unseen text. We measure its training loss, 1.657 nats, on the first 100,000 training characters.
 
 ## What it still cannot do
 

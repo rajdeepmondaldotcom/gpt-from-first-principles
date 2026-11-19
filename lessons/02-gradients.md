@@ -20,7 +20,7 @@ A positive slope means raising the parameter hurts, so we lower it. The rate, ca
 
 One way to get a slope is to nudge. Add 0.000001 to one score, work out the loss again, and divide the change by 0.000001. That costs one full loss calculation per parameter, on each step. Our sentence has 10 different characters, so its model has 100 scores. GPT-2 has 124 million parameters.
 
-One pass backwards gets all the slopes, because there is one loss. Going forwards would need one pass for each parameter. A loss is built from a few small operations, and each has a known slope:
+There is a cheaper way: one pass backwards from the loss gives all 100 scores their slopes. There is one loss, and each number passes its slope back to the numbers it was made from. A loss is built from a few small operations, and each has a known slope:
 
 | Operation | Slope for x |
 |---|---|
@@ -32,7 +32,7 @@ One pass backwards gets all the slopes, because there is one loss. Going forward
 
 Slopes combine by two rules, together called the chain rule. If x moves y at a rate of 3, and y moves the loss at a rate of 2, then x moves the loss at a rate of 6: multiply along a path. If x reaches the loss by two paths, add them.
 
-We work out the loss once and let each number remember what it was made from. Then we walk backwards from the loss and work out each number's slope. Code that does this is called automatic differentiation, or autograd.
+We work out the loss once and let each number remember what it was made from. The price is memory: we keep every number made on the way for the walk back. Then we walk backwards from the loss and work out each number's slope. Code that does this is called automatic differentiation, or autograd.
 
 ## By hand
 
@@ -54,7 +54,7 @@ Let the loss be (w - 3)². By the power rule and the chain rule its slope is 2 �
 | 2 | 0.6 | -4.8 | 1.08 |
 | 3 | 1.08 | -3.84 | 1.464 |
 
-Each step closes a fifth of the gap to 3.
+Each step multiplies the gap to 3 by 1 - 2 × rate = 0.8, so it closes a fifth of it. Above a rate of 1 that factor is below -1, and the gap grows, as the test with 1.1 shows.
 
 ## The code
 
@@ -80,7 +80,7 @@ class Value:
         return Value(self.data * other.data, (self, other), (other.data, self.data))
 ```
 
-Python calls `__add__` when it meets `a + b` and `__mul__` for `a * b`. So plain-looking arithmetic on Values builds new Values that remember their parents, with the slopes from the table. The `isinstance` line lets a plain number take part by wrapping it in a Value.
+Python calls `__add__` when it meets `a + b` and `__mul__` for `a * b`. So plain-looking arithmetic on Values builds new Values that remember their parents, with the slopes from the table. The `isinstance` line lets a plain number take part by wrapping it in a Value. `exp`, `log` and `**` are written the same way, each with its slope from the table.
 
 `backward` makes a list, `order`, of each Value after the Values it was made from. The result moves one for one with itself, so its `grad` is 1. Then `backward` walks the list in reverse. A Value must have collected the slopes from every Value made from it before it passes its own on:
 
@@ -92,7 +92,7 @@ Python calls `__add__` when it meets `a + b` and `__mul__` for `a * b`. So plain
                 parent.grad += slope * v.grad
 ```
 
-One step of learning for the table of scores `W`:
+One step of learning for the table of scores `W`, a list of 10 rows of 10 Values:
 
 ```python
 # gpt/autograd.py

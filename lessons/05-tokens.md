@@ -12,7 +12,7 @@ Characters never run out, and they are too small. We want pieces as large as wor
 
 A computer stores text as bytes, numbers from 0 to 255. Plain English letters take one byte each, `é` takes two, and most emoji take four. Any text in any language is a row of bytes, so a vocabulary of 256 tokens, one per byte, can write anything.
 
-Now grow the vocabulary. Find the pair of neighbouring tokens that occurs most often in the training text. Make that pair a new token, and replace it wherever it occurs. Repeat until the vocabulary is the size you want. This is byte pair encoding, or BPE.
+Now grow the vocabulary. Find the pair of neighbouring tokens that occurs most often in the training text. Make that pair a new token, and replace it wherever it occurs. Repeat until the vocabulary is the size you want. This is byte pair encoding, or BPE. A bigger vocabulary turns a text into fewer tokens, so a window reaches further. It also makes the embedding table and the scores layer larger, and training meets each token less often.
 
 Common words end up as one token. Rare words stay in pieces. Nothing is ever unknown, because the 256 bytes are still in the vocabulary.
 
@@ -20,11 +20,11 @@ Turning text into token ids is called encoding, and turning ids back into text i
 
 Cut the text into chunks first: a run of letters, a run of digits or a run of anything else, each with the one space before it. Merges happen inside a chunk, so no token spans two words. The usual token for a word in the middle of a sentence carries its space in front, as in ` time`.
 
-Keep one extra token that marks where a document ends. It never comes out of ordinary text. If a user types the characters `<|endoftext|>`, they are encoded as plain characters, or anyone could forge the end of a document.
+Keep one extra token that marks where a document ends. It never comes out of ordinary text. If a user types the characters `<|endoftext|>`, we encode them as plain characters, or anyone could forge the end of a document.
 
-A token can hold one byte of a two-byte character. Decoded alone it is not text, and Python prints a placeholder.
+A token can hold one byte of a two-byte character. Decoded alone it is not valid UTF-8, the code that maps characters to bytes, and our `decode` puts the replacement character U+FFFD in its place.
 
-Models with different tokens cannot be compared by loss per token, because a bigger token carries more text. So we convert to bits per byte: the loss per token, divided by ln 2 and by the average bytes in a token.
+We cannot compare models with different tokens by loss per token, because a bigger token carries more text. So we convert to bits per byte: the loss per token, divided by ln 2 and by the average bytes in a token.
 
 ## By hand
 
@@ -33,7 +33,7 @@ Train on `aaabdaaabac`. Each character is one byte, so we start with 11 tokens.
 | Tokens | Pair counts | Merge |
 |---|---|---|
 | a a a b d a a a b a c | aa 4, ab 2, four others 1 | aa becomes Z |
-| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie: compare as bytes. Z is `aa`, and `a` sorts before `aa`, so ab wins and becomes Y |
+| Z a b d Z a b a c | Za 2, ab 2, four others 1 | a tie between Za and ab. Compare their first tokens as bytes: `a` sorts before `aa`, so ab wins and becomes Y |
 | Z Y d Z Y a c | ZY 2, four others 1 | ZY becomes X |
 | X d X a c | | |
 
@@ -57,7 +57,7 @@ To encode `aab` with this vocabulary, start from a a b. The earliest merge that 
         chunks = {merge(tokens, best): n for tokens, n in chunks.items()}
 ```
 
-`chunks` maps each different chunk of the text, as a row of tokens, to how often it occurs. Counting each chunk once and multiplying by `n` saves going through the whole text on each merge. `vocab` maps the bytes of a token to its id, so a new token's id is the size of the vocabulary so far.
+`chunks` maps each different chunk of the text, as a row of tokens, to how often it occurs. Counting each chunk once and multiplying by `n` saves going through the whole text on each merge. `vocab` maps the bytes of a token to its id, so a new token's id is the size of the vocabulary so far. `merge` replaces each occurrence of the pair with one token, reading left to right.
 
 ```python
 # gpt/bpe.py
@@ -76,7 +76,7 @@ To encode `aab` with this vocabulary, start from a a b. The earliest merge that 
         return [self.vocab[p] for p in parts]
 ```
 
-`vocab.get(a + b, math.inf)` is the id of the token a pair would make, or infinity if no such token was learned. A token learned earlier has a smaller id, so `min` finds the earliest merge, and the leftmost one when there are several. Ties in training go to the pair that sorts first as bytes, first token then second.
+`vocab.get(a + b, math.inf)` is the id of the token a pair would make, or infinity if no such token was learned. A token learned earlier has a smaller id, so `min` finds the earliest merge, and the leftmost one when there are several. `chunk.encode()` gives the chunk's bytes, and `bytes([b])` makes each byte a token.
 
 ## The proof
 
@@ -141,9 +141,9 @@ Barely: 2.572 bits per byte against 2.597.
 Two. a a a a becomes Z a a, then Z Z. Each step joins the leftmost pair that the earliest merge covers.
 </details>
 
-<details><summary>A model's loss is 4.072 nats per token and a token averages 2.284 bytes. What is that in bits per byte?</summary>
+<details><summary>With 1,024 tokens the MLP scores 2.572 bits per byte, and a token averages 2.284 bytes. What is its loss in nats per token?</summary>
 
-4.072 / 0.6931 / 2.284 = 2.572.
+2.572 × 0.6931 × 2.284 = 4.072.
 </details>
 
 <details><summary>From lesson 4: the vocabulary grew from 65 to 1,025 with the end token. Which parts of the model grew?</summary>

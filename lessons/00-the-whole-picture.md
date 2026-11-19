@@ -27,7 +27,7 @@ Each lesson adds a piece or tests one, in this order.
 | 43 | Splitting the model | What if no one card holds the model? |
 | 44 and 45 | A stronger player | How strong can the player get? |
 
-The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. The stages between count their own results. Each lesson opens on something the last one left undone.
+The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. Lessons 25 to 40 and 43 to 45 use measures of their own, such as tokens a second and legal moves. Each lesson opens on something the last one left undone.
 
 Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so, and lessons 41 and 42 try some of them again on a rented card. Each dollar figure is the hours AWS reported times its price list.
 
@@ -41,7 +41,7 @@ One request, followed through the finished storyteller. The listener types Mira,
 |---|---|---|
 | 1 | The page sends `Name: Mira`, `Words: cat, moon, brave`, `Story:` to the server | 36 |
 | 2 | The text is cut into 20 tokens: `N`, `ame`, `:`, ` M`, `ir`, `a` and so on | 5, 18 |
-| 3 | The engine checks its memory. This request may come to need (20 + 120) × 6,144 = 860,160 bytes | 23, 32 |
+| 3 | The engine checks its memory. This request, 20 tokens in and up to 120 out, may come to need (20 + 120) × 6,144 = 860,160 bytes | 23, 32 |
 | 4 | The model reads the 20 tokens in one pass through 6 blocks. In each, each token chooses what to read from the tokens before it | 6 to 10, 15, 16 |
 | 5 | The keys and values of those 20 tokens are kept, so they are never worked out again | 23 |
 | 6 | The last place gives one score for each token that could come next | 10 |
@@ -68,7 +68,7 @@ def attend(q, k, v, mask=None):
     return weights @ v, weights
 ```
 
-You are not meant to follow it yet. By lesson 6 you will know each line of it.
+You need not follow it yet. By lesson 6 you will know each line of it.
 
 ## The proof
 

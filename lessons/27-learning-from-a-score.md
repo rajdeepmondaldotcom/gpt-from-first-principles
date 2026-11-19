@@ -8,7 +8,7 @@ Each fine-tune so far learned from 60,404 stories that obeyed their orders, and 
 
 Lesson 24's check says whether a story has the name and the three words. A finer version counts them: the share of those four that the story has, from 0 to 1. Call that number the score.
 
-Two ways can learn from the score. The first needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did.
+We can learn from the score in two ways. The first needs nothing new: let the model write many stories, keep the ones that pass, and fine-tune on those as lesson 25 did.
 
 The second way uses them all. Write the average score the model would earn as a sum over each story it might write: its chance times its score. We want that sum's slope for each weight. A story's score does not move with the weights, so only its chance has a slope. By lesson 2's table, the slope of ln x is (slope of x) / x, so the slope of a chance is the chance times the slope of its logarithm. Each term is now a chance times something, and such a sum is that something's average over draws. We cannot list every story, but the model can draw them: the slope is the average, over stories it wrote, of
 
@@ -16,15 +16,17 @@ score × slope of the log of the story's chance
 
 The log of a story's chance is the sum of the logs of its tokens' chances, lesson 1's surprise with the sign turned. So one training step is: let the model write stories, score each, and step so that each story's log chance rises in proportion to its score.
 
-The step as written is noisy. With scores from 0 to 1, no story is pushed down. The chances of all stories sum to 1, so only the difference between pushes teaches anything. With every push positive, the part that all stories share is large, teaches nothing, and only adds noise. We write four stories for each order and subtract the average of the four from each score. A story above its group's average is made more likely, and one below it less.
+The step as written is noisy. With scores from 0 to 1, no story is pushed down. The chances of all stories sum to 1, so only the difference between pushes teaches anything. With every push positive, the part that all stories share is large and teaches nothing: it adds noise. We write four stories for each order and subtract the average of the four from each score. The step then makes a story above its group's average more likely, and one below it less.
 
-Subtracting a number that does not depend on which story was drawn leaves the average slope where it was: on average it multiplies the slope of the sum of all chances, and a sum that is always 1 has a slope of 0. The average of four does depend on the story. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. On average the step keeps its direction and is three quarters as long.
+Subtracting a number that does not depend on which story was drawn leaves the average slope where it was: on average, the part removed is that number times the slope of the sum of all chances, and a sum that is always 1 has a slope of 0. The average of four does depend on the story. But a score minus the average of four is three quarters of the score minus the average of the other three, and those three do not depend on this story. On average the step keeps its direction and is three quarters as long.
 
-Both ways get the same budget: 1,600 stories, 16 to a round, and 100 steps at a peak rate of 0.0001 on lesson 12's schedule.
+Both ways get the same budget: 1,600 stories, 16 to a round, four stories for each of four orders, and 100 steps at a peak rate of 0.0001 on lesson 12's schedule. Keeping what passes writes its 1,600 stories first, from lesson 25's model. Learning from the score writes each round's 16 from the model as it then is and takes one step on them. A step on older stories would need a correction for their changed chances.
 
 ## By hand
 
-Two orders, two stories each. The first order's stories score 1 and 0. The second order's both score 1.
+The rule on two stories. Two stories each have a chance of 0.5, and they score 1 and 0. The average score is 0.5 × 1 + 0.5 × 0, so its slope is the slope of the first story's chance. The rule gives 0.5 × 1 × (slope of the first's chance / 0.5) + 0.5 × 0 × (slope of the second's chance / 0.5), which is the same.
+
+The baseline. Two orders, two stories each. The first order's stories score 1 and 0. The second order's both score 1.
 
 | Story | Score | Its group's average | Score minus average |
 |---|---|---|---|
@@ -59,7 +61,7 @@ def score_loss(log_chances, rewards, groups):
     return -((rewards - baseline) * log_chances).mean()
 ```
 
-A story the model wrote is stored as one of lesson 25's examples, so `collate` and its marks for the answer's places serve again. `rewards` is the usual name for the scores, and `baseline` for what is subtracted from them. `groups` gives each story the number of its order.
+A story the model wrote is stored as one of lesson 25's examples, so `collate` and its marks for the answer's places serve again. `rewards` is the usual name for the scores, and `baseline` for what is subtracted from them. `groups` gives each story the number of its order. The list in `baseline` loops over each story's group number, so each story gets its own group's average.
 
 ## The proof
 
@@ -98,13 +100,13 @@ learn from the score: 141 stories end by themselves, plain stories 1.573 nats a 
 asked words used, learning from the score minus keeping what passes: +0.10, 95% interval +0.07 to +0.14
 ```
 
-Lesson 25's model passes 30 of 200 here and passed 27 there: the stories are drawn afresh. Keeping what passes had 192 stories to learn from and reaches 37. We did not put lesson 24's paired interval on this difference, so the counts alone do not rank the two. The share of asked words stays at 0.57.
+Lesson 25's model passes 30 of 200 here and passed 27 there: we draw the stories afresh. Keeping what passes had 192 stories to learn from and reaches 37. We did not put lesson 24's paired interval on this difference, so the counts alone do not rank the two. The share of asked words stays at 0.57.
 
 Learning from the score passes 56. It uses 0.68 of the asked words against 0.57: +0.10, interval +0.07 to +0.14.
 
 ## What it still cannot do
 
-The score gave nothing for an ending, and 59 of 200 stories now never reach one, where 4 did. A person would mark that down, and our score cannot.
+The score gave nothing for an ending, and 59 of 200 stories now never reach one, where 4 did. A person would mark that down, and our score cannot. A story that never ends runs until it fills the model's context, and a longer story has more room for the asked words.
 
 ## Check yourself
 

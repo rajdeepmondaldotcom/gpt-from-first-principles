@@ -10,10 +10,10 @@ Four steps turn token ids into scores:
 
 1. The embedding gives each token a vector for what it is and where it stands.
 2. A stack of blocks works on the vectors.
-3. One last layer normalization steadies the result.
+3. One last layer normalization steadies the result. The norms inside the blocks touch only each layer's input, so no norm touches the stream itself, and its size can grow as blocks add to it.
 4. A linear layer turns each token's vector into one score per token in the vocabulary.
 
-The scores at place i are the model's guess for token i + 1. This model is called a GPT, a generative pre-trained transformer. Generative means it writes. Pre-trained means it is trained once on a great deal of text before being put to other uses. The transformer is the stack of attention blocks.
+The scores at place i are the model's guess for token i + 1. This model is called a GPT, a generative pre-trained transformer. Generative means it writes. Pre-trained means we train it once on a great deal of text before putting it to other uses. The transformer is the stack of attention blocks.
 
 PyTorch stores the last layer's grid with one row per token in the vocabulary, each as wide as the model. The table of token embeddings has the same shape. GPT-2 uses one grid for both jobs: the vector that says "this token came in" is also the vector a result is compared with to score that token. This is called weight tying. In GPT-2 it saves 38,597,376 parameters out of what would be 163 million.
 
@@ -21,7 +21,7 @@ Each grid starts as random numbers with a spread of 0.02, and each bias at 0. Th
 
 GPT-2 small has 12 blocks, a width of 768, 12 heads, a context of 1,024 tokens and 50,257 tokens in its vocabulary: 124,439,808 parameters. OpenAI published its trained weights. If our parts are that model, our code with those weights must give the scores that an independent implementation gives.
 
-The weights come in a format called safetensors. A file starts with 8 bytes that hold a length. Then come that many bytes of JSON, a plain-text format, naming each tensor with its shape and where its numbers sit. Then come the raw numbers. We read it by hand. OpenAI stored each linear layer's grid the other way round from PyTorch, so we turn those grids on their side as they load.
+The weights come in a format called safetensors. A file starts with 8 bytes that hold a length. Then come that many bytes of JSON, a plain-text format, naming each tensor with its shape and where its numbers sit. Then come the raw numbers. We read it by hand, in `read_safetensors`. OpenAI stored each linear layer's grid the other way round from PyTorch, so `load_gpt2` turns those grids on their side as they load.
 
 Hugging Face's `transformers` library has an implementation of GPT-2. We gave it the prompt `Once upon a time, there was a` and saved what it returned. Our model, with the same weights, picks the same top token at each of the 8 places. At the last place its scores for 31 tokens, the 20 it rates highest and 11 spread across the vocabulary, match the saved ones to within 0.0001, on scores near -100. Its top guess for the next token is ` man`.
 
@@ -60,7 +60,7 @@ One window gives a guess at each place. The window is `the c`, and the targets a
         return self.out(self.norm(x))
 ```
 
-`nn.ModuleList` is a list that PyTorch searches for parameters. `bias=False` leaves the biases out of the last layer, as GPT-2 does. `layers` is the number of blocks, and `# ...` stands for the lines that set the starting weights.
+`nn.ModuleList` is a list that PyTorch searches for parameters. `bias=False` leaves the biases out of the last layer, as GPT-2 does. `layers` is the number of blocks, and `# ...` stands for the lines that set the starting weights. In them `proj` and `narrow` are the two layers that add into the stream, started at 0.02 / √(2 × layers).
 
 A batch now holds a target for each place, the window moved one token on:
 
@@ -79,7 +79,7 @@ def loss_on(model, x, y):
     return cross_entropy(scores.view(-1, scores.size(-1)), y.reshape(-1))
 ```
 
-`view(-1, ...)` lays the places of each window in the batch out as one long list of rows, which is the shape lesson 3's `cross_entropy` takes.
+`view(-1, ...)` lays the places of each window in the batch out as one long list of rows, which is the shape lesson 3's `cross_entropy` takes. Scores of shape (32, 64, 65) become (32 × 64, 65), and the targets become one list of 32 × 64.
 
 A tensor lives on a device: `cpu`, the processor, or a graphics chip. `.to(ids.device)` puts the positions where the text is.
 
@@ -93,7 +93,7 @@ uv run pytest tests/test_gpt2.py
 - One grid reads tokens and scores them.
 - The model starts within 0.1 nats of no opinion.
 - The whole model cannot read the future: change token 8 and the scores at places 0 to 7 do not change by a bit.
-- We can read the weight file format.
+- A tiny file of 2 × 3 floats written by hand reads back exactly, and a file of whole numbers is refused.
 
 For the check against GPT-2, download the weights:
 

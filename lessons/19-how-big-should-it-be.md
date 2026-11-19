@@ -8,17 +8,17 @@ We have 52 million tokens, a model whose size we can set, and an afternoon on th
 
 We count the budget in multiplies and adds, because hours depend on what else the machine is doing. We count a training step as three forward passes, lesson 17's rule. We set the budget at 2.7 × 10¹⁵ multiplies and adds: 2.3 hours at lesson 17's speed, not the three hours it printed.
 
-Trying each size at the full budget would cost an afternoon a try. So we try many sizes at budgets 34 to 270 times smaller and fit a pattern to the results.
+Trying each size at the full budget would cost an afternoon a try. So we try many sizes at budgets 34 to 270 times smaller and fit a pattern to the results. Each run's rate falls over its own steps, so a short run ends its schedule too.
 
 Hoffmann and others (2022) fit this form:
 
 loss = floor + a / parameters^alpha + b / tokens^beta
 
-The middle term, the size term, is the loss a small model cannot remove, and it shrinks as the model grows. The last term, the training term, is the loss too few tokens leave, and it shrinks with training. The floor is what neither removes. At a fixed budget, parameters times tokens is about fixed, because each token costs about 6 multiplies and adds for each parameter. So a larger model shrinks the size term and grows the training term. The best size is where the fall in the size term equals the rise in the training term. At a fixed budget the best size grows as the budget to the power beta / (alpha + beta), 0.69 for our final law. Hoffmann and others found about one half, so their model and their tokens grow together. Their Chinchilla trained 70 billion parameters on 1.4 trillion tokens, 20 a parameter. Our pick gets 73,080,832 / 5,374,464 = 13.6.
+The middle term, the size term, is the loss a small model cannot remove, and it shrinks as the model grows. The last term, the training term, is the loss too few tokens leave, and it shrinks with training. The floor is what neither removes. At a fixed budget, parameters times tokens is about fixed, because each token costs about 6 multiplies and adds for each parameter. So a larger model shrinks the size term and grows the training term. The best size is where, for a small step in size, the fall in the size term equals the rise in the training term. At a fixed budget the best size grows as the budget to the power beta / (alpha + beta), 0.69 for our final law. Hoffmann and others found about one half, so their model and their tokens grow together. Their Chinchilla trained 70 billion parameters on 1.4 trillion tokens, 20 a parameter. Our pick gets 73,080,832 / 5,374,464 = 13.6.
 
 The law has five unknown numbers. Pick the two powers, and what is left is a weighted sum of three columns: a column of ones, one of parameters^-alpha and one of tokens^-beta. The weights that make the sum of squared misses smallest have an exact answer, called least squares. So we try each pair of powers from 0.10 to 1.50 and keep the pair whose best weights miss least.
 
-Each size gets its own learning rate, from a sweep like lesson 14's but with one seed for each rate, so a close win, such as width 192's win by 0.02 nats, may be noise. The three smallest models did best at 0.01 and the three largest at 0.003. For the three smallest, 0.01 was the highest rate tried, so a higher one may suit them better.
+The six sizes we try are widths 32, 48, 64, 96, 128 and 192, with 155,776, 252,192, 352,384, 688,896, 1,245,952 and 2,410,368 parameters. Each size gets its own learning rate, from a sweep like lesson 14's but with one seed for each rate, so a close win, such as width 192's win by 0.02 nats, may be noise. The three smallest models did best at 0.01 and the three largest at 0.003. For the three smallest, 0.01 was the highest rate tried, so a higher one may suit them better.
 
 To test the law we fit it on budgets of 1, 2 and 4 × 10¹³, 18 runs, and predict four runs at 8 × 10¹³ that it has not seen. The law passes if it misses them by no more than it misses its own runs.
 
@@ -26,7 +26,7 @@ To test the law we fit it on budgets of 1, 2 and 4 × 10¹³, 18 runs, and predi
 
 The law fitted to all 22 runs has a floor of 0.119, a of 1.3908, b of 0.806, alpha of 0.25 and beta of 0.55, with parameters counted in millions and tokens in tens of millions.
 
-Take 5,374,464 parameters: a width of 256, 6 blocks, 8 heads, 4 key heads and a context of 256. The full budget buys that model 8,921 steps of 8,192 tokens, which is 73,080,832 tokens.
+Take 5,374,464 parameters: a width of 256, 6 blocks, 8 heads, 4 key heads and a context of 256. A step reads 32 windows of 256 tokens, 8,192 in all, and costs three of lesson 17's forward passes over them. The budget divided by that cost is 8,921 steps, which is 73,080,832 tokens.
 
 | Term | Sum | Value |
 |---|---|---|
@@ -112,9 +112,9 @@ law from all 22 runs: floor 0.12, alpha 0.25, beta 0.55, misses its own runs by 
 14,555,904 parameters,  3,407 steps: predicted 1.289 nats
 ```
 
-The law missed the four unseen runs by 0.027 to 0.098 nats, less than the 0.195 it misses its own runs by, so it met the test. All four predictions were too low, so the law may lean low as the budget grows. The law and the runs both put the best of the four at 688,896 parameters, on one run each.
+The law missed the four unseen runs by 0.027 to 0.098 nats, less than the 0.195 it misses its own runs by, so it met the test. That bar is loose, because one odd run widens it. At 1 × 10¹³, 352,384 parameters scored 3.974 where 252,192 scored 3.066, and that run is the law's worst miss among its own. All four predictions were too low, so the law may lean low as the budget grows. The law and the runs both put the best of the four at 688,896 parameters, on one run each.
 
-At the full budget the predictions fall to 1.278 nats at 10 million parameters and rise after. From 5 to 15 million parameters they differ by 0.024 nats. We take the smallest size whose prediction is within 0.098 nats of the best, the law's largest miss on unseen runs, since a smaller model is cheaper to train and run: 5,374,464 parameters. At 0.132 above the best, 2,410,368 is out.
+The last five lines are widths 128, 192, 256, 320 and 384 at the full budget. Their predictions fall from 1.560 through 1.410 and 1.302 to 1.278 nats at 10 million parameters, and rise to 1.289 after. From 5 to 15 million parameters they differ by 0.024 nats. We take the smallest size whose prediction is within 0.098 nats of the best, the law's largest miss on unseen runs, since a smaller model is cheaper to train and run: 5,374,464 parameters. At 0.132 above the best, 2,410,368 is out.
 
 The full budget is 34 times the largest the law has seen, and the test above reached 2 times. The prediction of 1.302 may miss by more than 0.098.
 

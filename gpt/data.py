@@ -85,6 +85,7 @@ def near_repeats(docs, least=0.8):
         match = next((j for j in alike if overlap(mine, shingles(docs[j])) >= least), None)
         if match is None:
             for key in keys:
+                # shortcut: one candidate a band, the earliest; a pair can hide behind it
                 first.setdefault(key, i)
         else:
             drop[i] = match

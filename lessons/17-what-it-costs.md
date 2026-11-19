@@ -12,17 +12,17 @@ Training holds four numbers for each parameter: the weight, its slope, and AdamW
 
 Training also keeps results of the forward pass, because the backward pass reads them: lesson 2's autograd walks back through each step and needs what that step made. They grow with the batch, the context, the width and the number of blocks. For one batch of 32 windows of 64 tokens they come to 118.9 MB, 37 times the weights.
 
-One result grows faster than the rest. Attention makes a grid of scores with a row and a column for each token, so doubling the context makes that grid four times as large. The mask hides half of each grid, and that half is worked out all the same. With twice the context, all that the step keeps grows 2.28 times. At GPT-2's context of 1,024, one head's grid for one window is a million numbers. The grid does not have to exist all at once: we can work out the same result a few rows at a time.
+One result grows faster than the rest. Attention makes a grid of scores with a row and a column for each token, so doubling the context makes that grid four times as large. The mask hides half of each grid, and we work that half out all the same. With twice the context, all that the step keeps grows 2.28 times. At GPT-2's context of 1,024, one head's grid for one window is a million numbers. The grid does not have to exist all at once: in a forward pass we can work out the same result a few rows at a time.
 
 Next we count the arithmetic, as multiplies and adds of single numbers. The usual name for that count is flops, short for floating-point operations. A linear layer multiplies each input by a weight and adds the products, so each weight in a grid costs 2 operations for each token: one multiply and one add. The lookup of a token's row costs none, and the scores layer reuses the grid of token rows, so we count that grid once.
 
-Attention adds work of its own. Each token scores each key and then mixes each value: 4 × context × width for each block. In our model that is 131,072 a token against 1,588,480 for the weights, 8% on top.
+Attention adds work of its own. Each token scores each key, a dot product of width numbers at a multiply and an add each, and then mixes each value at the same cost: 2 × 2 × context × width = 4 × context × width for each block. In our model that is 131,072 a token against 1,588,480 for the weights, 8% on top. Over one batch of 2,048 tokens, (1,588,480 + 131,072) × 2,048 = 3.52 billion, the forward pass printed below.
 
 A training step runs forward and then backward. For a layer `Y = X @ W`, the pass back does two multiplies the size of the forward one: Y's slopes `@ W.T` give X's slopes, and `X.T @` Y's slopes give W's. So we count a step as three forward passes, about 6 multiplies and adds for each weight and each token.
 
 Divide the work by the machine's speed and you have the time. This Mac's graphics chip trains a model of 5 million parameters, the size lesson 19 will pick, at 326 billion multiplies and adds a second.
 
-Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A training step does 80 for each byte it holds: its training state and what it keeps. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when reading memory sets the pace on large models.
+Writing text reads far more than it multiplies. The model can keep a cache as it writes, which lesson 23 explains. With it, one new token reads each weight once and each cached key and value once: 0.5 multiplies and adds for each byte read. A weight costs 2 and takes 4 bytes, 2 / 4 = 0.5, and so does each cached number. A training step does 80 for each byte it holds, its training state and what it keeps. That is a different measure: each weight it reads serves all 2,048 of its tokens, where a new token uses it once. The higher the number, the more of the time goes on arithmetic and the less on waiting for memory. The notes by kipply, below, work out when reading memory sets the pace on large models.
 
 ## By hand
 
@@ -33,6 +33,8 @@ SwiGLU's first grid in our model takes 128 numbers in and gives 341 out.
 The cache. Each block keeps a key and a value for each token, each with 4 heads of 32 numbers, at 4 bytes a number. There are 4 blocks.
 
 2 × 4 × 4 × 32 × 4 = 4,096 bytes a token
+
+The factors are a key and a value, 4 blocks, 4 heads, 32 numbers and 4 bytes.
 
 With 2 key heads in place of 4 it is 2,048.
 
@@ -55,7 +57,7 @@ def cache_bytes(model, tokens):
     return 2 * len(model.blocks) * attn.k.out_features * 4 * tokens  # 4 bytes a number
 ```
 
-`attn.k.out_features` is the number of key heads times the width of one head. A third function, `kept_bytes`, adds up the memory of each tensor PyTorch saves for the backward pass, counting shared memory once.
+`model.parameters()` lists the grid of token rows once, though the scores layer shares it. `attn.k.out_features` is the number of key heads times the width of one head. A third function, `kept_bytes`, adds up the memory of each tensor PyTorch saves for the backward pass, counting shared memory once.
 
 ## The proof
 
@@ -94,7 +96,7 @@ that is 326 billion multiplies and adds a second
 three hours at that speed: 3.5e+15 multiplies and adds
 ```
 
-Timings are from an M4 laptop that was running other jobs, and they move from run to run. The 24 ms and 80 ms are the processor's: a step took 3.3 forward passes there and 4.5 on the graphics chip, not 3.
+Timings are from an M4 laptop that was running other jobs, and they move from run to run. The 24 ms and 80 ms are the processor's: a step took 3.3 forward passes there and 4.5 on the graphics chip, not 3. The rule counts only the matrix products. It leaves out the norms, the softmax and AdamW's step, whose arithmetic is small beside them but whose time we did not measure.
 
 ## What it still cannot do
 
@@ -124,7 +126,7 @@ It has twice the rows and twice the columns, so it is four times as large.
 
 <details><summary>From lesson 16: why does the cache halve with 2 key heads in place of 4?</summary>
 
-The cache holds keys and values, and grouped heads make half as many of each. The queries are not kept.
+The cache holds keys and values, and grouped heads make half as many of each. The cache does not keep the queries.
 </details>
 
 Go deeper:

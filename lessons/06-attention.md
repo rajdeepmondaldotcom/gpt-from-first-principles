@@ -10,7 +10,7 @@ We want each token to choose what to read.
 
 Each token is a row of numbers, its embedding. A row of numbers is called a vector, and the count of numbers in it is its width. To compare two vectors, multiply them entry by entry and add the products. This is the dot product. It is large when the two vectors have large numbers of the same sign in the same places.
 
-A first try: for one token, take its dot product with each token in the text, turn those scores into weights with softmax, and replace the token with the weighted average of the embeddings. This lets a token read from anywhere. It has no parameters beyond the embeddings, so it cannot learn what to look for.
+A first try: for one token, take its dot product with each token in the text, turn those scores into weights with softmax, and replace the token with the weighted average of the embeddings. This lets a token read from anywhere. One vector must then say both what a token looks for and what it offers, and a token scores itself at least as high as any token whose vector is no longer than its own.
 
 Give each token three vectors, made from its embedding by three linear layers:
 
@@ -18,11 +18,11 @@ Give each token three vectors, made from its embedding by three linear layers:
 - a key: what this token offers
 - a value: what this token hands over when chosen
 
-The score for token i reading token j is the dot product of i's query with j's key. Softmax turns token i's scores into weights that sum to 1. Token i's result is the weighted sum of the values. This is attention. The weights are called attention weights. They are worked out afresh for each text and are not parameters, unlike the weights inside a layer.
+The score for token i reading token j is the dot product of i's query with j's key. Softmax turns token i's scores into weights that sum to 1. Token i's result is the weighted sum of the values. This is attention. The weights are called attention weights. We work them out afresh for each text. Unlike the weights inside a layer, they are not parameters.
 
-The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens.
+The three linear layers are the same for each token, wherever it stands. The fixed slots are gone, and the same layers work on any number of tokens: a test runs one set of them on 3 tokens and on 30.
 
-Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. A dot product adds one product per entry, and the spread of a sum of n random terms, each of spread 1, grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, softmax then puts more than 0.8 of the weight on a single token, on average, so each token reads from one place. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
+Call the usual distance of a set of numbers from their average their spread. Statisticians call it the standard deviation. If the entries of a query and a key are independent random numbers around 0 with spread 1, each product has spread 1 too. A dot product adds one product per entry, and the spread of a sum of n random terms, each of spread 1, grows like the square root of n. A test measures it: with random vectors at a width of 256, the scores have a spread near 16. Among 100 tokens, the largest weight in a row then averages more than 0.8, so each token reads from one place. A softmax that puts nearly all its weight on one token also passes back almost no slope to its scores, so the queries and keys barely learn. So we divide the scores by the square root of the width. The spread drops to about 1 and the largest weight to under 0.1.
 
 ## By hand
 
@@ -45,7 +45,7 @@ The query for `sat` is (0, 2, 0, 2).
 
 The result is 0.017 × (1, 0) + 0.936 × (0, 1) + 0.047 × (1, 1) = (0.064, 0.983). `sat` took 94% of what it read from `cat`.
 
-Now all three tokens at once. Stack the queries as the rows of a grid Q, the keys as K and the values as V. `K.T` is K turned on its side, rows for columns. `Q @ K.T` then holds each query's dot product with each key, a grid of 3 × 3. Row i is what token i reads. The row for `sat` is the row we worked out, and a test finds it there.
+Now all three tokens at once. Stack the queries as the rows of a grid Q, the keys as K and the values as V. `K.T` is K turned on its side, rows for columns. `Q @ K.T` then holds each query's dot product with each key, a grid of 3 × 3. Row i is what token i reads. The row for `sat` is the row we worked out, and a test finds it there. For T tokens the grid is T × T, so doubling the text quadruples the scores to work out and store.
 
 ## The code
 
@@ -61,7 +61,7 @@ def attend(q, k, v, mask=None):
     return weights @ v, weights
 ```
 
-`k.transpose(-2, -1)` turns K on its side, as `.T` does, and also works when there are more than two directions. `q.size(-1)` is the width. `softmax` is ours from lesson 3. Leave `mask` for the next lesson.
+`k.transpose(-2, -1)` turns K on its side, as `.T` does, and also works when there are more than two directions. `q.size(-1)` is the width. `q` and `k` have shape (tokens, width), `v` (tokens, value width), and `scores` and `weights` (tokens, tokens). `softmax` is ours from lesson 3. Leave `mask` for the next lesson.
 
 ## The proof
 

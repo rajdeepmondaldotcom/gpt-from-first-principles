@@ -2,19 +2,19 @@
 
 By the end of this page the model has no table of places, and it runs on text four times longer than it trained on.
 
-Lesson 8's table has one row for each place, 64 of them, so a 65th token cannot be read. Each place also has a row of its own, so training on places 3 and 5 does not change the rows for places 43 and 45.
+Lesson 8's table has one row for each place, 64 of them, so the model cannot read a 65th token. Each place also has a row of its own, so training on places 3 and 5 does not change the rows for places 43 and 45.
 
 ## The idea
 
 Attention needs to know how far apart two tokens are. Lesson 8 put the place into the token's vector once, before any layer. Rotary positions put it where it is used: into each query and each key, at each attention layer.
 
-Pair up a query's entries: entry i with the entry half the vector's length further on. A pair of numbers is a point on a flat surface. Turn that point around the centre by an angle of place × speed, with the angle in radians: a full turn is 2π, about 6.283. Do the same to each key. We leave the values as they are. A turn moves a point and keeps its distance from the centre, so no vector changes length.
+Pair up a query's entries: entry i with the entry half the vector's length further on. A pair of numbers is a point on a flat surface. Turn that point around the centre by an angle of place × speed, with the angle in radians: a full turn is 2π, about 6.283. Do the same to each key. We leave the values as they are: place matters only where two tokens meet, in the score, and attention only averages the values. A turn moves a point and keeps its distance from the centre, so no vector changes length.
 
-A score is a dot product. For one pair of entries, the dot product of two points is their two lengths times the cosine of the angle between them, a fact of school geometry that the hand example below shows. Turn the query by m × speed and the key by n × speed, and the angle between them changes by (m - n) × speed. So the score depends only on m - n. Move both tokens 100 places on and the score is the same.
+A score is a dot product. For one pair of entries, the dot product of two points is their two lengths times the cosine of the angle between them, a fact of school geometry that the hand example below shows. Turn the query by m × speed and the key by n × speed, and the angle between them changes by (m - n) × speed. So the places enter the score only through m - n. Move both tokens 100 places on and the score is the same.
 
 One speed is not enough, because an angle comes back to where it started after a full turn. At 1 radian a place, a distance of 44 is seven full turns and 0.018 radians, which looks like a distance of 0. So each pair gets a speed of its own. The first turns 1 radian a place and the speeds fall, pair by pair, toward one ten-thousandth of that: each pair turns at the same fraction of the speed of the pair before it. Fast pairs change a score between neighbours. Slow pairs change it only across long distances.
 
-Nothing here has a size tied to the length of the text. The model can be handed more tokens than it trained on. The run below measures how well it reads them.
+Nothing here has a size tied to the length of the text. We can hand the model more tokens than it trained on. The run below measures how well it reads them.
 
 ## By hand
 
@@ -27,6 +27,8 @@ A query (1, 0) at place 2 turns by 2 radians to (cos 2, sin 2) = (-0.416, 0.909)
 Score: -0.416 × 0.540 + 0.909 × 0.841 = 0.540
 
 That is cos 1, the cosine of the distance. Put the same two vectors at places 102 and 101 and the score is cos 1 again.
+
+The speeds. With 2 pairs, half is 2, and the speeds are 10000⁰ = 1 and 10000^(-1/2) = 0.01.
 
 ## The code
 
@@ -53,7 +55,7 @@ Attention calls it on each query and key, and on nothing else:
         k = rope(self.k(x).view(B, T, self.kv_heads, -1).transpose(1, 2), pos)
 ```
 
-`gpt/model.py` holds this lesson's model: lesson 10's GPT with no table of places and with this attention, whose layers have no biases. It makes queries and keys with two separate layers, `self.q` and `self.k`, and `-1` in `view` means "work this size out". `seen` counts tokens read on an earlier call and is 0 here. `kv_heads` is lesson 16's, and here it equals `heads`. The model takes its normalization and its MLP as arguments, and here we pass lesson 9's.
+`gpt/model.py` holds this lesson's model: lesson 10's GPT with no table of places and with this attention, whose layers have no biases. It makes queries and keys with two separate layers, `self.q` and `self.k`, and `-1` in `view` means "work this size out". After `transpose(1, 2)` the queries have the shape (batch, heads, tokens, head width), and `rope` turns pairs in the last direction. `seen` counts tokens read on an earlier call and is 0 here. `kv_heads` is lesson 16's, and here it equals `heads`. The model takes its normalization and its MLP as arguments, and here we pass lesson 9's.
 
 ## The proof
 
@@ -104,7 +106,7 @@ My good my wife knee; most kill my our own.
 And off your worshood of him at
 ```
 
-The model runs on 256 tokens, and it reads them worse: 1.532 nats at 64 tokens, 1.869 at 128 and 2.393 at 256. It trained on distances up to 63 and never met a longer one.
+The model runs on 256 tokens, and it reads them worse: 1.532 nats at 64 tokens, 1.869 at 128 and 2.393 at 256. It trained on distances up to 63 and never met a longer one. Long-context models change the speeds, by dividing each place by a factor or by raising `base`, so that long distances turn by angles the model met in training. [MAP.md](../MAP.md) has where to read.
 
 The rest of the model is still 2019's: layer normalization, a GELU MLP, and a key and value head for each query head.
 

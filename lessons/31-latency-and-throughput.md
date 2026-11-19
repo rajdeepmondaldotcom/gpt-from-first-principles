@@ -16,9 +16,9 @@ Listeners do not arrive evenly. The script draws each gap between two arrivals b
 
 The code that takes requests in and writes their tokens is the engine. It turns away a request too big for the machine's memory. It takes one request at a time until we widen it in lesson 32. The script times lesson 21's story model, which has the storyteller's shape.
 
-Long waits come from the line. Say the machine can finish 3 requests a second. At half that rate, a request seldom finds another ahead of it. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows as long as listeners keep coming.
+Long waits come from the line. Say the machine can finish 3 requests a second. At half that rate, the machine is busy half the time, so about half the requests find it busy and wait. Near that rate, a bunch of arrivals builds a line that takes a long time to drain. Above that rate, the line grows as long as listeners keep coming.
 
-A ceiling on writing speed: each new token reads each weight once (lesson 17), and the story model's weights are 21.5 MB. The script times a copy of 268 MB, which reads each byte and writes it: 537 MB through memory. Those bytes a second divided by 21.5 MB is the most tokens a second memory alone allows.
+A ceiling on writing speed: each new token reads each weight once (lesson 17), and the story model's weights are 21.5 MB. The script times a copy of 268 MB, which reads each byte and writes it: 537 MB through memory. Those bytes a second divided by 21.5 MB is the most tokens a second memory allows one listener: a pass reads the weights once, however many rows it carries.
 
 ## By hand
 
@@ -71,7 +71,7 @@ def report(records):
     }
 ```
 
-A record holds the moment a request arrived and the moment each of its tokens was written. `serve` makes the records: it feeds the engine each request at its arrival time, holds back the ones there is no room for yet, and notes the clock after each step.
+A record holds the moment a request arrived and the moment each of its tokens was written. `gaps` holds each request's average time from one token to the next. `span` runs from the first arrival to the last token written. `serve` makes the records: it feeds the engine each request at its arrival time, holds back the ones there is no room for yet, and notes the clock after each step.
 
 ## The proof
 
@@ -107,7 +107,15 @@ Timings are from an M4 laptop, and they move from run to run.
 
 Alone, a 192-token prompt has a time to first token of 8 ms, read at 24,647 tokens a second: all 192 tokens pass through each weight in one read. Writing reads every weight for each token: 539 tokens a second. Memory alone would allow 4,231, almost eight times that. Lesson 37 looks for what holds it there.
 
-The three rates are half, nine tenths and one and a half times the 10.1 above. After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates: the line delays the first token, to 1,737 ms for half the listeners at 15.1 requests a second, and the writing keeps its pace. Each rate's 120 arrival times are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
+The three rates are half, nine tenths and one and a half times the 10.1 above.
+
+| Share of 10.1 | Requests a second | First token, half | First token, 95 in 100 |
+|---|---|---|---|
+| 0.5 | 5.0 | 3 ms | 157 ms |
+| 0.9 | 9.1 | 250 ms | 724 ms |
+| 1.5 | 15.1 | 1,737 ms | 2,826 ms |
+
+After these prompts of 64 tokens the middle gap between tokens is 1.5 ms at all three rates (the results file's `seconds_a_token_p50`): the line delays the first token, and the writing keeps its pace. Each rate's 120 arrival times are one draw, and it came slow: 275 tokens a second is 4.3 requests of 64 tokens, not 5.
 
 ## What it still cannot do
 
@@ -124,7 +132,7 @@ Predict before you run: a machine finishes 3 requests a second and 4.5 arrive ea
 
 <details><summary>A request has a prompt three times as long as another's. Which of its two waits grows more?</summary>
 
-The wait for the first token. The gap grows less: 1.9 ms after a prompt of 192 tokens, 1.5 ms after 64, as each token reads a longer cache.
+The wait for the first token. The gap grows less: 1.9 ms after a prompt of 192 tokens, 1.5 ms after 64. Each token's attention reads a longer cache, and the two numbers come from different runs.
 </details>
 
 <details><summary>From lesson 23: without the cache, what would happen to the gap between tokens as the answer grows?</summary>

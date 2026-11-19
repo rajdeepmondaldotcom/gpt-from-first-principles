@@ -6,7 +6,7 @@ The model plays chess from a list of moves. We never showed it a board. A legal 
 
 ## The idea
 
-After the model reads a move's last token, each block leaves a row of 256 numbers there: lesson 9's stream. The next move is worked out from those numbers, and they carry no labels. We look for the position in them.
+After the model reads a move's last token, each block leaves a row of 256 numbers there: lesson 9's stream. The model works out the next move from those numbers, and they carry no labels. We look for the position in them.
 
 A probe is the plainest reader we can build: one linear layer, 256 numbers in, and 13 scores out for each of the 64 squares, one for empty and one for each kind of piece of each colour. We train it on each fourth position of a game, each with white to move, and a chess program gives the right answer by replaying the moves. We freeze the model and only read it.
 
@@ -18,11 +18,11 @@ We check three things.
 2. Compare with a lazy guess: each square's most usual piece. Score the probe apart on the squares where that guess is wrong.
 3. Shuffle the answers. Fit the same probe to the same streams, with each board handed to another position's stream. It can still learn what is usual, and nothing about this game.
 
-The board could be in the stream and play no part in the move. So we change it, after whichever of the first five blocks reads best on other games: a block still has to run after the edit.
+The board could be in the stream and play no part in the move. So we change the stream, after whichever of blocks 1 to 5 reads best on 300 games kept apart from the fit. We leave out block 6 because a block must run after the edit.
 
 Take a position where white has a pawn and one queen that can move. Along the line that tells queen from empty on that square, nudge the stream until the probe scores empty above queen by a set margin, and let the model run on. A model that works from this board should give queen moves less chance. A nudge of the same length along a pawn's line should not.
 
-Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, show what the model would say if it stopped after an earlier block. We count how often the top token there is already the whole model's, and the chance it gives that token.
+Last, we watch the move form. Lesson 10's last two steps, a normalization and the scores layer, read an earlier block's stream as if it were the last. This is the logit lens. We did not train early blocks to be read this way, so a low count there can understate what their stream holds. We count how often the top token there is already the whole model's, and the chance it gives that token.
 
 ## By hand
 
@@ -54,7 +54,7 @@ def fit(x, y, generator, steps=1000, rate=1e-2):
     return probe
 ```
 
-An ordinary training loop on one layer, 256 positions to a step. `view(-1, PIECES)` lays the scores out as a row of 13 for each square, so that lesson 3's loss can mark each square.
+An ordinary training loop on one layer, 256 positions to a step. The layer's weights are a grid of 64 × 13 = 832 rows by 256, and `decay=0.0` turns off lesson 11's weight decay. `view(-1, PIECES)` lays the scores out as a row of 13 for each square, so that lesson 3's loss can mark each square.
 
 ```python
 # gpt/probe.py
@@ -120,17 +120,23 @@ after block 6: the final choice is on top in 100% of positions, with a chance of
 a probe after block 5 on positions with either side to move: 74.9% right, 74.3% to 75.3%
 ```
 
-Guessing each square's usual piece is right for 67.3% of squares. Fitted to shuffled boards, the probe after block 5 reads 63.2%. Fitted to the true boards it reads 80.7%, and 60.9% on squares that are not as usual. The usual piece scores 0 there.
+| Reader | All squares | Squares not as usual |
+|---|---|---|
+| each square's usual piece | 67.3% | 0% |
+| the probe after block 5, fitted to shuffled boards | 63.2% | not counted |
+| the probe after block 5 | 80.7% | 60.9% |
 
 Untouched, the model gives queen moves a chance of 20.3%. Margins of 3, 10 and 30 take nudges of 0.07, 0.12 and 0.28 of the stream's length on average, and bring that to 20.1%, 19.9% and 18.5%, each interval clear of zero. Pawn nudges of the same lengths leave 20.3%, 20.3% and 20.5%, the last 0.1 to 0.3 points up. So the model's next move depends in part on the probe's line: the longest nudge costs queen moves 1.5 to 2.0 of their 20.3 points.
 
+The probe's line is one direction we read along. The model may keep the board along nearby directions too, so a small effect from the edit does not show that the board matters little.
+
 The move forms late: the final choice is on top in 27% of positions after block 4 and 43% after block 5.
 
-A last probe is fitted and tested on each third position, with either side to move. After block 5 it reads 74.9%, against 80.7% with white to move.
+We fit and test a last probe on each third position, with either side to move. After block 5 it reads 74.9%, against 80.7% with white to move.
 
 ## What it still cannot do
 
-Every run so far used one laptop: a storyteller of 5,374,464 parameters and a chess player of 4,488,448, from one file of model code. We have not run that code on hardware built for it.
+Every run so far used one laptop: a storyteller of 5,374,464 parameters and a chess player of 4,488,448, from one file of model code. The storyteller ends at 1.565 nats, and the chess player takes 0.16 of the points from the grabber. We have not run that code on hardware built for it.
 
 ## Check yourself
 

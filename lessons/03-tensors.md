@@ -29,7 +29,7 @@ The slopes in a row sum to zero. The loss is an average over N pairs, so each sl
 
 Big scores overflow. A computer stores a number in a fixed count of bits, and e to the power 1,000 does not fit. PyTorch writes `inf`, and `inf / inf` gives `nan`, which means "not a number". Softmax depends only on the gaps between scores: add 5 to each score in a row and the chances stay put. So we subtract the row's largest score first. The largest becomes 0, e to the 0 is 1, and nothing overflows.
 
-A step on 2,000 pairs picked at random does 500 times less arithmetic than a step on all 1,003,853, and its slopes come from the same text, with some noise. The random handful is called a batch, and learning from batches is called stochastic gradient descent.
+A step on 2,000 pairs picked at random does 500 times less arithmetic than a step on all 1,003,853, and its slopes come from the same text, with some noise. We draw the pairs independently, so averaged over all possible batches a batch's slope is the full slope, and its spread around it falls as 1 over the square root of the batch size. The random handful is called a batch, and learning from batches is called stochastic gradient descent.
 
 ## By hand
 
@@ -87,7 +87,7 @@ One step of learning:
         W -= rate * torch.zeros_like(W).index_add_(0, x, slopes)
 ```
 
-`ids` is the text as a tensor and `at` holds the positions of this batch's pairs. `index_add_(0, x, slopes)` adds row i of `slopes` into row `x[i]` of a grid of zeros.
+`ids` is the text as a tensor and `at` holds the positions of this batch's pairs. `index_add_(0, x, slopes)` adds row i of `slopes` into row `x[i]` of a grid of zeros. The 0 means it adds whole rows, and the underscore means it changes the grid of zeros in place. With 2,000 pairs, `W[x]` and `slopes` have shape 2,000 × 65.
 
 ## The proof
 
@@ -124,7 +124,7 @@ Timings are from an M4 laptop and move from run to run.
 | Bigram, counted | 3.581 |
 | Bigram, learned | 3.599 |
 
-Trained for 2,000 steps, about 1 second, the learned bigram scores 3.599 bits per byte on unseen text, 0.018 behind the counted table, which adds 1 to each count.
+Trained for 2,000 steps, about 1 second, the learned bigram scores 3.599 bits per byte on unseen text, 0.018 behind the counted table.
 
 ## What it still cannot do
 
@@ -140,7 +140,7 @@ The loop needs only slopes. Any function built from operations with known slopes
 
 <details><summary>Prediction</summary>
 
-No. 0.10 s against 0.3 ms is over 300 times, not 500.
+No. 0.10 s against 0.3 ms is over 300 times, not 500. Part of each step does not grow with the batch: `torch.zeros_like(W)` and the update touch all 4,225 numbers of `W` every time.
 </details>
 
 <details><summary>`W[x]` for the training text holds 1,003,853 × 65 numbers at 4 bytes each. How much memory is that?</summary>

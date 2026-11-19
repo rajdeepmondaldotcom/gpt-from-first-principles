@@ -21,7 +21,7 @@ Say the draft drew a token to which it gave the chance q, and the big model give
 
 A token is written in one of two ways: drafted and kept, or drawn from the leftover after a guess was thrown out. The two add up to p for each token, by hand below and in a test.
 
-The draft changes only how many passes the writing takes: five tokens a pass at best, one at worst.
+The draft leaves each token's chance as the big model gives it and changes how many passes of the big model the writing takes: five tokens a pass at best, one at worst.
 
 We train two drafts of one size: one learns from the stories, the other learns to copy the big model.
 
@@ -37,7 +37,7 @@ Three tokens. The draft gives them chances q of 0.2, 0.6 and 0.2. The big model 
 | Second | 0.6 | 0.3 | 0.5 | 0.3 | 0 |
 | Third | 0.2 | 0.2 | 1 | 0.2 | 0 |
 
-A guess is kept 0.7 of the time and thrown out 0.3. The leftover is all on the first token, so each redraw gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2: the big model's chances.
+A guess is kept 0.7 of the time, the sum over tokens of the smaller of p and q: 0.2 + 0.3 + 0.2. It is thrown out 0.3. The closer the draft's chances are to the big model's, the more guesses it keeps. The leftover is all on the first token, so each redraw gives the first. The first token is then written 0.2 + 0.3 = 0.5 of the time, the second 0.3 and the third 0.2: the big model's chances.
 
 Tokens for each pass. A round always writes one token, a second if the first guess was kept, a third if two were. If each guess is kept with a chance of a, that is 1 + a + a² + a³ + a⁴ tokens on average: 3.36 at a = 0.8.
 
@@ -111,7 +111,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 The draft that copied the big model has the lower loss and keeps 63% of its checked guesses, against 61%. At a = 0.63 the hand sum gives 2.43 tokens a pass, and the run gave 2.38.
 
-Neither beats no draft, timed on 20 prompts of 64 tokens with 128 tokens drawn by chance after each: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings this draft, with half the big model's blocks, costs more. Lesson 37 times a smaller model's pass.
+We timed 20 prompts of 64 tokens with 128 tokens drawn by chance after each, and neither draft beats no draft: 475 and 480 tokens a second, against 490 alone. A round is one big pass and four draft passes for 2.38 tokens, which alone take 2.38 big passes, so a draft pass must cost under (2.38 - 1) / 4 = 0.35 of a big one. That sum counts the checking pass, which reads five tokens, as one ordinary pass. If it costs more, the bar is lower. By these timings a round took 2.38 × 490 / 480 = 2.43 big passes, so each draft pass took about (2.43 - 1) / 4 = 0.36 of a big one. This draft has half the big model's blocks, each narrower. Lesson 37 times a smaller model's pass.
 
 ## What it still cannot do
 

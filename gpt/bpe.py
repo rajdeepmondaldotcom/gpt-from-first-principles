@@ -103,7 +103,7 @@ if __name__ == "__main__":
     for size in (512, 1024):
         tokenizer = Tokenizer(train(learn, size))
         ids, val_ids = (torch.tensor(tokenizer.encode(part)) for part in (learn, held))
-        per_token = len(held) / len(val_ids)
+        per_token = len(held) / len(val_ids)  # characters; equal to bytes because the text is ASCII
         torch.manual_seed(0)
         model = MLP(size + 1)  # lesson 4's model, reading eight tokens in place of eight characters
         train_mlp(model, ids, steps=30000, rate=0.1, generator=torch.Generator().manual_seed(0))

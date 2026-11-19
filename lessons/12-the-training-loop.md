@@ -2,7 +2,7 @@
 
 By the end of this page you have a run you can leave. Its rate changes as it goes and it reports on unseen text. After a stop it carries on bit for bit.
 
-Lesson 11 ran 3,000 steps at one fixed rate. Nothing looked at unseen text along the way, and a run cut off at step 2,999 would have started again from step 0.
+Lesson 11 ran 3,000 steps at one fixed rate. The run never measured unseen text along the way, and a run cut off at step 2,999 would have started again from step 0.
 
 ## The idea
 
@@ -10,18 +10,20 @@ The rate changes as the run goes. Adam's first step moves each parameter by the 
 
 A batch can produce a gradient far longer than usual, so we put a limit on it. Adam's average of squares moves a thousandth of the way each step (lesson 11), so it would keep a trace of a long one for about a thousand steps, and divide each step in that time by a larger size. Before each step we measure the length of the whole gradient: square each slope, add them all, take the square root. If the length is above the limit, we scale the gradient down to the limit and keep its direction. This is called clipping.
 
-Slopes add, as lesson 2 showed, so small batches can stand in for a big one. Run four small batches, let their slopes add up, then take one step. The step is the same as for one batch four times the size, which might not fit in memory.
+Slopes add, as lesson 2 showed, so small batches can stand in for a big one. Run four small batches, divide each loss by four, let their slopes add up, then take one step. The step is the same as for one batch four times the size, which might not fit in memory.
 
-Every 500 steps the loop measures the loss on unseen text.
+Every 500 steps the script that runs the loop measures the loss on unseen text.
 
 A checkpoint lets the run stop and start. It is a file that holds what shapes the rest of this run:
 
 - the model's parameters
-- the optimizer's two averages for each parameter, and its count of steps
+- the optimizer's two averages for each parameter, and its count of steps, which sets Adam's two corrections
 - the step number, because the schedule depends on it
 - the state of the random number generator. A generator makes its numbers by a fixed rule from a state it keeps, so the state sets the batches to come
 
-The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with each number held in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time. Here the switch stays off. Its format, `bfloat16`, keeps the range of a 32-bit number and gives up digits, so tiny slopes do not round to 0 as they can in other 16-bit formats.
+The checkpoint leaves out PyTorch's own generator, which dropout (lesson 13) draws from, so a run with dropout would not resume bit for bit.
+
+The loop has a switch for 16-bit numbers. PyTorch can run the pass from tokens to loss, called the forward pass, with its big multiplications done in 16 bits in place of 32, while the weights and the optimizer stay in 32. On a graphics chip, or GPU, this saves memory and time. Here the switch stays off. Its format, `bfloat16`, keeps the range of a 32-bit number and gives up digits, so tiny slopes do not round to 0 as they can in other 16-bit formats.
 
 The run below uses a limit of 1 and batches of 32 windows.
 
@@ -36,7 +38,7 @@ A schedule with a peak of 1, a warmup of 10 steps and 100 steps in all.
 | 55 | 0.55 | halfway through the fall, halfway between 1.0 and 0.1 |
 | 99 | 0.1003 | a little above the floor of 0.1 |
 
-Clipping: two parameters have slopes 3 and 4. The gradient's length is the square root of 9 + 16, which is 5. With a limit of 1, each slope is multiplied by 1/5, giving 0.6 and 0.8.
+Clipping: two parameters have slopes 3 and 4. The gradient's length is the square root of 9 + 16, which is 5. With a limit of 1, we multiply each slope by 1/5, giving 0.6 and 0.8.
 
 ## The code
 
@@ -66,7 +68,7 @@ def rate_at(step, peak, warmup, steps, floor=0.1):
         yield step + 1, total
 ```
 
-`yield` hands the step number and the loss back to whoever called `train`, then carries on when asked for the next one. We divide each small loss by `parts` because a loss is an average, and the average over the big batch is the average of the small averages. `torch.autocast` is the 16-bit switch, off unless `half` is set.
+`yield` hands the step number and the loss back to whoever called `train`, then carries on when asked for the next one. We divide each small loss by `parts` because a loss is an average, and the average over the big batch is the average of the small averages. `torch.autocast` is the 16-bit switch, off unless `half` is set. `*` hands `batch`'s two results to `loss_on` as x and y. `.item()` turns a one-number tensor into a Python number.
 
 ```python
 # gpt/train.py
@@ -159,7 +161,7 @@ It draws other batches than the unbroken run, so the two no longer match.
 
 <details><summary>From lesson 2: what happens if the loop never sets the slopes back to 0?</summary>
 
-Each new slope is added to the old ones, and a step follows their sum.
+Each new slope adds to the old ones, and a step follows their sum.
 </details>
 
 Go deeper:

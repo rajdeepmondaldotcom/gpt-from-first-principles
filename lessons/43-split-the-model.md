@@ -8,15 +8,17 @@ We served a model of 7.6 billion parameters from one card. We could not train it
 
 In training a worker holds four numbers for each parameter: the weight, its slope, and AdamW's two averages. With whole copies, each worker holds all four for the whole model.
 
-The averages can be shared out, because AdamW steps each parameter from its own slope and its own two averages (lesson 11). So one worker can keep the averages for a share of the model's tensors and step only those. It needs the summed slopes for its share, and the others need the weights it stepped: together, the same bytes as one `all_reduce` of the slopes. Rajbhandari and others call this the first stage of ZeRO. They go on to share out the slopes and the weights too, and PyTorch ships the idea as FSDP.
+We can share the averages out, because AdamW steps each parameter from its own slope and its own two averages (lesson 11). So one worker can keep the averages for a share of the model's tensors and step only those. It needs the summed slopes for its share, and the others need the weights it stepped: together, the same bytes as one `all_reduce` of the slopes. Rajbhandari and others call this the first stage of ZeRO. They go on to share out the slopes and the weights too, and PyTorch ships the idea as FSDP. Sharing out the weights means gathering each block's weights before its use, forwards and again backwards: more bytes than one `all_reduce` of the slopes.
 
 A layer can be shared out as well. Lesson 16's MLP widens a vector to hidden units and narrows it again. Each hidden unit reads the whole input through its own row of the two grids that widen (PyTorch stores a row for each output). It then adds its own column of the grid that narrows, times its value, into the result. No unit reads another, so deal the units out. A worker holds its units' rows and columns, takes the whole input, and works out its part of the result. The parts add up to the result. Between cards that sum is an exchange, lesson 41's `all_reduce`, once for the MLP.
 
-Backwards, the result was a sum, and lesson 2 showed that an addition passes a slope back unchanged. So each worker is handed the same slope, and from it finds the slopes of its own weights with no help. Each also finds a slope for the input, and the input's slope is their sum, by lesson 2's rule for several paths: a second exchange. Shoeybi and others split each MLP of a transformer this way, and its attention by heads.
+Backwards, the result was a sum, and lesson 2 showed that an addition passes a slope back unchanged. So each worker gets the same slope, and from it finds the slopes of its own weights with no help. Each also finds a slope for the input, and the input's slope is their sum, by lesson 2's rule for several paths: a second exchange. Shoeybi and others split each MLP of a transformer this way, and its attention by heads.
 
 Whole copies add up slopes, once a step. A split MLP adds up a vector for each token, forwards and back, in each block. The timing differs: PyTorch's own version (lesson 20) sends slopes while the pass back still runs, but no block can start until its MLP's sum arrives.
 
 ## By hand
+
+The split, small. Two hidden units with values h1 and h2, and their columns c1 and c2 of the narrowing grid, give the result h1·c1 + h2·c2. Worker 1 holds unit 1 and sends h1·c1, worker 2 sends h2·c2, and one sum gives the result.
 
 Lesson 41's story model has 14,555,904 parameters, a width of 384, 8 blocks and MLPs of 1,024 hidden units (8 × 384 / 3, lesson 16). A step reads 32 windows of 256 tokens: 8,192 tokens.
 
@@ -25,7 +27,9 @@ Lesson 41's story model has 14,555,904 parameters, a width of 384, 8 blocks and 
 | Their slopes | 14,555,904 × 4 | 58.2 MB |
 | Their parts of 8 split MLPs, and the slopes back | 2 × 8,192 × 384 × 4 × 8 | 201.3 MB |
 
-For this model the split adds up over three times as much. Now take a made-up model of 70 billion parameters, 8,192 wide and 80 blocks deep, in 16-bit numbers. Its slopes are 140 GB. With the same 8,192 tokens a step, its split MLPs add up 2 × 8,192 × 8,192 × 2 × 80 bytes, 21.5 GB. Slopes grow with the parameters, and a split layer's sums with the tokens and the width.
+The second row is forwards and back, for each token, each of 384 numbers at 4 bytes, in 8 blocks.
+
+For this model the split adds up over three times as much. Now take a made-up model of 70 billion parameters, 8,192 wide and 80 blocks deep, in 16-bit numbers. Its slopes are 140 GB. With the same 8,192 tokens a step, its split MLPs add up 2 × 8,192 × 8,192 × 2 × 80 bytes, 21.5 GB. Slopes grow with the parameters, and a split layer's sums with the tokens and the width. Each block waits on its sum, so Shoeybi and others split a layer only among the cards of one server.
 
 ## The code
 
@@ -52,7 +56,7 @@ def dealt(params, workers, **how):
     return [AdamW(params[i::workers], **how) for i in range(workers)]
 ```
 
-`shares` cuts a count into runs of nearly equal length. `params[i::workers]` is every `workers`-th tensor from tensor `i` on, and `**how` passes the rate on to lesson 11's `AdamW`.
+`narrow.in_features` is the count of hidden units, 1,024. `shares` cuts a count into runs of nearly equal length. `params[i::workers]` is every `workers`-th tensor from tensor `i` on, and `**how` passes the rate on to lesson 11's `AdamW`.
 
 ## The proof
 
@@ -86,7 +90,7 @@ With the averages shared out, the fullest worker holds 155.0 MB where a whole co
 
 ## What it still cannot do
 
-These workers are four entries of a list in one process. Nothing crossed a wire or was timed: the page proves the sums that lesson 41's `all_reduce` would carry between cards. Our steps did not clip. Lesson 12's clipping needs the whole slope's length, so each worker would first send its sum of squares. We split one MLP and not the attention beside it, and never put different blocks on different cards. [MAP.md](../MAP.md) says where to read on.
+These workers are four entries of a list in one process. We sent nothing over a wire and timed nothing: the page proves the sums that lesson 41's `all_reduce` would carry between cards. Our steps did not clip. Lesson 12's clipping needs the whole slope's length, so each worker would first send its sum of squares. We split one MLP and not the attention beside it, and never put different blocks on different cards. [MAP.md](../MAP.md) says where to read on.
 
 Lesson 41's chess model is rated +775 on a scale of our own, where a random mover is 0. We do not know what that is worth on a scale others use, or how strong this code can get.
 
@@ -99,12 +103,12 @@ The optimizer: it does the same sums in the same order, and its weights are equa
 
 <details><summary>From lesson 17: the 7.6 billion parameter model trains on four cards with the averages shared evenly. Does each card's share fit in 48 GB?</summary>
 
-No. Each holds every weight and slope, 8 × 7.6 = 60.8 GB, and a quarter of the averages, 15.2 GB: 76 GB. Split every grid four ways as well and each card holds 121.6 / 4 = 30.4 GB.
+No. Each holds every weight and slope, 8 × 7.6 = 60.8 GB, and a quarter of the averages, 15.2 GB: 76 GB. Split every grid four ways as well and each card holds 121.6 / 4 = 30.4 GB, before what the step keeps for the backward pass.
 </details>
 
 <details><summary>The MLP has three grids, all split. Why is one sum of the parts enough going forwards?</summary>
 
-A worker's hidden units are used only by that worker's own columns of the narrowing grid. Nothing has to cross until the parts are added into the result.
+Only a worker's own columns of the narrowing grid use its hidden units. Nothing has to cross until the parts are added into the result.
 </details>
 
 Go deeper:

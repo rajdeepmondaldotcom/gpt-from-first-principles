@@ -6,22 +6,18 @@ You start with a loop that counts characters. Forty-five lessons later you have 
 
 | You build | Measured |
 |---|---|
-| A GPT, from its tokenizer up | It runs OpenAI's GPT-2 weights and, on a test prompt, gives the scores Hugging Face's code gives, to 0.0001 (lesson 10) |
+| A GPT, from its tokenizer up | It runs OpenAI's GPT-2 weights. On a test prompt it picks the token Hugging Face's code picks at each place, and the 31 scores we compare agree to within 0.0001 (lesson 10) |
 | A story model, trained on a laptop | 0.575 bits per byte on unseen stories (lesson 21). On a rented card, 88 minutes and $2.74 bring that to 0.467 (lesson 41) |
-| A storyteller that takes an order | Given a name and three words, it gets all four into 35 of 200 stories, where the story model got 0 (lessons 25 to 29) |
-| A server for it | 21.3 requests and 2,131 tokens a second from the laptop (lesson 36). On the card, vLLM keeps up with 128 requests a second, at $0.065 for a million tokens (lesson 42) |
-| A chess player, from the same model code | An Elo rating of 1,785 against Stockfish, after 12 hours of a card on 19 million games between strong players (lessons 44 and 45) |
-| A comparison with an open model about 520 times the size | On 200 of our unseen stories ours scores 0.426 bits per byte, and Qwen2.5-7B-Instruct scores 0.514 (lesson 42) |
+| A storyteller that takes an order | Given a name and three words, by lesson 29 it gets all four into 35 of 200 stories, with a 95% interval of 0.13 to 0.23, where the story model got 0. A model trained on each story's score alone reaches 56, and leaves 59 of its stories without an end (lessons 25 to 29) |
+| A server for it | With 16 requests inside at a time, 21.3 requests and 2,131 tokens a second from the laptop (lesson 36). On the card, vLLM keeps up with 128 requests a second: it answers them as fast as they arrive, and at 256 they wait. A million tokens written cost $0.065 there (lesson 42) |
+| A chess player, from the same model code | An Elo rating of 1,785 on Stockfish's scale, which is fitted to a list of rated chess programs and is not Lichess's, after 12 hours of a card on 19 million games between strong players (lessons 44 and 45) |
+| A comparison with an open model about 520 times the size | On 200 unseen children's stories, the one kind of text ours was trained on, ours scores 0.426 bits per byte and Qwen2.5-7B-Instruct, a general chat model, 0.514 (lesson 42). The number measures fit to this one kind of text and says nothing of what else each model can do |
 
-Each number is printed by a script in this repository and saved in `results/`, and a test checks each block of output on each page against that file. Where something did not work, the page says so: [the list is below](#what-did-not-pay-off).
+A script in this repository prints each number and saves it in `results/`, and a test checks each block of output on each page against that file. Each page says where something did not work: [the list is below](#what-did-not-pay-off). A short way to judge the work: read [`tests/test_lessons.py`](tests/test_lessons.py), then lessons [14](lessons/14-running-an-experiment.md), [35](lessons/35-speculative-decoding.md), [41](lessons/41-train-on-a-gpu.md) and [42](lessons/42-serve-on-a-gpu.md).
 
-Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41, 42, 44 and 45 also need an AWS account and about $60. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
+Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41, 42, 44 and 45 also need an AWS account and about $60, near what they cost us. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script.
 
-*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas behind training and inference work, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
-
-The numbers of lessons 1 to 40 and 43 come from an M4 MacBook, and those of lessons 41, 42, 44 and 45 from rented NVIDIA cards, which cost us $55.27 in all: $18.31 for lessons 41 and 42, and $36.96 for lessons 44 and 45. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac.
-
-One prompt, `Once upon a time`, answered by the model at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. Line breaks are shown as spaces.
+The model answers one prompt, `Once upon a time`, at seven stages. Lessons 1 to 16 learn from Shakespeare, and lessons 21 and 41 from children's stories. We show line breaks as spaces.
 
 ```
 lesson 1    Once upon a timeron: Foleithathavout: Whe irtthogor s.
@@ -47,6 +43,10 @@ Lesson 38 trains lesson 21's code, unchanged, on records of chess games. Left to
 e4 e5 Nf3 Nc6 Bc4 Nf6 d3 h6 O-O Bc5 a3 a6 b4 Ba7 c3 d6 d4 exd4 cxd4 Bg4 Be3 O-O Qc2 Rfe8 h3 Bh5
 ```
 
+*A note from Rajdeep.* I built this course to teach myself how a GPT is built, trained and served, and I am sharing it in case it helps you. The results on each page come from my own runs, and where something I tried did not help, the page says so. The course gives you the ideas behind training and inference work, each one built and measured. It does not give you a training run across many machines, a kernel you wrote for a graphics card, or a service kept up for real users. [MAP.md](MAP.md) and [PRACTICE.md](PRACTICE.md) say where to get those.
+
+The numbers of lessons 1 to 40 and 43 come from an M4 MacBook, and those of lessons 41, 42, 44 and 45 from rented NVIDIA cards, which cost us $55.27 in all: $18.31 for lessons 41 and 42, and $36.96 for lessons 44 and 45. The code and its tests also run on Linux, on the processor, except lesson 37's check against Apple's engine, which needs a Mac.
+
 Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one request through the finished storyteller.
 
 ## The lessons
@@ -63,14 +63,14 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 7 | [Causal multi-head self-attention](lessons/07-causal-multi-head-self-attention.md) | A layer that reads the text in several ways at once, and trains on each place without seeing the answers |
 | 8 | [Position](lessons/08-position.md) | A model that knows where each token stands |
 | 9 | [The block](lessons/09-the-block.md) | A unit that still passes gradients back when stacked 24 deep |
-| 10 | [The GPT](lessons/10-the-gpt.md) | One model that runs OpenAI's GPT-2 weights and, on a test prompt, gives the scores Hugging Face's code gives |
+| 10 | [The GPT](lessons/10-the-gpt.md) | One model that runs OpenAI's GPT-2 weights and, on a test prompt, picks the tokens Hugging Face's code picks |
 | 11 | [Optimizers](lessons/11-optimizers.md) | The same GPT ahead of each earlier model, with only the rule for the step changed |
 | 12 | [The training loop](lessons/12-the-training-loop.md) | A run you can stop and resume, bit for bit |
 | 13 | [Is it working?](lessons/13-is-it-working.md) | Six checks that catch a silent bug, and a measured cure for a model that stores its text |
 | 14 | [Running an experiment](lessons/14-running-an-experiment.md) | A rule that separates a real gain from a lucky seed, and its false-alarm rate |
 | 15 | [Rotary positions](lessons/15-rotary-positions.md) | A model with no table of places, which runs on text four times longer than it trained on, and reads it worse: 3.452 bits per byte at 256 tokens against 2.210 at 64 |
 | 16 | [Today's parts](lessons/16-todays-parts.md) | Llama's parts, giving a tiny reference Llama's scores |
-| 17 | [What it costs](lessons/17-what-it-costs.md) | A model's memory and arithmetic counted before it runs, and this Mac's speed: 326 billion multiplies and adds a second |
+| 17 | [What it costs](lessons/17-what-it-costs.md) | A model's memory and arithmetic counted before it runs, and this Mac's speed: 326 billion multiplies and adds a second (each multiply and each add counts as one: the field's FLOPs) |
 | 18 | [Data](lessons/18-data.md) | 210 MB of stories cleaned, split and turned into 52 million tokens on disk |
 | 19 | [How big should it be?](lessons/19-how-big-should-it-be.md) | A law fitted to short runs, tested on runs it had not seen, and a size for the story model |
 | 20 | [Many workers](lessons/20-many-workers.md) | Four processes that train one model and end with one process's weights |
@@ -109,7 +109,7 @@ Four guides go with the lessons.
 
 ## The scoreboard
 
-Each model is scored on the same unseen tenth of Shakespeare, in bits per byte. Lower is better.
+We score each model on the same unseen tenth of Shakespeare, in bits per byte. Lower is better.
 
 | Model | Lesson | Bits per byte |
 |---|---|---|
@@ -129,7 +129,7 @@ Each model is scored on the same unseen tenth of Shakespeare, in bits per byte. 
 
 With plain gradient descent the GPT trails the MLP. Lesson 11 changes only the optimizer, and the GPT leads. With the same optimizer, the same steps and as many predictions, the MLP still scores worse, and reading 64 characters it does worse than reading 8.
 
-From lesson 18 the text is 210 MB of short stories, and the scoreboard starts again. The two cannot be compared: the stories are simpler text than Shakespeare.
+From lesson 18 the text is 210 MB of short stories, and the scoreboard starts again. You cannot compare the two: the stories are simpler text than Shakespeare.
 
 | Model | Lesson | Bits per byte on unseen stories |
 |---|---|---|
@@ -138,7 +138,7 @@ From lesson 18 the text is 210 MB of short stories, and the scoreboard starts ag
 
 Lesson 24 reads each unseen story alone, and lesson 21's model scores 1.480 nats a token there, with a 95% interval of 1.463 to 1.497.
 
-From lesson 25 the question changes from how well the model predicts text to how often it does what it is asked. Each row is 200 orders made from unseen stories, and a story passes when it has the asked name and all three asked words.
+From lesson 25 we ask how often the model does what it is asked, in place of how well it predicts text. Each row is 200 orders made from unseen stories, and a story passes when it has the asked name and all three asked words.
 
 | Model | Lesson | Orders passed, of 200 |
 |---|---|---|
@@ -168,7 +168,7 @@ Lessons 31 to 37 measure the model as a service, on one M4 laptop. Lesson 36 ser
 | The fixed cost of 516 calls into PyTorch in one token's pass on the processor, worked out from two models' timings | 37 | 0.58 ms of 1.29 ms |
 | Tokens a second for 16 listeners on the processor: our engine, then Apple's MLX with the same weights | 37 | 4,134, then 5,943 |
 
-The chess model of lesson 38 is scored by the rules of the game and by play. Points are the share of the points it took: a win is 1 and a draw a half.
+We score the chess model of lesson 38 by the rules of the game and by play. Points are the share of the points it took: a win is 1 and a draw a half.
 
 | Measure | Lesson | Result |
 |---|---|---|
@@ -186,7 +186,7 @@ Lessons 41 and 42 run the same code on rented NVIDIA cards: one L40S, except for
 | A story model of 14,555,904 parameters, 88 minutes of the card, $2.74 | 41 | 1.270 nats a token on unseen stories (0.467 bits per byte), where the laptop's model had 1.565 (0.575) and lesson 19's law expected 0.923 nats |
 | The same budget on 25,170,944 parameters, then on 47,678,720 | 41 | 1.241 nats, then 1.271: the size lesson 19's own rule would have picked was the best of the three |
 | A chess model of 13,226,880 parameters: legal moves at 1,000 unseen positions, and its points against the laptop's model | 41 | 987 (the laptop's: 932 at the same positions), and 0.86 |
-| One step on four cards, against the same step on one | 41 | 4.19 times as fast, at 1.4 times the price for each token |
+| One step on four cards, against the same step on one | 41 | 4.19 times as fast, on a machine that costs 5.7 times as much an hour: 1.4 times the price for each token |
 | Tokens a second for one listener: our engine on the card, then vLLM with the same weights | 42 | 110, then 786 |
 | Requests a second vLLM keeps up with, and the price of a million tokens there | 42 | 128, at $0.065. At 256 and at 512 it writes about 12,800 tokens a second and requests wait |
 | Qwen2.5-7B-Instruct, 7.6 billion parameters, one listener: tokens a second the card's memory allows, then what it gets | 42 | At 16 bits: 52, then 50. At 8 bits: 97, then 73 |
@@ -199,7 +199,7 @@ Lesson 43 is back on the laptop. Its four workers are in one process, so it coun
 | What one of four workers holds to train lesson 41's story model: a whole copy, then with AdamW's averages shared out | 43 | 232.9 MB, then 155.0 MB for the fullest worker |
 | What the workers add up between them in a step: their slopes, then their parts of eight split MLPs | 43 | 58.2 MB, then 201.3 MB |
 
-Lessons 44 and 45 are on the rented L40S again: 12 hours of training steps on games between strong players, then 1,400 games against Stockfish, a chess program that can be held to a rating.
+Lessons 44 and 45 are on the rented L40S again: 12 hours of training steps on games between strong players, then 1,400 games against Stockfish, a chess program that can be held to a rating. Lesson 41's model plays 100 of them. The new player plays 500 to choose what we tell it about a game, 700 for its rating, and 100 with Stockfish on a slower clock.
 
 | Measure | Lesson | Result |
 |---|---|---|
@@ -210,7 +210,7 @@ Lessons 44 and 45 are on the rented L40S again: 12 hours of training steps on ga
 | The new player's Elo rating on Stockfish's scale, fitted to 700 games against seven settings from 1,400 to 2,600 | 45 | 1,785, with a range of 1,737 to 1,836. Match by match the rating climbs from 1,641 against the weakest setting to 2,122 against the strongest, so one number does not suit them all |
 | Points against Stockfish held to 1,800, when it has 0.05 seconds a move and when it has 0.5 | 45 | 0.36, then 0.41 |
 
-The chess players of the course, each with its Elo rating. The first four are on a scale of our own, and the last two on Stockfish's.
+The table below lists the chess players of the course, each with its Elo rating. The first four are on a scale of our own, and the last two on Stockfish's.
 
 | Player | Lesson | Elo rating | Scale |
 |---|---|---|---|
@@ -232,8 +232,8 @@ Each of these is on its lesson's page, with the run that showed it.
 | Weights at 8 bits | 34 | 8.6 MB in place of 21.5, and slower writing in our engine |
 | A small model guessing ahead for the big one | 35 | No faster: 475 and 480 tokens a second with two drafts, against 490 without |
 | A law fitted on small runs, to size a run 628 times larger | 41 | 0.347 nats too low, and the size it led us to was not the best of the three we then trained |
-| Four graphics cards in place of one | 41 | 4.19 times as fast, at 1.4 times the price for each token |
-| A chess player as strong as the players it learned from, who were rated 2,200 or more on Lichess | 45 | An Elo rating of 1,785 on Stockfish's scale, and 0.19 of the points from Stockfish held to 2,200 |
+| Four graphics cards in place of one | 41 | 4.19 times as fast, on a machine that AWS prices at 5.7 times the one-card machine, so a token costs 1.4 times as much. The step itself sped up by more than four |
+| A chess player as strong as the players it learned from, who were rated 2,200 or more on Lichess | 45 | An Elo rating of 1,785 on Stockfish's scale, which is not Lichess's, and 0.19 of the points from Stockfish held to 2,200 |
 
 ## Run it
 
@@ -245,7 +245,7 @@ uv sync
 uv run pytest
 ```
 
-Each lesson has a page in `lessons/`, code in a short file in `gpt/` (some files serve two or three lessons) and tests in `tests/`. Most lessons' numbers come from that file's script, for example `uv run python -m gpt.bigram`, and are saved in `results/`.
+Each lesson has a page in `lessons/`, code in a file in `gpt/` (most are under 200 lines, the longest is under 500, and some serve two or three lessons) and tests in `tests/`. Most lessons' numbers come from that file's script, for example `uv run python -m gpt.bigram`, and are saved in `results/`.
 
 From lesson 18 on, the scripts need the stories and a trained model. `uv run python -m gpt.data` downloads 210 MB and prepares them, and `uv run python -m gpt.story` trains the story model. By lesson 17's timing that takes 2.3 hours on an M4 laptop's graphics chip. `gpt.finetune` (lesson 25) makes the storyteller. The server loads the storyteller as lesson 29 left it, so first run `gpt.finetune`, `gpt.reinforce` and `gpt.prefer` in that order, or download the models below.
 
@@ -293,10 +293,10 @@ The scripts still need the text itself. `gpt.data` fetches and prepares the stor
 
 Each lesson ends with the sources it rests on, and [MAP.md](MAP.md) lists open material for everything else. We read four works before writing the first lesson.
 
-- Sebastian Raschka, [Build a Large Language Model (From Scratch)](https://github.com/rasbt/LLMs-from-scratch). From it, the habit of working one case by hand before the general one.
-- Knowlytix, [Building Language Models from Scratch](https://github.com/knowlytix/llm-from-scratch). Its order of topics, as a checklist.
-- Philip Kiely, [Inference Engineering](https://www.baseten.co/inference-engineering/). A map of serving.
-- elizabetht, [100 days of LLM inference engineering](https://github.com/elizabetht/100-days-of-inference). Experiments worth building again.
+- Sebastian Raschka, [Build a Large Language Model (From Scratch)](https://github.com/rasbt/LLMs-from-scratch). We took from it the habit of working one case by hand before the general one.
+- Knowlytix, [Building Language Models from Scratch](https://github.com/knowlytix/llm-from-scratch). We used its order of topics as a checklist.
+- Philip Kiely, [Inference Engineering](https://www.baseten.co/inference-engineering/). We read it as a map of serving.
+- elizabetht, [100 days of LLM inference engineering](https://github.com/elizabetht/100-days-of-inference). It has experiments worth building again.
 
 Andrej Karpathy's [Neural Networks: Zero to Hero](https://karpathy.ai/zero-to-hero.html) and Stanford's [CS336](https://cs336.stanford.edu/) showed what teaching from nothing, with a test for each part, can look like.
 

@@ -8,14 +8,14 @@ The model now writes fast enough to be judged on hundreds of stories. We cannot 
 
 Lesson 21 scored the model at 1.565 nats a token with lesson 10's `evaluate`: windows of 256 that sit side by side. A report on a score should answer four questions.
 
-1. How much text each token had before it. In side-by-side windows the first token of each window is scored with nothing before it. Move the window on by a quarter of its length, a stride of 64, and score only the tokens not scored before. The same 100 stories score 1.533 nats at a stride of 256 and 1.439 at 64. Read one story at a time, they score 1.444.
-2. Whether the model has seen the answers. We call an unseen story that is also in the training text a leak. Lesson 18's near-repeat finder compares each unseen story with each training story. Lesson 18 dropped near-repeats with it before the split, so it must find 0. Only a check that works another way would test the split. Lesson 21 also used the unseen text once, to pick its rate from three. A careful report keeps a third set no choice has touched.
+1. How much text each token had before it. In side-by-side windows we score the first token of each window with nothing before it. Move the window on by a quarter of its length, a stride of 64, and score only the tokens not scored before. The same 100 stories score 1.533 nats at a stride of 256 and 1.439 at 64. They hold 21,498 tokens, about 215 each, less than one window of 256. Read one story at a time, they score 1.444.
+2. Whether the model has seen the answers. We call an unseen story that is also in the training text a leak. Lesson 18's near-repeat finder looks for each unseen story among the training stories, and compares it in full only with the earliest one that shares a band of its 32 MinHash numbers. Lesson 18 dropped near-repeats with it before the split, so it must find 0, and its 0 shows only that the split kept lesson 18's rule. Only a check that works another way would test the split. Lesson 21 also used the unseen text once, to pick its rate from three. A careful report keeps a third set no choice has touched.
 3. How sure the loss is. It is a mean over the stories we happened to hold out, and other stories would give another mean. Draw 2,525 stories from our 2,525, with repeats allowed, and take the mean again. Do that 1,000 times. The middle 95% of those means is a 95% interval, and drawing again like this is the bootstrap. Draw whole stories and not single tokens: the tokens of one story rise and fall together, so they are not separate pieces of evidence.
 4. Whether one model is better than another. Score both on the same stories, take the difference for each token, and put an interval on the mean difference. If the interval holds 0, these stories have not separated the two models.
 
 A loss measures prediction, and a task checks one job with a rule that says pass or fail. We have two tasks. The easy one opens a story with a name, and passes when the story uses the name again and reaches its end. The hard one asks, in three lines, for a story with a given name and three given words. It passes when the story has the name and each of the three words as whole words.
 
-A pass rate is a mean of passes and failures, but the bootstrap serves it badly when passes are few. Draw again from 100 failures and each draw is 100 failures, so the interval has no width. So a pass rate gets the range worked out by hand below: from the lowest rate that gives this many passes or more 1 time in 40, to the highest that gives this many or fewer as often.
+A pass rate is a mean of passes and failures, but the bootstrap is a poor fit for it when passes are few. Draw again from 100 failures and each draw is 100 failures, so the interval has no width. So we give a pass rate the range worked out by hand below: from the rate at which this many passes or more come only 1 time in 40, to the rate at which this many or fewer come as rarely.
 
 We also ask for the chance that at least one of k tries passes, called pass at k. Given n tries of which c passed, count the ways to pick k tries that all failed, divide by the ways to pick any k, and take the result from 1.
 
@@ -25,7 +25,7 @@ Pass at 2, from 4 tries of which 2 passed. There are 6 ways to pick 2 tries from
 
 1 - 1/6 = 0.833
 
-The plain formula, 1 - (1 - 2/4)² = 0.75, is 0.083 too low here.
+The plain formula treats each try as a fresh draw at the rate the tries showed, 2/4: 1 - (1 - 2/4)² = 0.75, which is 0.083 too low here.
 
 No pass in 100 tries. At a pass rate of 0.036, 100 failures in a row have a chance of 0.964¹⁰⁰ = 0.026, about 1 in 40. A 95% interval leaves that share outside at each end, so ours runs from 0 to 0.036. One pass in 100 runs up to 0.054 by the same sum, taken over one pass or none.
 
@@ -45,7 +45,17 @@ def losses(model, ids, context, stride):
     return torch.cat(out)
 ```
 
-`F` is `torch.nn.functional`. `F.cross_entropy` with `reduction="none"` is lesson 3's loss with one number for each token and no mean taken, and `.long()` gives it the ids as 64-bit whole numbers. `start - end` is negative, so `[start - end :]` keeps the last `end - start` places.
+`F` is `torch.nn.functional`. `F.cross_entropy` with `reduction="none"` is lesson 3's loss with one number for each token and no mean taken, and `.long()` gives it the ids as 64-bit whole numbers. `start - end` is negative, so `[start - end :]` keeps the last `end - start` places. With a context of 256 and a stride of 64, the first five passes are:
+
+| Pass | Window, by place | Tokens scored |
+|---|---|---|
+| 1 | 0 to 64 | 1 to 64 |
+| 2 | 0 to 128 | 65 to 128 |
+| 3 | 0 to 192 | 129 to 192 |
+| 4 | 0 to 256 | 193 to 256 |
+| 5 | 64 to 320 | 257 to 320 |
+
+From the fourth pass on, each scored token has at least 193 tokens before it.
 
 ```python
 # gpt/evaluate.py
@@ -58,7 +68,7 @@ def interval(blocks, generator, draws=1000):
     return means.quantile(0.025).item(), means.quantile(0.975).item()
 ```
 
-A block is one story's losses. `drawn` holds 1,000 rows, each a random pick of stories. `quantile(0.025)` is the value that 2.5% of the means fall below.
+A block is one story's losses. `drawn` holds 1,000 rows, each a random pick of stories. `quantile(0.025)` is the value that 2.5% of the means fall below. Each draw divides its summed losses by its summed counts, so each token counts once and a long story weighs more than a short one, as in the mean over every token.
 
 ## The proof
 
@@ -66,9 +76,9 @@ A block is one story's losses. `drawn` holds 1,000 rows, each a random pick of s
 uv run pytest tests/test_evaluate.py tests/test_tasks.py
 ```
 
-- Each token is scored once at a stride of 1, 5 or 16. At a stride equal to the context the losses are lesson 10's, and `losses` refuses a stride past the context.
+- `losses` scores each token once at a stride of 1, 5 or 16. At a stride equal to the context its losses are lesson 10's, and it refuses a stride past the context.
 - The finder finds three planted leaks, one in capitals and one with words added, and nothing else.
-- On made-up data with a known mean, the interval drawn block by block holds it 88 to 99 times in 100, and drawn value by value under 60.
+- On made-up data with a known mean, the interval drawn block by block holds it 88 to 99 times in 100, and drawn value by value under 60 times in 100.
 - 70 passes of 100 give 0.60 to 0.79, and no pass gives 0 to 0.036. For a task passed 1 time in 50, the range holds the true rate in at least 19 runs of 20, where the bootstrap's top end falls short in over 1 run in 10.
 - Pass at k gives 0.833 for the hand example, and averages to the true value where the plain formula is more than 0.03 too low.
 - A story passes its own task and fails its neighbour's. `Timber` does not count as `Tim`.
@@ -96,13 +106,13 @@ a name to carry on: 'Once upon a time, there was a little cat named Ollie.'
 a story to order: 'Name: Ollie\nWords: fish, stone, duck\nStory:'
 ```
 
-All 2,525 stories, read one at a time, score 1.480 nats a token, 95% interval 1.463 to 1.497: about 0.54 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. Drawn token by token, the interval is a third as wide as it should be.
+All 2,525 stories, read one at a time in windows of 256, score 1.480 nats a token, 95% interval 1.463 to 1.497: about 0.54 bits per byte, against lesson 21's 1.565 and 0.575 in side-by-side windows. Drawn token by token, the interval is a third as wide as it should be.
 
-The 16-bit switch's +0.0001 nats has an interval that holds 0. A name is carried on in 97 of 100 stories, 95% interval 0.91 to 0.99.
+The 16-bit switch's +0.0001 nats has an interval that holds 0. The model carries a name on in 97 of 100 stories, 95% interval 0.91 to 0.99.
 
 ## What it still cannot do
 
-Asked in three lines for a name and three words, the model passes 0 of 100, and none of 10 tries on each of 20. It was trained to continue stories, and no story in its text begins with a line that says what to write.
+Asked in three lines for a name and three words, the model passes 0 of 100, and none of 10 tries on each of 20. We trained it to continue stories, and no story in its text begins with a line that says what to write.
 
 ## Check yourself
 
@@ -115,7 +125,7 @@ Predict before you run: a model passes 0 of 10 tries on a task. What does the fo
 
 <details><summary>From lesson 14: what in that lesson played the part that stories play here?</summary>
 
-Seeds. There each seed gave one difference between two models that had the same luck. Here each story gives its tokens' differences, and stories are what we draw again.
+Seeds. There each seed gave one difference between two models that had the same luck. Here each story gives its tokens' differences, and we draw whole stories again.
 </details>
 
 Go deeper:

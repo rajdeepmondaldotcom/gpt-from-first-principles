@@ -30,7 +30,7 @@ def work(pipe, shape, seed, rate):
             p.grad = mean
         optimizer.step()
     pipe.send(model.state_dict())
-    pipe.recv()  # wait: on Linux the coordinator fetches those tensors from this process
+    pipe.recv()  # stay alive until the coordinator has copied the weights out
 
 
 def share(pipes, x, y):

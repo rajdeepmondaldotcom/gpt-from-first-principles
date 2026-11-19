@@ -2,7 +2,7 @@
 
 A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40 and 43, and on rented machines for lessons 41, 42, 44 and 45. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
 
-Each link was fetched on 17 or 18 November 2026.
+We fetched each link on 17 or 18 November 2026.
 
 ## What the lessons leave out
 

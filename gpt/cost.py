@@ -42,7 +42,11 @@ def kept_bytes(model, x, y):
 
 
 def attend_in_tiles(q, k, v, mask, tile):
-    """Lesson 6's `attend`, `tile` queries at a time. The whole grid of scores never exists."""
+    """Lesson 6's `attend`, `tile` queries at a time.
+
+    With no backward pass to come, the whole grid of scores never exists at once. Under autograd
+    each tile's weights are kept for the backward pass, so training holds the whole grid after all.
+    """
     rows = range(0, q.size(-2), tile)
     return torch.cat(
         [attend(q[..., i : i + tile, :], k, v, mask[i : i + tile])[0] for i in rows], -2

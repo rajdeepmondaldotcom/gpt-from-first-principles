@@ -104,7 +104,8 @@ if __name__ == "__main__":
     say(f"alone, the prompt is read at {192 / first:,.0f} tokens a second")
     say(f"alone, the answer is written at {1 / gap:,.0f} tokens a second, {gap * 1e3:.1f} ms each")
 
-    # Memory speed: the fastest of five copies of 256 MB. A copy reads each byte and writes it.
+    # Memory speed: the fastest of five copies of 256 MiB (268 MB).
+    # A copy reads each byte and writes it.
     big, copies = torch.ones(2**26), []
     for _ in range(5):
         began = time.perf_counter()

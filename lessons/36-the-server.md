@@ -9,7 +9,7 @@ Each script so far runs once, in a terminal, and stops. Other programs cannot as
 A server is a program that waits for requests from other programs, its clients, and answers each one. A web request is text sent to an address such as `http://127.0.0.1:8000/metrics`: a machine, a port on it, and a path. Ours serves the storyteller as lesson 29 left it, and has five jobs.
 
 1. Speak a format that clients know. OpenAI's chat format is a list of messages sent to an address ending in `/v1/chat/completions`, answered in a text format called JSON. We answer it, so a tool written for it can use our model.
-2. Stream. A listener wants each word as it is written, so the answer goes out as a run of small events, one for each piece of text.
+2. Stream. A listener wants each word as it is written, so we send the answer as a run of small events, one for each piece of text.
 
    A token is not always a whole character: `é` is two bytes, and two tokens can carry one each. We hold the first half until the second arrives.
 3. Serve many at once. Each web request gets a thread of its own: work that runs beside the others in one program and waits most of the time. One more thread runs lesson 32's engine. A request hands the engine its prompt through a queue, a line that one thread fills and another empties, and gets its tokens back through a second queue. A listener who leaves mid-story frees their row.
@@ -105,7 +105,7 @@ The engine's thread:
                 out.put(None)  # stopped: nobody is left waiting on a stream that will not come
 ```
 
-`self.inbox` is the waiting line, a queue with a limit. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine.
+`self.inbox` is the waiting line, a queue with a limit. `id(request)` is a number unique to each request object, used as its key. The lock guards `refused`, which the web threads also add to when the line is full. `held` is the request at its head while the engine has no memory for it. `self.outs` holds, for each request the engine has taken, the queue its tokens go to. Each time round, the thread takes in what there is room for, adds to the count of request-seconds, and runs one step of the engine.
 
 If any of that fails, each answer being written ends with an error, and the thread starts a fresh engine.
 
@@ -149,7 +149,7 @@ a million tokens at that speed: 8 minutes of this machine
 
 Timings are from an M4 laptop, and they move from run to run.
 
-The outside tool and our own counts agree: 21.4 requests a second by its count and 21.3 by ours, and 718 ms each against 716. The server wrote 2,131 tokens a second, with a first token after 33 ms on average. Requests inside averaged 15.2. Requests left as fast as they arrived, at 21.3 a second, and 21.3 × 0.716 = 15.3: the sum holds.
+The outside tool and our own counts agree: 21.4 requests a second by its count and 21.3 by ours, and 718 ms each against 716. The server wrote 2,131 tokens a second, with a first token after 33 ms on average. Requests inside averaged 15.2. Requests left as fast as they arrived, at 21.3 a second, and 21.3 × 0.716 = 15.3: the sum holds. ab sends a new request only when one ends, so it can never outrun the server and never builds lesson 31's line.
 
 At that speed a million tokens take this laptop 8 minutes. Sent 400 requests, 200 at a time, the server answered 100, told 300 to try again and failed none. That is more than memory for 16 and a line of 64 hold at once: as answers finished, later arrivals found room in the line.
 
@@ -164,13 +164,13 @@ Mira was so very brave, she didn’t even notice the moon! But Mira got trying t
 The moon was so far away, as the moon got too small and she could not get there. Mira was so scared she had to leave the moon in the night, and now the moon was back in the sky.
 ```
 
-That story came over the web from our own server, to the order Mira, cat, moon and brave. It has Mira, the moon and brave, and no cat. Lesson 31 measured 539 tokens a second for one listener where memory alone allows 4,231, and lessons 34 and 35 made it no faster.
+That story came over the web from our own server, to the order Mira, cat, moon and brave. It has Mira, the moon and brave, and no cat. A listener who reads slowly does not slow the engine: their tokens pile up in a queue with no limit. Lesson 31 measured 539 tokens a second for one listener where memory alone allows 4,231, and lessons 34 and 35 made it no faster.
 
 ## Check yourself
 
 <details><summary>Prediction</summary>
 
-A little under: 15.2.
+A little under: 15.2. Between an answer ending and ab's next request arriving, fewer than 16 are inside.
 </details>
 
 <details><summary>16 requests are inside at a time, each for 2 seconds. How many does the server finish each second?</summary>

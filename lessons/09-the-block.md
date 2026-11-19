@@ -8,7 +8,7 @@ One attention layer is one round of reading, and we want several rounds. Attenti
 
 A block is attention with three parts added: an MLP, a path around each layer, and a normalization.
 
-After attention, each token's vector passes through a small MLP: a linear layer that widens it four times, a bend, and a linear layer that narrows it back. The same MLP serves each token. Attention moves information between tokens, and the MLP computes on what each token gathered.
+After attention, each token's vector passes through a small MLP: a linear layer that widens it four times, a bend, and a linear layer that narrows it back. Each token goes through the same MLP. Attention moves information between tokens, and the MLP computes on what each token gathered.
 
 The bend is called GELU. For large negative numbers it gives about 0, and for large positive numbers about the number itself. Unlike tanh it does not flatten for large positive numbers, so slopes pass back through it there. ReLU, max(0, x), is the plainer choice. GELU is GPT-2's.
 
@@ -16,13 +16,13 @@ We also add each layer's result to its input. In place of `x = layer(x)` we writ
 
 Lesson 2 showed that an addition passes a slope back unchanged. So each block has a path around it with a slope of exactly 1, and however many blocks we stack, the early ones still get slope from the loss. A test measures it with the starting weights of GPT-2, the 2019 model that lesson 10 rebuilds. Each block multiplies what passes through it by small weights (numbers with a spread of 0.02, which lesson 10 sets out). Without the additions, two blocks already pass back less than a hundredth of the gradient, and 24 blocks pass back less than a trillionth of it. With the additions, the gradient reaching the first block is about as large at 24 blocks as at 2, within a factor of 2.
 
-The normalization keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Batch normalization takes its mean over the batch in place of over the vector, so a token's result would depend on the other texts in the batch. Steady sizes matter for the reason lesson 6 gave: scores that are too large put nearly all of a softmax's weight on one token.
+The normalization keeps the numbers at a steady size. Before each layer, take each token's vector, subtract its mean and divide by its spread. The vector now has a mean of 0 and a spread of 1, whatever the blocks before it added. A learned gain and shift for each entry let the model move away from that when it helps. This is layer normalization. Batch normalization takes its mean over the batch in place of over the vector, so a token's result would depend on the other texts in the batch. Steady sizes let each layer's starting weights and rate suit its input at any depth, and keep attention scores from growing until softmax puts nearly all its weight on one token, as in lesson 6.
 
 We normalize the input to each layer and leave the residual stream alone:
 
 `x = x + attention(norm(x))`, then `x = x + mlp(norm(x))`
 
-The first model built from blocks like these, in 2017, normalized after each addition, which put a normalization on the main path. GPT-2 puts it where we have it.
+The first model built from blocks like these, in 2017, normalized after each addition, which put a normalization on the main path. The slope back along the stream then passes through each normalization, and Xiong and others, below, found such models need the rate raised slowly at the start to train. GPT-2 puts it where we have it.
 
 ## By hand
 
@@ -43,6 +43,11 @@ GELU at four points:
 | Out | -0.159 | 0 | 0.841 | 2.996 |
 
 A residual step: if x = (1, 2) and the layer returns (0.1, -0.2), the new x is (1.1, 1.8).
+
+| Two blocks, each layer's slope 0.01 | Slope back to x |
+|---|---|
+| x = layer(x) | 0.01 × 0.01 = 0.0001 |
+| x = x + layer(x) | (1 + 0.01) × (1 + 0.01) = 1.0201 |
 
 ## The code
 
@@ -67,7 +72,7 @@ class LayerNorm(nn.Module):
 ```python
 # gpt/gpt2.py
 def gelu(x):
-    """A smooth bend: about 0 for negative numbers, about x for positive ones."""
+    """A smooth bend: about 0 for large negative numbers, about x for large positive ones."""
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * x**3)))
 ```
 
@@ -106,7 +111,7 @@ uv run pytest tests/test_gpt2.py
 
 ## What it still cannot do
 
-Nothing yet turns the last block's vectors into scores for the next token, and nothing has been trained. We have the parts and no model.
+Nothing yet turns the last block's vectors into scores for the next token, and we have trained nothing. We have the parts and no model.
 
 Each test here checks one part against a small reference. We have no evidence yet that the parts add up to GPT-2.
 

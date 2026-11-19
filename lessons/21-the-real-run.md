@@ -10,13 +10,13 @@ Each part of this run comes from an earlier lesson. The run takes hours, so it i
 
 Check before the run. The script runs two of lesson 13's checks on the untrained model. Its first loss is within 0.15 of ln 4,097 = 8.318, for 4,096 tokens and the end token, and changing the last token of a window changes no earlier score. Either bug, found only after training, would have wasted the run.
 
-Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart. With one run each, lesson 14's rule cannot call that a difference: its five seeds of one setting spread over 0.047 nats. The run needs some rate, and the script takes the lowest loss. That rate, 0.002, was also the highest we tried. We did not try 0.003, which lesson 19's largest sizes preferred. The script scored the three short runs on 200,000 unseen tokens, so one small choice has already seen the text behind the final score.
+Pick the rate with short runs, as lesson 14 did. Three rates, 264 steps each: 0.0005 ends at 3.292 nats, 0.001 at 3.063 and 0.002 at 3.052. The last two are 0.011 nats apart. With one run each, lesson 14's rule cannot call that a difference: its five seeds of one setting spread over 0.047 nats. The run needs some rate, and the script takes the lowest loss. That rate, 0.002, was also the highest we tried. We did not try 0.003, which lesson 19's largest sizes preferred. The script scored the three short runs on 200,000 unseen tokens, part of the text that gives the final score, so the script picked the rate on that text.
 
 Then the run: 8,921 steps of 32 windows of 256 tokens, which is 73,080,832 tokens, 1.4 times through the training text. Every 500 steps the loop measures the loss on 100,000 unseen tokens and writes a checkpoint. If the machine stops, starting the script again carries on from the last checkpoint. Lesson 12's test that a resumed run matches an unbroken one ran on the processor. We have not checked it on the graphics chip.
 
-The two losses fall together. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text. So this run uses no dropout.
+The two losses fall together. The training number is one batch's loss, so it jumps, as from 1.500 at step 6,500 to 1.599 at 7,500. The unseen loss falls at each line printed below. At step 8,500 the training batch scored 1.510 nats and the unseen text 1.567. The gap is 0.057 nats, against 3.157 for lesson 13's model, which stored its text. With a gap that small, the run needs no dropout, lesson 13's cure for a large gap.
 
-Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565 nats, 0.575 bits per byte, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in the final fit, and the miss is 2.7 times larger. The run also used a lower rate than any of the law's runs, so part of the miss may be the rate. We trained one size, so we cannot say whether lesson 19's choice of size was right.
+Lesson 19's law, fitted to all 22 runs, predicted 1.302 nats for this size and budget. The run ends at 1.565 nats, 0.575 bits per byte, so the law was 0.263 too low. The earlier fit to 18 runs had missed four runs at twice its largest budget by at most 0.098. This run is 34 times the largest budget in the final fit, and the miss is 2.7 times larger. The run also differs from the law's runs in three ways: a lower rate, a warmup of a fiftieth of its steps where theirs took a tenth, and 1.4 times through its text where none of theirs read as many tokens as the text holds. Any of the three may explain part of the miss. We trained one size, so we cannot say whether lesson 19's choice of size was right.
 
 Keep the weights. The script writes them in lesson 16's Llama layout and lesson 10's file format, with the token rows stored once. Lesson 16's loader reads the file back.
 
@@ -40,7 +40,7 @@ The two checks, before the first step:
         assert reads_no_future(model, val_ids[None, :64])
 ```
 
-`assert` stops the script with an error when what follows it is false.
+`assert` stops the script with an error when what follows it is false. `val_ids[None, :64]` takes the first 64 unseen tokens and adds a batch direction in front, a batch of one window.
 
 The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
 
@@ -56,7 +56,7 @@ The loop is lesson 12's, with a measurement and a checkpoint every 500 steps:
             note()
 ```
 
-`notes` holds the rate that was picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `watch` adds nothing here. Lesson 38 uses it to measure one more thing at each checkpoint. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
+`|` joins two dictionaries into one. `flush=True` prints the line at once, where Python would otherwise hold it back, so a run of hours shows its progress as it goes. `notes` holds the rate the script picked and the curve so far, and `note` writes it to disk beside the checkpoint, so a restarted run knows both. `watch` adds nothing here. Lesson 38 uses it to measure one more thing at each checkpoint. `note` and `checkpoint` write each file under a spare name and then swap it in. A stop in the middle of writing leaves the last whole copy.
 
 ## The proof
 
@@ -111,11 +111,11 @@ We have not yet said how the model picks each token. The script used a temperatu
 
 ## Check yourself
 
-Predict before you run: the script writes a checkpoint every 500 steps. If the machine stops at step 8,499, how many steps are lost?
+Predict before you run: the script writes a checkpoint every 500 steps. If the machine stops at step 8,499, how many steps do you lose?
 
 <details><summary>Answer</summary>
 
-499. The last checkpoint was written at step 8,000.
+499. The script wrote the last checkpoint at step 8,000.
 </details>
 
 <details><summary>The law's largest miss was 0.098 at 2 times its largest budget, and 0.263 at 34 times. What does that suggest about using it at 628 times, as lesson 41 does?</summary>

@@ -2,14 +2,14 @@
 
 By the end of this page you have six checks that turn a silent bug into a failed line, and a measured cure for a model that learns its text by heart.
 
-A model with no mask still prints a falling loss and raises no error. A test here shows it: on random text, where nothing can be learned, its loss ends more than 1 nat below a healthy model's. There, a loss below ln of the vocabulary's size means the model reads its answers.
+A model with no mask still prints a falling loss and raises no error. A test here shows it. On random text nothing can be learned, so a healthy model's loss stays near ln of the vocabulary size. The model with no mask ends more than 1 nat lower, because it reads its answers.
 
 ## The idea
 
 A check is a fact that holds for a healthy run and fails for a broken one. We run these before a long run.
 
-- The first loss is near ln of the vocabulary size. A first loss far from that means the starting weights are wrong.
-- The stream keeps its size. Measure the spread of the residual stream after the embedding and after each block. A block adds a correction, so by the last block the spread should not have doubled.
+- The first loss is near ln of the vocabulary size. A first loss well above that means the starting scores are too large: the model is sure and wrong before it has learned anything.
+- The stream keeps its size. Measure the spread of the residual stream after the embedding and after each block. At the start each block adds a small correction, so by the last block the spread should not have doubled.
 - Each target is its input moved one token on. If the targets equal the inputs, the model learns to copy.
 - No place reads the future. Change a window's last token and the scores at each earlier place must not change by a bit.
 - The loop can learn one batch by heart. If the loss stays up, the loop is broken: slopes are not reaching the weights, or old slopes are piling up.
@@ -17,22 +17,22 @@ A check is a fact that holds for a healthy run and fails for a broken one. We ru
 
 The step check explains lesson 12's warmup. At the peak rate, Adam's first step would move a grid by 15% of its size or more. Later steps move a weight by less than the rate: by lesson 11's rule, a slope whose sign changes from batch to batch averages to less than its usual size.
 
-A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. The difference between the two losses is called the gap, and we say a model with a large gap overfits. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual.
+A run can pass each check and still fail: the loss on the training text keeps falling while the loss on unseen text stays high. The model is storing its text. We call the difference between the two losses the gap, and we say a model with a large gap overfits. It shows when the text is small, so we train on the first 100,000 characters, a tenth of the usual. Trained on that tenth of Shakespeare, the plain run below scores 0.491 on its training text and 3.648 on unseen text.
 
 Lesson 11's weight decay is one cure. Dropout is another. While training, dropout sets each number a layer adds to the residual stream to 0 with a fixed chance and divides the rest by the chance of being kept, which keeps their average the same over many passes. The idea, from the paper linked below, is that a model which cannot count on any one number has to spread what it learns. After training we switch dropout off and use every number.
 
 ## By hand
 
-A step size. Most grids start with entries about 0.02 in size, and Adam's first step moves each one by the rate.
+A step size. Most grids start with entries about 0.02 in size, and Adam's first step moves each one by the rate. Warmup's first rate is the peak's hundredth, 0.003 / 100 = 0.00003.
 
 | Rate | Share of the grid's size |
 |---|---|
 | 0.00003 | 0.00003 / 0.02 = 0.15% |
 | 0.003 | 0.003 / 0.02 = 15% |
 
-The two layers in each block that add into the stream start at 0.0071, so the same step is 42% of their size.
+The two layers in each block that add into the stream start at 0.02 / √8 = 0.0071, since our 4 blocks hold 2 × 4 = 8 of them, so the same step is 42% of their size.
 
-Dropout with a chance of 0.5 on the vector (1, 2, 3, 4). Suppose the first and third entries are dropped. The rest are divided by 0.5:
+Dropout with a chance of 0.5 on the vector (1, 2, 3, 4). Suppose we drop the first and third entries. We divide the rest by 0.5:
 
 (0, 4, 0, 8)
 
@@ -101,7 +101,7 @@ dropout 0.3 and decay 0.1: training text 1.230, unseen text 2.286, gap 1.055 nat
 
 Both runs are lesson 12's loop for 3,000 steps. The plain run has no dropout and no decay.
 
-Plain, the model stores its text: its 3.648 on unseen text is worse than the counted bigram's 2.482, which counted ten times the text. With dropout and decay together the gap falls from 3.157 nats to 1.055. Two things changed at once, so this measures the pair together.
+Plain, the model stores its text: its 3.648 on unseen text is worse than the counted bigram's 2.482, which counted ten times the text. With dropout and decay together the gap falls from 3.157 nats to 1.055. We changed two things at once, so this measures the pair together.
 
 ## What it still cannot do
 

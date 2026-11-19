@@ -11,11 +11,11 @@ Our text is TinyStories: short stories in simple words, written by a large langu
 A model learns junk and repeats too, so we clean in four steps.
 
 1. Clean each document. One character can be stored two ways: `é` as one character, or as `e` followed by a separate accent. We rewrite each document so that each character has one form. Then we drop junk: a fragment under 100 characters, a document with broken bytes in it, and a document that is less than 80% letters and spaces.
-2. Drop repeats. A document that occurs twice counts twice in training. It can also land once in the training text and once in the unseen text, and then the unseen text is no longer unseen. To find repeats without comparing texts, give each document a fingerprint: a short number worked out from its text, the same for the same text. We take the fingerprint of the text in lowercase with single spaces, and keep the first document with each fingerprint.
-3. Drop near-repeats. Change one word and the fingerprint changes. So cut each document into runs of five words in a row. The overlap of two documents is the share of their runs that both have: 1 for the same text, near 0 for different stories. We drop a document whose overlap with an earlier one is 0.8 or more. Comparing each pair of 256,000 documents takes 33 billion comparisons, and MinHash skips most of them. Scramble each of a document's runs into a number and keep the smallest. Two documents get the same smallest number with a chance equal to their overlap. Pool the runs of both documents: each is equally likely to get the smallest number of the pool, and the two documents agree exactly when that winning run is one they share. We scramble 32 ways and group each document's 32 numbers into 8 bands of 4. Only two documents that agree on a whole band get a real comparison.
-4. Split by fingerprint. A document goes to the unseen text when the fingerprint of its text as written leaves 0 after division by 100. The document's own text decides, so the same text can never be on both sides, and adding documents later moves none of them.
+2. Drop repeats. A document that occurs twice counts twice in training. It can also land once in the training text and once in the unseen text, and then the unseen text is no longer unseen. To find repeats without comparing texts, give each document a fingerprint: a short number worked out from its text, the same for the same text. We take the fingerprint of the text in lowercase with single spaces, and keep the first document with each fingerprint, so a copy in capitals or with other spacing counts as a repeat.
+3. Drop near-repeats. Change one word and the fingerprint changes. So cut each document into runs of five words in a row. The overlap of two documents is the share of their runs that both have: 1 for the same text, near 0 for different stories. We drop a document whose overlap with an earlier one is 0.8 or more. Comparing each pair of 256,000 documents takes 33 billion comparisons, and MinHash skips most of them. Scramble each of a document's runs into a number and keep the smallest. Two documents get the same smallest number with a chance close to their overlap, when the scramble orders the runs as if at random. Pool the runs of both documents: each has the same chance of getting the smallest number of the pool, and the two documents agree when, and only when, that winning run is one they share. We scramble 32 ways and group each document's 32 numbers into 8 bands of 4. Only two documents that agree on a whole band get a real comparison.
+4. Split by fingerprint. A document goes to the unseen text when the fingerprint of its text as written leaves 0 after division by 100. Step 2 has already removed copies that differ only in case or spacing, so the text as written is enough. The document's own text decides, so the same text can never be on both sides, and adding documents later moves none of them.
 
-Then the text becomes tokens. We train lesson 5's tokenizer on 5 MB of the training text, up to 4,096 tokens, encode each story with the end token after it, and write the ids to a file, 4 bytes each. Training maps the file into memory, so the machine loads only the parts a batch touches.
+Then we turn the text into tokens. We train lesson 5's tokenizer on 5 MB of the training text, to a vocabulary of 4,096 tokens, encode each story with the end token after it, and write the ids to a file, 4 bytes each. Training maps the file into memory, so the machine loads only the parts a batch touches.
 
 ## By hand
 
@@ -24,9 +24,9 @@ Two documents of seven words:
 - `the cat sat on the mat today`
 - `the cat sat on the mat tonight`
 
-Each has three runs of five words. `the cat sat on the` and `cat sat on the mat` are in both. The third run differs. Together they have four different runs and share two, so the overlap is 2/4 = 0.5.
+Each has three runs of five words. `the cat sat on the` and `cat sat on the mat` are in both. The third run differs. Together they have four different runs and share two, so the overlap is 2/4 = 0.5. Scramble the four: each has the same chance of getting the smallest number, and the two documents agree when it is one of the two they share, a chance of 2 in 4, the overlap.
 
-Now the bands. Two documents with an overlap of 0.8 agree on one band of 4 numbers with a chance of 0.8⁴ = 0.41. They miss all 8 bands with a chance of 0.59⁸ = 0.015. So they are compared 98.5% of the time. At an overlap of 0.2 the same sums give 1.3%.
+Now the bands. Two documents with an overlap of 0.8 agree on one band of 4 numbers with a chance of 0.8⁴ = 0.41. They miss one band with a chance of 1 - 0.41 = 0.59, and all 8 with 0.59⁸ = 0.015. So we compare them 98.5% of the time. At an overlap of 0.2 the same sums give 1.3%.
 
 ## The code
 
@@ -51,7 +51,7 @@ def minhash(items, a, b):
     return ((a[:, None] * x + b[:, None]) % PRIME).min(dim=1).values
 ```
 
-`items` are a document's runs, each already turned into a number, and `sorted` makes the set a list that `torch.tensor` can read. One scramble multiplies by a random number, adds another and takes the remainder after division by `PRIME`, which is 2³¹ − 1. `a` and `b` hold 32 such pairs, and broadcasting applies them all at once.
+`items` are a document's runs, each already turned into a number, and `sorted` makes the set a list that `torch.tensor` can read. One scramble multiplies by a random number, adds another and takes the remainder after division by `PRIME`, which is 2³¹ - 1. `a` and `b` hold 32 such pairs, and broadcasting applies them all at once. `min(dim=1)` takes the smallest along each scramble's row, and `.values` keeps those numbers and leaves out where they sat.
 
 ```python
 # gpt/data.py
@@ -60,7 +60,7 @@ def held_out(doc, one_in=100):
     return int.from_bytes(digest(doc)[:4], "big") % one_in == 0
 ```
 
-`digest` is the fingerprint, 20 bytes from a standard function called SHA-1. `int.from_bytes` reads its first 4 bytes as one whole number, which is enough to split on.
+`digest` is the fingerprint, 20 bytes from a standard function called SHA-1. `int.from_bytes` reads its first 4 bytes as one whole number, with `"big"` putting the first byte in the highest place. Four bytes are enough to split on.
 
 ## The proof
 
@@ -107,7 +107,7 @@ None of either, and 14 pieces of junk. Web text is messier (FineWeb, below).
 
 <details><summary>Two documents have an overlap of 0.5. How often do they agree on at least one of the 8 bands?</summary>
 
-0.5⁴ = 0.0625 for one band. They miss all eight with a chance of 0.9375⁸ = 0.60, so they are compared 40% of the time. We drop a document at an overlap of 0.8 or more, so a pair at 0.5 need not be compared.
+0.5⁴ = 0.0625 for one band. They miss all eight with a chance of 0.9375⁸ = 0.60, so we compare them 40% of the time. We drop a document at an overlap of 0.8 or more, so we need not compare a pair at 0.5.
 </details>
 
 <details><summary>Why split by fingerprint and not by picking each hundredth document?</summary>

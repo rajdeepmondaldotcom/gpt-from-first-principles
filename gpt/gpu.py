@@ -55,9 +55,9 @@ def more(path, docs, words, tidy=clean, lead=""):
 
 
 def pick(fitted, family, budget, most):
-    """What lesson 19's law expects of each shape for `budget`, and the shape lesson 19's rule
-    takes: the smallest one the law cannot tell from the best, among those that read `most`
-    tokens or fewer. Returns the rows and the pick."""
+    """What lesson 19's law expects of each shape for `budget`, and the pick: the smallest shape
+    within the law's miss on its own runs of the best, among those that read `most` tokens or
+    fewer. Returns the rows and the pick."""
     rows = []
     for one in family:
         model = GPT(**one)

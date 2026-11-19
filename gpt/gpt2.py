@@ -41,7 +41,7 @@ class LayerNorm(nn.Module):
 
 
 def gelu(x):
-    """A smooth bend: about 0 for negative numbers, about x for positive ones."""
+    """A smooth bend: about 0 for large negative numbers, about x for large positive ones."""
     return 0.5 * x * (1 + torch.tanh(math.sqrt(2 / math.pi) * (x + 0.044715 * x**3)))
 
 

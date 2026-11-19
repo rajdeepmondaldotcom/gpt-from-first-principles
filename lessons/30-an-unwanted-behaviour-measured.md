@@ -2,11 +2,11 @@
 
 By the end of this page the storyteller keeps a rule, you have counted its mistakes in both directions, and you have measured what further training does to the rule.
 
-We trained the model in lessons 25 to 29 on what to write, never on what to refuse: given 100 orders with a frightening word, lesson 25's model refuses none.
+We trained the model in lessons 25 to 29 on what to write, never on what to refuse. Our storyteller is for small children, and given 100 orders with a frightening word, lesson 25's model refuses none.
 
 ## The idea
 
-Our storyteller is for small children, so we give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy. We teach it to lesson 25's model, where lessons 27 to 29 also started, so its counts sit beside theirs. Lesson 36 serves lesson 29's model, which has no rule.
+We give it a rule: no story to order when one of the asked words is frightening. Eight words are on the list. The rule is a toy. We teach it to lesson 25's model, where lessons 27 to 29 also started, so its counts sit beside theirs. Lesson 36 serves lesson 29's model, which has no rule.
 
 Teaching it is lesson 25's loop again, for 300 steps at a peak rate of 0.0003. Each order with a listed word gets one fixed answer, `I will not tell that story.`, and each other order keeps its story. With the story swapped for the short refusal, 1,117 orders with a listed word fit the context, and 59,562 ordinary orders fit with their stories. We take each of the 1,117 and three times as many ordinary ones, so one example in four is a refusal.
 
@@ -17,7 +17,7 @@ A rule can fail in two ways, so we test both.
 
 One count cannot show both. A model that refuses each order it is given never misses, and is useless.
 
-So we make two sets from the same 100 unseen orders. In the first, the last asked word is swapped for a listed word. In the second, it is swapped for a harmless word that looks like it, such as `monkey` for `monster`. A model that had learned to refuse any word that starts with `mon` would refuse `monkey` too, and the second set would show it. Each count gets lesson 24's interval.
+We make two sets from the same 100 unseen orders. In the first, we swap the last asked word for a listed word. In the second, we swap it for a harmless word that looks like it, such as `monkey` for `monster`. A model that had learned to refuse any word that starts with `mon` would refuse `monkey` too, and the second set would show it. Each count gets lesson 24's interval. The listed set uses the eight words we taught, so 96 of 100 shows that the model kept the list, and says nothing of a frightening word we never taught. The interval counts the draw of orders and leaves out the draw of words. Each count is one draw for each order at lesson 25's temperature, and another temperature could give these weights another count.
 
 The same weights hold the rule and the model's other skills, and anyone who has the weights can go on training them. We fine-tune the rule-keeping model on two kinds of orders with their stories, for 300 steps each, and count again after each 100.
 
@@ -116,7 +116,7 @@ lesson 25's examples, 300 steps: 0 of 100 look-alike orders refused, 95% interva
 
 Taught the rule, the model refuses 96 of 100 listed orders: 4 misses, and 2 refusals it should not have made.
 
-Fine-tuned on orders that never show a listed word, the rule goes: refusals of listed orders fall from 96 of 100 to 9 after 100 steps, and to 7 after 300.
+Fine-tuned on orders that never show a listed word, the model loses the rule: refusals of listed orders fall from 96 of 100 to 9 after 100 steps, and to 7 after 300.
 
 On lesson 25's own examples 3 refusals are left after 100 steps, and none after 300. In 100 steps the model reads 3,200 examples, and about 45 of them answer a listed order with its story. We did not put lesson 24's paired interval on these differences, so these counts do not rank the two runs.
 

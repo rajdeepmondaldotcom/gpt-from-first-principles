@@ -14,7 +14,7 @@ The scorer is a model that reads an order and its story and gives back one numbe
 
 For each pair it scores both stories, and the difference between the scorer's two numbers is a bet on which the reader chose. When the first story leads by x, the bet puts a chance of 1 / (1 + e^-x) on it: one half at a lead of 0, and nearer 1 the larger the lead. The loss is lesson 1's surprise at the reader's real choice. Only differences between scores enter the bet, so its numbers have no fixed zero.
 
-A trained scorer can stand where lesson 27's score stood: the storyteller writes stories, the scorer scores them, and the step raises the chance of those above their group's average. We call that training the push.
+A trained scorer can stand where lesson 27's score stood: the storyteller writes stories, the scorer scores them, and the step raises the chance of those above their group's average. We call that training the push. The push uses each story's lead over its group's average, so the scorer's lack of a fixed zero does no harm.
 
 The scorer learned from stories the storyteller wrote before any of this training. Training now pushes the storyteller toward whatever the scorer rates highest, and nothing makes its number hold for stories unlike the ones it learned from. So we watch the scorer's number, which the training sees, and two it does not: the readers', and lesson 27's score. Ouyang and others add a penalty for drifting from the starting model. The push had none, and lesson 29's loss builds one in.
 
@@ -59,7 +59,7 @@ class Scorer(nn.Module):
         return self.head(read).squeeze(-1)
 ```
 
-`body.embed.weight.size(1)` is the model's width, and `squeeze(-1)` turns a column of single numbers into a row. Texts in a batch have different lengths, so each is padded at its end, and `last` says where each one stops. Padding after that place cannot reach back to it: lesson 7's mask.
+`body.embed.weight.size(1)` is the model's width, and `squeeze(-1)` turns a column of single numbers into a row. Texts in a batch have different lengths, so we pad each at its end, and `last` says where each one stops. Padding after that place cannot reach back to it: lesson 7's mask.
 
 ```python
 # gpt/scorer.py
@@ -80,9 +80,9 @@ uv run pytest tests/test_scorer.py
 - The loss is ln 2 for equal scores and 0.127 for the hand example.
 - A toy taste: of two random texts, the one with more 3s is better. From 600 pairs a small scorer ranks over 9 in 10 of 200 unseen pairs right, from about half.
 - The readers' three verdicts above, and two more: a whole story with all four gets 1, and a story of 7 words gets 0.
-- From four stories for one order, a good one, a fair one and two bad ones, five pairs are made, each with the better story first. The two bad ones tie and make no pair. An order held back keeps its pairs out of the learning.
+- From four stories for one order, a good one, a fair one and two bad ones, the code makes five pairs, each with the better story first. The two bad ones tie and make no pair. An order held back keeps its pairs out of the learning.
 
-The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model. Each two stories for one order make a pair, unless the readers give both the same number. The push is 100 rounds of 16 stories at a rate of 0.0003, on orders new to lesson 27.
+The stories are the 1,600 that lesson 27's first way wrote, four for each of 400 orders, all by lesson 25's model. Any two stories for one order make a pair, unless the readers give both the same number. The push is 100 rounds of 16 stories at a rate of 0.0003, three times lesson 27's peak rate, a choice we did not test. Its orders are new to lesson 27.
 
 Predict before you run: as the storyteller is trained against the scorer, the scorer's number for its stories will rise. What will the readers' number do?
 
@@ -110,7 +110,15 @@ on 200 unseen orders the readers give its stories 0.03, where they gave 0.57. Th
 
 The scorer's loss on a batch of 16 of its own pairs falls from 0.916 to 0.024. Of the 240 held-back pairs it ranked 109 right before training and 140 after: 0.51 to 0.65 against a coin's 0.5, drawn order by order, since one order's pairs share stories.
 
-The scorer's number rose from +3.41 to +12.72. On 200 orders the push did not train on, the readers gave its stories 0.57 before it and give 0.03 after, a change of -0.58 to -0.51.
+Before the push, on the 240 held-back stories, the scorer gave +3.41 and the readers 0.58. The later rows are the push's own stories:
+
+| Rounds | The scorer | The readers |
+|---|---|---|
+| 1 to 20 | +4.85 | 0.51 |
+| 41 to 60 | +11.43 | 0.20 |
+| 81 to 100 | +12.72 | 0.05 |
+
+On 200 orders the push did not train on, the readers gave its stories 0.57 before it and give 0.03 after, a change of -0.58 to -0.51.
 
 ## What it still cannot do
 
@@ -123,7 +131,7 @@ One day, a happy sad girl named Mia wanted to find more. She wanted to bake anot
 Bby was happy again. They were happy again. They could not sell past again. They had fun and sang their new things again. They were happy again. They were happy again because they did their choory together.
 ```
 
-The story above is what the storyteller now writes. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs already say which story is better, and we have not learned from them directly.
+The storyteller now writes stories such as the one above. The scorer is a second model to train and keep, and training against it drove the readers' number to 0.05. The pairs already say which story is better, and we have not learned from them directly.
 
 ## Check yourself
 
@@ -134,7 +142,7 @@ Fall: from 0.58 to 0.05 over the push, and from 0.57 to 0.03 on unseen orders.
 
 <details><summary>Why can training against the scorer make stories worse, when the scorer ranks most unseen pairs right?</summary>
 
-It learned from lesson 25's stories only. Here the number it gives rose while the readers' fell, so its number stopped tracking theirs.
+It ranks 140 of 240 held-back pairs right, where a coin gets 120, and it learned from lesson 25's stories only. Its number rose while the readers' fell.
 </details>
 
 <details><summary>From lesson 13: the scorer's loss on a batch of its own pairs fell to 0.024, and it ranks 140 of 240 unseen pairs right. What has happened, and what would you try?</summary>

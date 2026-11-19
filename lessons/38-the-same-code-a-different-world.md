@@ -14,9 +14,9 @@ The games come from Lichess, a free site that publishes a record of each rated g
 
 From there the steps are lesson 18's: drop repeats and near-repeats, split by fingerprint, train lesson 5's tokenizer on a sample, write the ids to disk. Lesson 18's `clean` threw out a document under 80% letters and spaces, and a game is 74%. So we switch `clean` off for games: `moves` has done the cleaning.
 
-The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. The training is lesson 21's long run, called with other data: it tries the same three rates on short runs, and the same budget buys this smaller model 10,420 steps.
+The model is lesson 21's, with 636 tokens in place of 4,097: 4,488,448 parameters. We ask the tokenizer for as many tokens as the stories had, and it stops at 636, when each chunk of the games has become one token. The training is lesson 21's long run, called with other data: it tries the same three rates on short runs, and the same budget buys this smaller model 10,420 steps.
 
-A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move. Hand the model the moves so far, let it write the next one, and ask a chess program whether that move is legal. What is legal depends on where each piece now stands, and the model is shown only the moves.
+A loss in nats says little about chess, and the rules give us an exact check of lesson 24's kind. Take a game the model has not seen and cut it at a random move among its first 60. Hand the model the moves so far, let it write its top move, and ask a chess program whether that move is legal. We count the top move only, so this says nothing of the moves it gives less chance. The legal moves depend on where each piece now stands, and we show the model only the moves.
 
 Many games open alike, so the moves so far may be the start of a game the model trained on. We count those apart.
 
@@ -98,7 +98,7 @@ uv run pytest tests/test_games.py
 - A record's line becomes moves alone, with notes, numbers, marks and results gone, and a record of 4 moves is left out. Each move kept is legal after the ones before it.
 - The hand examples, and more: nothing is legal after checkmate, and `hello` and `--` are no moves. `Nf3+` with no check is a legal move, and not an exact one.
 - A small model that knows one game by heart writes its next move at three places, castling among them.
-- A cut falls inside a game's first 60 moves. A position is found among the training games it opens, and half a move opens none.
+- A cut falls inside a game's first 60 moves. A position is found among the training games it opens, and half a move, `c` for `c4`, opens none.
 
 The script downloads 129 MB and trains on the graphics chip.
 

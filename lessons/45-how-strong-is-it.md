@@ -10,11 +10,11 @@ Stockfish is a program that plays chess. One of its settings holds it to any rat
 
 The games follow lesson 39's rules, but stop after 240 moves, not 100: a common move is one token now, and the model reads 256. Stockfish gets 0.05 seconds a move, so 1,400 games fit in two hours. Its scale was fitted at a far slower clock, 120 seconds a game and a second more a move, so a last match gives it ten times as long, to see if that matters.
 
-Lesson 39's player wrote a move, and the rules picked one when five tries failed. The new player plays the legal move the model scores highest, among those that are one token.
+Lesson 39's player wrote a move, and the rules picked one when five tries failed. The new player plays the legal move the model scores highest, among those that are one token: one pass scores them all.
 
-Lesson 44's three words are now ours to write, and we call what we write a telling: one rating for both players, and a win for the model's side or a draw. White in the unseen games is rated 2,200 or more, and the 2,700s are the highest hundred that holds one game in a hundred. We try four ratings from 2,200 to 2,700 with a win, and 2,700 with a draw, each for 100 games against Stockfish held to 1,900. The best then plays new games: we picked it for its score, so part of that score is the luck of the pick.
+Lesson 44's three words are now ours to write, and we call what we write a telling: one rating for both players, and a win for the model's side or a draw. White in the unseen games is rated 2,200 or more, and the highest band of a hundred points that holds one game in a hundred is the 2,700s. We try 2,200, 2,400, 2,500 and 2,700 with a win, and 2,700 with a draw, each for 100 games against Stockfish held to 1,900. The best then plays new games.
 
-Lesson 39 fitted every player's rating at once. Here Stockfish's seven ratings are given, and ours is the one unknown. The script keeps the whole-number rating below 4,000 that makes the 700 results most likely by the Elo rule, and lesson 24's bootstrap, 200 draws over pairs of games, gives it a range.
+Lesson 39 fitted every player's rating at once. Here we know Stockfish's seven ratings, and ours is the one unknown. The script keeps the whole-number rating below 4,000 that makes the 700 results most likely by the Elo rule, and lesson 24's bootstrap, 200 draws over pairs of games, gives it a range.
 
 First, lesson 41's model plays the weakest setting, by lesson 39's rules.
 
@@ -89,7 +89,7 @@ def rating(results):
     return likely.argmax().item()
 ```
 
-`words.vocab` maps a token's bytes to its id, and `board.turn` is true when white is to move. `UCI_Elo` is the setting that holds Stockfish to a rating. In `rating`, `expected` is lesson 39's Elo rule, `mine` is a column of each rating from 0 to 3,999, and `likely` is the log of the chance each one gives the results.
+`words.vocab` maps a token's bytes to its id. UCI is the text protocol chess programs speak: `popen_uci` starts Stockfish, `UCI_LimitStrength` and `UCI_Elo` hold it to a rating, and `play` returns its move in `.move`. In `rating`, `mine` is a column of each rating from 0 to 3,999, and `likely` is the log of the chance each one gives the results.
 
 ## The proof
 
@@ -137,9 +137,9 @@ against Stockfish held to 1,800, 0.5 s a move: 0.41 of the points in 100 games, 
 
 Lesson 41's model takes 0.23 of the points from Stockfish's weakest setting. The rule turned round makes that an Elo rating of about 1,110.
 
-The five tellings score from 0.30 to 0.45, each on openings of its own, and each interval overlaps the best one's: 100 games do not tell them apart.
+The five tellings score from 0.30 to 0.45, on openings of their own. The best owes part of that to the pick, so 100 games do not rank them.
 
-The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836, on Stockfish's scale. That scale is fitted to a list of rated chess programs, so 1,785 is not a Lichess rating or a chess federation's. The course's chess players, then:
+The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836, on Stockfish's scale, which is not Lichess's or a chess federation's. The course's chess players:
 
 | Player | Elo rating | Scale |
 |---|---|---|
@@ -150,9 +150,9 @@ The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,
 | Lesson 41's model | about 1,110 | Stockfish's, one match, below its scale |
 | Lesson 44's model | 1,785 | Stockfish's, seven matches, range 1,737 to 1,836 |
 
-Only lesson 41's model is on both scales, and one match is too little to turn one into the other.
+Only lesson 41's model is on both scales, and one match is too little to turn one into the other. On Stockfish's scale lesson 44's model stands about 1,785 - 1,110 = 675 points above lesson 41's, and lesson 44 cannot say which of its changes bought them.
 
-One rating does not suit the seven matches, though. The same rule, on each match alone:
+One rating does not suit the seven matches. The same rule, on each match alone:
 
 | Stockfish held to | Our share | The rule gives |
 |---|---|---|
@@ -178,11 +178,11 @@ Lessons 44 and 45 cost us $36.96 by the price list: `results/45_bill.json` has t
 
 Lesson 44 bought 1,785 with 12 hours of steps and tried no rate below its best. We also changed how a move is picked, and never let the new model pick moves lesson 39's way. We did not tally how many games reached 240 moves and went to the piece count.
 
-Lesson 42's bigger story model has not been taught to take an order, and lesson 36's own server has not run on a card.
+We have not taught lesson 42's bigger story model to take an order, and lesson 36's own server has not run on a card.
 
 The player picks each move in one pass and never tries a reply on a board. [MAP.md](../MAP.md) has two ways on from here: a search through the moves ahead, and learning an engine's verdict on each move.
 
-This is the last lesson. The README's tables hold each result of the course, and [PRACTICE.md](../PRACTICE.md) has nine routines for practising what the lessons taught.
+This is the last lesson. The README's tables hold each result, and [PRACTICE.md](../PRACTICE.md) has nine routines for practising what the lessons taught.
 
 ## Check yourself
 
@@ -193,7 +193,7 @@ No: 0.19 of the points, with an interval of 0.12 to 0.27. Stockfish's 2,200 need
 
 <details><summary>The best telling scored 0.45 against Stockfish held to 1,900. Why play it again in new games before fitting a rating?</summary>
 
-It was picked for scoring highest of five, so part of that 0.45 is the luck that made it the pick. The new games had no part in the choice.
+We picked it for scoring highest of five, so part of that 0.45 is the luck that made it the pick. The new games had no part in the choice.
 </details>
 
 <details><summary>From lesson 39: that fit added a made-up drawn game between each two players. Why does this fit need none?</summary>

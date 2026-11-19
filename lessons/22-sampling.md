@@ -1,6 +1,6 @@
 # 22. Sampling
 
-By the end of this page you control how each token is picked from the model's chances: the same story each time, or a new one on each run.
+By the end of this page you control how the loop picks each token from the model's chances: the same story each time, or a new one on each run.
 
 Lesson 21's model wrote a story after `Once upon a time`. The script that asked for it set a temperature of 0.8 and a top-p of 0.95, and explained neither.
 
@@ -10,13 +10,13 @@ The model gives a chance to each of 4,097 tokens. A loop outside it picks one, a
 
 The plainest rule, called greedy, takes the token with the top score each time. It uses no chance, so the same prompt gives the same story on every run.
 
-The rule that matches training draws a token by its chance, as lesson 1 did. A token with a chance of 0.3 comes three times in ten. Each run now gives a different story. It also means that a token with a chance of one in a thousand comes once in a thousand draws, and a story has hundreds of draws. The run below counts what that does to the words.
+The rule that matches training draws a token by its chance, as lesson 1 did. A token with a chance of 0.3 comes three times in ten. Each run now gives a different story. Drawing also means that a token with a chance of one in a thousand comes once in a thousand draws, and a story has hundreds of draws. The run below counts what that does to the words.
 
 Temperature moves between those two rules, and past them. Divide each score by a number T before the softmax. At a T of 1 nothing changes. With T under 1 the gaps between scores grow, so likely tokens become more likely. With T over 1 the gaps shrink and the chances move toward even. A T of 0.5 doubles each score, and e to twice a score is the square of e to that score. So it squares each chance and then shares the total out again. As T goes to 0 the top token takes all of it, and we treat a T of 0 as greedy.
 
-Top-p removes the unlikely tokens. Sort the tokens from most to least likely and keep the smallest set whose chances reach p. Drop the rest and share their chance among the kept ones. With a p of 0.9, the dropped tokens held at most a tenth of the chance. Top-k, the older rule, keeps a fixed number of tokens. Top-p keeps few when the model is sure and many when it is not.
+Top-p removes the unlikely tokens. Sort the tokens from most to least likely and keep the smallest set whose chances reach p. Drop the rest and share their chance among the kept ones. With a p of 0.9, the dropped tokens held at most a tenth of the chance. Top-k, the older rule, keeps a fixed number of tokens. Top-p keeps few when the model is sure and many when it is not. We divide by the temperature first and cut by top-p after, so a T over 1 also lets top-p keep more tokens.
 
-Writing stops when the end token is picked, when the text has as many new tokens as we allow, or when it is as long as the context the model trained on.
+Writing stops when the loop picks the end token, when the text has as many new tokens as we allow, or when it is as long as the context the model trained on.
 
 ## By hand
 
@@ -28,7 +28,16 @@ Four tokens with chances 0.5, 0.3, 0.15 and 0.05.
 | Squared, for T = 0.5 | 0.25 | 0.09 | 0.0225 | 0.0025 |
 | Divided by their total, 0.365 | 0.685 | 0.247 | 0.062 | 0.007 |
 
-Now top-p at 0.75 on the first row. The first token alone has 0.5, which is under 0.75. The first two have 0.8, which reaches it. So two are kept, and their chances become 0.5 / 0.8 = 0.625 and 0.3 / 0.8 = 0.375. At a p of 0.81 the third would be kept too.
+Now top-p at 0.75 on the first row. The first token alone has 0.5, which is under 0.75. The first two have 0.8, which reaches it. So we keep two, and their chances become 0.5 / 0.8 = 0.625 and 0.3 / 0.8 = 0.375. At a p of 0.81 we would keep the third too.
+
+The code below works the same cut from `before`, the total chance of the tokens ahead of each one, and drops a token whose `before` reaches p:
+
+| | First | Second | Third | Fourth |
+|---|---|---|---|---|
+| `before` | 0, set to -1 | 0.5 | 0.8 | 0.95 |
+| Dropped at p = 0.75 | no | no | yes | yes |
+
+We set the first token's `before` to -1 so that it stays even at a top-p of 0, where its 0 would reach p.
 
 ## The code
 
@@ -102,7 +111,7 @@ About a tenth: 12.6%, against 0.3% at a temperature of 1. Over 1 the chances mov
 
 <details><summary>At a temperature of 0, how many different stories are among the 20?</summary>
 
-One. Nothing is drawn by chance, so each run takes the same path.
+One. The rule draws nothing by chance, so each run takes the same path.
 </details>
 
 <details><summary>Chances of 0.6, 0.3 and 0.1, with a top-p of 0.5. What are the chances after it?</summary>
@@ -117,7 +126,7 @@ The squares are 0.64 and 0.04, which total 0.68. So 0.941 and 0.059.
 
 <details><summary>From lesson 1: which setting draws each token by the chance the model gave it?</summary>
 
-A temperature of 1 with a top-p of 1. That is lesson 1's rule, and the loss in training measures the model under that rule.
+A temperature of 1 with a top-p of 1. That is lesson 1's rule, and the loss in training measures the model under that rule, because the loss scored the chance the model gave each true token.
 </details>
 
 Go deeper:

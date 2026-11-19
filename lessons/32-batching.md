@@ -2,7 +2,7 @@
 
 By the end of this page many listeners share each pass of the model, a request joins or leaves between two tokens, and each listener still gets the story they would get alone.
 
-Lesson 31's machine served one listener while the rest stood in line, and each pass of the model wrote one token for that one listener.
+In lesson 31, at 15.1 requests a second, half the listeners waited 1,737 ms for a first token, while each pass wrote one token for one listener.
 
 ## The idea
 
@@ -10,11 +10,11 @@ A pass of the model works on a grid of tokens with one row for each text. In tra
 
 1. The rows have different lengths, and a grid needs rows of one length. We line the rows up at their ends and put empty places in front of the shorter ones. A grid of true and false, called `real`, marks the places that hold tokens, and attention reads only those.
 2. Listeners come and go. A pass of the batch takes one new token for each row, and a prompt is many tokens. So a new request first reads its prompt alone, into a cache of its own, as in lesson 23. Then its cache joins the batch's cache as one more row. When a row writes its last token the engine cuts it out of the grid.
-3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine counts each request at the size of the longest row, and takes a new one only if the rows together fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
+3. Memory runs out. Each row's cache grows by lesson 23's 6,144 bytes a token, and the grid is as long as its longest row. So the engine sizes each request by its prompt plus the most tokens it may write, counts every request at the largest of those sizes, and takes a new one only if the rows together fit in a budget. Otherwise it says no, and lesson 31's loop keeps that request in line until there is room.
 
 A row read its prompt at places 0, 1, 2 and so on, and the model turned each key by its place, as in lesson 15. In the batch that row may sit further along, behind some empty places. With rotary positions a score depends only on the distance between two tokens, so we turn each of the row's keys further by the same number of places and no score changes.
 
-The engine works in rounds: each writes one token for each row and reads 64 tokens of each prompt still being read.
+The engine works in rounds: each writes one token for each row and reads 64 tokens of each prompt still being read (64 by default, and 256 in the timed runs below).
 
 ## By hand
 
@@ -26,7 +26,7 @@ Row A has read 5 tokens and row B has read 3. B gets two empty places in front.
 | Row B | empty | empty | b | b | b |
 | `real` for B | false | false | true | true | true |
 
-B's tokens were read at places 0, 1 and 2, and now sit at 2, 3 and 4, so each of B's keys is turned 2 more places. Alone, B's next query would sit at place 3 and meet its newest key at place 2, a distance of 1. In the batch the query is at 5 and that key at 4: a distance of 1 again.
+B read its tokens at places 0, 1 and 2, and they now sit at 2, 3 and 4, so each of B's keys is turned 2 more places. Alone, B's next query would sit at place 3 and meet its newest key at place 2, a distance of 1. In the batch the query is at 5 and that key at 4: a distance of 1 again.
 
 Memory. A request with a prompt of 64 tokens that may write 64 more can hold 128 tokens.
 
@@ -54,7 +54,7 @@ def slide(kept, by, pad):
         )
 ```
 
-`kept` is lesson 23's list of caches, one for each block. Values carry no place, so we move them without turning them.
+`kept` is lesson 23's list of caches, one for each block. A cache's keys have lesson 7's shape (batch, heads, tokens, head width), so `dim=2` is the places. `new_zeros` makes zeros of k's type on k's device. Values carry no place, so we move them without turning them.
 
 ```python
 # gpt/engine.py
@@ -132,9 +132,9 @@ a request offered one byte less than its cache needs is taken: False
 
 Timings are from an M4 laptop, and they move from run to run.
 
-After a 64-token prompt, one listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. At 32 it writes 2,275, 13% more than at 16.
+After a 64-token prompt, one listener gets 669 tokens a second, or 657 with the reading of the prompt counted. Among 16, each gets 139 and the machine writes 2,020, 3.1 times what it wrote for one. Each listener's gap is one pass, so a pass with 16 rows takes 669 / 139 = 4.8 times as long as a pass with one: much of a pass's time does not grow with its rows. Lesson 37 measures that fixed part. At 32 it writes 2,275, 13% more than at 16.
 
-At 15.1 requests a second, half of lesson 31's listeners waited 1,737 ms for a first token. With room for 16, half wait 8 ms, and the machine writes 813 tokens a second where it wrote 631. At the two lower rates both engines write the same, to within 4 tokens a second: a machine that keeps up writes what arrives.
+At 15.1 requests a second with room for 16, half the listeners wait 8 ms for a first token, and the machine writes 813 tokens a second where it wrote 631. At the two lower rates both engines write the same, to within 4 tokens a second: at those rates each machine keeps up, and writes what arrives.
 
 ## What it still cannot do
 

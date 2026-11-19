@@ -1,6 +1,6 @@
 # Glossary
 
-Each term the lessons define, in one line, with the lesson that defines it. The lessons use plain words where they can. The first table sets each plain word beside the word a paper or an interviewer would use, so that you can read both.
+This page gives each term the lessons define in one line, with the lesson that defines it. The lessons use plain words where they can. The first table sets each plain word beside the word a paper or an interviewer would use, so that you can read both.
 
 ## Our words and the field's
 
@@ -40,6 +40,10 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | the 16-bit switch | mixed precision, autocast. bfloat16 (bf16) is the 16-bit format we use |
 | a big batch built from small ones | gradient accumulation |
 | multiplying the loss so that 16-bit slopes do not round to 0 | loss scaling. float16 needs it and bfloat16 does not |
+| the law (lesson 19) | scaling law. Ours has the form Hoffmann and others fitted for the Chinchilla model |
+| the floor | irreducible loss |
+| a miss (lesson 19) | residual: what a fit gets wrong on one run |
+| budget (of a run) | compute budget, counted in FLOPs |
 | trusting a difference only past three errors on paired seeds | a paired t-test. Its false-alarm rate is the significance level |
 | results kept for the pass back | activations |
 | fingerprint | hash |
@@ -68,6 +72,8 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | trained hard against the scorer, the readers' number falls | reward hacking. The general rule is Goodhart's law |
 | the reference | reference policy |
 | a penalty for drifting from the starting model | KL penalty |
+| gain | the log-ratio of the model's chance to the reference's |
+| lead | the difference of two gains: the margin that DPO's loss pushes up |
 | beta × gain | implicit reward |
 | a miss, an overreach | under-refusal, over-refusal. Also false negative, false positive |
 | the wait before anything appears | time to first token, TTFT |
@@ -84,6 +90,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | a scale for each row | per-channel quantization |
 | the draft | draft model |
 | keep chance | acceptance probability |
+| drafted and kept, or drawn again from the leftover | accepted, or rejected and resampled: a modified rejection sampling |
 | the leftover | residual distribution |
 | copying the big model's chances | distillation, with soft targets |
 | saying no when the line is full | load shedding |
@@ -97,6 +104,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 | fitting the probe to shuffled boards | control task |
 | a graphics card | GPU. CUDA is NVIDIA's name for programming one, and PyTorch's name for the device |
 | workers adding their slopes up among themselves | all-reduce. NCCL is NVIDIA's library for it between cards |
+| four cards sharing one step of the same size | strong scaling. Giving each card a full step of its own is weak scaling |
 | the share of a card's listed speed that a run gets, 2.4% in lesson 41 | model FLOPs utilisation, MFU |
 | the card's faster 32-bit multiply | TF32 |
 | a pass recorded once and replayed as one job | CUDA graph |
@@ -163,7 +171,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **encoding**: Turning text into token ids. [Lesson 5](lessons/05-tokens.md)
 - **end token**: An extra token that marks where a document ends. It never comes out of ordinary text. [Lesson 5](lessons/05-tokens.md)
 - **engine**: The code that takes requests in and writes their tokens. In lessons 37 and 42, any program that runs a model's arithmetic, such as Apple's MLX or vLLM. [Lesson 31](lessons/31-latency-and-throughput.md)
-- **entropy**: The loss of a text's own counted table on that text. No table scores lower. [Lesson 1](lessons/01-predict-the-next-token.md)
+- **entropy**: The loss of a text's own counted table on that text: how random each character is, given the one before. That form is called conditional entropy. No table scores lower. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **fine-tuning**: Training a trained model further on new text. [Lesson 25](lessons/25-fine-tuning.md)
 - **fingerprint**: A short number worked out from a document's text, the same for the same text. [Lesson 18](lessons/18-data.md)
 - **floor**: The loss that neither the model-size term nor the token-count term removes. [Lesson 19](lessons/19-how-big-should-it-be.md)
@@ -197,7 +205,7 @@ Each term the lessons define, in one line, with the lesson that defines it. The 
 - **listener**: A person the storyteller writes for. Lessons 31 to 37 and 42 measure what one gets. [Lesson 31](lessons/31-latency-and-throughput.md)
 - **Llama**: A family of open models from Meta. [Lesson 16](lessons/16-todays-parts.md)
 - **logarithm**: The natural logarithm of x, ln x, is the power that e, about 2.718, must be raised to in order to give x. [Lesson 1](lessons/01-predict-the-next-token.md)
-- **look-alike**: A harmless word that resembles a listed one, used to count the orders a rule refuses wrongly. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
+- **look-alike**: A harmless word that resembles a listed one, used to count the orders a rule refuses by mistake. [Lesson 30](lessons/30-an-unwanted-behaviour-measured.md)
 - **LoRA**: Leaving a grid of weights frozen and training a correction beside it, made of two thin grids multiplied together. [Lesson 26](lessons/26-lora.md)
 - **loss**: The model's average surprise over a text. Lower is better. [Lesson 1](lessons/01-predict-the-next-token.md)
 - **matrix multiplication**: Written `@`. Output j is each input times the weight in column j, added up. [Lesson 4](lessons/04-a-neural-language-model.md)

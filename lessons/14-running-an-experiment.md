@@ -8,21 +8,21 @@ Lesson 13 compared two runs, one of each setting. We cannot trust that result ye
 
 A run starts from random weights and draws random batches, and lesson 11's seed fixes both. On `cpu` the same seed gives the same run to the last bit, and a new seed gives a different one.
 
-So run one setting on five seeds. Lesson 12's model, trained for 600 steps, ends between 1.896 and 1.943 nats on unseen text, with only the seed changed. A change that moves one run by 0.02 nats has shown nothing.
+Run one setting on five seeds. Lesson 12's model, trained for 600 steps, ends between 1.896 and 1.943 nats on unseen text, with only the seed changed. A change that moves one run by 0.02 nats has shown nothing.
 
-To compare two settings, run both on the same seeds and take the difference for each seed. Average the differences. Then ask how sure that average is: work out the spread of the differences as lesson 9 did for a vector, but divide by one less than their count, as By hand explains. Then divide the spread by the square root of the number of seeds. The result is called the standard error, and here we call it the error.
+To compare two settings, run both on the same seeds and take the difference for each seed. The same seed gives both settings the same batches, and the same starting weights when only the training changes, so the noise they share cancels. Average the differences. Then ask how sure that average is: work out the spread of the differences as lesson 9 did for a vector, but divide by one less than their count, as By hand explains. Then divide the spread by the square root of the number of seeds. This result is the standard error, and here we call it the error.
 
-The rule: count a difference as real when it is more than 3 errors from zero. Five seeds give only a rough error, so we set the bar above the 1.96 errors that Miller, below, uses for a 95% interval.
+The rule: count a difference as real when it is more than 3 errors from zero. Five seeds give only a rough error, so we set the bar above the 1.96 errors that Miller, below, uses for a 95% interval. When the differences follow a normal curve, mean over error follows Student's t distribution, with one fewer degree of freedom than seeds. Its tails are wider than the normal's, so few seeds need a higher bar.
 
 A rule like this is wrong at a rate we can measure. A test draws 10,000 pretend experiments in which nothing changed. With five seeds the rule passes 4 or 5 of each 100 as real. With three seeds it passes 9.
 
-The rule also misses real changes. A change three times the spread of the differences is found more than 90 times in 100 with five seeds. A change as large as that spread is missed more often than found with five seeds, and found more than 80 times in 100 with twenty.
+The rule also misses real changes. With five seeds it finds a change three times the spread of the differences more than 90 times in 100. With five seeds it misses a change as large as that spread more often than it finds one, and with twenty it finds one more than 80 times in 100.
 
 Three habits:
 
-- Change one thing at a time, or you cannot tell which caused the difference.
-- Search a rate by factors. Lesson 13's planted rate was wrong by a factor of 100. So try 0.0003, 0.001, 0.003, 0.01 and 0.03, each about three times the last, on a few seeds. This is called a sweep. Trust a rate that wins on each seed.
-- Say what was measured. A rate that wins at 600 steps may lose at 5,000.
+- Change one thing at a time, or you cannot tell which caused the difference. In AdamW each step shrinks the weight grids by a share of rate × decay, so sweeping the rate also changes how hard they decay.
+- Search a rate by factors. Lesson 13's planted rate was wrong by a factor of 100. So try 0.0003, 0.001, 0.003, 0.01 and 0.03, each about three times the last, on a few seeds. We call this a sweep. Trust a rate that wins on each seed.
+- Say what you measured. A rate that wins at 600 steps may lose at 5,000.
 
 ## By hand
 
@@ -40,7 +40,7 @@ Setting A scores 2.00 on each of five seeds. Setting B scores 2.02, 1.99, 2.03, 
 
 B looks worse by 0.01. That is 1.4 errors from zero, which is under 3, so the rule does not count B as worse.
 
-We divide by 4 because the mean was worked out from these five numbers, which makes their spread look smaller than it is.
+We divide by 4 because we worked out the mean from these five numbers, which makes their spread look smaller than it is.
 
 ## The code
 
@@ -65,7 +65,7 @@ def compare(a, b):
     return mean, spread / math.sqrt(len(diffs))  # the error shrinks as the seeds grow
 ```
 
-`make` is a function that builds the model, so each trial starts fresh. `**loop` collects any extra named settings and hands them to lesson 12's `train`. `zip(a, b, strict=True)` pairs the two lists and raises an error if one is longer. `rate=0.0` is a placeholder, because the loop sets the rate before each step. `val_ids` is the unseen text, and `evaluate` gives the mean loss on it.
+`make` is a function that builds the model, so each trial starts fresh. `**loop` collects any extra named settings and hands them to lesson 12's `train`. `zip(a, b, strict=True)` pairs the two lists and raises an error if one is longer. `rate=0.0` is a placeholder, because the loop sets the rate before each step, and `decay=0.1` is lesson 11's weight decay. `train` yields after each step, so `for _ in train(...): pass` runs every step and ignores what it yields. `val_ids` is the unseen text, and `evaluate` gives the mean loss on it.
 
 ## The proof
 
@@ -76,7 +76,7 @@ uv run pytest tests/test_experiment.py
 - The hand example gives a mean of 0.01, an error of 0.0071 and a ratio of 1.41.
 - The same seed gives the same loss, and a new seed a different one.
 - With nothing changed, the rule passes between 3 and 6 experiments in 100 at five seeds, and between 8 and 11 at three.
-- A planted change three times the noise is found. One as large as the noise needs twenty seeds.
+- The rule finds a planted change three times the noise. One as large as the noise needs twenty seeds.
 - On a tiny model, a rate 100 times too low is more than 3 errors worse, and each of three seeds picks 0.01 or 0.03 out of five rates.
 
 Predict before you run: the sweep tries five rates on three seeds. Does lesson 12's peak of 0.003 win?

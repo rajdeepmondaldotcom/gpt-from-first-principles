@@ -311,6 +311,7 @@ if __name__ == "__main__" and not sys.argv[1:]:
             f"vLLM, one listener: first token after {first * 1e3:.0f} ms, {speed:,.0f} tokens a second"
         )
         small = sweep("vLLM", prompts, 16)
+        # answers received, times the 64 tokens each asked for
         sent = sum(row["served"] for row in small) * 64
         say(
             f"tokens written in the sweep: {sent:,} by our count, "

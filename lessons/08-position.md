@@ -10,11 +10,11 @@ Tell each token its place before attention runs. A token's place is also called 
 
 A first try is to attach the place as one more number: 0 for the first token, 1 for the second. That gives the model a single number to work with, and its size has no limit: place 500 is 500 times place 1. A layer multiplies it by fixed weights, so later places push ever harder, and a place beyond training is a size the layer never met.
 
-The fix repeats what worked for tokens. A token's id picks a row from a table of embeddings. Let its place pick a row from a second table, with one row per place. Add the two rows:
+We repeat what worked for tokens. A token's id picks a row from a table of embeddings. Let its place pick a row from a second table, with one row per place. Add the two rows:
 
 vector for a token = row for what it is + row for where it stands
 
-Both tables start random and both are learned. Training moves the place rows the same way it moves the token rows.
+Both tables start random, and training moves the place rows the same way it moves the token rows.
 
 After the addition, the same token in two places gives two different vectors. The layer makes queries and keys from those vectors, so what a token reads can now depend on where things stand.
 
@@ -77,7 +77,7 @@ uv run pytest tests/test_gpt2.py
 
 We have the parts of one layer: embeddings with positions, and attention. One round of reading lets a token gather facts from other tokens. To use a fact that another token gathered, it needs a second round, so we want to stack layers.
 
-Attention also only mixes. A token's result is a weighted average of values, passed through one linear layer, with no bend after it. And with GPT-2's starting weights, a plain stack of many such layers passes almost no slope back to the first, as lesson 9 measures.
+Attention also only mixes. The weights depend on the tokens, but a token's result is a weighted average of values, passed through one linear layer, with no bend after it. And with GPT-2's starting weights, a plain stack of many such layers passes almost no slope back to the first, as lesson 9 measures.
 
 ## Check yourself
 
@@ -100,7 +100,7 @@ It would double the width of each vector, and of each layer that reads it. Addin
 
 <details><summary>From lesson 7: the mask already stops a token reading later tokens. Why does that not give the model order?</summary>
 
-The mask says which tokens a token may read. Among those it may read, nothing says which came first.
+The mask says which tokens a token may read. In one layer, nothing among those says which came first. In a stack, token i's first result is an average over i + 1 tokens, so it can carry something of its place for later layers to use. A table of places hands order over directly.
 </details>
 
 Go deeper:

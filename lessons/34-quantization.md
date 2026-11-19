@@ -8,7 +8,7 @@ The weights take 21.5 MB, each one a 32-bit number, and we have not measured wha
 
 We can store each weight as a small whole number, and keep one 32-bit number for its row, called the scale, that says how large a step of 1 is.
 
-With 8 bits a whole number runs from -127 to 127. Find the row's largest weight, ignoring its sign, and give it the number 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
+With 8 bits a whole number runs from -128 to 127, and we use -127 to 127 so both signs get the same range. Find the row's largest weight, ignoring its sign, and give it the number 127, so the scale is that weight divided by 127. Each weight becomes its value divided by the scale, rounded to the nearest whole number. To use a weight, multiply its number by the scale. Rounding moves a number by at most a half, so no weight moves by more than half a step.
 
 With 4 bits the numbers run from -7 to 7. The steps are 127 / 7 = 18 times as coarse.
 
@@ -20,7 +20,7 @@ We measure what the model loses: the loss on 500 unseen stories, before and afte
 
 An 8-bit number is a byte, a quarter of 32 bits. Two 4-bit numbers share a byte, an eighth. The scales add one 32-bit number a row.
 
-We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading the weights at memory's full speed takes an eighth of each token's time. And we turn the small numbers back into 32-bit numbers each time a layer runs, which is extra work. Programs built for speed multiply them as they are, with code written for one kind of chip. We claim the memory saving and report the speed we measured.
+We do not expect more speed. Lesson 31 put our writing at about an eighth of what memory alone allows, so reading the weights at memory's full speed takes an eighth of each token's time. We also turn the small numbers back into 32-bit numbers each time a layer runs, which writes a full 32-bit copy of each grid and reads it back, so a pass moves more bytes than the plain model's. A program built for speed converts inside the multiply, with code written for one kind of chip, and never writes that copy. Each output row has one scale, which comes out of that row's sum, so such a program can add up inputs times whole numbers first and apply the scale once at the end. We claim the memory saving and report the speed we measured.
 
 ## By hand
 
@@ -33,7 +33,7 @@ One row at 4 bits: 0.6, -1.0, 0.26 and 0.0. The largest size is 1.0, so the scal
 | 0.26 | 1.82 | 2 | 0.286 | 0.026 |
 | 0.0 | 0 | 0 | 0.0 | 0 |
 
-Half a step is 0.071, and no weight moved further.
+Half a step is 0.071, and no weight moved further. With each input 1, the bound for this row is 4 × 0.071. The real error is -0.029 + 0.026 = -0.003: the errors mostly cancel, and the bound is the worst case.
 
 Memory, for a grid of 256 rows of 256 weights.
 
@@ -71,7 +71,7 @@ def pack(numbers):
         return x @ (numbers * self.scale).T
 ```
 
-This is the layer that stands in for a linear layer, with lesson 6's `.T`. `unpack` undoes `pack`, and `shrink` puts one such layer in place of each linear layer inside the blocks. The grid of token rows stays at 32 bits: it is 4.2 MB of the 21.5.
+This is the layer that stands in for a linear layer, with lesson 6's `.T`. `four` says whether the numbers are packed, and `shape` is the grid's shape before packing. `unpack` undoes `pack`, and `shrink` puts one such layer in place of each linear layer inside the blocks. The grid of token rows stays at 32 bits: it is 4.2 MB of the 21.5.
 
 ## The proof
 
@@ -105,7 +105,7 @@ Timings are from an M4 laptop, and they move from run to run.
 
 At 8 bits the model takes 8.6 MB where it took 21.5, and its loss rises by 0.0001 nats, interval +0.0000 to +0.0002. At 4 bits it takes 6.4 MB and loses 0.0303 nats, and that interval, +0.0286 to +0.0318, is far from zero. For scale, lesson 25's fine-tune cost plain stories 0.069.
 
-Writing 200 tokens after "Once upon a time" with lesson 23's loop, always taking the top token, fastest of three tries, both shrunk models are slower: 393 and 168 tokens a second, against 643. Lesson 37 looks at where a pass's time goes.
+We write 200 tokens after "Once upon a time" with lesson 23's loop, take the top token each time and keep the fastest of three tries. Both shrunk models are slower: 393 and 168 tokens a second, against 643. Lesson 37 looks at where a pass's time goes.
 
 ## What it still cannot do
 

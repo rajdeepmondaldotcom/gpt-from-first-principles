@@ -12,7 +12,7 @@ Finding the weights is settled: in lesson 21 we saved them under the names that 
 
 Doing what we do is harder to see. The engine has its own code for attention, rotary positions, RMSNorm and SwiGLU. If one detail differs, such as which entries lesson 15's rotation pairs up, its scores differ from ours with no error shown. So we feed both engines the same tokens and compare each score. We do not expect the last bits to agree: an engine may add the same numbers in another order, and 32-bit sums depend on the order.
 
-Then speed. Both engines write 128 tokens after the same 64-token prompt and take the top token each time, and we keep the fastest of three tries. We time both engines on the processor and on the graphics chip, and each with sixteen at once, ours on the processor only.
+Then we turn to speed. Both engines write 128 tokens after the same 64-token prompt and take the top token each time, and we keep the fastest of three tries. We time both engines on the processor and on the graphics chip, and each with sixteen at once, ours on the processor only.
 
 One token's pass makes about 500 calls into PyTorch, and each call costs some time whatever the size of its arithmetic. If that fixed cost is a large part of a pass, a far smaller model will not be much faster. So the script also times an untrained model as deep as ours and an eighth as wide: 26 times fewer weights, the same calls.
 
@@ -111,7 +111,7 @@ The engines agree: the largest gap between their scores is 0.000013, the top tok
 
 On the processor, one listener gets 775 tokens a second from our engine and 942 from Apple's. Lesson 31's run, which gave 539, drew each token by chance after a prompt three times as long. With 16 at once it is 4,134 against 5,943. On the graphics chip ours writes 104, about a seventh of its speed on the processor. Apple's writes 298 there alone and 5,921 with 16 at once, level with its processor.
 
-With the small model we answer part of lesson 31's question. It makes the same 516 calls on 26 times fewer weights and writes 1,648 tokens a second, 2.1 times as fast. By the sum above, 0.58 of a pass's 1.29 ms is the fixed cost of its calls. That alone is more than twice the 0.24 ms a token takes at lesson 31's memory limit. A pass of the small model still costs 0.47 of ours, and lesson 35's draft needed under 0.35. Sixteen listeners share the calls and get 5.3 times the tokens.
+With the small model we answer part of lesson 31's question. It makes the same 516 calls on 26 times fewer weights and writes 1,648 tokens a second, 2.1 times as fast. By the sum above, 0.58 of a pass's 1.29 ms is the fixed cost of its calls. That alone is more than twice the 0.24 ms a token takes at lesson 31's memory limit. A model as deep as ours and an eighth as wide costs 0.47 of a pass. Lesson 35's draft had half the blocks, so about half the calls, and still missed the 0.35 it needed. Sixteen listeners share the calls and get 5.3 times the tokens. Lesson 42 shows one way an engine cuts the fixed cost: the whole pass recorded once and handed over in one call.
 
 ## What it still cannot do
 

@@ -8,7 +8,7 @@ The scorer of lesson 28 is a second model to train and keep, and training agains
 
 A pair says that for one order, story A is better than story B. Training should then make A more likely and B less likely. Our model gives each text a chance, so "more likely" has an exact meaning: the log of A's chance should rise and the log of B's should fall.
 
-We cannot compare the two log chances as they stand. They differ for reasons that say nothing about which story is better: each token lowers a story's log chance, so length alone can put one story far below another. So we compare how far each has moved since training began. Keep a frozen copy of the model, made before this training starts, and call it the reference. A long story is unlikely under both, and the difference between them cancels most of what length does.
+We cannot compare the two log chances as they stand. They differ for reasons that say nothing about which story is better: each token lowers a story's log chance, so length alone can put one story far below another. So we compare how far each has moved since training began. Keep a frozen copy of the model, made before this training starts, and call it the reference. The reference carries no slope, so it never changes which way a pair pushes. With it, each pair starts at a lead of 0, so length alone does not decide how hard a pair pushes.
 
 For each story, ask how much more likely our model makes it than the reference does: the log of its chance under our model, minus the log of its chance under the reference. Call that the story's gain. Then for a pair,
 
@@ -17,13 +17,13 @@ lead = gain of the better story - gain of the worse story
 We want the lead to grow, and the loss is lesson 28's bet again, with the lead times a small number beta in the place of x.
 
 1. At the start our model is the reference. Each gain is 0, each lead is 0, and the loss is ln 2.
-2. The loss falls as the better story gains on the worse one. A rise in the better and a fall in the worse count alike.
+2. The loss falls as the better story gains on the worse one. A rise in the better and a fall in the worse count alike. The loss asks only that the lead grow, so both stories can lose chance while the better loses less.
 3. A pair with a large lead has little left to teach: its loss is nearly flat there, so it pushes little.
 4. Beta sets how large a lead counts as large. A lead is in nats, summed over a story, and our stories run to about 180 tokens. With our beta of 0.1, a lead of 10 nats, under 0.06 a token, makes x = 1 and a bet of 0.73.
 
-This is called direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and the reference's part of each lead can be worked out once.
+The method is direct preference optimization, or DPO. It needs no scorer and no stories written during training. The pairs are fixed, and we can work out the reference's part of each lead once.
 
-Its authors start from lesson 28's aim with a penalty: raise the scorer's average number, less beta times the average gain of the stories the model writes. A larger beta holds the model nearer the reference. Let the scorer's number for a story be beta times its gain, and the storyteller is its own scorer: the two models of lesson 28 fold into one.
+Its authors start from lesson 28's aim with a penalty: raise the scorer's average number, less beta times the average gain of the stories the model writes. A larger beta holds the model nearer the reference. They prove that the model best at that aim gives each story a gain equal to its score divided by beta, plus a number shared by every story for one order. A lead takes two stories for one order, so that number cancels, and beta times the lead is the scorer's own lead. The storyteller is its own scorer: the two models of lesson 28 fold into one.
 
 ## By hand
 
@@ -92,7 +92,7 @@ the readers give its stories 0.62 on average, where they gave 0.53. The change h
 
 The loss falls on pairs it trains on: by step 200 it has drawn 1,600 pairs from 1,386, and each story sits in about two, so most stories in a late batch were pushed before. The fair test is the held-back line: 240 pairs from 60 orders it never trained on.
 
-Readers give its stories 0.62 where they gave 0.53, with an interval clear of zero. Lesson 28's draw from the same model gave 0.57.
+Readers give its stories 0.62 where they gave 0.53, with an interval clear of zero. Lesson 28's draw, from the same model on the same 200 orders, gave 0.57: each number is a separate draw of stories.
 
 35 pass where 30 did. We did not put lesson 24's paired interval on this difference, so the counts alone do not rank the two.
 

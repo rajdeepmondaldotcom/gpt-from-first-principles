@@ -12,7 +12,7 @@ from gpt.optim import AdamW
 from gpt.results import save, say
 from gpt.train import train
 
-BUDGET = 2.7e15  # multiplies and adds for the story model: about two and a half hours on this Mac
+BUDGET = 2.7e15  # multiplies and adds for the story model: about 2.3 hours at lesson 17's speed
 
 
 def shape(width, layers):

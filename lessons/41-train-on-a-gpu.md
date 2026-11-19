@@ -2,7 +2,7 @@
 
 By the end of this page the code that trained on a laptop has trained a bigger story model and a stronger chess player on a rented graphics card, and you know what each run cost, on one card and on four.
 
-Every run so far used one laptop: a storyteller of 5,374,464 parameters and a chess player of 4,488,448, from one file of model code. We have not run that code on hardware built for it.
+Every run so far used one laptop: a storyteller of 5,374,464 parameters and a chess player of 4,488,448, from one file of model code. The storyteller ends at 1.565 nats, and the chess player takes 0.16 of the points from the grabber. We have not run that code on hardware built for it.
 
 ## The idea
 
@@ -10,7 +10,7 @@ We rent a machine with one NVIDIA L40S, at $1.861 an hour in November 2026. It i
 
 The model file, the training loop and the checks do not change. PyTorch calls an NVIDIA card `cuda` where it called the laptop's chip `mps`. Three things change.
 
-Lesson 12's switch runs the forward pass in 16 bits.
+Lesson 12's switch does the big multiplies in 16 bits, forwards and back, while the weights, slopes and AdamW's averages stay in 32 bits.
 
 There is more text: all 2,717,495 stories of TinyStories' training file, where lesson 18 took the first 210 MB, and four months of chess games, where lesson 38 took one. We score both story models on lesson 18's unseen stories, which neither has read.
 
@@ -99,7 +99,7 @@ this script, start to end: 239 minutes of one card, $7.41
 
 Part of its output is above, and "19 laptops" means 19 times lesson 21's budget. Timings are from rented machines and move from run to run.
 
-The card takes lesson 21's step in 34 ms where the laptop took 928. That is 8,822 billion multiplies and adds a second, 2.4% of the 362,050 billion NVIDIA lists for this card at 16 bits. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. It took 88 minutes, not 60. The three trial rates add 9% to the budget, and we did not time the rest. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
+The card takes lesson 21's step in 34 ms where the laptop took 928. That is 8,822 billion multiplies and adds a second, 2.4% of the 362,050 billion NVIDIA lists for this card at 16 bits. We did not measure where the rest goes. The bigger story model ends at 1.270 nats on unseen stories, 0.467 bits per byte, where lesson 21's had 1.565 and 0.575. It took 88 minutes, not 60. The three trial rates add 9% to the budget, and we did not time the rest. Both laws predicted too low a loss, lesson 19's by 0.347 nats and the refit by 0.209.
 
 The chess model is the pick's shape with lesson 38's 636 tokens. It makes a legal move at 987 of this script's 1,000 unseen positions, where the laptop's makes 932, and it slips on 0.4% of its moves where the laptop's slipped on 3.6% (lesson 39). It takes 0.86 of the points from the laptop's model, and 0.89 from the grabber. Its Elo rating is +775 and the laptop's model's +355, where lesson 39's fit gave +421: a rating depends on who else is in the fit.
 
@@ -119,7 +119,7 @@ one card, 128 windows a step: 1004 ms, 32,644 tokens a second
 a million tokens of training: $0.0068 on one card, $0.0093 on 4
 ```
 
-Four cards take a step of 128 windows in 240 ms where one takes 1,004: 4.19 times as fast. The gain beats four because a card takes 7.5 ms a window on 32 windows, exchange included, and 7.8 ms on 128. After 12 steps the two sets of weights differ by 0.000002 on average, where a weight moved 0.004, and by 0.003239 at most, far above the 0.00001 lesson 20's test allows after three steps. We have not found why.
+Four cards take a step of 128 windows in 240 ms where one takes 1,004: 4.19 times as fast. The gain beats four because a card takes 7.5 ms a window on 32 windows, exchange included, and 7.8 ms on 128. We did not find why a bigger batch costs more a window. After 12 steps the two sets of weights differ by 0.000002 on average, where a weight moved 0.004, and by 0.003239 at most, far above the 0.00001 lesson 20's test allows after three steps. We have not found why. One suspect we have not tested: AdamW divides each slope by its usual size, so a slope near zero whose sign flips with the order of a sum moves its weight a full step either way.
 
 A second stage tries each bigger size, on the one-card machine:
 
@@ -134,7 +134,7 @@ aws/run.sh <host> python -m gpt.gpu sizes
  81,022,464 parameters: not trained. Its first loss is 8.468 nats, 0.150 from ln 4,097, and lesson 13's check allows 0.15
 ```
 
-The 25 million model is best, at 1.241 nats: lesson 19's yardstick would have picked it. The law favoured each bigger size over the last, and 48 million does no better than our pick. The widest never trained: its first loss was at or past lesson 13's limit, 0.15 from ln 4,097.
+The 25 million model is best, at 1.241 nats: lesson 19's yardstick would have picked it. The law favoured each bigger size over the last, and 48 million does no better than our pick. The widest never trained: its first loss was at or past lesson 13's limit, 0.15 from ln 4,097. Each weight starts at the same size whatever the width, so a wider model's first scores spread wider, and its first loss sits further above ln 4,097.
 
 ```bash
 AWS_PROFILE=<yours> AWS_REGION=us-east-1 aws/stop.sh

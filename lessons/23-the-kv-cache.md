@@ -6,11 +6,11 @@ To write each new token, the model reads the whole text again from its first tok
 
 ## The idea
 
-Add one token to the end. Lesson 7's mask lets a token read only the tokens before it, so the results for the first 200 tokens are the same whether or not a 201st follows. We need not work them out again.
+Add one token to the end. Lesson 7's mask lets a token read only itself and the tokens before it, so the results for the first 200 tokens are the same whether or not a 201st follows. We need not work them out again.
 
-The new token does need something from the old ones. In each block, attention scores the new token's query against the key of each earlier token and mixes their values. It needs nothing else from them: only their own results use their queries and what their MLPs made.
+The new token does need something from the old ones. In each block, attention scores the new token's query against the key of each earlier token and mixes their values. It needs nothing else from them: their queries serve only their own results, and what their MLPs made reaches the new token only through the next block's keys and values, which the cache holds.
 
-So keep, in each block, the key and the value of each token read so far. This is the KV cache. To add a token, run that one token through the model. In each block it makes its query, key and value, puts the key and value at the end of the cache, and reads the whole cache.
+Keep, in each block, the key and the value of each token read so far. This is the KV cache. To add a token, run that one token through the model. In each block it makes its query, key and value, puts the key and value at the end of the cache, and reads the whole cache.
 
 For a text of n tokens the model then reads n tokens in all. Without the cache it reads 1 + 2 + ... + n, about n² / 2.
 
@@ -19,6 +19,8 @@ A cache goes wrong in three places, and each has a test here.
 - The new token's place is the number of tokens in the cache. A cache that starts each call at place 0 turns the new query and key by the wrong angle, and the wrong key stays in the cache.
 - A prompt can arrive in pieces, so one call can bring several new tokens. The new tokens need lesson 7's mask among themselves: each reads the whole cache, and the new tokens up to itself.
 - With grouped heads the cache holds one key for each key head, and lesson 16 repeats them for the query heads at the moment of use.
+
+The cache holds keys already turned by their place. That is safe because a key's angle depends only on its own place, which never changes.
 
 The cache costs memory, and lesson 17 counted it. The story model keeps a key and a value in each of 6 blocks, for 4 key heads of 32 numbers at 4 bytes each: 2 × 6 × 4 × 32 × 4 = 6,144 bytes for each token. A story of 250 tokens holds 1.5 MB. At 6,144 bytes a token, the cache matches the 21.5 MB of weights at about 3,500 tokens: about fourteen full contexts at once.
 
@@ -44,6 +46,8 @@ Lesson 15 quoted attention with `seen` left for later. `seen` is how many tokens
         pos = torch.arange(seen, seen + T, device=x.device)
 ```
 
+The cached keys have the shape (batch, key heads, tokens, head width), so `.size(2)` counts the tokens.
+
 The new keys and values join the old ones, and the cache keeps the result:
 
 ```python
@@ -54,14 +58,19 @@ The new keys and values join the old ones, and the cache keeps the result:
             cache["k"], cache["v"] = k, v
 ```
 
-`cache` is a dictionary for one block, empty until the first call. The mask has a row for each new token and a column for each token old or new:
+`cache` is a dictionary for one block, empty until the first call. An empty dictionary counts as false, so on the first call `if cache` skips the joining while `if cache is not None` still stores the keys and values. The mask has a row for each new token and a column for each token old or new:
 
 ```python
 # gpt/model.py
         past = torch.ones(T, seen + T, dtype=torch.bool, device=x.device).tril(seen)
 ```
 
-`tril(seen)` keeps, in row i, the first `seen` + i + 1 columns: the whole cache and the new tokens up to this one.
+`tril(seen)` keeps, in row i, the first `seen` + i + 1 columns: the whole cache and the new tokens up to this one. With 3 tokens in the cache and 2 new ones, 1 for a column read and 0 for one hidden:
+
+| | Old 1 | Old 2 | Old 3 | New 1 | New 2 |
+|---|---|---|---|---|---|
+| New 1 | 1 | 1 | 1 | 1 | 0 |
+| New 2 | 1 | 1 | 1 | 1 | 1 |
 
 The loop that writes hands the model only what it has not read. The loop passes the model `kept`, a list with one cache for each block:
 
@@ -84,6 +93,8 @@ def generate(model, ids, n, stop=None, cache=True, **how):
         unread = ids[-1:]
     return ids
 ```
+
+`**how` gathers the picking settings, such as `temperature` and `top_p`, and hands them to lesson 22's `choose`.
 
 ## The proof
 
@@ -123,7 +134,7 @@ The model now writes fast enough to be judged on hundreds of stories. We cannot 
 
 <details><summary>Prediction</summary>
 
-No: 3.5 times. It still calls the model once for each new token.
+No: 3.5 times. Each call has costs that fewer tokens do not shrink, and each new token's attention still reads the whole cache.
 </details>
 
 <details><summary>A prompt of 10 tokens, and 100 tokens to write. How many tokens does the model read with a cache, and without?</summary>
@@ -133,7 +144,7 @@ With: 10 + 99 = 109. Without: 10 + 11 + ... + 109 = 100 × (10 + 109) / 2 = 5,95
 
 <details><summary>Why does the cache keep keys and values and not queries?</summary>
 
-A token's query is used once, to work out its own result. Its key and value are read again by each token that comes after.
+Attention uses a token's query once, to work out its own result. Each token that comes after reads its key and value again.
 </details>
 
 <details><summary>How much memory does the story model's cache need for a full context of 256 tokens?</summary>
@@ -143,7 +154,7 @@ A token's query is used once, to work out its own result. Its key and value are 
 
 <details><summary>From lesson 7: why does adding a token leave the earlier results as they were?</summary>
 
-The causal mask. The result at a place is built from that token and the ones before it, so a later token cannot reach it.
+The causal mask. The model builds the result at a place from that token and the ones before it, so a later token cannot reach it.
 </details>
 
 Go deeper:

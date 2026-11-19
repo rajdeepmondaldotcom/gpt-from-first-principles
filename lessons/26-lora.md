@@ -8,7 +8,7 @@ Lesson 25's fine-tune moved all 5,374,464 weights. The result is a second file o
 
 Fine-tuning turns a grid of weights W into W plus a change D, and D is as large as W. The authors of LoRA, low-rank adaptation, bet that a new task needs a simpler change, and build D from two thin grids.
 
-Take a grid that maps 256 numbers to 256. In place of a free D, write D as B times A. A maps the 256 numbers down to r of them, and B maps those r back up to 256. With r = 8, A and B hold 4,096 numbers, where D held 65,536. The number r, the fewest numbers the change can be passed through, is called its rank.
+Take a grid that maps 256 numbers to 256. In place of a free D, write D as B times A. A maps the 256 numbers down to r of them, and B maps those r back up to 256. With r = 8, A and B hold 4,096 numbers, where D held 65,536. The change passes through r numbers, so its rank, the fewest numbers it can be passed through, is at most r. We call r the rank.
 
 The layer becomes the old result plus the correction:
 
@@ -16,26 +16,17 @@ W x + (32 / r) × B (A x)
 
 W is frozen: it gets no slope and takes no step. Only A and B train.
 
-The number in front sets how much the correction counts. We divide it by r so that the first step is the same on average at each rank, and one learning rate can serve them all.
+The number in front sets how much the correction counts. We divide it by r so that, under AdamW, the first step moves the layer's output by about as much at each rank, and one learning rate can serve them all.
 
 A starts random and B at zero, so the correction starts at zero and the model begins as it was.
 
-A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two, the ones that make queries and values. We run that first, at a rank of 8. Then, one change at a time as lesson 14 taught: eight times the rank, and a correction beside each of the seven.
+A block has seven grids: four in attention and three in the MLP. The paper that introduced LoRA put a correction beside two, the ones that make queries and values. We run that first, at a rank of 8. Then we make one change at a time, as lesson 14 taught: eight times the rank, and a correction beside each of the seven.
 
 Keep a trained A and B apart, and one copy of the big model can serve many tasks, each with a small file of its own. Or fold them in: add (32 / r) × B A to W once, and the model is plain again, no larger and no slower.
 
 Each run repeats lesson 25: the same examples in the same batches, 2,000 steps of 32, the same three measures. Two settings differ: the peak rate is 0.01, ten times as high, and there is no weight decay. We took the 32, the division by r and the ten times from Schulman and others, below, without a search.
 
 ## By hand
-
-The count for one block, at a rank of 8.
-
-| Grid | Maps | A and B | Trained numbers |
-|---|---|---|---|
-| Queries | 256 to 256 | 8 × 256 and 256 × 8 | 4,096 |
-| Values | 256 to 128 | 8 × 256 and 128 × 8 | 3,072 |
-
-The values grid is smaller because of lesson 16's grouped heads: 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers and six blocks 43,008: 0.8% of 5,374,464, and 0.17 MB. At a rank of 64 the same two grids have 344,064, or 6.4%. A rank of 8 beside each of the seven grids has 221,088, or 4.1%: the MLP's three grids are 682 wide inside (8 × 256 / 3, lesson 16).
 
 A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0).
 
@@ -47,6 +38,15 @@ A rank of 1, small enough to see. A is the row (1, 2) and B is the column (3, 0)
 
 Each result is a multiple of (3, 0). No input can make this correction change the second number, and a free D could.
 
+The count for one block, at a rank of 8.
+
+| Grid | Maps | A and B | Trained numbers |
+|---|---|---|---|
+| Queries | 256 to 256 | 8 × 256 and 256 × 8 | 4,096 |
+| Values | 256 to 128 | 8 × 256 and 128 × 8 | 3,072 |
+
+The values grid is smaller because of lesson 16's grouped heads: 8 heads of 32 share 4 sets of keys and values, and 4 × 32 = 128. A block has 7,168 trained numbers and six blocks 43,008: 0.8% of 5,374,464, and 0.17 MB. At a rank of 64 the same two grids have 344,064, or 6.4%. A rank of 8 beside each of the seven grids has 221,088, or 4.1%: the MLP's three grids are 682 wide inside (8 × 256 / 3, lesson 16).
+
 ## The code
 
 ```python
@@ -57,7 +57,7 @@ class LoRA(nn.Module):
     def __init__(self, layer, rank):
         super().__init__()
         self.layer = layer
-        self.scale = 32 / rank  # over the rank: the first step is the same size on average
+        self.scale = 32 / rank  # over r: under AdamW the first step is the same size on average
         edge = layer.in_features**-0.5
         self.down = nn.Parameter(torch.empty(rank, layer.in_features).uniform_(-edge, edge))
         self.up = nn.Parameter(torch.zeros(layer.out_features, rank))  # zero: no change at first
@@ -91,7 +91,7 @@ def merge(model):
                     setattr(part, name, one.layer)
 ```
 
-`down` is A and `up` is B. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `named_children` lists a part's layers by name and `setattr` replaces one, so the model's own file does not change.
+`down` is A and `up` is B. `uniform_(-edge, edge)` fills A with numbers drawn evenly between -edge and edge, where edge is 1 over the square root of the input width. `x` arrives as a row, so B (A x) is written `x @ down.T @ up.T`. `requires_grad_(False)` tells PyTorch to keep no slopes for the model's own weights. `named_children` lists a part's layers by name and `setattr` replaces one, so the model's own file does not change.
 
 ## The proof
 
@@ -150,9 +150,9 @@ merged against unmerged, largest difference in a score: 0.000014
 
 Beside queries and values at a rank of 8, the model uses 0.37 of the asked words: 0.33 to 0.41. That is clear of the 0.14 it started from and of the full fine-tune's 0.56, so the corrections learned part of the skill. It passes 10 of 200 tasks, against the 27 of lesson 25's draw.
 
-Eight times the rank gives 0.41: a gap of +0.037, interval -0.005 to +0.080. A correction beside each grid gives 0.34: -0.033, interval -0.080 to +0.012. Neither is clear of zero, so these runs do not rank the settings. None reaches 0.56.
+Eight times the rank gives 0.41: a gap of +0.037, interval -0.005 to +0.080. A correction beside each grid gives 0.34: -0.033, interval -0.080 to +0.012. Neither is clear of zero, so these runs do not rank the settings, and none of the three reaches 0.56.
 
-Plain stories pay less too: 0.006 to 0.009 nats, against 0.069.
+The cost on plain stories is smaller too: 0.006 to 0.009 nats, against 0.069. These runs also learned less of the task, so the smaller cost does not compare the two methods at equal skill.
 
 Folded in, the last run's corrections move no score on a 64-token window by more than 0.000014.
 
