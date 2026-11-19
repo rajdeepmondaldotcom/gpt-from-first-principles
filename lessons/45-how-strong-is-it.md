@@ -1,6 +1,6 @@
 # 45. How strong is it?
 
-By the end of this page lesson 44's model has played 1,300 games against a chess program held to known ratings, and has a rating on that program's scale, with a range around it.
+By the end of this page lesson 44's model has played 1,300 games against a chess program held to known ratings, and has an Elo rating on that program's scale, with a range around it.
 
 The model has a loss, and lesson 38 found that a loss says little about chess. It has not played a game, and we still have no opponent whose rating others know.
 
@@ -16,7 +16,7 @@ Lesson 44's three words are now ours to write, and we call what we write a telli
 
 Lesson 39 fitted every player's rating at once. Here Stockfish's seven ratings are given, and ours is the one unknown. The script keeps the whole-number rating below 4,000 that makes the 700 results most likely by the Elo rule, and lesson 24's bootstrap, 200 draws over pairs of games, gives it a range.
 
-First, lesson 41's model plays the weakest setting, with lesson 39's player and its 100 moves.
+First, lesson 41's model plays the weakest setting, by lesson 39's rules.
 
 ## By hand
 
@@ -96,7 +96,6 @@ uv run pytest tests/test_strong.py
 ```
 
 - Ten wins for each loss against a player rated 1,500 give a rating of 1,900, and a half share gives the opponent's own.
-- Two opponents, each scored as a player rated 1,700 would score, give 1,700.
 - The line the player hands the model opens with the end token and the three words, with `1-0` when it plays white and `0-1` when it plays black. It plays the one-token legal move scored highest.
 
 Predict before you run: each game the model read was between players rated 2,200 or more. Will it take half the points from Stockfish held to 2,200?
@@ -133,11 +132,20 @@ the stronger player is rated 1,785 on Stockfish's scale, 95% interval 1,737 to 1
 against Stockfish held to 1,800, 0.5 s a move: 0.41 of the points in 100 games, 95% interval 0.32 to 0.50
 ```
 
-Lesson 41's model takes 0.23 of the points from Stockfish's weakest setting. The rule turned round makes that about 1,110, below the lowest rating the scale has, so no setting can check it.
+Lesson 41's model takes 0.23 of the points from Stockfish's weakest setting. The rule turned round makes that an Elo rating of about 1,110.
 
 The five tellings score from 0.30 to 0.45, each on openings of its own, and each interval overlaps the best one's: 100 games do not tell them apart.
 
-The fit gives 1,785, with a range of 1,737 to 1,836. But one rating does not suit the seven matches. The same rule, on each match alone:
+The fit gives the new player an Elo rating of 1,785, with a range of 1,737 to 1,836. The course's chess players, then:
+
+| Player | Elo rating | Scale |
+|---|---|---|
+| Lesson 38's model | +421 | ours, a random mover at 0 |
+| Lesson 41's model | +775 | ours |
+| Lesson 41's model | about 1,110 | Stockfish's, one match, below its scale |
+| Lesson 44's model | 1,785 | Stockfish's, seven matches |
+
+One rating does not suit the seven matches, though. The same rule, on each match alone:
 
 | Stockfish held to | Our share | The rule gives |
 |---|---|---|
@@ -182,4 +190,3 @@ A fitted rating is finite unless one side took each point. Our player both won a
 Go deeper:
 
 - Stockfish, [UCI and commands](https://official-stockfish.github.io/docs/stockfish-wiki/UCI-Protocol-and-Stockfish-Commands.html). The setting that holds it to a rating, and the clock its scale was fitted at.
-- Zhang and others, [Transcendence: Generative Models Can Outperform The Experts That Train Them](https://arxiv.org/abs/2406.11741) (2024). A chess model can sometimes play better than each player it learned from, and picking its likelier moves can enable that.

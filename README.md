@@ -2,7 +2,7 @@
 
 Build a GPT yourself. Train it, serve it, teach the same code chess, then run it all on a rented graphics card.
 
-You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs, and a third shares one model out among several workers. The last two train a chess player on 19 million games between strong players and rate it against Stockfish, a chess program that can be held to a known rating.
+You start with a loop that counts characters. Forty lessons later a model you trained tells stories to many listeners at once, from a server you wrote, and the same code has learned chess from records of games. Two more lessons move training and serving to rented graphics cards and count what that costs, and a third shares one model out among several workers. The last two train a chess player on 19 million games between strong players and rate it against Stockfish, a chess program that can be held to a known rating: it comes out at an Elo rating of 1,785.
 
 Each lesson adds one idea, in code short enough to read in a sitting, with a test that checks it. You need Python and school maths. Lessons 41, 42, 44 and 45 also need an AWS account and about $60. It is hard on purpose: each page has you work a sum by hand and predict a result before you run its script. A test checks each block of output on each page against the file its script saved.
 
@@ -81,13 +81,13 @@ Start with [lesson 0](lessons/00-the-whole-picture.md), which follows one reques
 | 36 | [The server](lessons/36-the-server.md) | The storyteller in a browser: streamed, read aloud, and serving other listeners at the same moment |
 | 37 | [A real engine](lessons/37-a-real-engine.md) | The model in Apple's MLX engine with the scores it has in ours, and both engines timed |
 | 38 | [The same code, a different world](lessons/38-the-same-code-a-different-world.md) | Lesson 21's model code, unchanged, trained from nothing on records of chess games, with its legal moves counted |
-| 39 | [Can it play?](lessons/39-can-it-play.md) | Whole games against three opponents, and a rating with a range |
+| 39 | [Can it play?](lessons/39-can-it-play.md) | Whole games against three opponents, and an Elo rating with a range, on a scale of our own |
 | 40 | [The board in its head](lessons/40-the-board-in-its-head.md) | A chess position read out of the model's inner numbers, and the chance of a move changed by editing them |
 | 41 | [Train on a GPU](lessons/41-train-on-a-gpu.md) | The same code on a rented graphics card: a bigger story model, a stronger chess player, four cards sharing a step, and each run's cost in dollars |
 | 42 | [Serve on a GPU](lessons/42-serve-on-a-gpu.md) | The bigger story model served by vLLM, the request rate it keeps up with, and the price of a million tokens, for our model and for one about 520 times its size |
 | 43 | [Split the model](lessons/43-split-the-model.md) | One layer's weights and the optimizer's averages shared among four workers, with each sum checked against the model in one piece |
 | 44 | [A stronger player](lessons/44-a-stronger-player.md) | A chess model of 76 million parameters, trained for 12 hours of a card on 19 million games between strong players, with each choice in the run and its cost |
-| 45 | [How strong is it?](lessons/45-how-strong-is-it.md) | 1,400 games against Stockfish held to known ratings, and a rating on its scale with a range |
+| 45 | [How strong is it?](lessons/45-how-strong-is-it.md) | 1,400 games against Stockfish held to known ratings, and the player's Elo rating on its scale: 1,785, with a range of 1,737 to 1,836 |
 
 Four guides go with the lessons.
 
@@ -162,6 +162,7 @@ The chess model of lesson 38 is scored by the rules of the game and by play.
 | Points against a player that moves at random, 200 games | 39 | 0.92 |
 | Points against a player that looks one move ahead, 200 games | 39 | 0.16 |
 | Points against itself at step 2,500, 200 games | 39 | 0.64 |
+| Elo rating, on a scale of our own where a player that moves at random is 0 | 39 | +421, with a range of +378 to +465. The player that looks one move ahead: +738 |
 | Squares a linear probe names from the model's inner numbers | 40 | 80.7% after block 5, against 67.3% for naming each square's most usual piece |
 
 Lessons 41 and 42 run the same code on rented NVIDIA cards: one L40S, except for the four-card timing, which ran on four L4s.
@@ -172,6 +173,7 @@ Lessons 41 and 42 run the same code on rented NVIDIA cards: one L40S, except for
 | A story model of 14,555,904 parameters, 88 minutes of the card, $2.74 | 41 | 1.270 nats on unseen stories, where the laptop's model had 1.565 and lesson 19's law expected 0.923 |
 | The same budget on 25,170,944 parameters, then on 47,678,720 | 41 | 1.241 nats, then 1.271: the size lesson 19's own rule would have picked was the best of the three |
 | A chess model of 13,226,880 parameters: legal moves at 1,000 unseen positions, and its points against the laptop's model | 41 | 987 (the laptop's: 932 at the same positions), and 0.86 |
+| That model's Elo rating, on lesson 39's scale | 41 | +775, with a range of +714 to +829 |
 | One step on four cards, against the same step on one | 41 | 4.19 times as fast, at 1.4 times the price for each token |
 | Tokens a second for one listener: our engine on the card, then vLLM with the same weights | 42 | 110, then 786 |
 | Requests a second vLLM keeps up with, and the price of a million tokens there | 42 | 128, at $0.065. At 256 and at 512 it writes about 12,800 tokens a second and requests wait |
@@ -193,8 +195,19 @@ Lessons 44 and 45 are on the rented L40S again: 12 hours of training steps on ga
 | One training step with lesson 6's attention, then with PyTorch's own routine in its place | 44 | 257 ms, then 97 ms |
 | Tokens a second through a training step of 32 windows, then of 128 | 44 | 84,095, then 63,206 |
 | Points against Stockfish held to 1,320, for lesson 41's chess model. Then against Stockfish held to 1,400, for the new one | 45 | 0.23, then 0.80 |
-| The new player's rating on Stockfish's scale, fitted to 700 games against seven settings from 1,400 to 2,600 | 45 | 1,785, with a range of 1,737 to 1,836. Match by match the rating climbs from 1,641 against the weakest setting to 2,122 against the strongest, so one number does not suit them all |
+| The new player's Elo rating on Stockfish's scale, fitted to 700 games against seven settings from 1,400 to 2,600 | 45 | 1,785, with a range of 1,737 to 1,836. Match by match the rating climbs from 1,641 against the weakest setting to 2,122 against the strongest, so one number does not suit them all |
 | Points against Stockfish held to 1,800, when it has 0.05 seconds a move and when it has 0.5 | 45 | 0.36, then 0.41 |
+
+The chess players of the course, each with its Elo rating. The first four are on a scale of our own, and the last two on Stockfish's.
+
+| Player | Lesson | Elo rating | Scale |
+|---|---|---|---|
+| A player that moves at random | 39 | 0 | Ours: it is held at 0 |
+| The laptop's chess model | 39 | +421, with a range of +378 to +465 | Ours |
+| A player that looks one move ahead | 39 | +738, with a range of +690 to +798 | Ours |
+| The bigger chess model from the rented card | 41 | +775, with a range of +714 to +829 | Ours. In this fit the laptop's model is +355 |
+| The same model against Stockfish | 45 | About 1,110 | Stockfish's, from one match: 0.23 of the points against its weakest setting, 1,320. That is below the scale, so no setting can check it |
+| The stronger player | 45 | 1,785, with a range of 1,737 to 1,836 | Stockfish's, from 700 games against seven settings |
 
 ## Run it
 
