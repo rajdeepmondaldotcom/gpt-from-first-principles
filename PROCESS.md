@@ -18,7 +18,7 @@ A page written before its run tends to say what the author hoped for. So the pag
 - **At most 1,200 words** outside its code. A page that runs over gets cut.
 - **Nothing used before it is defined**, in plain words. The glossary sets each plain word beside the field's own.
 - **A question to predict**, which nothing above it answers. Where the run's output answers it, it stands above the run, and its answer is the first hidden block of "Check yourself".
-- **Results that did not go our way stay in.** Lessons 34 and 35 each build a speed-up that is no faster. Lesson 37 says its chip timings are not settled, and lesson 41 says its script used a looser yardstick than the lesson it cites.
+- **Results that did not go our way stay in.** Lessons 34 and 35 each build a speed-up that is no faster. Lesson 37 says its chip timings are not settled, lesson 41 says its script used a looser yardstick than the lesson it cites, and lesson 45 says that one rating does not suit its seven matches.
 
 ## What the tests enforce
 
@@ -51,12 +51,12 @@ Most timings are the fastest of several tries on a machine doing nothing else, o
 
 ## Rented machines
 
-Lessons 41 and 42 run on AWS. The scripts in `aws/` follow four rules:
+Lessons 41, 42, 44 and 45 run on AWS. The scripts in `aws/` follow four rules:
 
 - Each machine is started with a time limit, after which it destroys itself and its disk.
 - Each machine, disk, key and door for SSH carries one tag, so what was started can be found and removed.
 - SSH is open to the address that started the machine and no other.
-- A run's cost is the machine's hours, from the times AWS reports, times the on-demand price, plus its disk. `results/42_bill.json` has ours.
+- A run's cost is the machine's hours, from the times AWS reports, times the on-demand price, plus its disk. `results/42_bill.json` and `results/45_bill.json` have ours, and `aws/cost.sh` lists what the machines still running have cost so far.
 
 ## Adding a lesson
 

@@ -1,6 +1,6 @@
 # The map
 
-A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40 and 43, and on rented machines for lessons 41 and 42. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
+A topic is a lesson only if you cannot build, train, measure, adapt or serve a GPT without it, and only if we can prove it with a test: on a laptop for lessons 1 to 40 and 43, and on rented machines for lessons 41, 42, 44 and 45. This page holds what that rule leaves out. Each topic gets one line on the problem it solves and the best open place to learn it. A resource can be in both tables, once for a topic and once as the best of its area.
 
 Each link was fetched on 17 or 18 November 2026.
 
@@ -51,7 +51,7 @@ Each link was fetched on 17 or 18 November 2026.
 |---|---|---|
 | Retrieval | Answering from documents the model never trained on, by finding them and putting them in the prompt | Lewis and others, [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401) |
 | Agents and tools | Letting a model call programs and act on what they return | Anthropic, [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) |
-| Constrained output | Making each answer fit a format, by allowing only the tokens that keep it valid | Willard and Louf, [Efficient Guided Generation for Large Language Models](https://arxiv.org/abs/2307.09702) |
+| Constrained output | Lesson 45 allows only legal moves. The same idea makes each answer fit a format, by allowing only the tokens that keep it valid | Willard and Louf, [Efficient Guided Generation for Large Language Models](https://arxiv.org/abs/2307.09702) |
 | Reinforcement learning in depth | Lesson 27 has one method. The family around it, derived step by step | OpenAI, [Spinning Up in Deep RL](https://spinningup.openai.com/) |
 | Reusing each batch of samples | Lesson 27 writes fresh stories for every step. PPO takes several steps on one batch of samples | Schulman and others, [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347) |
 | When the preferred answer loses chance | Lesson 29's loss rewards the better story for gaining on the worse one. Both can lose chance while the gap grows, and this paper studies when | Razin and others, [Unintentional Unalignment: Likelihood Displacement in Direct Preference Optimization](https://arxiv.org/abs/2410.08847) |
@@ -87,6 +87,14 @@ Each link was fetched on 17 or 18 November 2026.
 | Reading and writing on separate chips | Lesson 31's two waits compete for one chip. DistServe reads prompts on some chips and writes tokens on others, so each wait can be held to its own limit | Zhong and others, [DistServe](https://arxiv.org/abs/2401.09670) |
 | Load tests | Lesson 36 uses `ab`, and lesson 42's script doubles the rate until vLLM falls behind. Tools built for language models sweep it and report each wait | [GuideLLM](https://github.com/vllm-project/guidellm) |
 | Lines and waits | The mathematics of lesson 31's waiting line | Harchol-Balter, [Performance Modeling and Design of Computer Systems](https://www.cs.cmu.edu/~harchol/PerformanceModeling/book.html) |
+
+### A stronger player
+
+| Topic | The problem it solves | Learn it from |
+|---|---|---|
+| Search, and learning from its own games | Lesson 45's player picks each move in one pass, and learned from people's games. The strongest chess programs search the moves ahead. AlphaZero learned from games against itself, given only the rules, and beat a champion program | Silver and others, [Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm](https://arxiv.org/abs/1712.01815) |
+| Learning an engine's verdicts | Lesson 44 copies the moves people made. Ruoss and others teach a model Stockfish's verdict on each move of 10 million games, and it plays with no search | Ruoss and others, [Amortized Planning with Large-Scale Transformers: A Case Study on Chess](https://arxiv.org/abs/2402.04494) |
+| Playing better than the games it read | A chess model can sometimes play better than each player whose games it learned from. Picking likelier moves, as lesson 45's player does, can enable it | Zhang and others, [Transcendence: Generative Models Can Outperform The Experts That Train Them](https://arxiv.org/abs/2406.11741) |
 
 ## The best open resources, by area
 

@@ -1,0 +1,28 @@
+{
+ "what": "What lessons 44 and 45 cost on 18 and 19 November 2026, in us-east-1: the hours of the one machine, from the launch time and end time AWS reports (06:17:29 UTC on the 18th to 09:55:57 UTC on the 19th), that are not already in 42_bill.json, times its on-demand price, plus its 200 GB disk for those hours. Worked out by hand from those times, not printed by a lesson's script. The games stage began at 11:40:27 and ran beside lesson 42's second stage until 14:46:05: those hours are in 42_bill.json and are not counted twice. As there, the machine's public address, half a cent an hour, and tax are left out.",
+ "machines": [
+  {
+   "machine": "g6e.xlarge",
+   "cards": "one L40S card",
+   "dollars_an_hour": 1.861,
+   "from_utc": "2026-11-18 11:10:00",
+   "to_utc": "2026-11-18 11:37:50",
+   "hours": 0.4638888888888889,
+   "dollars": 0.8632972222222223,
+   "for": "setting up the games stage, between lesson 42's two rows"
+  },
+  {
+   "machine": "g6e.xlarge",
+   "cards": "one L40S card",
+   "dollars_an_hour": 1.861,
+   "from_utc": "2026-11-18 14:46:05",
+   "to_utc": "2026-11-19 09:55:57",
+   "hours": 19.164444444444445,
+   "dollars": 35.66503111111111,
+   "for": "the rest of the games and ids stages, the train stage (15:47:12 to 07:46:52), the play stage (07:46:53 to 09:40:11), then 16 minutes of a test that is not in the course and of copying files back"
+  }
+ ],
+ "disk_dollars": 0.43021004566210047,
+ "total_dollars": 36.958538378995435,
+ "printed": []
+}

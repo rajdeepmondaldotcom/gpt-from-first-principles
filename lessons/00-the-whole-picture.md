@@ -1,12 +1,12 @@
 # 0. The whole picture
 
-By the end of this page you know where the next 43 lessons go, and what each one is for.
+By the end of this page you know where the next 45 lessons go, and what each one is for.
 
-Before lesson 1, we follow the finished storyteller from one end to the other.
+First we follow the finished storyteller from one end to the other.
 
 ## The idea
 
-You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess. Last, you rent a graphics card, train bigger models on it with the same code, and serve one with an engine that services run.
+You are going to build a storyteller. Someone types a name and three words. A model that you trained writes a new story with them, the computer reads it aloud, and the listener types what happens next. It runs on a server that you wrote and serves many listeners at once. Then you will hand the same code a pile of chess games in place of stories, and it will learn the moves of chess. Last, you rent a graphics card: the same code trains bigger models there, an engine that services run serves one, and Stockfish, a chess program, rates your player.
 
 Each lesson adds a piece or tests one, in this order.
 
@@ -25,10 +25,11 @@ Each lesson adds a piece or tests one, in this order.
 | 38 to 40 | A different world | Was any of this about English? |
 | 41 and 42 | Real hardware | What does a rented machine buy? |
 | 43 | Many cards | What if no one card holds the model? |
+| 44 and 45 | A stronger player | How strong can the player get? |
 
 The model answers `Once upon a time`, and from lesson 25 an order, so you can watch it learn to write. Up to lesson 24, and again in lessons 41 and 42, we score in bits per byte, a unit lesson 1 defines, on Shakespeare and then on stories. The stages between count their own results. Each lesson opens on something the last one left undone.
 
-Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so, and lessons 41 and 42 try some of them again on a rented card. The dollars in those two lessons are the hours AWS reported times its price list.
+Each claim on a page is one of three things: a test that passes, a number that a script printed, or a source you can open. If an idea does not pay off on a laptop, we say so, and lessons 41 and 42 try some of them again on a rented card. Each dollar figure is the hours AWS reported times its price list.
 
 The lessons are hard on purpose: you work sums by hand before the code does them, and guess each result before you see it. Each page asks one question that begins "Predict before you run". Where the run answers it, the question stands above the run. Write your guess down before you read on.
 
@@ -49,7 +50,7 @@ One request, followed through the finished storyteller. The listener types Mira,
 | 9 | Tokens become bytes and bytes become text. Half a character waits for its other half | 36 |
 | 10 | The browser speaks each sentence as it ends. The end token arrives, and the request leaves the batch | 25, 36 |
 
-Each number in that table is one you will be able to work out. The model's 5,374,464 weights came from a run that read 73 million tokens of stories, then from 2,000 steps on stories written to order, and 200 more on pairs of stories with one judged the better.
+You will work out each number in that table. The model's 5,374,464 weights came from a run that read 73 million tokens of stories, then from 2,000 steps on stories written to order, and 200 more on pairs of stories with one judged the better.
 
 ## The code
 

@@ -67,6 +67,7 @@ def long_run(
     Returns the model, the notes kept along the way, the number of steps, and the generator.
     """
     saved, log = cache / f"{name}.pt", cache / f"{name}_log.json"
+    size = how.get("size", 32)  # windows in a step: the short runs and the count of steps follow it
 
     def note():
         """Write the notes beside the old ones, then swap: a stop while writing loses nothing."""
@@ -77,7 +78,10 @@ def long_run(
     if log.exists():  # a stopped run: carry on with what it had decided and measured
         notes = json.loads(log.read_text())
     else:  # before three hours, three short runs: which rate suits this size?
-        tried = [[peak, run(shape, check, ids, val_ids[:200_000], peak=peak)[2]] for peak in RATES]
+        tried = [
+            [peak, run(shape, check, ids, val_ids[:200_000], size=size, peak=peak)[2]]
+            for peak in RATES
+        ]
         notes = {"tried": tried, "peak": min(tried, key=lambda pair: pair[1])[0], "curve": []}
         note()
 
@@ -85,7 +89,7 @@ def long_run(
     generator = torch.Generator().manual_seed(0)
     model = GPT(**shape).to(ids.device)
     optimizer = AdamW(model.parameters(), rate=0.0, decay=0.1)
-    steps = steps_for(model, budget)
+    steps = steps_for(model, budget, size)
     if saved.exists():
         start = resume(saved, model, optimizer, generator)
     else:  # lesson 13's checks, before the long run and not after

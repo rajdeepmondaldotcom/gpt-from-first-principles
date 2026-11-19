@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       # The versions in uv.lock, so CI runs what `uv sync` gives a reader.
-      # The chess extra too, or the tests of lessons 38 to 40 would be skipped here.
+      # The chess extra too, or the tests of lessons 38 to 40, 44 and 45 would be skipped here.
       - run: uv sync --locked --extra reference --extra chess
       - run: uv run --no-sync ruff check .
       - run: uv run --no-sync ruff format --check .
